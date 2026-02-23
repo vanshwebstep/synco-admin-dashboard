@@ -20,6 +20,8 @@ import PhoneInput from 'react-phone-input-2';
 
 const ParentProfile = ({ profile }) => {
     const navigate = useNavigate();
+    const { serviceHistoryMembership } = useBookFreeTrial();
+    const [textloading, setTextLoading] = useState(null);
 
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const {
@@ -525,6 +527,45 @@ const ParentProfile = ({ profile }) => {
             }
         });
     };
+    const sendText = async (bookingIds) => {
+        setTextLoading(true);
+
+        const headers = {
+            "Content-Type": "application/json",
+        };
+        // console.log('bookingIds', bookingIds)
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/book-membership/send-text`, {
+                method: "POST",
+                headers,
+                body: JSON.stringify({
+                    bookingId: bookingIds, // make sure bookingIds is an array like [96, 97]
+                }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || "Failed to send text");
+            }
+
+            await showSuccess("Success!", result.message || "Text has been sent successfully.");
+
+            return result;
+
+        } catch (error) {
+            console.error("Error sending Text:", error);
+            await showError("Error", error.message || "Something went wrong while sending text.");
+            throw error;
+        } finally {
+            navigate(`/weekly-classes/all-members/list`);
+            await serviceHistoryMembership(bookingId);
+            setTextLoading(false);
+        }
+    };
 
     const hearOptions = [
         { value: "Google", label: "Google" },
@@ -912,8 +953,14 @@ const ParentProfile = ({ profile }) => {
                                         <img src="/images/icons/mail.png" alt="" /> Send Email
                                     </button>
 
-                                    <button className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
-                                        <img src="/images/icons/sendText.png" alt="" /> Send Text
+                                    <button disabled={textloading} onClick={() => sendText([bookingId])} className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
+                                        <img src="/images/icons/sendText.png" alt="" />  {textloading ? (
+                                            <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
+                                        ) : (
+                                            <>
+                                                Send Text
+                                            </>
+                                        )}
                                     </button>
                                 </div>
                                 {(status === "frozen" || status === "cancelled") && canRebooking && (
@@ -1027,8 +1074,14 @@ const ParentProfile = ({ profile }) => {
                                         <img src="/images/icons/mail.png" alt="" /> Send Email
                                     </button>
 
-                                    <button className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
-                                        <img src="/images/icons/sendText.png" alt="" /> Send Text
+                                    <button disabled={textloading} onClick={() => sendText([bookingId])} className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
+                                        <img src="/images/icons/sendText.png" alt="" />  {textloading ? (
+                                            <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
+                                        ) : (
+                                            <>
+                                                Send Text
+                                            </>
+                                        )}
                                     </button>
                                 </div>
 

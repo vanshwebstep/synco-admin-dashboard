@@ -382,6 +382,12 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
               needPermissions: [{ module: 'payment-group', action: 'view-listing' }]
 
             },
+            {
+              noPaddingx: true,
+              title: "Starter Pack",
+              link: "/configuration/weekly-classes/starter-pack",
+              needPermissions: [{ module: 'payment-group', action: 'view-listing' }]
+            },
           ],
         },
 
@@ -709,37 +715,37 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
                   </span>
                 )}
               </span>
-             {/* Right-side icons */}
-{!isSidebarCollapsed && (hasSubItems || hasInnerSubItems) && (
-  <>
-    {/* Level 0 → Chevron icons */}
-    {level === 0 && (
-      openDropdowns[itemTitle]
-        ? <ChevronUp size={18} />
-        : <ChevronDown size={18} />
-    )}
+              {/* Right-side icons */}
+              {!isSidebarCollapsed && (hasSubItems || hasInnerSubItems) && (
+                <>
+                  {/* Level 0 → Chevron icons */}
+                  {level === 0 && (
+                    openDropdowns[itemTitle]
+                      ? <ChevronUp size={18} />
+                      : <ChevronDown size={18} />
+                  )}
 
-    {/* Level 1 → + / - icons */}
-    {level === 1 && hasSubItems && (
-     <span className="select-none">
-  {openDropdowns[itemTitle] ? (
-    <img
-      src="/images/icons/minus.png"
-      className="w-4 h-4 cursor-pointer"
-      alt="collapse"
-    />
-  ) : (
-    <img
-      src="/images/icons/add.png"
-      className="w-4 h-4 cursor-pointer"
-      alt="expand"
-    />
-  )}
-</span>
+                  {/* Level 1 → + / - icons */}
+                  {level === 1 && hasSubItems && (
+                    <span className="select-none">
+                      {openDropdowns[itemTitle] ? (
+                        <img
+                          src="/images/icons/minus.png"
+                          className="w-4 h-4 cursor-pointer"
+                          alt="collapse"
+                        />
+                      ) : (
+                        <img
+                          src="/images/icons/add.png"
+                          className="w-4 h-4 cursor-pointer"
+                          alt="expand"
+                        />
+                      )}
+                    </span>
 
-    )}
-  </>
-)}
+                  )}
+                </>
+              )}
 
             </motion.div>
           );
@@ -817,9 +823,9 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
         onClick={toggleSidebarCollapse}
       >
         {isSidebarCollapsed ? (
-          <Menu size={15}  className='text-gray-700'/>
+          <Menu size={15} className='text-gray-700' />
         ) : (
-                    <Menu size={15} className='text-gray-700' />
+          <Menu size={15} className='text-gray-700' />
 
         )}
       </button>

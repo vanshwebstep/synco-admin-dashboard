@@ -46,6 +46,7 @@ const AccountInfoBookMembership = () => {
     };
     fetchData();
   }, [itemId, serviceHistoryMembership]);
+  
   const [activeTab, setActiveTab] = useState("Service History");
   if (loading) {
     return (

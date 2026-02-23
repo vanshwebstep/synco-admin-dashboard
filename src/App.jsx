@@ -148,6 +148,7 @@ import FranchiseLeads from './Components/Pages/AdminPages/Recruitment/franchise/
 import FranchiseCandidateDetails from './Components/Pages/AdminPages/Recruitment/franchise/seeDetails/FranchiseCandidateDetails.jsx';
 import TodoList from './Components/Pages/AdminPages/Administration/todo/ToDoList.jsx';
 import Createtemplate from './Components/Pages/AdminPages/Templates/CreateTemplate.jsx';
+import StarterPack from './Components/Pages/AdminPages/configuration/weekly-classes/starter-pack/StarterPack.jsx';
 
 import CommunicationsList from './Components/Pages/AdminPages/Templates/ListofTemplates/list.jsx';
 import SettingList from './Components/Pages/AdminPages/Templates/Settings/SettingList.jsx';
@@ -170,6 +171,7 @@ import StudentCource from './Components/Pages/AdminPages/configuration/coach-pro
 import StudentCourceAdd from './Components/Pages/AdminPages/configuration/coach-pro/studentsCources/StudentCourceAdd.jsx';
 import CourseUpdate from './Components/Pages/AdminPages/coach-pro/Course/CourceUpdate.jsx';
 import CourseStudentUpdate from './Components/Pages/AdminPages/configuration/coach-pro/studentsCources/CourseStudentUpdate.jsx';
+import { StarterPackProvider } from './Components/Pages/AdminPages/contexts/StarterPackContext.jsx';
 import { CoachProProvider } from './Components/Pages/AdminPages/contexts/CoachProContext.jsx';
 
 const commonRole = ['Admin', 'user', 'Member', 'Agent', 'Super Admin'];
@@ -361,6 +363,10 @@ const AppRoutes = () => {
       <Route
         path="/configuration/weekly-classes/session-plan-list"
         element={renderProtectedRoute(SessionPlanList, [{ module: "session-plan-group", action: "view-listing" }])}
+      />
+      <Route
+        path="/configuration/weekly-classes/starter-pack"
+        element={renderProtectedRoute(StarterPack, [{ module: "payment-group", action: "view-listing" }])}
       />
       <Route
         path="/configuration/weekly-classes/session-plan-preview"
@@ -1136,7 +1142,9 @@ function App() {
                                                 <ToDoListProvider>
                                                   <RecruitmentProvider>
                                                     <CoachProProvider>
-                                                      <AppRoutes />
+                                                      <StarterPackProvider>
+                                                        <AppRoutes />
+                                                      </StarterPackProvider>
                                                     </CoachProProvider>
                                                   </RecruitmentProvider>
                                                 </ToDoListProvider>
