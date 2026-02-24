@@ -22,6 +22,7 @@ const ParentProfile = ({ ParentProfile }) => {
     const { adminInfo, setAdminInfo } = useNotification();
     const token = localStorage.getItem("adminToken");
     const [transferVenue, setTransferVenue] = useState(false);
+    const [textloading,setTextLoading] = useState(null)
 
     const { loading, cancelFreeTrial, sendCancelFreeTrialmail, rebookFreeTrialsubmit, cancelMembershipSubmit, reactivateDataSubmit, addtoWaitingListSubmit, freezerMembershipSubmit, sendAllmail, sendFullTomail, sendRequestTomail, transferMembershipSubmit } = useBookFreeTrial() || {};
     const [addToWaitingList, setaddToWaitingList] = useState(false);
@@ -78,8 +79,8 @@ const ParentProfile = ({ ParentProfile }) => {
                 await showError("Error", error.message || "Something went wrong while sending text.");
                 throw error;
             } finally {
-                navigate(`/weekly-classes/all-members/list`);
-                await serviceHistoryFetchById(id);
+                // navigate(`/weekly-classes/all-members/list`);
+                // await serviceHistoryFetchById(id);
                 setTextLoading(false);
             }
         };

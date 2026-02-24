@@ -19,7 +19,7 @@ export const VenueProvider = ({ children }) => {
     termGroupId: [],
     parking: false,
     congestion: false,
-    hasStarterPack: false,
+    starterPack: false,
     parkingNote: "",
     entryNote: "",
   });
@@ -134,7 +134,7 @@ export const VenueProvider = ({ children }) => {
       setOpenForm(null)
       setFormData({
         area: "", name: "", address: "", facility: "",
-        hasParking: false, isCongested: false, hasStarterPack: false, parkingNote: "",
+        hasParking: false, isCongested: false, starterPack: false, parkingNote: "",
         howToEnterFacility: "", termGroupId: [], paymentGroupId: ""
       });
       await showSuccess("Success!", result.message || "Venue has been created successfully.");

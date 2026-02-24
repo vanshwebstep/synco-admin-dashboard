@@ -20,6 +20,7 @@ const StudentProfile = ({ StudentProfile }) => {
     const [selectedDate, setSelectedDate] = useState(null);
     console.log('StudentProfile', StudentProfile)
     const [transferVenue, setTransferVenue] = useState(false);
+    const [textloading,setTextLoading] = useState(null)
 
     const { loading, cancelFreeTrial, sendCancelFreeTrialmail, rebookFreeTrialsubmit, cancelMembershipSubmit, transferMembershipSubmit, reactivateDataSubmit, addtoWaitingListSubmit, freezerMembershipSubmit, sendAllmail, sendFullTomail, sendRequestTomail } = useBookFreeTrial() || {};
     const [addToWaitingList, setaddToWaitingList] = useState(false);
@@ -263,7 +264,45 @@ const StudentProfile = ({ StudentProfile }) => {
     const handleRadioChange = (value, field, stateSetter) => {
         stateSetter((prev) => ({ ...prev, [field]: value }));
     };
-
+  const sendText = async (id) => {
+            setTextLoading(true);
+    
+            const headers = {
+                "Content-Type": "application/json",
+            };
+            // console.log('bookingIds', bookingIds)
+            if (token) {
+                headers["Authorization"] = `Bearer ${token}`;
+            }
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/book/free-trials/send-text`, {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify({
+                        bookingId: id, // make sure bookingIds is an array like [96, 97]
+                    }),
+                });
+    
+                const result = await response.json();
+    
+                if (!response.ok) {
+                    throw new Error(result.message || "Failed to send text");
+                }
+    
+                await showSuccess("Success!", result.message || "Text has been sent successfully.");
+    
+                return result;
+    
+            } catch (error) {
+                console.error("Error sending Text:", error);
+                await showError("Error", error.message || "Something went wrong while sending text.");
+                throw error;
+            } finally {
+                // navigate(`/weekly-classes/all-members/list`);
+                // await serviceHistoryFetchById(id);
+                setTextLoading(false);
+            }
+        };
 
     // Unified handler for DatePicker
     const handleDateChange = (date, field, stateSetter) => {
@@ -750,10 +789,15 @@ const StudentProfile = ({ StudentProfile }) => {
                                         <img src="/images/icons/mail.png" alt="" /> Send Email
                                     </button>
 
-
-                                    <button className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
-                                        <img src="/images/icons/sendText.png" alt="" /> Send Text
-                                    </button>
+  <button disabled={textloading} onClick={() => sendText([id])} className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
+                                <img src="/images/icons/sendText.png" alt="" />  {textloading ? (
+                                    <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
+                                ) : (
+                                    <>
+                                        Send Text
+                                    </>
+                                )}
+                            </button>
                                 </div>
 
                                 <div className="bg-white rounded-3xl   space-y-4">

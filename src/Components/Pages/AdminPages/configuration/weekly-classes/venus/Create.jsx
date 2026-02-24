@@ -53,7 +53,7 @@ const Create = ({ groups, termGroup }) => {
   const handleCancel = () => {
     setFormData({
       area: "", name: "", address: "", facility: "",
-      hasParking: false, isCongested: false, hasStarterPack: false, parkingNote: "",
+      hasParking: false, isCongested: false, starterPack: false, parkingNote: "",
       howToEnterFacility: "", termGroupId: [], paymentGroupId: ""
     });
     setIsEditVenue(false);
@@ -101,7 +101,7 @@ const Create = ({ groups, termGroup }) => {
     // Reset form
     setFormData({
       area: "", name: "", address: "", facility: "",
-      hasParking: false, isCongested: false, hasStarterPack: false, parkingNote: "",
+      hasParking: false, isCongested: false, starterPack: false, parkingNote: "",
       howToEnterFacility: "", termGroupId: [], paymentGroupId: ""
     });
 
@@ -479,20 +479,20 @@ const Create = ({ groups, termGroup }) => {
             <span className="block font-semibold text-[16px]">Starter Pack</span>
             <input
               type="checkbox"
-              name="hasStarterPack"
-              checked={formData.hasStarterPack}
+              name="starterPack"
+              checked={formData.starterPack}
               onChange={(e) => {
                 const { checked } = e.target;
                 setFormData((prev) => ({
                   ...prev,
-                  hasStarterPack: checked,
+                  starterPack: checked,
                 }));
               }}
               className="sr-only"
             />
             <div
               className={`w-10 h-6 flex items-center rounded-full p-1 transition-all duration-300
-      ${formData.hasStarterPack ? 'bg-[#5372FF] justify-end' : 'bg-gray-300 justify-start'}`}
+      ${formData.starterPack ? 'bg-[#5372FF] justify-end' : 'bg-gray-300 justify-start'}`}
             >
               <div className="w-4 h-4 bg-white rounded-full shadow-md"></div>
             </div>

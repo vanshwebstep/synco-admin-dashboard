@@ -217,6 +217,7 @@ const List = () => {
             }
         }
     };
+   
 
     const handlePlanChange = (plan) => {
         setMembershipPlan(plan);
@@ -686,12 +687,11 @@ const List = () => {
             ...(Object.keys(filteredPayment).length > 0 && {
                 payment: {
                     ...filteredPayment,
-                    price: pricingBreakdown.totalAmount, // ✅ added here
+                    price: membershipPlan?.all?.price, // ✅ added here
                 }
             }),
         };
 
-        console.log('payload', payload)
 
         try {
             if (comesFrom === "trials") {
@@ -1042,9 +1042,7 @@ const List = () => {
         );
     };
 
-    console.log('payment', payment)
-    console.log('membershipPlan', membershipPlan)
-    console.log('calendarDays', calendarDays)
+
 
     if (loading) return <Loader />;
 
@@ -2068,6 +2066,11 @@ const List = () => {
                                         </p>
 
                                     </div>
+                                    {singleClassSchedulesOnly?.venue?.starterPack &&(
+                                        <p className="text-[16px] py-3 ">
+                                            Starter Pack:<b> {singleClassSchedulesOnly?.starterPack?.price}</b>
+                                        </p>
+                                    )}
                                     <div className="space-y-2 px-6 pb-6">
 
                                         {/* ================= Personal Details ================= */}
