@@ -2,11 +2,11 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { FiSearch } from "react-icons/fi";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Select from "react-select";
-import { Check, Filter } from "lucide-react";
+import { Check, Filter, Loader2 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { useBookFreeTrial } from '../../contexts/BookAFreeTrialContext';
 import Loader from '../../contexts/Loader';
-import { showWarning, showConfirm, showError } from '../../../../../utils/swalHelper';
+import { showWarning, showSuccess, showError } from '../../../../../utils/swalHelper';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import StatsGrid from '../../Common/StatsGrid';
@@ -19,8 +19,9 @@ const trialLists = () => {
     const navigate = useNavigate();
     const [isFilterApplied, setIsFilterApplied] = useState(false);
     const [showFilter, setShowFilter] = useState(false);
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-    const [tempSelectedAgents, setTempSelectedAgents] = useState([]);
+    const [textloading, setTextLoading] = useState(null);
+    const token = localStorage.getItem("adminToken");
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; const [tempSelectedAgents, setTempSelectedAgents] = useState([]);
     const [selectedStudents, setSelectedStudents] = useState([]);
     const toggleSelect = (studentId) => {
         setSelectedStudents((prev) =>
@@ -63,6 +64,11 @@ const trialLists = () => {
         const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
         saveAs(data, 'MembershipSalesData.xlsx');
     };
+
+
+
+
+
     // ✅ Define all filters with dynamic API mapping
     const filterOptions = [
         { label: "Pending", key: "pending", apiParam: "status", apiValue: "pending" },
@@ -115,7 +121,7 @@ const trialLists = () => {
             );
             return;
         }
-          if (hasAssignedStudents || selectedStudents.length === 0) {
+        if (hasAssignedStudents || selectedStudents.length === 0) {
             return;
         }
 
@@ -423,7 +429,45 @@ const trialLists = () => {
         setShowPopup(false);
     };
 
+    const sendText = async (id) => {
+        setTextLoading(true);
 
+        const headers = {
+            "Content-Type": "application/json",
+        };
+        // console.log('bookingIds', bookingIds)
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/book/free-trials/send-text`, {
+                method: "POST",
+                headers,
+                body: JSON.stringify({
+                    bookingId: id, // make sure bookingIds is an array like [96, 97]
+                }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || "Failed to send text");
+            }
+
+            await showSuccess("Success!", result.message || "Text has been sent successfully.");
+
+            return result;
+
+        } catch (error) {
+            console.error("Error sending Text:", error);
+            await showError("Error", error.message || "Something went wrong while sending text.");
+            throw error;
+        } finally {
+            // navigate(`/weekly-classes/all-members/list`);
+            await fetchMembershipSales();
+            setTextLoading(false);
+        }
+    };
 
     const handleSearch = (e) => {
         const value = e.target.value;
@@ -854,9 +898,24 @@ const trialLists = () => {
                                     />
                                     Send Email
                                 </button>
-                                <button className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-3 py-2 rounded-xl text-[16px]">
-                                    <img src='/images/icons/sendText.png' className='md:w-[13px] md:h-[12px] ' alt="" />
-                                    Send Text
+                                <button
+                                    onClick={() => {
+                                        if (!selectedStudents || selectedStudents.length === 0) {
+                                            showWarning("No students selected", "Please select at least one student before sending an email.");
+                                            return;
+                                        }
+
+                                        sendText(selectedStudents);
+                                    }}
+                                    className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-3 py-2 rounded-xl  text-[16px]">
+                                    <img src='/images/icons/sendText.png' className='w-4 h-4 sm:w-5 sm:h-5' alt="" />
+                                    {textloading ? (
+                                        <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
+                                    ) : (
+                                        <>
+                                            Send Text
+                                        </>
+                                    )}
                                 </button>
                                 <button onClick={exportMembershipData} className="flex gap-1 items-center justify-center bg-[#237FEA] text-white px-3 py-2 rounded-xl text-[16px]">
                                     <img src='/images/icons/download.png' className='md:w-[13px] md:h-[12px] ' alt="" />

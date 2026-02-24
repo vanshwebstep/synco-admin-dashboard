@@ -177,7 +177,7 @@ const StudentProfile = ({ profile }) => {
             headers["Authorization"] = `Bearer ${token}`;
         }
         try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/book-membership/send-text`, {
+            const response = await fetch(`${API_BASE_URL}/api/admin/book/free-trials/send-text`, {
                 method: "POST",
                 headers,
                 body: JSON.stringify({
@@ -200,7 +200,7 @@ const StudentProfile = ({ profile }) => {
             await showError("Error", error.message || "Something went wrong while sending text.");
             throw error;
         } finally {
-            navigate(`/weekly-classes/all-members/list`);
+            // navigate(`/weekly-classes/all-members/list`);
 
             await serviceHistoryMembership(bookingId);
             setTextLoading(false);

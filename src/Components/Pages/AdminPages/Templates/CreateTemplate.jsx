@@ -27,6 +27,7 @@ export default function CreateTemplateSteps() {
     const [builderBlocks, setBuilderBlocks] = useState([]);
     const [builderPreview, setBuilderPreview] = useState(false);
     const [builderSubject, setBuilderSubject] = useState("");
+    const [builderGlobalStyle, setBuilderGlobalStyle] = useState(null);
     const [step, setStep] = useState(1);
     const [communicationMode, setCommunicationMode] = useState(null);
     const [categoryOpen, setCategoryOpen] = useState(false);
@@ -113,6 +114,7 @@ export default function CreateTemplateSteps() {
             if (t.mode_of_communication === "email") {
                 setBuilderSubject(emailContent.subject || "");
                 setBuilderBlocks(emailContent.blocks || []);
+                setBuilderGlobalStyle(emailContent.globalStyle || null);
                 setStep(2);
             }
             setCommunicationMode(
@@ -613,6 +615,7 @@ export default function CreateTemplateSteps() {
                                             // ✅ only send when edit mode exists
                                             editMode={isEditMode}
                                             templateId={isEditMode ? templateId : null}
+                                            initialGlobalStyle={builderGlobalStyle}
                                         />
 
                                     </div>

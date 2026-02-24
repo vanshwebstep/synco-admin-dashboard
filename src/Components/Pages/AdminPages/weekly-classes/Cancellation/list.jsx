@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { FiSearch } from "react-icons/fi";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft,Loader2, ChevronRight } from "lucide-react";
 import Select from "react-select";
 import { Check, Filter } from "lucide-react";
 import { useBookFreeTrial } from '../../contexts/BookAFreeTrialContext';
@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import Loader from '../../contexts/Loader';
 import { usePermission } from '../../Common/permission';
 import * as XLSX from "xlsx";
-import { showError, showWarning } from '../../../../../utils/swalHelper';
+import { showError, showSuccess, showWarning } from '../../../../../utils/swalHelper';
 import { useLocation } from "react-router-dom";
 
 import { saveAs } from "file-saver";
@@ -22,6 +22,9 @@ const CancellationList = () => {
     const [selectedStudents, setSelectedStudents] = useState([]);
     const location = useLocation();
     const [isFilterApplied, setIsFilterApplied] = useState(false);
+    const [textloading, setTextLoading] = useState(null);
+    const token = localStorage.getItem("adminToken");
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
     const [active, setActive] = useState("request"); // default selected
     const [showFilter, setShowFilter] = useState(false);
@@ -47,6 +50,46 @@ const CancellationList = () => {
                 ? prev.filter((id) => id !== studentId) // remove if already selected
                 : [...prev, studentId] // add if not selected
         );
+    };
+
+    const sendText = async (id) => {
+        setTextLoading(true);
+
+        const headers = {
+            "Content-Type": "application/json",
+        };
+        // console.log('bookingIds', bookingIds)
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/book/free-trials/send-text`, {
+                method: "POST",
+                headers,
+                body: JSON.stringify({
+                    bookingId: id, // make sure bookingIds is an array like [96, 97]
+                }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || "Failed to send text");
+            }
+
+            await showSuccess("Success!", result.message || "Text has been sent successfully.");
+
+            return result;
+
+        } catch (error) {
+            console.error("Error sending Text:", error);
+            await showError("Error", error.message || "Something went wrong while sending text.");
+            throw error;
+        } finally {
+            // navigate(`/weekly-classes/all-members/list`);
+            await fetchRequestToCancellations();
+            setTextLoading(false);
+        }
     };
     const exportFreeTrials = () => {
         const dataToExport = [];
@@ -944,9 +987,30 @@ const CancellationList = () => {
                                 Send Email
                             </button>
 
-                            <button className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl  text-[16px]">
+                            <button onClick={() => {
+                                if (!selectedStudents || selectedStudents.length === 0) {
+                                    showWarning("No students selected", "Please select at least one student before sending an email.");
+                                    return;
+                                }
+                                if (active === "full") {
+                                    sendText(selectedStudents);
+                                    setSelectedStudents([]);
+                                } else if (active === "request") {
+                                    sendText(selectedStudents);
+                                    setSelectedStudents([]);
+                                } else if (active === "all") {
+                                    sendText(selectedStudents);
+                                    setSelectedStudents([]);
+                                }
+                            }} className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl  text-[16px]">
                                 <img src='/images/icons/sendText.png' className='w-4 h-4 sm:w-5 sm:h-5' alt="" />
-                                Send Text
+                                {textloading ? (
+                                    <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
+                                ) : (
+                                    <>
+                                        Send Text
+                                    </>
+                                )}
                             </button>
                             <button onClick={exportFreeTrials} className="flex gap-1 items-center justify-center bg-[#237FEA] text-white px-2 py-2 rounded-xl  text-[16px]">
                                 <img src='/images/icons/download.png' className='w-4 h-4 sm:w-5 sm:h-5' alt="" />

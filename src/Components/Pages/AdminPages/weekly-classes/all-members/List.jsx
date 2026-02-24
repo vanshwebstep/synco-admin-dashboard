@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { FiSearch } from "react-icons/fi";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import Select from "react-select";
 import { Check, Filter } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
@@ -24,6 +24,7 @@ const trialLists = () => {
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const [agentsData, setAgentsData] = useState([]);
     const [selectedAdminId, setSelectedAdminId] = useState(null);
+    const [textloading, setTextLoading] = useState(null);
 
     const [showAgentPopup, setShowAgentPopup] = useState(null);
     const [tempSelectedAgents, setTempSelectedAgents] = useState([]);
@@ -48,8 +49,8 @@ const trialLists = () => {
             .toLowerCase()                       // everything lowercase first
             .replace(/\b\w/g, (c) => c.toUpperCase()); // capitalize each word
     };
+    const token = localStorage.getItem("adminToken");
     const fetchAllAgents = useCallback(async () => {
-        const token = localStorage.getItem("adminToken");
         if (!token) return;
 
         setAgentsLoading(true);
@@ -164,6 +165,47 @@ const trialLists = () => {
             fetchBookMembershipsLoading(); // No filter
         }
     }, [selectedVenue, fetchBookMemberships, fetchBookMembershipsLoading]);
+
+
+    const sendText = async (bookingIds) => {
+        console.log('bookingIds', bookingIds)
+        setTextLoading(true);
+
+        const headers = {
+            "Content-Type": "application/json",
+        };
+        // console.log('bookingIds', bookingIds)
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/book/free-trials/send-text`, {
+                method: "POST",
+                headers,
+                body: JSON.stringify({
+                    bookingId: bookingIds, // make sure bookingIds is an array like [96, 97]
+                }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || "Failed to send text");
+            }
+
+            await showSuccess("Success!", result.message || "Text has been sent successfully.");
+
+            return result;
+
+        } catch (error) {
+            console.error("Error sending Text:", error);
+            await showError("Error", error.message || "Something went wrong while sending text.");
+            throw error;
+        } finally {
+            setTextLoading(false);
+        }
+    };
+
     const month = currentDate.getMonth();
     const year = currentDate.getFullYear();
 
@@ -427,7 +469,7 @@ const trialLists = () => {
             );
             return;
         }
-          if (hasAssignedStudents || selectedStudents.length === 0) {
+        if (hasAssignedStudents || selectedStudents.length === 0) {
             return;
         }
 
@@ -886,9 +928,23 @@ const trialLists = () => {
                                 />
                                 Send Email
                             </button>
-                            <button className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl  text-[16px]">
+                            <button
+                                onClick={() => {
+                                    if (selectedStudents && selectedStudents.length > 0) {
+                                        sendText(selectedStudents);
+                                    } else {
+                                        showWarning("No Students Selected", "Please select at least one student before sending an email.");
+                                    }
+                                }}
+                                className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl  text-[16px]">
                                 <img src='/images/icons/sendText.png' className='w-4 h-4 sm:w-5 sm:h-5' alt="" />
-                                Send Text
+                                {textloading ? (
+                                    <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
+                                ) : (
+                                    <>
+                                        Send Text
+                                    </>
+                                )}
                             </button>
                             <button onClick={exportToExcel} className="flex gap-2 items-center justify-center bg-[#237FEA] text-white px-3 py-2 rounded-xl  text-[16px]">
                                 <img src='/images/icons/download.png' className='w-4 h-4 sm:w-5 sm:h-5' alt="" />

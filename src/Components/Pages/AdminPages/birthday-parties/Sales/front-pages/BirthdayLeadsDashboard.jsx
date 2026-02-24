@@ -13,7 +13,7 @@ import {
   ChevronRight,
   Check,
   User, Filter,
-  UserRoundPlus, X
+  UserRoundPlus, X, Loader2
 } from "lucide-react";
 import { TiUserAdd } from "react-icons/ti";
 import * as XLSX from "xlsx";
@@ -31,6 +31,7 @@ const BirthdayLeadsDashboard = () => {
   const [noLoaderShow, setNoLoaderShow] = useState(null);
   console.log('noLoaderShow', noLoaderShow);
   const [showFilter, setShowFilter] = useState(false);
+  const [textloading, setTextLoading] = useState(null);
 
   const modalRef = useRef(null);
   const [loading, setLoading] = useState(false);
@@ -178,6 +179,46 @@ const BirthdayLeadsDashboard = () => {
 
     loadLeads();
   }, [fetchLeads]);
+  const sendText = async (bookingIds) => {
+    console.log('bookingIds', bookingIds)
+    setTextLoading(true);
+
+    const headers = {
+      "Content-Type": "application/json",
+    };
+    // console.log('bookingIds', bookingIds)
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/birthday-party/booking/send-text`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          bookingId: bookingIds, // make sure bookingIds is an array like [96, 97]
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to send text");
+      }
+
+      await showSuccess("Success!", result.message || "Text has been sent successfully.");
+
+      return result;
+
+    } catch (error) {
+      console.error("Error sending Text:", error);
+      await showError("Error", error.message || "Something went wrong while sending text.");
+      throw error;
+    } finally {
+      setTextLoading(false);
+      setSelectedUserIds([])
+      await fetchLeads();
+    }
+  };
 
   const sources = summary?.sourceOfBookings;
 
@@ -1068,9 +1109,24 @@ const BirthdayLeadsDashboard = () => {
                   />
                   Send Email
                 </button>
-                <button className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl  text-[16px]">
+                <button
+                  onClick={() => {
+                    if (selectedUserIds && selectedUserIds.length > 0) {
+                      sendText(selectedUserIds);
+                    } else {
+                      showWarning("No Students Selected", "Please select at least one Lead before sending an email.");
+
+                    }
+                  }}
+                  className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl  text-[16px]">
                   <img src='/images/icons/sendText.png' className='w-4 h-4 sm:w-5 sm:h-5' alt="" />
-                  Send Text
+                  {textloading ? (
+                    <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
+                  ) : (
+                    <>
+                      Send Text
+                    </>
+                  )}
                 </button>
                 <button onClick={exportToExcel} className="flex gap-2 items-center justify-center bg-[#237FEA] text-white px-3 py-2 rounded-xl  text-[16px]">
                   <img src='/images/icons/download.png' className='w-4 h-4 sm:w-5 sm:h-5' alt="" />

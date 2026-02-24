@@ -38,7 +38,7 @@ const Create = ({ groups, termGroup }) => {
     const err = validateForm();
     if (err) {
       showError("Validation Error", err);
-      
+
       return; // stop here
     }
 
@@ -53,7 +53,7 @@ const Create = ({ groups, termGroup }) => {
   const handleCancel = () => {
     setFormData({
       area: "", name: "", address: "", facility: "",
-      hasParking: false, isCongested: false, parkingNote: "",
+      hasParking: false, isCongested: false, hasStarterPack: false, parkingNote: "",
       howToEnterFacility: "", termGroupId: [], paymentGroupId: ""
     });
     setIsEditVenue(false);
@@ -71,7 +71,7 @@ const Create = ({ groups, termGroup }) => {
     const err = validateForm();
     if (err) {
       showError("Validation Error", err);
-     
+
       return; // stop here, don't close
     }
 
@@ -101,7 +101,7 @@ const Create = ({ groups, termGroup }) => {
     // Reset form
     setFormData({
       area: "", name: "", address: "", facility: "",
-      hasParking: false, isCongested: false, parkingNote: "",
+      hasParking: false, isCongested: false, hasStarterPack: false, parkingNote: "",
       howToEnterFacility: "", termGroupId: [], paymentGroupId: ""
     });
 
@@ -144,23 +144,23 @@ const Create = ({ groups, termGroup }) => {
     : [];
 
 
-const toggleTermId = (id) => {
-  setSelectedTermIds((prev) => {
-    const current = Array.isArray(prev) ? prev : [];
+  const toggleTermId = (id) => {
+    setSelectedTermIds((prev) => {
+      const current = Array.isArray(prev) ? prev : [];
 
-    const updated = current.includes(id)
-      ? current.filter(i => i !== id)
-      : [...current, id];
+      const updated = current.includes(id)
+        ? current.filter(i => i !== id)
+        : [...current, id];
 
-    // auto-save to formData
-    setFormData(prevForm => ({
-      ...prevForm,
-      termGroupId: updated,
-    }));
+      // auto-save to formData
+      setFormData(prevForm => ({
+        ...prevForm,
+        termGroupId: updated,
+      }));
 
-    return updated;
-  });
-};
+      return updated;
+    });
+  };
 
 
   const dropdownVariants = {
@@ -275,7 +275,7 @@ const toggleTermId = (id) => {
           />
         </div>
 
-        <div className="flex py-2 items-center justify-between gap-6">
+        <div className="flex py-2 flex-wrap items-center justify-between gap-6">
           {/* Parking Toggle */}
           <label className="flex items-center gap-2 cursor-pointer">
             <span className="block font-semibold text-[16px]">Parking</span>
@@ -324,6 +324,8 @@ const toggleTermId = (id) => {
               <div className="w-4 h-4 bg-white rounded-full shadow-md"></div>
             </div>
           </label>
+
+         
         </div>
 
         {/* Conditionally Render Textareas */}
@@ -472,6 +474,29 @@ const toggleTermId = (id) => {
 
 
         </div>
+         {/* Starter Pack Toggle */}
+          <label className="flex items-center gap-2 cursor-pointer">
+            <span className="block font-semibold text-[16px]">Starter Pack</span>
+            <input
+              type="checkbox"
+              name="hasStarterPack"
+              checked={formData.hasStarterPack}
+              onChange={(e) => {
+                const { checked } = e.target;
+                setFormData((prev) => ({
+                  ...prev,
+                  hasStarterPack: checked,
+                }));
+              }}
+              className="sr-only"
+            />
+            <div
+              className={`w-10 h-6 flex items-center rounded-full p-1 transition-all duration-300
+      ${formData.hasStarterPack ? 'bg-[#5372FF] justify-end' : 'bg-gray-300 justify-start'}`}
+            >
+              <div className="w-4 h-4 bg-white rounded-full shadow-md"></div>
+            </div>
+          </label>
 
         {/* BUTTONS */}
         <div className="flex justify-between mt-6">

@@ -138,6 +138,7 @@ const convertHtmlToBlocks = (html) => {
 
       if (s.alignItems) style.alignItems = s.alignItems;
       if (s.justifyContent) style.justifyContent = s.justifyContent;
+      if (s.listStyleType) style.listStyleType = s.listStyleType;
     }
     return style;
   };
@@ -197,11 +198,28 @@ const convertHtmlToBlocks = (html) => {
 
         // 2. Text
         if (type === "text") {
+          const qlEditor = node.querySelector(".ql-editor");
+          const content = qlEditor ? qlEditor.innerText : node.innerText;
+
           return createBlock("text", {
-            content: node.innerHTML,
+            content: content,
             style: { fontSize: 16, ...nodeStyle }
           });
         }
+
+        // 2.1 Text Editor
+      if (type === "textEditor") {
+        const qlEditor = node.querySelector(".ql-editor");
+        const ol = node.querySelector("ol");
+        let listStyleType = nodeStyle.listStyleType || (ol ? ol.style.listStyleType : undefined);
+        
+        const content = qlEditor ? qlEditor.innerHTML : node.innerHTML;
+
+        return createBlock("textEditor", {
+          content: content,
+          style: { fontSize: 16, listStyleType, ...nodeStyle }
+        });
+      }
 
         // 3. Image
         if (type === "image") {
@@ -212,12 +230,20 @@ const convertHtmlToBlocks = (html) => {
             // Merge critical image styles that might be on the img tag instead of wrapper
             if (s.width) imgStyle.width = s.width;
             if (s.maxWidth) imgStyle.maxWidth = s.maxWidth;
+            if (s.height) imgStyle.height = s.height;
             if (s.borderRadius) imgStyle.borderRadius = s.borderRadius;
             if (s.objectFit) imgStyle.objectFit = s.objectFit;
+            if (s.margin) imgStyle.margin = s.margin;
           }
           return createBlock("image", {
             url: img ? img.getAttribute("src") : "",
-            style: { ...nodeStyle, ...imgStyle }
+            style: {
+              ...nodeStyle,
+              ...imgStyle,
+              // ✅ Ensure height and margin are captured from the img styled div/wrapper
+              height: nodeStyle.height || imgStyle.height,
+              margin: nodeStyle.margin || imgStyle.margin
+            }
           });
         }
 
@@ -392,18 +418,24 @@ const convertHtmlToBlocks = (html) => {
             let cardTitleStyle = {};
             let cardDescStyle = {};
             let columns = Math.min(cards.length, 3);
+            let gap = 20;
 
             if (node.dataset.columns) {
               columns = parseInt(node.dataset.columns);
             } else if (nodeStyle.columns) {
-              // Fallback: Use columns parsed from grid-template-columns in extractStyles
               columns = nodeStyle.columns;
             }
+
+            if (node.dataset.gap) {
+              gap = parseInt(node.dataset.gap);
+            } else if (nodeStyle.gap) {
+              gap = parseInt(nodeStyle.gap);
+            }
+
             if (node.dataset.cardStyle) {
               try { cardStyle = JSON.parse(node.dataset.cardStyle); } catch (e) { }
             } else if (cards.length > 0) {
               // Infer Card Style from first card
-              // cards[0].style already contains extracted styles
               const s = cards[0].style || {};
               if (s.backgroundColor) cardStyle.backgroundColor = s.backgroundColor;
               if (s.borderRadius) cardStyle.borderRadius = s.borderRadius;
@@ -417,19 +449,52 @@ const convertHtmlToBlocks = (html) => {
             if (node.dataset.cardImageStyle) {
               try { cardImageStyle = JSON.parse(node.dataset.cardImageStyle); } catch (e) { }
             } else if (cards.length > 0) {
-              // ... (existing inference logic is weak for table, leaving as is)
+              // Infer Image Style from first image
+              const firstCardNode = isTable ? node.rows[0]?.cells[0] : node.children[0];
+              const img = firstCardNode?.querySelector("img");
+              if (img) {
+                const s = extractStyles(img);
+                if (s.width) cardImageStyle.width = s.width;
+                if (s.height) cardImageStyle.height = s.height;
+                if (s.objectFit) cardImageStyle.objectFit = s.objectFit;
+                if (s.borderRadius) cardImageStyle.borderRadius = s.borderRadius;
+                if (s.marginTop) cardImageStyle.marginTop = s.marginTop;
+                if (s.marginBottom) cardImageStyle.marginBottom = s.marginBottom;
+                if (s.margin) cardImageStyle.margin = s.margin;
+              }
             }
 
             if (node.dataset.cardTitleStyle) {
               try { cardTitleStyle = JSON.parse(node.dataset.cardTitleStyle); } catch (e) { }
+            } else if (cards.length > 0) {
+              // Infer Title Style
+              const firstCardNode = isTable ? node.rows[0]?.cells[0] : node.children[0];
+              const title = firstCardNode?.querySelector("h4, strong");
+              if (title) {
+                const s = extractStyles(title);
+                if (s.fontSize) cardTitleStyle.fontSize = parseInt(s.fontSize);
+                if (s.textColor) cardTitleStyle.textColor = s.textColor;
+                if (s.textAlign) cardTitleStyle.textAlign = s.textAlign;
+              }
             }
+
             if (node.dataset.cardDescStyle) {
               try { cardDescStyle = JSON.parse(node.dataset.cardDescStyle); } catch (e) { }
+            } else if (cards.length > 0) {
+              // Infer Desc Style
+              const firstCardNode = isTable ? node.rows[0]?.cells[0] : node.children[0];
+              const desc = firstCardNode?.querySelector("p");
+              if (desc) {
+                const s = extractStyles(desc);
+                if (s.fontSize) cardDescStyle.fontSize = parseInt(s.fontSize);
+                if (s.textColor) cardDescStyle.textColor = s.textColor;
+                if (s.textAlign) cardDescStyle.textAlign = s.textAlign;
+              }
             }
 
             return createBlock("cardRow", {
               cards,
-              style: { ...nodeStyle, display: "flex", gap: 20, columns },
+              style: { ...nodeStyle, display: "flex", gap, columns },
               cardStyle,
               cardImageStyle,
               cardTitleStyle,
@@ -1287,7 +1352,7 @@ const convertHtmlToBlocks = (html) => {
         }
         return innerBlocks;
       } else {
-        const content = node.innerHTML.trim();
+        const content = node.innerText.trim();
         if (!content) return null;
         return createBlock("text", {
           content: content,
@@ -1409,7 +1474,7 @@ const TextEditor = ({ value, onChange, style, placeholder, readOnly, id }) => {
         <style>
           {`
             .rich-text-content ul { display: block; list-style-type: disc !important; padding-left: 1.5em !important; margin-bottom: 1em; }
-            .rich-text-content ol { display: block; list-style-type: decimal !important; padding-left: 1.5em !important; margin-bottom: 1em; }
+            .rich-text-content ol { display: block; list-style-type: ${style?.listStyleType || "decimal"} !important; padding-left: 1.5em !important; margin-bottom: 1em; }
             .rich-text-content li { display: list-item; }
           `}
         </style>
@@ -1443,6 +1508,9 @@ const TextEditor = ({ value, onChange, style, placeholder, readOnly, id }) => {
       text-decoration: ${style?.textDecoration || "none"} !important;
       text-transform: ${style?.textTransform || "none"} !important;
     }
+    #editor-${id} .ql-editor ol {
+      list-style-type: ${style?.listStyleType || "decimal"} !important;
+    }
   `}
       </style>
 
@@ -1452,11 +1520,11 @@ const TextEditor = ({ value, onChange, style, placeholder, readOnly, id }) => {
 
 const modules = {
   toolbar: [
-    [{ 'header': [1, 2, 3, false] }],
+    [{ header: [1, 2, 3, false] }],
     ['bold', 'italic', 'underline', 'strike'],
-    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+    [{ list: 'ordered' }, { list: 'bullet' }, { list: 'alpha' }],
     ['link', 'clean']
-  ],
+  ]
 };
 
 // const parseUnit = (val) => {
@@ -1682,6 +1750,16 @@ const STYLE_GROUPS = {
       },
       { label: "Color", key: "textColor", type: "color", path },
       { label: "Alignment", key: "textAlign", type: "align", path },
+      {
+        label: "List Style", key: "listStyleType", type: "select", path, options: [
+          { label: "Decimal (1, 2, 3)", value: "decimal" },
+          { label: "Lower Alpha (a, b, c)", value: "lower-alpha" },
+          { label: "Upper Alpha (A, B, C)", value: "upper-alpha" },
+          { label: "Lower Roman (i, ii, iii)", value: "lower-roman" },
+          { label: "Upper Roman (I, II, III)", value: "upper-roman" },
+        ],
+        condition: (b) => b.type === "textEditor"
+      },
       { label: "Opacity", key: "opacity", type: "range", min: 0, max: 1, step: 0.1, path, condition: (b) => path === 'subtitleStyle' }
     ]
   }),
@@ -1752,7 +1830,7 @@ const getStyleConfig = (block) => {
   const config = [];
 
   // Common styles for almost everyone
-  if (block.type === "text" || block.type === "heading" || block.type === "btn") {
+  if (block.type === "text" || block.type === "heading" || block.type === "btn" || block.type === "textEditor") {
     config.push(STYLE_GROUPS.layout("style"));
 
     if (block.type === "text") {
@@ -1784,7 +1862,9 @@ const getStyleConfig = (block) => {
 
   if (block.type === "cardRow") {
     config.push(STYLE_GROUPS.grid("style")); // Grid Layout
-    config.push(STYLE_GROUPS.appearance("cardStyle", "Card Style")); // Card Appearance
+    const cardAppearance = STYLE_GROUPS.appearance("cardStyle", "Card Style");
+    cardAppearance.fields.push({ label: "Alignment", key: "textAlign", type: "align", path: "cardStyle" });
+    config.push(cardAppearance); // Card Appearance
     config.push(STYLE_GROUPS.image("cardImageStyle")); // Image Style
     config.push(STYLE_GROUPS.typography("cardTitleStyle", "Card Title")); // Title
     config.push(STYLE_GROUPS.typography("cardDescStyle", "Card Description")); // Desc
@@ -2022,7 +2102,7 @@ export const AdvancedStyleControls = ({ block, updateStyle: rawUpdateStyle }) =>
                       }
                     }}
                   />
-                  <label htmlFor={`upload-${field.key}-${targetBlock.id}`} className="bg-blue-50 text-blue-600 p-2 rounded cursor-pointer hover:bg-blue-100 transition h-8 flex items-center justify-center">
+                  <label htmlFor={`upload-${field.key}-${targetBlock.id}`} className="bg-blue-50 text-blue-600 p-2  cursor-pointer hover:bg-blue-100 transition h-8 flex items-center justify-center">
                     <FaImage />
                   </label>
                 </>
@@ -3310,7 +3390,7 @@ export default function BlockRenderer({ block, blocks, setBlocks, readOnly = fal
     const newChild = {
       id: crypto.randomUUID(),
       type,
-      content: type === "btn" ? "Click More" : (type === "noteSection" ? "" : "Enter Text"),
+      content: type === "btn" ? "Click More" : (type === "noteSection" ? "" : (type === "textEditor" ? "Enter rich text here..." : "Enter Text")),
       items: type === "infoBox" ? [{ label: "Label", value: "Value" }] : [],
       rows: type === "noteSection" ? [{
         id: crypto.randomUUID(),
@@ -3829,10 +3909,8 @@ export default function BlockRenderer({ block, blocks, setBlocks, readOnly = fal
 
     // TEXT / PARAGRAPH
     if (block?.type === "text") {
-      console.log('fsdf', block.style)
-
       const textStyles = {
-        color: "#5F5F6D" || "#5F5F6D",
+        color: block.style?.textColor || "#5F5F6D",
         fontSize: parseUnit(block.style?.fontSize) || "16px",
         fontWeight: block.style?.fontWeight || "normal",
         textAlign: block.style?.textAlign || "left",
@@ -3841,19 +3919,47 @@ export default function BlockRenderer({ block, blocks, setBlocks, readOnly = fal
         letterSpacing: parseUnit(block.style?.letterSpacing) || "normal",
         textDecoration: block.style?.textDecoration || "none",
         textTransform: block.style?.textTransform || "none",
+        whiteSpace: "pre-wrap",
+        overflowWrap: "break-word",
       };
 
       return (
         <div style={{ ...getCommonStyles(block) }} className={`block-component block-${block.type} block-${block.id}`}>
+          {readOnly ? (
+            <div style={textStyles}>
+              {block.content}
+            </div>
+          ) : (
+            <VariableTextarea
+              value={block.content}
+              placeholder="Enter text..."
+              onChange={(e) => update("content", e.target.value)}
+              style={textStyles}
+              className="w-full bg-transparent focus:outline-none resize-none overflow-hidden block"
+            />
+          )}
+        </div>
+      );
+    }
+
+    // TEXT EDITOR (Rich Text)
+    if (block?.type === "textEditor") {
+      return (
+        <div style={{ ...getCommonStyles(block) }} className={`block-component block-${block.type} block-${block.id}`}>
           <TextEditor
             id={block.id}
-            readOnly={readOnly}
             value={block.content}
-            contentStyle={{ color: textStyles.color }}
-
             onChange={(val) => update("content", val)}
-            style={textStyles}
-            placeholder="Enter text..."
+            style={{
+              color: block.style?.textColor,
+              fontSize: parseUnit(block.style?.fontSize),
+              fontWeight: block.style?.fontWeight,
+              textAlign: block.style?.textAlign,
+              fontFamily: block.style?.fontFamily,
+              lineHeight: block.style?.lineHeight,
+            }}
+            placeholder={block.placeholder || "Enter rich text..."}
+            readOnly={readOnly}
           />
         </div>
       );
@@ -3895,9 +4001,13 @@ export default function BlockRenderer({ block, blocks, setBlocks, readOnly = fal
 
     // DIVIDER
     if (block?.type === "divider") {
+      const dividerStyle = {
+        borderTop: `${block.style?.borderTopWidth || 2}px solid ${block.style?.borderColor || '#F6F6F7'}`,
+        margin: 0
+      };
       return (
         <div style={{ ...getCommonStyles(block) }} className={`block-component block-${block.type} block-${block.id}`}>
-          <hr style={{ borderTop: '2px solid #F6F6F7', margin: 0 }} className={!readOnly ? "border-t-2 border-gray-100" : ""} />
+          <hr style={dividerStyle} className={!readOnly ? "border-t-2 border-gray-100" : ""} />
         </div>
       );
     }
@@ -3909,7 +4019,7 @@ export default function BlockRenderer({ block, blocks, setBlocks, readOnly = fal
         width: block.style?.width ? '100%' : 'auto',
         maxWidth: block.style?.maxWidth || '100%',
         height: block.style?.height || 'auto',
-        borderRadius: block.style?.borderRadius ? `${block.style.borderRadius}px` : (readOnly ? '12px' : undefined),
+        borderRadius: block.style?.borderRadius || `${block.style.borderRadius}px` ,
         objectFit: block.style?.objectFit || 'contain',
         display: 'block',
         margin: block.style?.margin || '0 auto',
@@ -4119,6 +4229,7 @@ export default function BlockRenderer({ block, blocks, setBlocks, readOnly = fal
                         <div className="grid grid-cols-2 gap-2">
                           {[
                             { type: "text", icon: <FaFont />, label: "Text" },
+                            { type: "textEditor", icon: <FaPlus />, label: "Text Editor" },
                             { type: "image", icon: <FaImage />, label: "Image" },
                             { type: "heading", icon: <FaHeading />, label: "Heading" },
                             { type: "btn", icon: <FaMousePointer />, label: "Button" },
@@ -4139,7 +4250,7 @@ export default function BlockRenderer({ block, blocks, setBlocks, readOnly = fal
                       ) : (
                         <div className="flex gap-2 justify-center">
                           <span className="text-[10px] text-gray-400 uppercase font-bold self-center mr-2">Add:</span>
-                          {["text", "image", "heading", "btn", "cardRow", "infoBox", "noteSection"].map((t) => (
+                          {["text", "textEditor", "image", "heading", "btn", "cardRow", "infoBox", "noteSection"].map((t) => (
                             <button
                               key={t}
                               className="w-6 h-6 flex items-center justify-center text-[10px] font-bold uppercase bg-white border border-gray-200 rounded-full hover:bg-blue-50 hover:border-blue-300 transition text-gray-500"
@@ -4230,6 +4341,12 @@ export default function BlockRenderer({ block, blocks, setBlocks, readOnly = fal
               display: 'table', // Override flex/grid
               borderCollapse: 'separate'
             }}
+            data-columns={columns}
+            data-gap={gap}
+            data-card-style={JSON.stringify(block.cardStyle || {})}
+            data-card-image-style={JSON.stringify(block.cardImageStyle || {})}
+            data-card-title-style={JSON.stringify(block.cardTitleStyle || {})}
+            data-card-desc-style={JSON.stringify(block.cardDescStyle || {})}
           >
             <tbody>
               {cardRows.map((rowCards, rIdx) => (
@@ -4359,6 +4476,7 @@ export default function BlockRenderer({ block, blocks, setBlocks, readOnly = fal
       return (
         <div
           data-columns={columns}
+          data-gap={gap}
           data-card-style={JSON.stringify(block.cardStyle || {})}
           data-card-image-style={JSON.stringify(block.cardImageStyle || {})}
           data-card-title-style={JSON.stringify(block.cardTitleStyle || {})}
@@ -4537,7 +4655,7 @@ export default function BlockRenderer({ block, blocks, setBlocks, readOnly = fal
                         whiteSpace: "pre-wrap",
                         overflowWrap: "break-word",
                         marginBottom: "4px",
-                        textAlign: block.cardStyle?.textAlign || "left"
+                        textAlign: block.cardTitleStyle?.textAlign || block.cardStyle?.textAlign || "left"
                       }}
                     >
                       {card.title}
@@ -4550,7 +4668,7 @@ export default function BlockRenderer({ block, blocks, setBlocks, readOnly = fal
                         color: block.cardDescStyle?.textColor || "#666",
                         whiteSpace: "pre-wrap",
                         overflowWrap: "break-word",
-                        textAlign: block.cardStyle?.textAlign || "left"
+                        textAlign: block.cardDescStyle?.textAlign || block.cardStyle?.textAlign || "left"
                       }}
                     >
                       {card.description}
@@ -4564,7 +4682,7 @@ export default function BlockRenderer({ block, blocks, setBlocks, readOnly = fal
                       style={{
                         fontSize: block.cardTitleStyle?.fontSize ? `${block.cardTitleStyle.fontSize}px` : "16px",
                         color: block.cardTitleStyle?.textColor || "#000000",
-                        textAlign: block.cardStyle?.textAlign || "left",
+                        textAlign: block.cardTitleStyle?.textAlign || block.cardStyle?.textAlign || "left",
                       }}
                       value={card.title}
                       onInput={(e) => {
@@ -4583,7 +4701,7 @@ export default function BlockRenderer({ block, blocks, setBlocks, readOnly = fal
                       style={{
                         fontSize: block.cardDescStyle?.fontSize ? `${block.cardDescStyle.fontSize}px` : "14px",
                         color: block.cardDescStyle?.textColor || "#666",
-                        textAlign: block.cardStyle?.textAlign || "left",
+                        textAlign: block.cardDescStyle?.textAlign || block.cardStyle?.textAlign || "left",
                       }}
                       value={card.description}
                       onInput={(e) => {

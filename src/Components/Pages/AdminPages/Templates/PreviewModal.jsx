@@ -3,7 +3,7 @@ import BlockRenderer from "./BlockRenderer";
 import { useCommunicationTemplate } from "../contexts/CommunicationContext";
 import { useNavigate, useSearchParams } from "react-router-dom";  // ✅ to read URL params
 
-export default function PreviewModal({ mode_of_communication, title, category, tags, sender, message, blocks, onClose, subject, editMode, templateId }) {
+export default function PreviewModal({ mode_of_communication, title, category, tags, sender, message, blocks, onClose, subject, editMode, templateId, initialGlobalStyle }) {
   const { createCommunicationTemplate, updateCommunicationTemplate } = useCommunicationTemplate();
   const navigate = useNavigate();
 
@@ -11,6 +11,14 @@ export default function PreviewModal({ mode_of_communication, title, category, t
     subject: subject || "",
     blocks: blocks.map(b => ({ ...b })) // clone to avoid mutating props
   });
+
+  const [globalStyle, setGlobalStyle] = useState(initialGlobalStyle || {
+    backgroundImage: "",
+    maxWidth: 600
+  });
+
+  // Load existing global styles from blocks if they exist (parsing content might happen in parent)
+  // But PreviewModal is where we edit them for final preview.
 
   const previewRef = useRef(null);
 
@@ -91,6 +99,13 @@ export default function PreviewModal({ mode_of_communication, title, category, t
           return url;
         };
 
+        if (block === "global") {
+          if (globalStyle.backgroundImage?.startsWith("blob")) {
+            await checkAndReplace(globalStyle.backgroundImage, "global_bg");
+          }
+          return;
+        }
+
         if (block.type === "image" || block.type === "card") {
           block.url = await checkAndReplace(block.url, "image");
         }
@@ -140,6 +155,7 @@ export default function PreviewModal({ mode_of_communication, title, category, t
       };
 
       // extract all images
+      await collectImages("global");
       for (const block of finalBlocks) {
         await collectImages(block);
       }
@@ -156,7 +172,14 @@ export default function PreviewModal({ mode_of_communication, title, category, t
       // JSON content
       const contentJSON = JSON.stringify({
         subject: previewData.subject,
-        htmlContent
+        htmlContent,
+        globalStyle: {
+          ...globalStyle,
+          backgroundImage: globalStyle.backgroundImage.startsWith("blob")
+            ? imageMap.get(globalStyle.backgroundImage)
+            : globalStyle.backgroundImage
+        },
+        blocks: finalBlocks
       });
 
       // append form fields
@@ -209,6 +232,13 @@ export default function PreviewModal({ mode_of_communication, title, category, t
           return url;
         };
 
+        if (block === "global") {
+          if (globalStyle.backgroundImage?.startsWith("blob")) {
+            await checkAndReplace(globalStyle.backgroundImage, "global_bg");
+          }
+          return;
+        }
+
         if (block.type === "image" || block.type === "card") {
           block.url = await checkAndReplace(block.url, "image");
         }
@@ -255,6 +285,7 @@ export default function PreviewModal({ mode_of_communication, title, category, t
       };
 
       // extract all images
+      await collectImages("global");
       for (const block of finalBlocks) {
         await collectImages(block);
       }
@@ -270,7 +301,14 @@ export default function PreviewModal({ mode_of_communication, title, category, t
       // JSON content
       const contentJSON = JSON.stringify({
         subject: previewData.subject,
-        htmlContent
+        htmlContent,
+        globalStyle: {
+          ...globalStyle,
+          backgroundImage: globalStyle.backgroundImage.startsWith("blob")
+            ? imageMap.get(globalStyle.backgroundImage)
+            : globalStyle.backgroundImage
+        },
+        blocks: finalBlocks
       });
 
 
@@ -299,28 +337,73 @@ export default function PreviewModal({ mode_of_communication, title, category, t
   };
 
 
+  const handleGlobalBgChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setGlobalStyle(prev => ({ ...prev, backgroundImage: url }));
+    }
+  };
+
   return (
 
     <div className="pt-10">
-      <div className="flex justify-end ">
+      <div className="flex flex-col md:flex-row justify-between items-center bg-gray-50 p-4 rounded-xl mb-6 gap-4">
+        <div className="flex flex-wrap gap-4 items-center">
+          <div className="flex flex-col">
+            <label className="text-xs font-bold text-gray-500 uppercase mb-1">Max Width (px)</label>
+            <input
+              type="number"
+              className="border border-gray-300 rounded-lg px-3 py-1.5 w-24 text-sm"
+              value={globalStyle.maxWidth}
+              onChange={(e) => setGlobalStyle(p => ({ ...p, maxWidth: parseInt(e.target.value) || 600 }))}
+            />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-xs font-bold text-gray-500 uppercase mb-1">Background Image</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleGlobalBgChange}
+                className="text-xs text-gray-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
+              {globalStyle.backgroundImage && (
+                <button
+                  onClick={() => setGlobalStyle(p => ({ ...p, backgroundImage: "" }))}
+                  className="text-xs text-red-500 hover:text-red-700 font-medium"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
         <button
-          className="mt-5 bg-blue-600 w-full max-w-fit text-white px-4 py-2 rounded-lg flex justify-end"
+          className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition"
           onClick={editMode ? handleUpdatePreview : handleSavePreview}
         >
           {editMode ? "Update Template" : "Save Template"}
         </button>
-
       </div>
+
       {subject && (
         <h1 className="text-2xl font-semibold mb-6">{subject}</h1>
       )}
       <div
-        style={{ maxWidth: "600px", margin: "0 auto" }}
+        style={{
+          maxWidth: `${globalStyle.maxWidth}px`,
+          margin: "0 auto",
+          backgroundImage: globalStyle.backgroundImage ? `url(${globalStyle.backgroundImage})` : "none",
+          backgroundSize: "cover",
+          backgroundPosition: "center"
+        }}
         ref={previewRef}
-        className="bg-white w-full max-w-[600px] m-auto overflow-auto space-y-3 "
+        className="bg-white w-full m-auto overflow-auto space-y-3 shadow-inner rounded-md"
       >
 
-        <div style={{ maxWidth: "600px", margin: "0 auto", backgroundColor: "#fff" }}>
+        <div style={{ maxWidth: `${globalStyle.maxWidth}px`, margin: "0 auto", backgroundColor: globalStyle.backgroundImage ? "transparent" : "#fff" }}>
           {blocks.map((block, i) => (
             <BlockRenderer
               key={block.id || i}

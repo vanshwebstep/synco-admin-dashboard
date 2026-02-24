@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { FiSearch } from "react-icons/fi";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Select from "react-select";
-import { Check, Filter } from "lucide-react";
+import { Check, Filter, Loader2 } from "lucide-react";
 import { useBookFreeTrial } from '../../contexts/BookAFreeTrialContext';
 import { useNavigate } from "react-router-dom";
 import Loader from '../../contexts/Loader';
@@ -24,6 +24,8 @@ const trialLists = () => {
     const [selectedStudents, setSelectedStudents] = useState([]);
     const [isFilterApplied, setIsFilterApplied] = useState(false);
     const [showFilter, setShowFilter] = useState(false);
+    const [textloading, setTextLoading] = useState(null);
+    const token = localStorage.getItem("adminToken");
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
     const toggleSelect = (studentId) => {
@@ -91,7 +93,45 @@ const trialLists = () => {
             setAgentsLoading(false);
         }
     }, []);
+    const sendText = async (id) => {
+        setTextLoading(true);
 
+        const headers = {
+            "Content-Type": "application/json",
+        };
+        // console.log('bookingIds', bookingIds)
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/book/free-trials/send-text`, {
+                method: "POST",
+                headers,
+                body: JSON.stringify({
+                    bookingId: id, // make sure bookingIds is an array like [96, 97]
+                }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || "Failed to send text");
+            }
+
+            await showSuccess("Success!", result.message || "Text has been sent successfully.");
+
+            return result;
+
+        } catch (error) {
+            console.error("Error sending Text:", error);
+            await showError("Error", error.message || "Something went wrong while sending text.");
+            throw error;
+        } finally {
+            // navigate(`/weekly-classes/all-members/list`);
+            await fetchBookFreeTrials();
+            setTextLoading(false);
+        }
+    };
 
 
     console.log('selectedStudents', selectedStudents)
@@ -902,9 +942,24 @@ const trialLists = () => {
                                     Send Email
                                 </button>
 
-                                <button className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-3 py-2 rounded-xl  text-[16px]">
+                                <button
+                                    onClick={() => {
+                                        if (!selectedStudents || selectedStudents.length === 0) {
+                                            showWarning("No students selected", "Please select at least one student before sending an email.");
+                                            return;
+                                        }
+
+                                        sendText(selectedStudents);
+                                    }}
+                                    className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-3 py-2 rounded-xl  text-[16px]">
                                     <img src='/images/icons/sendText.png' className='w-4 h-4 sm:w-5 sm:h-5' alt="" />
-                                    Send Text
+                                    {textloading ? (
+                                        <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
+                                    ) : (
+                                        <>
+                                            Send Text
+                                        </>
+                                    )}
                                 </button>
                                 <button onClick={exportFreeTrials} className="flex gap-1 items-center justify-center bg-[#237FEA] text-white px-3 py-2 rounded-xl  text-[16px]">
                                     <img src='/images/icons/download.png' className='w-4 h-4 sm:w-5 sm:h-5' alt="" />

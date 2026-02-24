@@ -69,12 +69,48 @@ const General = () => {
                     },
                 ],
     });
+    const [textloading, setTextLoading] = useState(null);
 
     const token = localStorage.getItem("adminToken");
     const { adminInfo } = useNotification();
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+    const sendText = async () => {
+        setTextLoading(true);
 
+        const headers = {
+            "Content-Type": "application/json",
+        };
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/one-to-one/booking/send-text`, {
+                method: "POST",
+                headers,
+                body: JSON.stringify({
+                    bookingId: [id], // make sure bookingIds is an array like [96, 97]
+                }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || "Failed to send text");
+            }
+
+            await showSuccess("Success!", result.message || "Text has been sent successfully.");
+
+            return result;
+
+        } catch (error) {
+            console.error("Error sending Text:", error);
+            await showError("Error", error.message || "Something went wrong while sending text.");
+            throw error;
+        } finally {
+            setTextLoading(false);
+        }
+    };
     const formatTimeAgo = (timestamp) => {
         const now = new Date();
         const past = new Date(timestamp);
@@ -675,8 +711,21 @@ const General = () => {
                                 }} className="flex-1 flex items-center gap-2 justify-center border border-[#717073] text-[#717073] rounded-xl font-semibold py-3 text-[18px] text-[18px]  hover:bg-gray-50 transition">
                                     <Mail className="w-4 h-4 mr-1" /> Send Email
                                 </button>
-                                <button className="flex-1 flex items-center gap-2 justify-center border border-[#717073] rounded-xl font-semibold py-3 text-[18px] text-[#717073]  hover:bg-gray-50 transition">
-                                    <MessageSquare className="w-4 h-4 mr-1" /> Send Text
+                                <button onClick={() => {
+                                    if (bookingId) {
+                                        sendText();
+                                    } else {
+                                        showWarning("No Booking ID", "No booking ID found to send email.");
+
+                                    }
+                                }} className="flex-1 flex items-center gap-2 justify-center border border-[#717073] rounded-xl font-semibold py-3 text-[18px] text-[#717073]  hover:bg-gray-50 transition">
+                                    <MessageSquare className="w-4 h-4 mr-1" />   {textloading ? (
+                                        <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
+                                    ) : (
+                                        <>
+                                            Send Text
+                                        </>
+                                    )}
                                 </button>
                             </div>
 

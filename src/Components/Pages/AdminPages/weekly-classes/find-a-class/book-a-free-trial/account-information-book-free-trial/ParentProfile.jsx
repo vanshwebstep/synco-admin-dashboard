@@ -241,7 +241,7 @@ const ParentProfile = ({ ParentProfile }) => {
             await showError("Error", error.message || "Something went wrong while sending text.");
             throw error;
         } finally {
-            navigate(`/weekly-classes/all-members/list`);
+            // navigate(`/weekly-classes/all-members/list`);
             await serviceHistoryFetchById(id);
             setTextLoading(false);
         }
@@ -846,7 +846,8 @@ const ParentProfile = ({ ParentProfile }) => {
                                     </button>
 
                                     <button disabled={textloading} onClick={() => sendText([id])} className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
-                                        <img src="/images/icons/sendText.png" alt="" />  {textloading ? (
+                                        <img src="/images/icons/sendText.png" alt="" /> 
+                                         {textloading ? (
                                             <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
                                         ) : (
                                             <>

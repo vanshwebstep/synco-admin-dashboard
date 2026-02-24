@@ -124,6 +124,7 @@ export default function TemplateBuilder({
 
   const sidebarBlocks = [
     { id: "text", label: "Text field", icon: <FaFont /> },
+    { id: "textEditor", label: "Text Editor", icon: <FaFont /> },
     { id: "heading", label: "Heading", icon: <FaHeading /> },
     { id: "image", label: "Image", icon: <FaRegImage /> },
     { id: "btn", label: "Button", icon: <FaMousePointer /> },
@@ -182,6 +183,11 @@ export default function TemplateBuilder({
       newBlock.style.fontSize = 24;
       newBlock.style.fontWeight = "bold";
       newBlock.placeholder = "Enter Heading";
+    } else if (type === "textEditor") {
+      newBlock.content = "";
+      newBlock.placeholder = "Enter rich text here...";
+      newBlock.style.padding = 10;
+      newBlock.style.marginBottom = 20;
     } else if (type === "customSection") {
       newBlock.style.padding = 40;
       newBlock.style.textAlign = "center";
