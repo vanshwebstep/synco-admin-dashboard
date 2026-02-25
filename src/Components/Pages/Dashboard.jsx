@@ -277,7 +277,7 @@ const goToNextMonth = () => {
 
               {/* Scorecard Header */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center my-6 gap-3">
-                <h2 className="text-[22px] sm:text-[28px] font-semibold">Weekly Classes Scorecards</h2>
+                <h2 className="text-[22px] sm:text-[28px] font-bold">Weekly Classes Scorecards</h2>
 
                 <div className="flex gap-2">
                   {!reorderMode && (
@@ -353,12 +353,12 @@ const goToNextMonth = () => {
                               >
                                 <div className="flex mb-5 justify-between flex-wrap gap-3">
                                   <div className="flex items-center space-x-3">
-                                    <div className={`text-3xl p-3 rounded-full ${metric.bg}`}>
+                                    <div className={`text-3xl p-3 poppins rounded-full ${metric.bg}`}>
                                       {metric.icon}
                                     </div>
                                     <div>
-                                      <h3 className="text-[16px] text-gray-700">{metric.title}</h3>
-                                      <p className="text-[24px] sm:text-[28px] font-semibold text-gray-900">
+                                      <h3 className="text-[16px] poppins text-gray-700">{metric.title}</h3>
+                                      <p className="text-[24px] poppins sm:text-[28px] font-semibold text-gray-900">
                                         {typeof metric.value === "number" ? (
                                           <CountUp
                                             start={0}
@@ -392,7 +392,7 @@ const goToNextMonth = () => {
                                 {/* Conversion Section (Last Month / This Week) */}
                                 <div className="flex flex-wrap justify-start gap-4 items-end">
                                   <div className="text-xs text-gray-400 mt-2 block">
-                                    <span className="font-semibold text-black flex items-center gap-2">
+                                    <span className="font-semibold poppins text-black flex items-center gap-2">
                                       <img
                                         src="/DashboardIcons/orangedot.png"
                                         alt=""
@@ -422,7 +422,7 @@ const goToNextMonth = () => {
                                   </div>
 
                                   <div className="text-xs text-gray-400 block">
-                                    <span className="font-semibold text-black flex items-center gap-2">
+                                    <span className="font-semibold poppins text-black flex items-center gap-2">
                                       <img
                                         src="/DashboardIcons/greendot.png"
                                         alt=""
@@ -475,12 +475,12 @@ const goToNextMonth = () => {
                   <h3 className="font-semibold text-[20px] sm:text-[24px]">Filter by date</h3>
                   <button onClick={applyFilter} className="flex gap-2 items-center bg-blue-500 text-white px-3 py-2 rounded-lg text-sm text-[16px]">
                     <img src='/DashboardIcons/filtericon.png' className='w-4 h-4 sm:w-5 sm:h-5' alt="" />
-                    Apply fiter
+                    Apply Filter
                   </button>
                 </div>
 
                 <div className="gap-2 text-sm bg-gray-100 p-4 my-6 rounded-xl">
-                  <label className="font-semibold text-[16px] sm:text-[18px] block mb-3">Choose type</label>
+                  <label className="font-semibold text-[16px] Gilroy sm:text-[18px] block mb-3">Choose type</label>
                   <div className="flex flex-wrap gap-3">
 
                     {filterOptions.map(({ label, key }) => (
@@ -494,16 +494,16 @@ const goToNextMonth = () => {
                         <span className="w-5 h-5 inline-flex text-gray-500 items-center justify-center border border-[#717073] rounded-sm bg-transparent peer-checked:text-white peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-colors">
                           <Check className="w-4 h-4 transition-all" strokeWidth={3} />
                         </span>
-                        <span>{label}</span>
+                        <span className="poppins">{label}</span>
                       </label>
                     ))}
                   </div>
                 </div>
 
                 {/* Calendar */}
-                <div className="rounded p-4 mt-6 text-center text-base w-full max-w-md mx-auto">
+                <div className="rounded manrope p-4 mt-6 text-center text-base w-full max-w-md mx-auto">
                   {/* Header */}
-                  <div className="flex justify-center gap-5 items-center mb-3">
+                  <div className="flex manrope justify-center gap-5 items-center mb-3">
                     <button
                       onClick={goToPreviousMonth}
                       className="w-8 h-8 rounded-full bg-white text-black hover:bg-black hover:text-white border border-black flex items-center justify-center"
@@ -523,9 +523,9 @@ const goToNextMonth = () => {
                   </div>
 
                   {/* Day Labels */}
-                  <div className="grid grid-cols-7 text-xs gap-1 text-[18px] text-gray-500 mb-1">
+                  <div className="grid manrope grid-cols-7 text-xs gap-1 text-[18px] text-gray-500 mb-1">
                     {["M", "T", "W", "T", "F", "S", "S"].map((day, indx) => (
-                      <div key={indx} className="font-medium text-center">
+                      <div key={indx} className="font-medium manrope text-center">
                         {day}
                       </div>
                     ))}
@@ -550,22 +550,22 @@ const goToNextMonth = () => {
                             const isExcluded = !date; // replace with your own excluded logic
 
                             let className =
-                              " w-full h-12 aspect-square flex items-center justify-center transition-all duration-200 ";
+                              " w-full h-12 manrope aspect-square flex items-center justify-center transition-all duration-200 ";
                             let innerDiv = null;
 
                             if (!date) {
                               className += "";
                             } else if (isExcluded) {
                               className +=
-                                "bg-gray-300 text-white opacity-60 cursor-not-allowed";
+                                "bg-gray-300 manrope text-white opacity-60 cursor-not-allowed";
                             } else if (isStartOrEnd) {
                               // Outer pill connector background
-                              className += ` bg-sky-100 ${isStart ? "rounded-l-full" : ""} ${isEnd ? "rounded-r-full" : ""
+                              className += `manrope bg-sky-100 ${isStart ? "rounded-l-full" : ""} ${isEnd ? "rounded-r-full" : ""
                                 }`;
                               // Inner circle but with left/right rounding
                               innerDiv = (
                                 <div
-                                  className={`bg-blue-700 rounded-full text-white w-12 h-12 flex items-center justify-center font-bold
+                                  className={` manrope bg-blue-700 rounded-full text-white w-12 h-12 flex items-center justify-center font-bold
                          
                          `}
                                 >
@@ -613,15 +613,15 @@ const goToNextMonth = () => {
                     { label: "Weekly meeting", date: "24 Nov 2022" },
                     { label: "Add new services", date: "24 Nov 2022" },
                   ].map((task, i) => (
-                    <li key={i} className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-[16px] sm:text-[18px] font-semibold border-t py-3 sm:py-4">
+                    <li key={i} className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-[16px] sm:text-[18px] font-semibold border-t border-[#E2E1E5] py-3 sm:py-4">
                       <div className="block flex-col sm:flex-row items-start sm:items-center gap-2">
-                        <p className="flex items-center gap-2">
+                        <p className="flex text-[18px] font-semibold mb-1 text-[#282829] items-center gap-2">
                           {task.label}
                           {task.alert && (
                             <div className="w-4 h-4 bg-red-500 clip-hexagon flex items-center justify-center text-white font-bold text-xs shrink-0">!</div>
                           )}
                         </p>
-                        <p className="text-[14px] text-gray-400">{task.date}</p>
+                        <p className="text-[14px] text-[#717073]">{task.date}</p>
                       </div>
                       <span className="text-[14px] bg-gray-100 mt-2 sm:mt-0 p-2 rounded-lg font-semibold">6:15 PM</span>
                     </li>
@@ -678,7 +678,7 @@ const goToNextMonth = () => {
 
 
                 <div className="gap-2 text-sm bg-gray-100 p-4 my-6 rounded">
-                  <label className="font-semibold text-[18px] block mb-3">Choose type</label>
+                  <label className="font-semibold text-[18px] Gilroy block mb-3">Choose type</label>
                   <div className="flex flex-wrap gap-3">
                     {["This Year", "This Month", "This Week", "Last Year", "Last Month", "Last Week"].map((label, i) => (
                       <label

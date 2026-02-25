@@ -111,7 +111,7 @@ const goToNextMonth = () => {
 
             {/* Scorecard Header */}
             <div className="flex justify-between items-center my-6 flex-wrap gap-2">
-              <h2 className="text-[28px] font-semibold Gilroy">Weekly Classes Scorecards</h2>
+              <h2 className="text-[28px] font-bold Gilroy">Weekly Classes Scorecards</h2>
               <button className="text-sm p-2 rounded-lg text-white font-semibold  bg-blue">
                 Reorder Your Widgets
               </button>
@@ -168,13 +168,13 @@ const goToNextMonth = () => {
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <h3 className="font-semibold text-[24px]">Filter by date</h3>
                 <button className="flex gap-2 items-center bg-blue-500 text-white p-2 rounded-lg text-[16px]">
-                  <img src='DashboardIcons/filtericon.png' className='w-5 h-5' alt="" />  Apply filter
+                  <img src='DashboardIcons/filtericon.png' className='w-5 h-5' alt="" />  Apply Filter
                 </button>
               </div>
 
 
               <div className="gap-2 text-sm bg-gray-100 p-4 my-6 rounded">
-                <label className="font-semibold text-[18px] block mb-3">Choose type</label>
+                <label className="font-semibold text-[18px] Gilroy block mb-3">Choose type</label>
                 <div className="flex flex-wrap gap-3">
                   {["This Year", "This Month", "This Week", "Last Year", "Last Month", "Last Week"].map((label, i) => (
                     <label

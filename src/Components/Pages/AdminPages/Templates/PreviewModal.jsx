@@ -397,6 +397,7 @@ export default function PreviewModal({ mode_of_communication, title, category, t
           margin: "0 auto",
           backgroundImage: globalStyle.backgroundImage ? `url(${globalStyle.backgroundImage})` : "none",
           backgroundSize: "cover",
+          backgroundColor:"#fff",
           backgroundPosition: "center"
         }}
         ref={previewRef}

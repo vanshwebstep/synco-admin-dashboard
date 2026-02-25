@@ -2066,9 +2066,9 @@ const List = () => {
                                         </p>
 
                                     </div>
-                                    {singleClassSchedulesOnly?.venue?.starterPack &&(
-                                        <p className="text-[16px] py-3 ">
-                                            Starter Pack:<b> {singleClassSchedulesOnly?.starterPack?.price}</b>
+                                    {singleClassSchedulesOnly?.venue?.starterPack && (
+                                        <p className="text-[18px] py-3 px-6 font-semibold ">
+                                            Starter Pack:<b> {singleClassSchedulesOnly?.starterPack[0]?.price}</b>
                                         </p>
                                     )}
                                     <div className="space-y-2 px-6 pb-6">

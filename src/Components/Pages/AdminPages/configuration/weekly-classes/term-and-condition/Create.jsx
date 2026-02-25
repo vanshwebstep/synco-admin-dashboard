@@ -678,7 +678,7 @@ const Create = () => {
                     sessionPlanGroupId: 1, // static value
                     startDate: term.startDate,
                     endDate: term.endDate,
-                    totalSessions: Number(term.sessions),
+                    totalSessions: term.sessionsMap.length,
                     exclusionDates: term.exclusions.filter((ex) => ex.trim() !== ""),
                     sessionsMap: sessionMappings.map((session) => ({
                         sessionDate: session.sessionDate,
