@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Filter, ListRestartIcon } from "lucide-react";
 import Loader from '../../contexts/Loader';
 import { FiSearch } from "react-icons/fi";
@@ -31,6 +31,10 @@ const List = () => {
   useEffect(() => {
     fetchFindClasses()
   }, [fetchFindClasses]);
+   const location = useLocation();
+  const parentId = location.state?.parentId;
+  console.log('parentId',parentId)
+
   const iconContainerRef = useRef(null);
   const [activeParkingVenueId, setActiveParkingVenueId] = useState(null);
   const [notes, setNotes] = useState(null);
@@ -371,7 +375,7 @@ const List = () => {
 
   const handleBookFreeTrial = (classId) => {
     navigate('/weekly-classes/find-a-class/book-a-free-trial', {
-      state: { classId },
+      state: { classId ,parentId },
     });
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'auto' });

@@ -395,20 +395,42 @@ export const SessionPlanContextProvider = ({ children }) => {
 
 
   // Delete discount
-  const deleteSessionGroup = useCallback(async (id) => {
-    if (!token) return;
-    try {
-      await fetch(`${API_BASE_URL}/api/admin/session-plan-group/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      await fetchSessionGroup();
-    } catch (err) {
-      console.error("Failed to delete discount:", err);
-    }
-  }, [token, fetchSessionGroup]);
-
-
+ const deleteSessionGroup = useCallback(async (id) => {
+   if (!token) {
+     showError("Authentication token missing.");
+     return;
+   }
+ setLoading(true);
+   try {
+ 
+     const response = await fetch(
+       `${API_BASE_URL}/api/admin/session-plan-group/${id}`,
+       {
+         method: "DELETE",
+         headers: {
+           Authorization: `Bearer ${token}`,
+         },
+       }
+     );
+ 
+     const data = await response.json();
+ 
+     if (!response.ok) {
+       throw new Error(data?.message || "Failed to delete session group.");
+     }
+ 
+     // Refresh list
+     showSuccess(data?.message || "Session group deleted successfully.")
+     await fetchSessionGroup();
+ 
+   } catch (err) {
+     console.error("Failed to delete session group:", err);
+     showError(err.message || "Something went wrong.");
+   }finally{
+    setLoading(false)
+   }
+ }, [token, fetchSessionGroup]);
+ 
   //duplicate  
   const duplicateSession = useCallback(async (id) => {
     if (!token) return;
@@ -427,21 +449,42 @@ export const SessionPlanContextProvider = ({ children }) => {
 
 
 
-  const deleteSessionlevel = useCallback(async (id, level) => {
-    if (!token) return;
-    try {
-      await fetch(`${API_BASE_URL}/api/admin/session-plan-group/${id}/level/${level}`, {
+ const deleteSessionlevel = useCallback(async (id, level) => {
+  if (!token) {
+    showError("Authentication token missing.");
+    return;
+  }
+
+  try {
+    setLoading(true);
+  
+    const response = await fetch(
+      `${API_BASE_URL}/api/admin/session-plan-group/${id}/level/${level}`,
+      {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-      });
-      await fetchSessionGroup();
-    } catch (err) {
-      console.error("Failed to delete discount:", err);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data?.message || "Failed to delete session level.");
     }
-  }, [token, fetchSessionGroup]);
 
+    showSuccess(data?.message || "Session level deleted successfully.");
 
+    await fetchSessionGroup();
+
+  } catch (err) {
+    console.error("Delete error:", err);
+    showError(err.message || "Something went wrong.");
+  } finally {
+    setLoading(false); // ✅ Always stop loading
+  }
+}, [token, fetchSessionGroup]);
   return (
     <SessionPlanContext.Provider
       value={{

@@ -94,7 +94,7 @@ const List = () => {
     const img3Ref = useRef(null); // add a ref for the image
     const img1Ref = useRef(null); // add a ref for the image
     const img2Ref = useRef(null); // add a ref for the image
-    console.log('comesFrom', comesFrom)
+    // console.log('comesFrom', comesFrom)
     const [showPopup, setShowPopup] = useState(false);
     const [directDebitData, setDirectDebitData] = useState([]);
     const [payment, setPayment] = useState({
@@ -149,6 +149,7 @@ const List = () => {
             // Add other fields if needed
         },
     ]);
+    console.log('students',students)
     // console.log('singleClassSchedulesOnly', singleClassSchedulesOnly)
     const [emergency, setEmergency] = useState({
         sameAsAbove: false,
@@ -181,7 +182,7 @@ const List = () => {
     const paymentPlanOptions = numberOfStudents
         ? allPaymentPlans.filter((plan) => plan.all?.students === Number(numberOfStudents))
         : allPaymentPlans;
-    console.log('singleClassSchedulesOnly', singleClassSchedulesOnly)
+    // console.log('singleClassSchedulesOnly', singleClassSchedulesOnly)
 
 
     const classesWithCapacity = Array.isArray(singleClassSchedulesOnly?.venueClasses) ? singleClassSchedulesOnly?.venueClasses?.filter((cls) => {
@@ -262,7 +263,7 @@ const List = () => {
                 // console.log('stp2')
                 setStudents(TrialData.students);
                 setNumberOfStudents(TrialData?.totalStudents);
-                console.log('comesfromtrialdaata', TrialData)
+                // console.log('comesfromtrialdaata', TrialData)
             }
             // console.log('stp3')
             if (Array.isArray(TrialData.parents) && TrialData.parents.length > 0) {
@@ -369,8 +370,8 @@ const List = () => {
             !payment.account_number ||
             !payment.branch_code
         );
-    console.log('isCardInvalid', isCardInvalid)
-    console.log('isBankInvalid', isBankInvalid)
+    // console.log('isCardInvalid', isCardInvalid)
+    // console.log('isBankInvalid', isBankInvalid)
     const formatLocalDate = (date) => {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, "0"); // months are 0-indexed
@@ -528,7 +529,7 @@ const List = () => {
 
 
 
-    console.log('membershipPlan', membershipPlan)
+    // console.log('membershipPlan', membershipPlan)
 
     const handleAddParent = () => {
         setParents((prev) => [
@@ -651,8 +652,12 @@ const List = () => {
 
 
         const missingClass = students.some(
-            (s, i) => i !== 0 && !s.selectedClassData && !s?.classSchedule?.id
+            (s, i) => {
+                if (i === 0 || comesFrom) return false;
+                return !s.selectedClassData && !s?.classSchedule?.id;
+            }
         );
+        console.log('students',students)
 
         console.log('missingClass', students)
 
@@ -938,7 +943,7 @@ const List = () => {
         ? keyInfoData.find(item => item.serviceType === 'membership')?.keyInformationRaw
         : keyInfoData?.keyInformationRaw;
 
-    console.log('membershipKeyInfo', membershipKeyInfo)
+    // console.log('membershipKeyInfo', membershipKeyInfo)
 
     const keyInfoArray = htmlToHtmlArray(membershipKeyInfo);
 
@@ -948,7 +953,7 @@ const List = () => {
         label: item,
     }));
 
-    console.log("keyInfoOptions", membershipKeyInfo)
+    // console.log("keyInfoOptions", membershipKeyInfo)
 
     const genderOptions = [
         { value: "male", label: "Male" },
@@ -1309,7 +1314,7 @@ const List = () => {
 
                                                     const formattedDate = formatLocalDate(date);
                                                     const isAvailable = sessionDatesSet.has(formattedDate); // check if this date is valid session
-                                                    console.log('isAvailable', isAvailable)
+                                                    // console.log('isAvailable', isAvailable)
                                                     const isSelected = isSameDate(date, selectedDate);
                                                     const today = new Date();
                                                     today.setHours(0, 0, 0, 0);

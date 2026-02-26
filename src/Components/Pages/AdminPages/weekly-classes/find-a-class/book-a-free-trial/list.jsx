@@ -40,7 +40,8 @@ const List = () => {
     const [result, setResult] = useState('');
     const navigate = useNavigate();
     const location = useLocation();
-    const { classId, from_lead, leadId } = location.state || {};
+    const { classId,parentId, from_lead, leadId } = location.state || {};
+    console.log('parentId-',parentId)
     const popup1Ref = useRef(null);
     const popup2Ref = useRef(null);
     const popup3Ref = useRef(null);

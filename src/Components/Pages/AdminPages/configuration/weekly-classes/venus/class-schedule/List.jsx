@@ -273,16 +273,24 @@ const List = () => {
         setOpenForm(false);
     };
 
-    const handleEdit = (id) => {
-        const payload = {
-            ...formData,
-            venueId: venueId
-        };
-        updateClassSchedules(id, payload);
-        setFormData({})
-
-        setOpenForm(false);
+  const handleEdit = async (id) => {
+  try {
+    const payload = {
+      ...formData,
+      venueId: venueId,
     };
+
+    await updateClassSchedules(id, payload);
+
+    // ✅ Only reset if update succeeds
+    setFormData({});
+    setOpenForm(false);
+
+  } catch (error) {
+    // ❌ If update fails, modal stays open
+    console.error("Edit failed:", error);
+  }
+};
 
 
     const isAllSelected = venues.length > 0 && selectedUserIds.length === venues.length;

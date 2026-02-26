@@ -37,8 +37,9 @@ const AccountInfoBookMembership = () => {
     }
   }, [location.state]);
 
-
-  useEffect(() => {
+  console.log('serviceHistory', serviceHistory);
+const selectedParentId = serviceHistory?.parents?.[0]?.id ?? null; 
+ useEffect(() => {
     const fetchData = async () => {
       if (itemId) {
         await serviceHistoryMembership(itemId);
@@ -46,7 +47,7 @@ const AccountInfoBookMembership = () => {
     };
     fetchData();
   }, [itemId, serviceHistoryMembership]);
-  
+
   const [activeTab, setActiveTab] = useState("Service History");
   if (loading) {
     return (
@@ -78,7 +79,7 @@ const AccountInfoBookMembership = () => {
                 className="w-5 h-5 md:w-6 md:h-6"
               />
             </h2>
-            <div className="flex gap-0    p-1 rounded-xl flex-wrap bg-white">
+            <div className="flex gap-0  p-1 rounded-xl flex-wrap bg-white">
               {tabs.map((tab) => (
                 <button
                   key={tab}
@@ -132,7 +133,9 @@ const AccountInfoBookMembership = () => {
               </div>
               <button
                 onClick={() => {
-                  navigate('/weekly-classes/find-a-class');
+                  navigate('/weekly-classes/find-a-class', {
+                    state: { parentId: selectedParentId }
+                  });
                 }}
                 className="bg-[#237FEA] flex items-center gap-2 text-white px-4 py-2 md:py-[10px] rounded-xl hover:bg-blue-700 text-[15px]  font-semibold"
               >

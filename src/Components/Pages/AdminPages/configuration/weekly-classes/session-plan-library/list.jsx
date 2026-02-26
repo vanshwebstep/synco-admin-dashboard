@@ -163,7 +163,6 @@ const List = () => {
 
     if (result.isConfirmed) {
       deleteSessionGroup(weekId);
-      showSuccess('Deleted!', 'The group has been deleted.');
     }
   };
 
@@ -199,7 +198,6 @@ const List = () => {
 
     if (result.isConfirmed) {
       deleteSessionlevel(id, level);
-      showSuccess('Deleted!', 'The group has been deleted.');
     }
   };
   const handleEditGroupNameOnly = (weekId, currentTitle) => {

@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback } from "react";
 import { useNavigate } from 'react-router-dom';
-import { showSuccess } from "../../../../utils/swalHelper";
+import { showSuccess,showError,showConfirm } from "../../../../utils/swalHelper";
 
 const ClassScheduleContext = createContext();
 
@@ -184,42 +184,75 @@ export const ClassScheduleProvider = ({ children }) => {
   };
 
   // UPDATE VENUE
-  const updateClassSchedules = async (classScheduleId, updatedClassScheduleData) => {
-    setLoading(true);
+const updateClassSchedules = async (classScheduleId, updatedClassScheduleData) => {
+  setLoading(true);
 
-    const myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
-    if (token) {
-      myHeaders.append("Authorization", `Bearer ${token}`);
-    }
+  const myHeaders = new Headers();
+  myHeaders.append("Content-Type", "application/json");
 
-    const requestOptions = {
-      method: "PUT",
-      headers: myHeaders,
-      body: JSON.stringify(updatedClassScheduleData),
-      redirect: "follow",
-    };
+  if (token) {
+    myHeaders.append("Authorization", `Bearer ${token}`);
+  }
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/class-schedule/${classScheduleId}`, requestOptions);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to update classSchedule");
-      }
-
-      const result = await response.json();
-      await fetchClassSchedules();
-      await showSuccess('Success!', result.message || 'ClassSchedule has been updated successfully.');
-      return result;
-    } catch (error) {
-      console.error("Error updating classSchedule:", error);
-      await showError('Error', error.message || "Something went wrong while updating classSchedule?.");
-      throw error;
-    } finally {
-      setLoading(false);
-    }
+  const requestOptions = {
+    method: "PUT",
+    headers: myHeaders,
+    body: JSON.stringify(updatedClassScheduleData),
   };
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/admin/class-schedule/${classScheduleId}`,
+      requestOptions
+    );
+
+    // Safely parse response (JSON or text)
+    let data;
+    const contentType = response.headers.get("content-type");
+
+    if (contentType && contentType.includes("application/json")) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      data = { message: text };
+    }
+
+    // ❌ If response not ok → show error
+    if (!response.ok) {
+      const errorMessage =
+        data?.message ||
+        (typeof data === "string" ? data : null) ||
+        "Failed to update class schedule";
+
+      await showError("Error", errorMessage);
+      throw new Error(errorMessage);
+    }
+
+    // ✅ Success
+    await fetchClassSchedules();
+    await showSuccess(
+      "Success!",
+      data?.message || "Class schedule has been updated successfully."
+    );
+
+    return data;
+
+  } catch (error) {
+    console.error("Error updating classSchedule:", error);
+
+    await showError(
+      "Error",
+      error.message || error.error || "Something went wrong while updating class schedule."
+    );
+
+    throw error;
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
   const deleteClassSchedule = useCallback(async (id) => {
     if (!token) return;
     setLoading(true);
