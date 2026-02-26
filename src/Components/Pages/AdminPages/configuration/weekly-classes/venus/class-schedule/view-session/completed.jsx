@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from "react-router-dom";
 import { Check, X } from 'lucide-react';
 import { showError, showSuccess, showLoading, ThemeSwal } from '../../../../../../../../utils/swalHelper';
@@ -16,7 +16,7 @@ const ViewSessions = ({ item, sessionData }) => {
     const id = query.get("id");
     const venueId = location.state?.venueId;
     const sessionDate = location.state?.sessionDate;
-
+    const scrollRef = useRef(null);
     const token = localStorage.getItem("adminToken");
     const statusIs = location.state?.statusIs;
     console.log('statusIs', location.state)
@@ -45,8 +45,22 @@ const ViewSessions = ({ item, sessionData }) => {
         fetchData();
     }, [fetchData]);
 
-    console.log('data', data)
+    useEffect(() => {
+        const saveScrollPosition = () => {
+            if (scrollRef.current) {
+                sessionStorage.setItem(
+                    "viewSessionScroll",
+                    scrollRef.current.scrollTop
+                );
+            }
+        };
 
+        window.addEventListener("beforeunload", saveScrollPosition);
+
+        return () => {
+            window.removeEventListener("beforeunload", saveScrollPosition);
+        };
+    }, []);
     const toggleAttendance = async (idx, isAttended, tabKey, studentId) => {
         try {
             const token = localStorage.getItem("adminToken"); // dynamic token
@@ -99,7 +113,14 @@ const ViewSessions = ({ item, sessionData }) => {
             console.error("Error updating attendance:", error);
         }
     };
-
+    useEffect(() => {
+        if (!loading && scrollRef.current) {
+            const savedPosition = sessionStorage.getItem("viewSessionScroll");
+            if (savedPosition) {
+                scrollRef.current.scrollTop = Number(savedPosition);
+            }
+        }
+    }, [loading]);
 
 
     const renderStudents = (tabKey) => {
@@ -190,8 +211,10 @@ const ViewSessions = ({ item, sessionData }) => {
                 !data ? (
                     <div className="p-10 text-center text-gray-400">No data available.</div>
                 ) : (
-                    <div className="bg-white rounded-3xl h-[95vh] overflow-auto shadow p-6 flex flex-col md:flex-row gap-6">
-                        {/* Left Sidebar */}
+                    <div
+                        ref={scrollRef}
+                        className="bg-white rounded-3xl h-[95vh] overflow-auto shadow p-6 flex flex-col md:flex-row gap-6"
+                    >                        {/* Left Sidebar */}
                         <div
                             className={`
                             w-full md:w-2/12 py-6 rounded-2xl text-center

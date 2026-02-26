@@ -111,7 +111,7 @@ const StudentProfile = ({ StudentProfile }) => {
             await showError("Error", error.message || "Something went wrong while sending text.");
             throw error;
         } finally {
-            navigate(`/weekly-classes/all-members/list`);
+            // navigate(`/weekly-classes/all-members/list`);
             await serviceHistoryFetchById(id);
             setTextLoading(false);
         }

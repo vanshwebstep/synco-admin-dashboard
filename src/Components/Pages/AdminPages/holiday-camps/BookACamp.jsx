@@ -4,7 +4,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
-import { Search } from "lucide-react";
+import { Search ,Info} from "lucide-react";
 import { useNotification } from "../contexts/NotificationContext";
 import { useMembers } from "../contexts/MemberContext";
 import { ChevronDown, ChevronUp, X, Loader2 } from "lucide-react";
@@ -15,8 +15,10 @@ import PlanTabs from "../weekly-classes/find-a-class/PlanTabs";
 import { evaluate } from 'mathjs';
 import { showError, showLoading, showSuccess } from "../../../../utils/swalHelper";
 import Loader from "../contexts/Loader";
+import { motion, AnimatePresence } from "framer-motion";
 
 const BookACamp = () => {
+    
     const [expression, setExpression] = useState('');
     const [result, setResult] = useState('');
     const navigate = useNavigate();
@@ -139,7 +141,14 @@ const BookACamp = () => {
         }
     };
 
-
+  const renderContent = (content) => {
+    return (
+      <div
+        className="text-gray-800 prose prose-blue max-w-none"
+        dangerouslySetInnerHTML={{ __html: content }}
+      />
+    );
+  };
     const handleClickOutside = (e) => {
         if (
             (activePopup === 1 && popup1Ref.current && !popup1Ref.current.contains(e.target) && img1Ref.current && !img1Ref.current.contains(e.target)) ||
@@ -754,7 +763,9 @@ const BookACamp = () => {
         { name: "time", placeholder: "Automatic Entry", type: "text", label: "Time" },
     ];
 
-
+  const holidayKeyInfoRaw = Array.isArray(keyInfoData)
+    ? keyInfoData.find(item => item.serviceType === 'holiday_camp')?.keyInformationRaw
+    : keyInfoData?.keyInformationRaw;
     const parentInputs = [
         { name: "parentFirstName", placeholder: "Enter First Name", type: "text", label: "First Name" },
         { name: "parentLastName", placeholder: "Enter Last Name", type: "text", label: "Last Name" },
@@ -1293,10 +1304,64 @@ const BookACamp = () => {
                         {renderInputs(emergencyInputs, "emergency")}
                     </section>
 
-                    <div onClick={() => setIsOpen(!isOpen)} className="flex items-center justify-between text-[20px] p-3 border border-gray-200 rounded-xl cursor-pointer bg-white shadow-md hover:border-gray-400 transition">
-                        <span className={`${selectedKeyInfo ? "font-medium text-gray-900" : "text-gray-500"}`}>{selectedLabel}</span>
-                        {isOpen ? <ChevronUp className="w-5 h-5 text-gray-500" /> : <ChevronDown className="w-5 h-5 text-gray-500" />}
+                    {/* Premium Key Information Accordion */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="w-full my-10 bg-white border border-blue-100 rounded-[2rem] shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden"
+            >
+              {/* Accordion Header */}
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full flex items-center justify-between p-8 hover:bg-blue-50/30 transition-colors duration-300 relative overflow-hidden group"
+              >
+                {/* Decorative background element */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 opacity-50 group-hover:scale-110 transition-transform duration-500" />
+
+                <div className="flex items-center gap-3 relative text-left">
+                  <div className="p-2 bg-blue-600 rounded-lg shadow-lg shadow-blue-200">
+                    <Info className="w-6 h-6 text-white" />
+                  </div>
+                  <h2 className="text-[24px] font-bold text-gray-900 leading-tight">Key Information</h2>
+                </div>
+
+                <div className="relative">
+                  <motion.div
+                    animate={{ rotate: isOpen ? 180 : 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <ChevronDown className="w-6 h-6 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                  </motion.div>
+                </div>
+              </button>
+
+              {/* Accordion Content */}
+              <AnimatePresence>
+                {isOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.4, ease: "easeInOut" }}
+                  >
+                    <div className="p-8 pt-0 relative border-t border-gray-50">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative pt-6">
+
+
+                        {holidayKeyInfoRaw ? (
+                          renderContent(JSON.parse(holidayKeyInfoRaw))
+                        ) : (
+                          <div className="text-gray-500 italic py-4 col-span-2 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                            No key information available for this service.
+                          </div>
+                        )}
+                      </div>
                     </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
 
                     <div className="flex justify-end gap-4 mt-6">
                         <button className="px-8 py-2 border border-[#717073] text-[#717073] rounded-md">Cancel</button>

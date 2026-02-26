@@ -399,6 +399,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                             className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                             value={parent.howDidYouHear}
                                             readOnly
+                                            disabled
                                         >
                                             <option value="Google">Google</option>
                                             <option value="Facebook">Facebook</option>

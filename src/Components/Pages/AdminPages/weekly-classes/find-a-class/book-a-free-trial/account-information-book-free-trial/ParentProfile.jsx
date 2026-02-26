@@ -509,6 +509,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                             className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                             value={parent.howDidYouHear}
                                             readOnly={editingIndex !== index}
+                                            disabled={editingIndex !== index}
                                             onChange={(e) =>
                                                 handleDataChange(index, "howDidYouHear", e.target.value)
                                             }

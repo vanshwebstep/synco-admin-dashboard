@@ -1,4 +1,4 @@
-﻿import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import ReactQuill from "react-quill-new";
 // import "react-quill-new/dist/quill.snow.css";
 import {
@@ -1873,6 +1873,8 @@ const getStyleConfig = (block) => {
   if (block.type === "multipleInfoBox") {
     const unitStyle = STYLE_GROUPS.appearance("boxStyle", "Unit Style");
     // Add specific fields for multipleInfoBox unit style
+    unitStyle.fields.push({ label: "Top Border Color", key: "topBorderColor", type: "color", path: "boxStyle" });
+    unitStyle.fields.push({ label: "Top Border Width", key: "topBorderWidth", type: "range", min: 0, max: 20, path: "boxStyle", suffix: "px" });
     unitStyle.fields.push({ label: "Items per Row", key: "boxColumns", type: "select", path: true, options: [{ label: "1", value: "1" }, { label: "2", value: "2" }] });
     unitStyle.fields.push({ label: "Item Layout", key: "boxItemLayout", type: "select", path: true, options: [{ label: "Stacked", value: "stacked" }, { label: "Inline", value: "inline" }] });
     // Add separator color
@@ -2799,12 +2801,12 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
     display: style.display || "grid",
     // Grid Props
     gridTemplateColumns: isGrid ? (style.gridTemplateColumns || `repeat(${(!style.columns || style.columns === "auto") ? 1 : style.columns}, minmax(0, 1fr))`) : undefined,
-    gap: style.gap ? `${style.gap}px` : "16px",
+    gap: style.gap !== undefined ? `${style.gap}px` : "16px",
     // Flex Props
     flexDirection: isFlex ? (style.flexDirection || "row") : undefined,
     flexWrap: isFlex ? "wrap" : undefined,
-    justifyContent: isFlex ? (style.justifyContent || "flex-start") : undefined,
-    alignItems: isFlex ? (style.alignItems || "stretch") : undefined,
+    justifyContent: style.justifyContent,
+    alignItems: style.alignItems,
   };
 
   const updateBox = (boxId, key, value) => {
@@ -2889,7 +2891,11 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
           {boxRows.map((rowBoxes, rowIndex) => (
             <tr key={rowIndex}>
               {rowBoxes.map((box, colIndex) => {
-                const boxStyle = { ...globalBoxStyle, ...(box.style || {}) };
+                const boxStyle = { ...(box.style || {}) };
+                Object.entries(globalBoxStyle).forEach(([k, v]) => {
+                  if (v !== undefined && v !== "") boxStyle[k] = v;
+                });
+
                 const borderTopWidth = boxStyle.borderTopWidth !== undefined ? boxStyle.borderTopWidth : boxStyle.topBorderWidth;
                 const borderTopColor = boxStyle.borderTopColor || boxStyle.topBorderColor || boxStyle.borderColor || "#10b981";
                 const hasTopBorder = borderTopWidth !== undefined && borderTopWidth > 0;
@@ -2901,10 +2907,12 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
                     width={`${100 / columns}%`}
                     style={{
                       padding: style.gap ? `${parseInt(style.gap) / 2}px` : "10px", // Simulate gap
+                      height: "100%"
                     }}
                   >
                     <table
                       width="100%"
+                      height="100%"
                       cellPadding="0"
                       cellSpacing="0"
                       border="0"
@@ -2913,7 +2921,7 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
                         borderRadius: parseUnit(boxStyle.borderRadius) || "12px",
                         // padding: parseUnit(boxStyle.padding) || "20px",  // Padding must be on TD for email clients often
                         boxShadow: boxStyle.boxShadow || "0 2px 4px rgba(0,0,0,0.05)",
-                        border: boxStyle.border || (boxStyle.borderWidth ? `${boxStyle.borderWidth}px solid ${boxStyle.borderColor || "#eee"}` : "1px solid #eee"),
+                        border: boxStyle.border || (boxStyle.borderWidth !== undefined ? `${boxStyle.borderWidth}px solid ${boxStyle.borderColor || "#eee"}` : (boxStyle.borderColor ? `1px solid ${boxStyle.borderColor}` : "1px solid #eee")),
                         borderTop: hasTopBorder ? `${borderTopWidth}px solid ${borderTopColor}` : undefined,
                         borderCollapse: "separate"
                       }}
@@ -2961,6 +2969,7 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
                                               display: boxStyle.itemLayout === 'inline' ? 'inline-block' : 'block',
                                               width: boxStyle.itemLayout === 'inline' ? '40%' : 'auto',
                                               verticalAlign: 'top',
+                                              textAlign: boxStyle.itemLayout === 'inline' ? 'left' : (boxStyle.textAlign || 'left'),
                                               // Add font family support
                                               fontFamily: style.fontFamily,
                                             }}>
@@ -2970,7 +2979,7 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
                                             <div style={{
                                               fontSize: "14px",
                                               color: boxStyle.valueColor || style.textColor || "#111827",
-                                              textAlign: boxStyle.itemLayout === 'inline' ? "right" : "left",
+                                              textAlign: boxStyle.itemLayout === 'inline' ? "right" : (boxStyle.textAlign || "left"),
                                               display: boxStyle.itemLayout === 'inline' ? 'inline-block' : 'block',
                                               width: boxStyle.itemLayout === 'inline' ? '58%' : 'auto',
                                               verticalAlign: 'top',
@@ -3010,7 +3019,12 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
     >
       {(block.boxes || []).map((box) => {
         // Merge individual box styles with global box styles for editor too
-        const boxStyle = { ...globalBoxStyle, ...(box.style || {}) };
+        // globalBoxStyle values MUST override box.style values where explicitly defined
+        const boxStyle = { ...(box.style || {}) };
+        Object.entries(globalBoxStyle).forEach(([k, v]) => {
+          if (v !== undefined && v !== "") boxStyle[k] = v;
+        });
+
         // Border Logic Correction
         const borderTopWidth = boxStyle.borderTopWidth !== undefined ? boxStyle.borderTopWidth : boxStyle.topBorderWidth;
         const borderTopColor = boxStyle.borderTopColor || boxStyle.topBorderColor || boxStyle.borderColor || "#10b981";
@@ -3025,7 +3039,7 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
               borderRadius: parseUnit(boxStyle.borderRadius) || "12px",
               padding: parseUnit(boxStyle.padding) || "20px",
               boxShadow: boxStyle.boxShadow || "0 2px 4px rgba(0,0,0,0.05)",
-              border: boxStyle.border || (boxStyle.borderWidth ? `${boxStyle.borderWidth}px solid ${boxStyle.borderColor || "#eee"}` : "1px solid #eee"),
+              border: boxStyle.border || (boxStyle.borderWidth !== undefined ? `${boxStyle.borderWidth}px solid ${boxStyle.borderColor || "#eee"}` : (boxStyle.borderColor ? `1px solid ${boxStyle.borderColor}` : "1px solid #eee")),
               borderTop: hasTopBorder ? `${borderTopWidth}px solid ${borderTopColor}` : undefined,
               display: "flex",
               flexDirection: "column",
@@ -3033,6 +3047,8 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
               textAlign: boxStyle.textAlign || "left",
               width: isFlex ? (style.flexDirection === "column" ? "100%" : undefined) : undefined,
               flex: isFlex ? "1 1 0px" : undefined, // Distribute evenly in flex
+              height: "100%",
+              boxSizing: 'border-box'
             }}
           >
             {/* Controls */}
@@ -3099,12 +3115,13 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
                           fontSize: "12px",
                           textTransform: "uppercase",
                           color: boxStyle.labelColor || style.textColor || "#6b7280",
+                          textAlign: boxStyle.itemLayout === 'inline' ? 'left' : (boxStyle.textAlign || 'left'),
                           marginBottom: boxStyle.itemLayout === 'inline' ? "0" : "2px"
                         }}>{item.label}</div>
                         <div style={{
                           fontSize: "14px",
                           color: boxStyle.valueColor || style.textColor || "#111827",
-                          textAlign: boxStyle.itemLayout === 'inline' ? "right" : "left"
+                          textAlign: boxStyle.itemLayout === 'inline' ? "right" : (boxStyle.textAlign || "left")
                         }} dangerouslySetInnerHTML={{ __html: item.value || "" }} />
                       </>
                     ) : (
@@ -3116,7 +3133,8 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
                           placeholder="Label"
                           style={{
                             width: boxStyle.itemLayout === 'inline' ? '40%' : '100%',
-                            color: boxStyle.labelColor || style.textColor || "#6b7280"
+                            color: boxStyle.labelColor || style.textColor || "#6b7280",
+                            textAlign: boxStyle.itemLayout === 'inline' ? 'left' : (boxStyle.textAlign || 'left')
                           }}
                         />
                         <VariableTextarea
@@ -3127,7 +3145,7 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
                           showVariables={false}
                           style={{
                             width: boxStyle.itemLayout === 'inline' ? '55%' : '100%',
-                            textAlign: boxStyle.itemLayout === 'inline' ? 'right' : 'left',
+                            textAlign: boxStyle.itemLayout === 'inline' ? 'right' : (boxStyle.textAlign || 'left'),
                             color: boxStyle.valueColor || style.textColor || "#111827"
                           }}
                         />

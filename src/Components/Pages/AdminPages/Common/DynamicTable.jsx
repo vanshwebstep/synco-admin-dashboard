@@ -82,7 +82,8 @@ const DynamicTable = ({
   ============================== */
   const totalItems = finalData.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / rowsPerPage));
-  const startIndex = (currentPage - 1) * rowsPerPage;
+  const validCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+  const startIndex = (validCurrentPage - 1) * rowsPerPage;
 
   const paginatedData = useMemo(() => {
     return finalData.slice(
@@ -93,10 +94,10 @@ const DynamicTable = ({
 
   // Keep page in range
   useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
+    if (currentPage !== validCurrentPage) {
+      setCurrentPage(validCurrentPage);
     }
-  }, [totalPages]);
+  }, [validCurrentPage, currentPage]);
 
   // Reset on filter
   useEffect(() => {
@@ -105,10 +106,10 @@ const DynamicTable = ({
     }
   }, [isFilterApplied]);
 
-  // Reset when data or page size changes
+  // Reset when page size changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [rowsPerPage, data]);
+  }, [rowsPerPage]);
 
   /* =============================
      Render
@@ -127,9 +128,8 @@ const DynamicTable = ({
                 return (
                   <th
                     key={idx}
-                    className={`p-4 text-[#717073] whitespace-nowrap ${
-                      shouldCenter ? "text-center" : "text-left"
-                    }`}
+                    className={`p-4 text-[#717073] whitespace-nowrap ${shouldCenter ? "text-center" : "text-left"
+                      }`}
                   >
                     {col.header}
                   </th>
@@ -147,12 +147,16 @@ const DynamicTable = ({
                   row?.bookingId ||
                   `row-${startIndex + index}`;
 
+                const trKey = row?.studentIndex !== undefined
+                  ? `${uniqueId}-student-${row.studentIndex}`
+                  : `${uniqueId}-idx-${index}`;
+
                 const isSelected =
                   selectedIds?.includes(uniqueId);
 
                 return (
                   <tr
-                    key={uniqueId}
+                    key={trKey}
                     onClick={
                       onRowClick
                         ? () => onRowClick(row, from)
@@ -171,22 +175,19 @@ const DynamicTable = ({
                                   e.stopPropagation();
                                   toggleSelect(uniqueId);
                                 }}
-                                className={`w-5 h-5 flex items-center justify-center rounded-md border-2 ${
-                                  isSelected
+                                className={`w-5 h-5 flex items-center justify-center rounded-md border-2 ${isSelected
                                     ? "bg-blue-500 border-blue-500 text-white"
                                     : "border-gray-300 text-transparent"
-                                }`}
+                                  }`}
                               >
                                 {isSelected && <Check size={14} />}
                               </button>
 
                               <span>
                                 {col.header === "Parent Name"
-                                  ? `${row?.parents?.[0]?.parentFirstName || ""} ${
-                                      row?.parents?.[0]?.parentLastName || ""
+                                  ? `${row?.parents?.[0]?.parentFirstName || ""} ${row?.parents?.[0]?.parentLastName || ""
                                     }`.trim() || "N/A"
-                                  : `${row?.student?.studentFirstName || ""} ${
-                                      row?.student?.studentLastName || ""
+                                  : `${row?.student?.studentFirstName || ""} ${row?.student?.studentLastName || ""
                                     }`.trim() || "N/A"}
                               </span>
                             </div>
@@ -264,14 +265,14 @@ const DynamicTable = ({
               onClick={() =>
                 setCurrentPage((p) => Math.max(p - 1, 1))
               }
-              disabled={currentPage === 1}
+              disabled={validCurrentPage === 1}
               className="px-3 py-1 rounded-md border hover:bg-gray-100"
             >
               Prev
             </button>
 
             <span>
-              {currentPage} / {totalPages}
+              {validCurrentPage} / {totalPages}
             </span>
 
             <button
@@ -280,7 +281,7 @@ const DynamicTable = ({
                   Math.min(p + 1, totalPages)
                 )
               }
-              disabled={currentPage === totalPages}
+              disabled={validCurrentPage === totalPages}
               className="px-3 py-1 rounded-md border hover:bg-gray-100"
             >
               Next

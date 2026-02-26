@@ -134,6 +134,7 @@ const HolidayAddtoWaitingList = () => {
   const holidayKeyInfoRaw = Array.isArray(keyInfoData)
     ? keyInfoData.find(item => item.serviceType === 'holiday_camp')?.keyInformationRaw
     : keyInfoData?.keyInformationRaw;
+    
   const renderContent = (content) => {
     return (
       <div
