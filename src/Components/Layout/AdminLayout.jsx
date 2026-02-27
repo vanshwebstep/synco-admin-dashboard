@@ -25,7 +25,7 @@ const AdminLayout = ({ children }) => {
     '/notification': { title: 'Notifications', icon: '/members/Notification.png' },
     '/configuration/weekly-classes/term-dates/list': { title: 'Term Dates & Session Plan Mapping', icon: '/members/termCondition.png' },
     '/weekly-classes/term-dates/Create': { title: 'Term Dates & Session Plan Mapping', icon: '/members/termCondition.png' },
-    '/configuration/weekly-classes/venues/class-schedule': { title: 'Class Schedule ', icon: '/members/classSchedule?.png' },
+    '/configuration/weekly-classes/venues/class-schedule': { title: 'Class Schedule ', icon: '/members/classSchedule.png' },
     '/configuration/weekly-classes/session-plan-list': { title: 'Session Plan Library ', icon: '/members/Document.png' },
     '/configuration/weekly-classes/session-plan-preview': { title: 'Session Plan Library ', icon: '/members/Document.png' },
     '/configuration/weekly-classes/session-plan-create': { title: 'Session Plan Library ', icon: '/members/Document.png' },
@@ -78,7 +78,7 @@ const AdminLayout = ({ children }) => {
     '/holiday-camp/reports': { title: 'Holiday Camps Report', icon: '/members/Profile.png' },
 
     '/configuration/holiday-camp/venues': { title: 'Holiday Camp Venues ', icon: '/members/Location.png' },
-    '/configuration/holiday-camp/venues/class-schedule': { title: 'Class Schedule', icon: '/members/classSchedule?.png' },
+    '/configuration/holiday-camp/venues/class-schedule': { title: 'Class Schedule', icon: '/members/classSchedule.png' },
     '/configuration/holiday-camp/terms': { title: 'Holiday Camp Dates & Session Plan Mapping', icon: '/members/termCondition.png' },
     '/configuration/holiday-camp/session-plan': { title: 'Session Plan Library', icon: '/members/Document.png' },
     '/configuration/holiday-camp/subscription-plan-group': { title: 'Payment Plan Manager', icon: '/images/icons/subscriptionplanIcon.png' },

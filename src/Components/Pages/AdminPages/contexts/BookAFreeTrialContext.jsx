@@ -21,6 +21,7 @@ export const BookFreeTrialProvider = ({ children }) => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [removeWaiting, setRemoveWaiting] = useState(false);
   const [isBooked, setIsBooked] = useState(false);
+ const [parentData, setParentData] = useState(null);
 
   const [isEditBookFreeTrial, setIsEditBookFreeTrial] = useState(false);
   const [singleBookFreeTrials, setSingleBookFreeTrials] = useState([]);
@@ -2544,6 +2545,36 @@ export const BookFreeTrialProvider = ({ children }) => {
       setLoading(false);
     }
   }, []);
+
+
+const fetchMembershipByParent = useCallback(async (ID) => {
+  const token = localStorage.getItem("adminToken");
+  if (!token || !ID) return;
+
+  setLoading(true);
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/admin/book/free-trials/get-parent/${ID}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const resultRaw = await response.json();
+    const result = resultRaw.data || null;
+
+    console.log("fetchMembershipByParent result", result);
+
+    setParentData(result); // 👈 store in hook state
+  } catch (error) {
+    console.error("Failed to fetch parent:", error);
+  } finally {
+    setLoading(false);
+  }
+}, []);
   return (
     <BookFreeTrialContext.Provider
       value={{// Free Trials
@@ -2646,7 +2677,9 @@ export const BookFreeTrialProvider = ({ children }) => {
         ServiceHistoryFulltto,
         ServiceHistoryAlltto,
         setIsBooked, isBooked,
-        fetchMembershipSalesLoading, createBookLeads, createBookBirthday, addToWaitingList, setaddToWaitingList, showCancelTrial, setshowCancelTrial
+        fetchMembershipSalesLoading,parentData, setParentData, createBookLeads, createBookBirthday, addToWaitingList, setaddToWaitingList, showCancelTrial, setshowCancelTrial
+
+        ,fetchMembershipByParent
       }}>
       {children}
     </BookFreeTrialContext.Provider>

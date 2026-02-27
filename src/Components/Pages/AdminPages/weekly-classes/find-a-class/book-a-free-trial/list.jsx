@@ -38,10 +38,12 @@ const List = () => {
 
     const [expression, setExpression] = useState('');
     const [result, setResult] = useState('');
+    const [isPrefilled, setIsPrefilled] = useState(false);
+
     const navigate = useNavigate();
     const location = useLocation();
-    const { classId,parentId, from_lead, leadId } = location.state || {};
-    console.log('parentId-',parentId)
+    const { classId,existingparentid, from_lead, leadId } = location.state || {};
+    console.log('existingparentid-',existingparentid)
     const popup1Ref = useRef(null);
     const popup2Ref = useRef(null);
     const popup3Ref = useRef(null);
@@ -52,7 +54,7 @@ const List = () => {
     const [isOpen, setIsOpen] = useState(false);
     // console.log('classId', classId)
     const { fetchFindClassID, singleClassSchedulesOnly, loading } = useClassSchedule() || {};
-    const { createBookFreeTrials, isBooked, setIsBooked } = useBookFreeTrial()
+    const { createBookFreeTrials, isBooked, setIsBooked, fetchMembershipByParent ,parentData,} = useBookFreeTrial()
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { keyInfoData, fetchKeyInfo } = useMembers();
     const { adminInfo, setAdminInfo } = useNotification();
@@ -738,18 +740,25 @@ const List = () => {
         }
     };
 
-    useEffect(() => {
 
-        const fetchData = async () => {
-            if (classId) {
-                setIsBooked(false);
-                await fetchFindClassID(classId);
-                await fetchKeyInfo();
-                await fetchComments();
-            }
-        };
-        fetchData();
-    }, [classId, fetchFindClassID]);
+useEffect(() => {
+  const fetchData = async () => {
+    if (classId) {
+      setIsBooked(false);
+
+      await fetchFindClassID(classId);
+      await fetchKeyInfo();
+      await fetchComments();
+
+      // 👇 Call membership API
+       if (existingparentid) {
+        await fetchMembershipByParent(existingparentid);
+      }
+    }
+  };
+
+  fetchData();
+}, [classId, existingparentid, fetchFindClassID]);
 
     const handleClick = (val) => {
         if (val === 'AC') {
@@ -892,6 +901,23 @@ const List = () => {
         }
         handleSubmit();
     };
+    useEffect(() => {
+  if (parentData?.id) {
+    setParents([
+      {
+        id: parentData.id,
+        parentFirstName: parentData.parentFirstName || "",
+        parentLastName: parentData.parentLastName || "",
+        parentEmail: parentData.parentEmail || "",
+        parentPhoneNumber: parentData.parentPhoneNumber || "",
+        relationToChild: "",
+        howDidYouHear: "",
+      },
+    ]);
+
+    setIsPrefilled(true);
+  }
+}, [parentData]);
     if (loading) {
         return (
             <>
@@ -1370,6 +1396,7 @@ const List = () => {
                                             <input
                                                 className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                                 placeholder="Enter first name"
+                                                disabled={isPrefilled} // Disable if pre-filled from existing parent data
                                                 value={parent.parentFirstName}
                                                 onChange={(e) => {
                                                     // Remove numbers if typed or pasted
@@ -1387,6 +1414,7 @@ const List = () => {
                                             <input
                                                 className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                                 placeholder="Enter last name"
+                                                disabled={isPrefilled} // Disable if pre-filled from existing parent data
                                                 value={parent.parentLastName}
                                                 onChange={(e) => {
                                                     // Remove numbers if typed or pasted
@@ -1409,7 +1437,9 @@ const List = () => {
                                                 type="email"
                                                 className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                                 placeholder="Enter email address"
+                                                disabled={isPrefilled} // Disable if pre-filled from existing parent data
                                                 value={parent.parentEmail}
+
                                                 onChange={(e) => handleParentChange(index, "parentEmail", e.target.value)}
                                             />
                                         </div>
@@ -1437,6 +1467,7 @@ const List = () => {
 
                                                 <input
                                                     type="number"
+                                                        disabled={isPrefilled} // Disable if pre-filled from existing parent data
                                                     value={parent.parentPhoneNumber}
                                                     onChange={(e) =>
                                                         handleParentChange(index, "parentPhoneNumber", e.target.value)
@@ -1459,7 +1490,10 @@ const List = () => {
                                                 placeholder="Select Relation"
                                                 className="mt-2"
                                                 classNamePrefix="react-select"
-                                                value={relationOptions.find((o) => o.value === parent.relationToChild)}
+//   isDisabled={isPrefilled}
+                                                value={relationOptions.find(
+    (o) => o.value === parent.relationToChild
+  )}
                                                 onChange={(selected) =>
                                                     handleParentChange(index, "relationToChild", selected.value)
                                                 }
@@ -1471,6 +1505,7 @@ const List = () => {
                                                 options={hearOptions}
                                                 placeholder="Select from drop down"
                                                 className="mt-2"
+                                                // isDisabled={isPrefilled}
                                                 classNamePrefix="react-select"
                                                 value={hearOptions.find((o) => o.value === parent.howDidYouHear)}
                                                 onChange={(selected) =>

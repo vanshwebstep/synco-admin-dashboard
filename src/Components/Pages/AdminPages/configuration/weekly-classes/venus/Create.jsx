@@ -223,10 +223,10 @@ const Create = ({ groups, termGroup }) => {
   return (
     <div className="max-w-md mx-auto">
       <h2 onClick={handleCancel} className="md:text-[24px] cursor-pointer hover:opacity-80 font-semibold mb-4 flex gap-2 items-center border-[#E2E1E5] border-b p-5"><img src="/members/Arrow - Left.png" className="w-6" alt="" />{isEditVenue ? 'Edit Venue' : 'Add New Venue'}</h2>
-      <form className="space-y-2  p-5 pt-1">
+      <form className="space-y-2  p-5 pt-1 ">
 
         <div>
-          <label className="block font-semibold text-[16px] pb-2">Area</label>
+          <label className="block font-semibold text-[16px] pb-2 poppins">Area</label>
           <input
             type="text"
             name="area"
@@ -237,7 +237,7 @@ const Create = ({ groups, termGroup }) => {
         </div>
 
         <div>
-          <label className="block font-semibold text-[16px] pb-2">Name of Venue</label>
+          <label className="block font-semibold text-[16px] pb-2 poppins">Name of Venue</label>
           <input
             type="text"
             name="name"
@@ -248,7 +248,7 @@ const Create = ({ groups, termGroup }) => {
         </div>
 
         <div>
-          <label className="block font-semibold text-[16px] pb-2">Address</label>
+          <label className="block font-semibold text-[16px] pb-2 poppins">Address</label>
           <input
             type="text"
             name="address"
@@ -259,7 +259,7 @@ const Create = ({ groups, termGroup }) => {
         </div>
 
         <div>
-          <label className="block font-semibold text-[16px] pb-2">Facility</label>
+          <label className="block font-semibold text-[16px] pb-2 poppins">Facility</label>
           <Select
             name="facility"
             value={facilityOptions.find(option => option.value === formData.facility)}
@@ -278,7 +278,7 @@ const Create = ({ groups, termGroup }) => {
         <div className="flex py-2 flex-wrap items-center justify-between gap-6">
           {/* Parking Toggle */}
           <label className="flex items-center gap-2 cursor-pointer">
-            <span className="block font-semibold text-[16px]">Parking</span>
+            <span className="block font-semibold text-[16px] poppins">Parking</span>
             <input
               type="checkbox"
               name="hasParking"
@@ -303,7 +303,7 @@ const Create = ({ groups, termGroup }) => {
 
           {/* Congestion Toggle */}
           <label className="flex items-center gap-2 cursor-pointer">
-            <span className="block font-semibold text-[16px]">Congestion</span>
+            <span className="block font-semibold text-[16px] poppins">Congestion</span>
             <input
               type="checkbox"
               name="isCongested"
@@ -344,7 +344,7 @@ const Create = ({ groups, termGroup }) => {
 
 
         <div>
-          <label className="block font-semibold text-[16px] pb-2">How to enter facility</label>
+          <label className="block font-semibold text-[16px] pb-2 poppins">How to enter facility</label>
           <textarea
             name="howToEnterFacility"
             value={formData.howToEnterFacility}
@@ -361,7 +361,7 @@ const Create = ({ groups, termGroup }) => {
 
           {/* TERM DATE */}
           <div className="w-full max-w-xl">
-            <label className="block font-semibold text-[16px] pb-2">
+            <label className="block font-semibold text-[16px] pb-2 poppins">
               Term Date Linkage
             </label>
             <div
@@ -385,7 +385,7 @@ const Create = ({ groups, termGroup }) => {
                   variants={dropdownVariants}
                   transition={{ duration: 0.2 }}
                 >
-                  <p className="font-semibold text-[17px]">Select Term Date Group</p>
+                  <p className="font-semibold text-[17px] poppins poppins">Select Term Date Group</p>
                   {termOptions.map((group) => (
                     <label key={group.id} className="flex items-center gap-2 text-[15px]">
                       <input
@@ -415,7 +415,7 @@ const Create = ({ groups, termGroup }) => {
 
           {/* SUBSCRIPTION PLAN */}
           <div className="w-full">
-            <label className="block font-semibold text-[16px] pb-2">
+            <label className="block font-semibold text-[16px] pb-2 poppins">
               Subscription Plan Linkage
             </label>
             <div
@@ -476,7 +476,7 @@ const Create = ({ groups, termGroup }) => {
         </div>
          {/* Starter Pack Toggle */}
           <label className="flex items-center gap-2 cursor-pointer">
-            <span className="block font-semibold text-[16px]">Starter Pack</span>
+            <span className="block font-semibold text-[16px] poppins">Starter Pack</span>
             <input
               type="checkbox"
               name="starterPack"

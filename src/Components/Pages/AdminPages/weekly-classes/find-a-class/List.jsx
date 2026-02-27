@@ -31,10 +31,19 @@ const List = () => {
   useEffect(() => {
     fetchFindClasses()
   }, [fetchFindClasses]);
-   const location = useLocation();
-  const parentId = location.state?.parentId;
-  console.log('parentId',parentId)
+  const location = useLocation();
 
+  const parentId = location.state?.parentId;
+  const [isParentExist, setIsParentExist] = useState(false);
+
+  useEffect(() => {
+    console.log('parentId', parentId);
+
+    if (parentId) {
+      setIsParentExist(true);
+    }
+  }, [location.state]);
+  console.log('isParentExist', isParentExist)
   const iconContainerRef = useRef(null);
   const [activeParkingVenueId, setActiveParkingVenueId] = useState(null);
   const [notes, setNotes] = useState(null);
@@ -373,22 +382,34 @@ const List = () => {
 
 
 
-  const handleBookFreeTrial = (classId) => {
-    navigate('/weekly-classes/find-a-class/book-a-free-trial', {
-      state: { classId ,parentId },
-    });
-    setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'auto' });
-    }, 50);
-  };
-  const handleAddToWaitingList = (classId) => {
-    navigate('/weekly-classes/find-a-class/add-to-waiting-list', {
-      state: { classId },
-    });
-  };
+ const handleBookFreeTrial = (classId) => {
+  navigate('/weekly-classes/find-a-class/book-a-free-trial', {
+    state: {
+      classId,
+      ...(parentId && { existingparentid: parentId }),
+    },
+  });
+
+  setTimeout(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, 50);
+};
+
+const handleAddToWaitingList = (classId) => {
+  navigate('/weekly-classes/find-a-class/add-to-waiting-list', {
+    state: {
+      classId,
+      ...(parentId && { existingparentid: parentId }),
+    },
+  });
+};
+
   const handleBookMembership = (classId) => {
     navigate('/weekly-classes/find-a-class/book-a-membership', {
-      state: { classId },
+      state: {
+        classId,
+        ...(parentId && { existingparentid: parentId }),
+      },
     });
   };
   // console.log('calendarData', calendarData)
