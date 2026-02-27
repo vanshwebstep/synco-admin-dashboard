@@ -2896,9 +2896,10 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
                   if (v !== undefined && v !== "") boxStyle[k] = v;
                 });
 
-                const borderTopWidth = boxStyle.borderTopWidth !== undefined ? boxStyle.borderTopWidth : boxStyle.topBorderWidth;
+                const borderTopWidthRaw = boxStyle.borderTopWidth !== undefined ? boxStyle.borderTopWidth : boxStyle.topBorderWidth;
+                const parsedTopWidth = parseInt(borderTopWidthRaw) || 0;
                 const borderTopColor = boxStyle.borderTopColor || boxStyle.topBorderColor || boxStyle.borderColor || "#10b981";
-                const hasTopBorder = borderTopWidth !== undefined && borderTopWidth > 0;
+                const hasTopBorder = parsedTopWidth > 0;
 
                 return (
                   <td
@@ -2912,17 +2913,18 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
                   >
                     <table
                       width="100%"
-                      height="100%"
+                      height="100vh"
                       cellPadding="0"
                       cellSpacing="0"
                       border="0"
                       style={{
+                        height: "100%",
                         backgroundColor: boxStyle.backgroundColor,
                         borderRadius: parseUnit(boxStyle.borderRadius) || "12px",
                         // padding: parseUnit(boxStyle.padding) || "20px",  // Padding must be on TD for email clients often
                         boxShadow: boxStyle.boxShadow || "0 2px 4px rgba(0,0,0,0.05)",
                         border: boxStyle.border || (boxStyle.borderWidth !== undefined ? `${boxStyle.borderWidth}px solid ${boxStyle.borderColor || "#eee"}` : (boxStyle.borderColor ? `1px solid ${boxStyle.borderColor}` : "1px solid #eee")),
-                        borderTop: hasTopBorder ? `${borderTopWidth}px solid ${borderTopColor}` : undefined,
+                        borderTop: hasTopBorder ? `${parsedTopWidth}px solid ${borderTopColor}` : undefined,
                         borderCollapse: "separate"
                       }}
                     >
@@ -3026,9 +3028,10 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
         });
 
         // Border Logic Correction
-        const borderTopWidth = boxStyle.borderTopWidth !== undefined ? boxStyle.borderTopWidth : boxStyle.topBorderWidth;
+        const borderTopWidthRaw = boxStyle.borderTopWidth !== undefined ? boxStyle.borderTopWidth : boxStyle.topBorderWidth;
+        const parsedTopWidth = parseInt(borderTopWidthRaw) || 0;
         const borderTopColor = boxStyle.borderTopColor || boxStyle.topBorderColor || boxStyle.borderColor || "#10b981";
-        const hasTopBorder = borderTopWidth !== undefined && borderTopWidth > 0;
+        const hasTopBorder = parsedTopWidth > 0;
 
         return (
           <div
@@ -3040,7 +3043,7 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
               padding: parseUnit(boxStyle.padding) || "20px",
               boxShadow: boxStyle.boxShadow || "0 2px 4px rgba(0,0,0,0.05)",
               border: boxStyle.border || (boxStyle.borderWidth !== undefined ? `${boxStyle.borderWidth}px solid ${boxStyle.borderColor || "#eee"}` : (boxStyle.borderColor ? `1px solid ${boxStyle.borderColor}` : "1px solid #eee")),
-              borderTop: hasTopBorder ? `${borderTopWidth}px solid ${borderTopColor}` : undefined,
+              borderTop: hasTopBorder ? `${parsedTopWidth}px solid ${borderTopColor}` : undefined,
               display: "flex",
               flexDirection: "column",
               gap: "12px",
@@ -3127,7 +3130,7 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
                     ) : (
                       <>
                         <input
-                          className="text-[10px] font-bold uppercase bg-transparent outline-none"
+                          className="text-[13px] font-bold bg-transparent outline-none"
                           value={item.label || ""}
                           onChange={(e) => updateBoxItem(box.id, idx, "label", e.target.value)}
                           placeholder="Label"
@@ -4261,17 +4264,17 @@ export default function BlockRenderer({ block, blocks, setBlocks, readOnly = fal
                               className="flex flex-col items-center justify-center p-3 gap-1 bg-white border border-gray-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition text-gray-500 hover:text-blue-600"
                             >
                               <span className="text-lg">{opt.icon}</span>
-                              <span className="text-[10px] font-bold uppercase">{opt.label}</span>
+                              <span className="text-[10px] font-bold ">{opt.label}</span>
                             </button>
                           ))}
                         </div>
                       ) : (
                         <div className="flex gap-2 justify-center">
-                          <span className="text-[10px] text-gray-400 uppercase font-bold self-center mr-2">Add:</span>
+                          <span className="text-[10px] text-gray-400  font-bold self-center mr-2">Add:</span>
                           {["text", "textEditor", "image", "heading", "btn", "cardRow", "infoBox", "noteSection"].map((t) => (
                             <button
                               key={t}
-                              className="w-6 h-6 flex items-center justify-center text-[10px] font-bold uppercase bg-white border border-gray-200 rounded-full hover:bg-blue-50 hover:border-blue-300 transition text-gray-500"
+                              className="w-6 h-6 flex items-center justify-center text-[10px] font-bold  bg-white border border-gray-200 rounded-full hover:bg-blue-50 hover:border-blue-300 transition text-gray-500"
                               onClick={() => addChild(i, t)}
                               title={`Add ${t}`}
                             >
