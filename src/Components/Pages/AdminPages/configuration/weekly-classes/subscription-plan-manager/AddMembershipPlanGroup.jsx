@@ -54,7 +54,6 @@ const AddPaymentPlanGroup = () => {
         interval: '',
         duration: '',
         students: '',
-        joiningFee: '',
         termsAndCondition: '',
         HolidayCampPackage: '',
 
@@ -169,17 +168,17 @@ const AddPaymentPlanGroup = () => {
             setSubmitLoading(false); // stop loader
         }
     };
-    const priceFields = ["price", "priceLesson", "joiningFee"];
+    const priceFields = ["price", "priceLesson"];
 
     const handleSavePlan = async () => {
 
 
-        const { title, price, priceLesson, interval, duration, joiningFee, students } = formData;
+        const { title, price, priceLesson, interval, duration, students } = formData;
 
         // ✅ Validation
 
-        if (!title || !price || !interval || !priceLesson || !duration || !students || !joiningFee) {
-            showWarning("Missing Fields", "Please fill in all required fields: Title, Price, Interval, Duration, Number of Students, and Joining Fee.");
+        if (!title || !price || !interval || !priceLesson || !duration || !students) {
+            showWarning("Missing Fields", "Please fill in all required fields: Title, Price, Interval, Duration, and Number of Students.");
             return;
         }
 
@@ -189,7 +188,6 @@ const AddPaymentPlanGroup = () => {
             priceLesson,
             interval,
             duration,
-            joiningFee,
             students,
             termsAndCondition: formData.termsAndCondition,
             HolidayCampPackage: formData.HolidayCampPackage
@@ -210,7 +208,6 @@ const AddPaymentPlanGroup = () => {
                 interval: '',
                 duration: '',
                 students: '',
-                joiningFee: '',
                 termsAndCondition: '',
                 HolidayCampPackage: ''
             });
@@ -559,7 +556,6 @@ const AddPaymentPlanGroup = () => {
                                         },
                                         { label: "Duration", name: "duration", type: "number" },
                                         { label: "Number of Students", name: "students", type: "number" },
-                                        { label: "Joining Fee (£)", name: "joiningFee", type: "text" }
                                     ].map((field) => {
                                         // Duration options for dropdown
                                         let durationOptions = [];

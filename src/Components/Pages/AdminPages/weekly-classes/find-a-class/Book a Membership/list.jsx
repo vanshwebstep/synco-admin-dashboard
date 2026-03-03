@@ -701,7 +701,7 @@ const List = () => {
 
         console.log('amountToSend', amountToSend);
         console.log('payload', payload);
-        return;
+       
         try {
             if (comesFrom === "trials") {
                 await createBookMembershipByfreeTrial(payload, TrialData.id);
@@ -1040,6 +1040,8 @@ const List = () => {
         });
         return totalAmount;
     };
+
+
     const renderContent = (content) => {
         return (
             <div
