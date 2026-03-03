@@ -149,8 +149,8 @@ const List = () => {
             // Add other fields if needed
         },
     ]);
-    console.log('students',students)
-    // console.log('singleClassSchedulesOnly', singleClassSchedulesOnly)
+    console.log('students', students)
+    console.log('singleClassSchedulesOnly', singleClassSchedulesOnly)
     const [emergency, setEmergency] = useState({
         sameAsAbove: false,
         emergencyFirstName: "",
@@ -218,7 +218,7 @@ const List = () => {
             }
         }
     };
-   
+
 
     const handlePlanChange = (plan) => {
         setMembershipPlan(plan);
@@ -657,7 +657,7 @@ const List = () => {
                 return !s.selectedClassData && !s?.classSchedule?.id;
             }
         );
-        console.log('students',students)
+        console.log('students', students)
 
         console.log('missingClass', students)
 
@@ -684,7 +684,9 @@ const List = () => {
             })),
 
             parents: parents.map(({ id, ...rest }) => rest),
-
+            costOfProRatedLessons: pricingBreakdown.costOfProRatedLessons,
+            starterPack: singleClassSchedulesOnly?.venue?.starterPack?.[0]?.price || 0,
+            calculateAmount: amountToSend,
             emergency,
 
             paymentPlanId: membershipPlan?.value ?? null,
@@ -697,7 +699,9 @@ const List = () => {
             }),
         };
 
-
+        console.log('amountToSend', amountToSend);
+        console.log('payload', payload);
+        return;
         try {
             if (comesFrom === "trials") {
                 await createBookMembershipByfreeTrial(payload, TrialData.id);
@@ -1036,8 +1040,6 @@ const List = () => {
         });
         return totalAmount;
     };
-
-
     const renderContent = (content) => {
         return (
             <div
@@ -2073,7 +2075,7 @@ const List = () => {
                                     </div>
                                     {singleClassSchedulesOnly?.venue?.starterPack && (
                                         <p className="text-[18px] py-3 px-6 font-semibold ">
-                                            Starter Pack:<b> {singleClassSchedulesOnly?.starterPack[0]?.price}</b>
+                                            Starter Pack:<b> {singleClassSchedulesOnly?.starterPack?.[0]?.price}</b>
                                         </p>
                                     )}
                                     <div className="space-y-2 px-6 pb-6">

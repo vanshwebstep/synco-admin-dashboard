@@ -16,17 +16,20 @@ const Update = () => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const useQuery = () => new URLSearchParams(useLocation().search);
   const query = useQuery();
+  const storedAdminId = localStorage.getItem("adminId");
+  const role = localStorage.getItem("role");
   const id = query.get("id");
   const [error, setError] = useState("");
   const MyRole = localStorage.getItem("role");
   const { checkPermission } = usePermission();
   const { setAdminInfo } = useNotification();
-
+  const [showApiKey, setShowApiKey] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     phoneNumber: "",
+    gcFranchiseToken: "",
     bio: "",
     position: "",
     passwordHint: "",
@@ -197,11 +200,29 @@ const Update = () => {
     setOriginalData(formData); // update backup on save
     setEditPersonal(false);
     setEditAddress(false);
-    const requiredFields = ["firstName", "lastName", "email", "city", "postalCode"];
+    const requiredFields = [
+      "firstName",
+      "lastName",
+      "email",
+      "city",
+      "postalCode",
+      "gcFranchiseToken",
+    ];
+
+    const fieldLabels = {
+      firstName: "First Name",
+      lastName: "Last Name",
+      email: "Email",
+      city: "City",
+      postalCode: "Postal Code",
+      gcFranchiseToken: "API Token", // 👈 custom label
+    };
+
     const missing = requiredFields.filter((f) => !formData[f]);
 
     if (missing.length > 0) {
-      showError("Missing Fields", `Please fill in: ${missing.join(", ")}`);
+      const formattedFields = missing.map((f) => fieldLabels[f] || f);
+      showError("Missing Fields", `Please fill in: ${formattedFields.join(", ")}`);
       return;
     }
     const data = new FormData();
@@ -214,6 +235,7 @@ const Update = () => {
     data.append("postalCode", formData.postalCode);
     data.append("position", formData.position);
     data.append("phoneNumber", formData.phoneNumber);
+    data.append("gcFranchiseToken", formData.gcFranchiseToken);
     data.append("email", formData.email);
     data.append("role", formData.role?.id || formData.role?.value);
 
@@ -463,7 +485,7 @@ const Update = () => {
   if (!id) return null;
   if (error) return <p className="text-red-500 text-center mt-5">{error}</p>;
   console.log('formData', formData)
-  console.log('editPersonal', editPersonal)
+  console.log('localStorage', localStorage)
   // console.log('isImageremove', isImageremove)
   return (
     <div className="md:max-w-[1043px] w-full mx-auto md:p-4 space-y-8">
@@ -604,6 +626,11 @@ const Update = () => {
                     numeric: true,
                   },
                   {
+                    name: "gcFranchiseToken",
+                    label: "API Key",
+                    placeholder: "API Key",
+                  },
+                  {
                     name: "position",
                     label: "Position",
                     placeholder: "Position",
@@ -615,35 +642,47 @@ const Update = () => {
                     placeholder: "Password",
                     readOnly: true,
                   },
+
                 ].map(({ name, label, placeholder, preventNumbers, numeric, readOnly }) => (
-                  <div key={name}>
-                    <label className="block text-sm font-semibold text-[#282829]">{label}</label>
+                  <div key={name} className="relative">
+                    <label className="block text-sm font-semibold text-[#282829]">
+                      {label}
+                    </label>
+
                     <input
+                      type={
+                        name === "gcFranchiseToken"
+                          ? showApiKey
+                            ? "text"
+                            : "password"
+                          : "text"
+                      }
                       name={name}
                       value={formData[name] || ""}
                       onChange={(e) => {
                         let value = e.target.value;
 
-                        if (numeric) {
-                          // Only allow digits
-                          value = value.replace(/\D/g, "");
-                        } else if (preventNumbers) {
-                          // Remove any digits (also handles paste)
-                          value = value.replace(/\d/g, "");
-                        }
+                        if (numeric) value = value.replace(/\D/g, "");
+                        else if (preventNumbers) value = value.replace(/\d/g, "");
 
                         setFormData((prev) => ({ ...prev, [name]: value }));
                       }}
-                      onKeyPress={(e) => {
-                        if (preventNumbers && /\d/.test(e.key)) e.preventDefault();
-                      }}
                       readOnly={readOnly}
                       placeholder={placeholder}
-                      inputMode={numeric ? "numeric" : undefined}
-                      pattern={numeric ? "[0-9]*" : undefined}
                       className="w-full mt-2 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
 
+                    {name === "gcFranchiseToken" &&
+                      (role === "Super Admin" ||
+                        String(id) === String(storedAdminId)) && (
+                        <button
+                          type="button"
+                          onClick={() => setShowApiKey(!showApiKey)}
+                          className="absolute right-3 top-9 text-sm bg-white p-1 text-blue-600"
+                        >
+                          {showApiKey ? "Hide" : "Show"}
+                        </button>
+                      )}
                   </div>
                 ))}
               </>
@@ -656,6 +695,12 @@ const Update = () => {
                   {
                     label: "Phone:", value: formData.phoneNumber ? `+${formData.phoneNumber}`
                       : "Enter Your Mobile Number"
+                  },
+                  {
+                    label: "API Key:",
+                    value: formData.gcFranchiseToken
+                      ? `${formData.gcFranchiseToken.slice(0, 10)}********`
+                      : "No API Key Set"
                   }, {
                     label: "Bio:",
                     value: (
@@ -666,6 +711,8 @@ const Update = () => {
                     ),
                   },
                   { label: "Password:", value: formData.passwordHint },
+
+
                 ].map(({ label, value }, idx) => (
                   <div key={idx}>
                     <span className="block text-[#717073] font-medium text-sm">{label}</span>

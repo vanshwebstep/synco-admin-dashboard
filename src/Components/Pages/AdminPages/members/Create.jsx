@@ -37,11 +37,16 @@ const Create = () => {
     password: "",
     role: null,
     photo: null,
+    gcFranchiseToken: "",   // 👈 ADD THIS
+
   });
   const isCoach =
     formData?.role?.label === "Coach" ||
     formData?.role?.value === "Coach";
 
+  const isFranchisee =
+    formData?.role?.label === "Franchisee" ||
+    formData?.role?.value === "Franchisee";
   const token = localStorage.getItem("adminToken");
 
   useEffect(() => {
@@ -100,6 +105,10 @@ const Create = () => {
       showError("Invalid Email", "Please enter a valid email address.");
       return;
     }
+    if (isFranchisee && !formData.gcFranchiseToken?.trim()) {
+      showWarning("Missing API Key", "API Key is required for Franchisee role.");
+      return;
+    }
     // console.log("❌ Misdss:", formData);
     if (isCoach) {
       const missingDocs = Object.entries(coachDocs)
@@ -139,6 +148,9 @@ const Create = () => {
       data.append("position", formData.position);
       data.append("phoneNumber", formData.phoneNumber);
       data.append("email", formData.email);
+      if (isFranchisee) {
+        data.append("gcFranchiseToken", formData.gcFranchiseToken);
+      }
       data.append("password", formData.password);
       data.append("role", formData.role?.value);
       if (isCoach) {
@@ -188,6 +200,7 @@ const Create = () => {
           password: "",
           role: null,
           photo: null,
+          gcFranchiseToken: "",
         });
         setPhotoPreview(null);
       } catch (error) {
@@ -329,6 +342,24 @@ const Create = () => {
             />
 
           </div>
+          {isFranchisee && (
+            <div>
+              <label>API Key</label>
+              <input
+                type="text"
+                name="gcFranchiseToken"
+                value={formData.gcFranchiseToken}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    gcFranchiseToken: e.target.value,
+                  }))
+                }
+                className="w-full border border-[#E2E1E5] rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter API Key"
+              />
+            </div>
+          )}
           {isCoach && (
             <div className="space-y-5">
               <div>
