@@ -43,7 +43,7 @@ const List = () => {
         pricePerClassPerChild: 0,
         numberOfLessonsProRated: 0,
         costOfProRatedLessons: 0,
-        joiningFee: 0,
+        starterPackPrice: 0,
         totalAmount: 0
     });
 
@@ -175,7 +175,7 @@ const List = () => {
         singleClassSchedulesOnly?.venue?.paymentGroups[0]?.paymentPlans?.map((plan) => ({
             label: `${plan.title} (${plan.students} student${plan.students > 1 ? "s" : ""})`,
             value: plan.id,
-            joiningFee: plan.joiningFee,
+            starterPackPrice: singleClassSchedulesOnly?.starterPack?.[0]?.price || 0,
             all: plan,
         })) || [];
 
@@ -477,6 +477,8 @@ const List = () => {
             }))
         )
         : [];
+
+    // console.log('allTermRanges', allTermRanges);
     // or `null`, `undefined`, or any fallback value
 
     // Usage inside calendar cell:
@@ -667,9 +669,47 @@ const List = () => {
         }
         setIsSubmitting(true);
         const amountToSend = calculateAmount(selectedDate);
+        const paymentData =
+            Object.keys(filteredPayment).length > 0
+                ? filteredPayment.paymentType === "accesspaysuite"
+                    ? {
+                        paymentType: "accesspaysuite",
+                        firstName: filteredPayment.firstName,
+                        lastName: filteredPayment.lastName,
+                        email: filteredPayment.email,
+                        addressLine1: filteredPayment.addressLine1,
+                        addressLine2: filteredPayment.addressLine2,
+                        city: filteredPayment.city,
+                        postalCode: filteredPayment.postalCode,
+                        account_number: filteredPayment.account_number,
+                        branch_code: filteredPayment.branch_code,
+                        account_holder_name: filteredPayment.account_holder_name,
+                        authorise: filteredPayment.authorise,
+                        price: membershipPlan?.all?.price,
+                        calculateAmount: amountToSend,
+                        proRataAmount:
+                            pricingBreakdown.costOfProRatedLessons,
+                    }
+                    : filteredPayment.paymentType === "bank"
+                        ? {
+                            paymentType: "bank",
+                            firstName: filteredPayment.firstName,
+                            lastName: filteredPayment.lastName,
+                            email: filteredPayment.email,
+                            account_number: filteredPayment.account_number,
+                            branch_code: filteredPayment.branch_code,
+                            account_holder_name: filteredPayment.account_holder_name,
+                            authorise: filteredPayment.authorise,
+                            price: membershipPlan?.all?.price,
+                            // calculateAmount: amountToSend,
+                            proRataAmount:
+                                pricingBreakdown.costOfProRatedLessons,
+                        }
+                        : null
+                : null;
+
         const payload = {
             venueId: singleClassSchedulesOnly?.venue?.id,
-
             startDate: selectedDate,
             totalStudents: students.length,
             keyInformation: selectedKeyInfo,
@@ -680,28 +720,18 @@ const List = () => {
                 classScheduleId:
                     index === 0 || comesFrom
                         ? singleClassSchedulesOnly?.id
-                        : s.selectedClassData?.id
+                        : s.selectedClassData?.id,
             })),
 
             parents: parents.map(({ id, ...rest }) => rest),
-            costOfProRatedLessons: pricingBreakdown.costOfProRatedLessons,
-            starterPack: singleClassSchedulesOnly?.venue?.starterPack?.[0]?.price || 0,
-            calculateAmount: amountToSend,
+            starterPack: membershipPlan?.starterPackPrice || 0,
             emergency,
-
             paymentPlanId: membershipPlan?.value ?? null,
 
-            ...(Object.keys(filteredPayment).length > 0 && {
-                payment: {
-                    ...filteredPayment,
-                    price: membershipPlan?.all?.price, // ✅ added here
-                }
-            }),
+            ...(paymentData && { payment: paymentData }),
         };
-
         console.log('amountToSend', amountToSend);
         console.log('payload', payload);
-       
         try {
             if (comesFrom === "trials") {
                 await createBookMembershipByfreeTrial(payload, TrialData.id);
@@ -801,7 +831,7 @@ const List = () => {
                 interval: plan.interval,
                 students: plan.students,
                 duration: plan.duration,
-                joiningFee: plan.joiningFee,
+                starterPackPrice: singleClassSchedulesOnly?.starterPack?.[0]?.price || 0,
                 holidayCampPackage: plan.HolidayCampPackage,
                 termsAndCondition: plan.termsAndCondition,
             }));
@@ -997,50 +1027,70 @@ const List = () => {
 
         hasInitialized.current = true; // ✅ mark as done
     }, [sessionDatesSet]);
+    console.log('membershipPlan', membershipPlan);
     const calculateAmount = (startDate) => {
         if (!membershipPlan || !startDate) return;
 
-        const pricePerLesson = membershipPlan.all?.priceLesson; // price per class per child
-        const joiningFee = membershipPlan.all?.joiningFee;
+        const pricePerLesson = membershipPlan?.all?.priceLesson || 0;
+        const starterPack = membershipPlan?.starterPackPrice || 0;
+        const durationMonths = membershipPlan?.all?.duration || 1;
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const monthlyPrice =
+            membershipPlan?.all?.price / durationMonths || 0;
 
         const selected = new Date(startDate);
         selected.setHours(0, 0, 0, 0);
 
-        // 1️⃣ All available + future sessions
-        const availableSessions = calendarDays
-            .filter(Boolean)
-            .map(d => new Date(d))
-            .filter(d => {
-                d.setHours(0, 0, 0, 0);
-                const formatted = formatLocalDate(d);
-                return sessionDatesSet.has(formatted) && d >= today;
-            });
+        const selectedMonth = selected.getMonth();
+        const selectedYear = selected.getFullYear();
 
-        // 2️⃣ Pro-rated lessons (from selected start date)
-        const proRatedSessions = availableSessions.filter(d => d >= selected);
+        // convert sessions
+        const allSessions = Array.from(sessionDatesSet)
+            .map((d) => {
+                const date = new Date(d);
+                date.setHours(0, 0, 0, 0);
+                return date;
+            })
+            .sort((a, b) => a - b);
 
-        const numberOfLessons = proRatedSessions.length;
-        const costOfProRatedLessons = numberOfLessons * pricePerLesson;
+        // sessions of selected month only
+        const monthSessions = allSessions.filter(
+            (d) =>
+                d.getMonth() === selectedMonth &&
+                d.getFullYear() === selectedYear
+        );
 
-        const totalAmount = costOfProRatedLessons + joiningFee;
+        // sessions after selected date
+        const remainingSessions = monthSessions.filter((d) => d >= selected);
 
-        setRemainingLessons(numberOfLessons);
-        setCalculatedAmount(totalAmount);
+        let remainingLessons = remainingSessions.length;
+        let proRatedCost = remainingLessons * pricePerLesson;
 
-        // OPTIONAL: if you want all values separately
+        const firstSessionOfMonth = monthSessions[0];
+
+        // if starting from first session of that month
+        if (selected.getTime() === firstSessionOfMonth?.getTime()) {
+            remainingLessons = 0;
+            proRatedCost = 0;
+        }
+
+        const totalToday = proRatedCost + starterPack;
+
+        setRemainingLessons(remainingLessons);
+        setCalculatedAmount(totalToday);
+
         setPricingBreakdown({
             pricePerClassPerChild: pricePerLesson,
-            numberOfLessonsProRated: numberOfLessons,
-            costOfProRatedLessons,
-            joiningFee,
-            totalAmount
+            numberOfLessonsProRated: remainingLessons,
+            costOfProRatedLessons: proRatedCost,
+            starterPack: starterPack,
+            totalAmountToday: totalToday,
+            nextMonthPayment: monthlyPrice,
         });
-        return totalAmount;
-    };
 
+        return totalToday;
+    };
+    console.log("All Available Dates:", Array.from(sessionDatesSet));
 
     const renderContent = (content) => {
         return (
@@ -1247,12 +1297,12 @@ const List = () => {
                             </div>
                         </div>
                         <div className="mb-5">
-                            <label htmlFor="" className="text-base font-semibold">Joining Fee</label>
+                            <label htmlFor="" className="text-base font-semibold">Starter Pack</label>
                             <div className="relative mt-2 ">
                                 <input
                                     type="text"
-                                    placeholder="Choose Joining fee"
-                                    value={membershipPlan?.joiningFee != null ? `£${membershipPlan?.joiningFee}` : ""}
+                                    placeholder=" Starter Pack"
+                                    value={singleClassSchedulesOnly?.starterPack?.[0]?.price != null ? `£${singleClassSchedulesOnly?.starterPack?.[0]?.price}` : ""}
                                     readOnly
                                     className="w-full border border-gray-300 rounded-xl px-3 text-[16px] py-3  focus:outline-none"
                                 />
@@ -1398,12 +1448,16 @@ const List = () => {
                                     </span>
                                 </div>
                                 <div className="flex justify-between text-[#333]">
+                                    <span>Subscription Fee</span>
+                                    <span>£{membershipPlan?.all?.price}</span>
+                                </div>
+                                <div className="flex justify-between text-[#333]">
                                     <span>Monthly Subscription Fee</span>
                                     <span>£{membershipPlan?.all?.priceLesson} p/m</span>
                                 </div>
                                 <div className="flex justify-between text-[#333]">
-                                    <span>One-off Joining Fee</span>
-                                    <span>£{membershipPlan?.all?.joiningFee}</span>
+                                    <span>Starter Pack</span>
+                                    <span>£{singleClassSchedulesOnly?.starterPack?.[0]?.price || 0}</span>
                                 </div>
                                 <div className="flex justify-between text-[#333]">
                                     <span>Number of lessons pro-rated</span>
@@ -2068,18 +2122,18 @@ const List = () => {
                                             £{pricingBreakdown.costOfProRatedLessons}
                                             <sup className="text-[12px] ml-1">(Price per lesson)</sup>
                                             {" + "}
-                                            £{membershipPlan?.all?.joiningFee}
-                                            <sup className="text-[12px] ml-1">(Joining Fee)</sup>
+                                            £{singleClassSchedulesOnly?.starterPack?.[0]?.price}
+                                            <sup className="text-[12px] ml-1">(Starter Pack)</sup>
                                             {" = "}
                                             £{calculatedAmount}
                                         </p>
 
                                     </div>
-                                    {singleClassSchedulesOnly?.venue?.starterPack && (
+                                    {/* {singleClassSchedulesOnly?.venue?.starterPack && (
                                         <p className="text-[18px] py-3 px-6 font-semibold ">
                                             Starter Pack:<b> {singleClassSchedulesOnly?.starterPack?.[0]?.price}</b>
                                         </p>
-                                    )}
+                                    )} */}
                                     <div className="space-y-2 px-6 pb-6">
 
                                         {/* ================= Personal Details ================= */}

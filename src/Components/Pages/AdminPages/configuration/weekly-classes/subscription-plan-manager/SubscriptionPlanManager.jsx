@@ -198,9 +198,9 @@ const SubscriptionPlanManagerList = () => {
 
 
 
-                      <button className="px-8 py-3 text-[16px] font-medium rounded-xl bg-[#237FEA] text-white shadow transition">
+                      {/* <button className="px-8 py-3 text-[16px] font-medium rounded-xl bg-[#237FEA] text-white shadow transition">
                         {plan.joiningFee ? `£${plan.joiningFee} Joining Fee` : "Not Defined Joining Fee"}
-                      </button>
+                      </button> */}
                     </div>
                   ))}
                 </div>

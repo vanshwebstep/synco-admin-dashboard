@@ -733,7 +733,7 @@ const Create = () => {
             setSavedTermIds(prev => new Set(prev).add(data.data.id || term.id));
 
             showSuccess(data.message || 'Term Saved Successfully');
-            navigate('/configuration/weekly-classes/term-dates/list');
+            // navigate('/configuration/weekly-classes/term-dates/list');
 
 
             toggleTerm(term.id);

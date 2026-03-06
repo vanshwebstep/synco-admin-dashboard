@@ -27,12 +27,19 @@ const PlanTabs = ({ selectedPlans = [] }) => {
       </p>
     );
   }
+const intervalOrder = ["Day", "Week", "Month", "Year"];
 
-  const sortedPlans = [...groupByStudents[activeTab]].sort((a, b) => {
-    const intervalOrder = ["Day", "Week", "Month", "Year"];
-    return intervalOrder.indexOf(a.interval) - intervalOrder.indexOf(b.interval);
-  });
+const sortedPlans = [...groupByStudents[activeTab]].sort((a, b) => {
+  // 1️⃣ Sort by interval type
+  const intervalDiff =
+    intervalOrder.indexOf(a.interval) -
+    intervalOrder.indexOf(b.interval);
 
+  if (intervalDiff !== 0) return intervalDiff;
+
+  // 2️⃣ If same interval → sort by duration (1, 3, 6, 12 etc.)
+  return a.duration - b.duration;
+});
   return (
     <div className="w-full">
       <div className="flex justify-center my-6">
@@ -94,11 +101,11 @@ const PlanTabs = ({ selectedPlans = [] }) => {
                   })}
             </ul>
 
-            <button className="px-8 py-3 text-[16px] font-medium rounded-xl bg-[#237FEA] text-white shadow transition">
+            {/* <button className="px-8 py-3 text-[16px] font-medium rounded-xl bg-[#237FEA] text-white shadow transition">
               {plan.joiningFee
                 ? `£${plan.joiningFee} Joining Fee`
                 : "Not Defined Joining Fee"}
-            </button>
+            </button> */}
           </div>
         ))}
       </div>
