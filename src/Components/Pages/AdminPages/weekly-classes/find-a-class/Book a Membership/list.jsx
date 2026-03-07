@@ -1029,67 +1029,72 @@ const List = () => {
     }, [sessionDatesSet]);
     console.log('membershipPlan', membershipPlan);
     const calculateAmount = (startDate) => {
-        if (!membershipPlan || !startDate) return;
+    if (!membershipPlan || !startDate) return;
 
-        const pricePerLesson = membershipPlan?.all?.priceLesson || 0;
-        const starterPack = membershipPlan?.starterPackPrice || 0;
-        const durationMonths = membershipPlan?.all?.duration || 1;
+    const pricePerLesson = membershipPlan?.all?.priceLesson || 0;
 
-        const monthlyPrice =
-            membershipPlan?.all?.price / durationMonths || 0;
+    // ✅ starter pack only if venue allows it
+    const starterPack = singleClassSchedulesOnly?.venue?.starterPack
+        ? membershipPlan?.starterPackPrice || 0
+        : 0;
 
-        const selected = new Date(startDate);
-        selected.setHours(0, 0, 0, 0);
+    const durationMonths = membershipPlan?.all?.duration || 1;
 
-        const selectedMonth = selected.getMonth();
-        const selectedYear = selected.getFullYear();
+    const monthlyPrice =
+        membershipPlan?.all?.price / durationMonths || 0;
 
-        // convert sessions
-        const allSessions = Array.from(sessionDatesSet)
-            .map((d) => {
-                const date = new Date(d);
-                date.setHours(0, 0, 0, 0);
-                return date;
-            })
-            .sort((a, b) => a - b);
+    const selected = new Date(startDate);
+    selected.setHours(0, 0, 0, 0);
 
-        // sessions of selected month only
-        const monthSessions = allSessions.filter(
-            (d) =>
-                d.getMonth() === selectedMonth &&
-                d.getFullYear() === selectedYear
-        );
+    const selectedMonth = selected.getMonth();
+    const selectedYear = selected.getFullYear();
 
-        // sessions after selected date
-        const remainingSessions = monthSessions.filter((d) => d >= selected);
+    // convert sessions
+    const allSessions = Array.from(sessionDatesSet)
+        .map((d) => {
+            const date = new Date(d);
+            date.setHours(0, 0, 0, 0);
+            return date;
+        })
+        .sort((a, b) => a - b);
 
-        let remainingLessons = remainingSessions.length;
-        let proRatedCost = remainingLessons * pricePerLesson;
+    // sessions of selected month only
+    const monthSessions = allSessions.filter(
+        (d) =>
+            d.getMonth() === selectedMonth &&
+            d.getFullYear() === selectedYear
+    );
 
-        const firstSessionOfMonth = monthSessions[0];
+    // sessions after selected date
+    const remainingSessions = monthSessions.filter((d) => d >= selected);
 
-        // if starting from first session of that month
-        if (selected.getTime() === firstSessionOfMonth?.getTime()) {
-            remainingLessons = 0;
-            proRatedCost = 0;
-        }
+    let remainingLessons = remainingSessions.length;
+    let proRatedCost = remainingLessons * pricePerLesson;
 
-        const totalToday = proRatedCost + starterPack;
+    const firstSessionOfMonth = monthSessions[0];
 
-        setRemainingLessons(remainingLessons);
-        setCalculatedAmount(totalToday);
+    // if starting from first session of that month
+    if (selected.getTime() === firstSessionOfMonth?.getTime()) {
+        remainingLessons = 0;
+        proRatedCost = 0;
+    }
 
-        setPricingBreakdown({
-            pricePerClassPerChild: pricePerLesson,
-            numberOfLessonsProRated: remainingLessons,
-            costOfProRatedLessons: proRatedCost,
-            starterPack: starterPack,
-            totalAmountToday: totalToday,
-            nextMonthPayment: monthlyPrice,
-        });
+    const totalToday = proRatedCost + starterPack;
 
-        return totalToday;
-    };
+    setRemainingLessons(remainingLessons);
+    setCalculatedAmount(totalToday);
+
+    setPricingBreakdown({
+        pricePerClassPerChild: pricePerLesson,
+        numberOfLessonsProRated: remainingLessons,
+        costOfProRatedLessons: proRatedCost,
+        starterPack: starterPack,
+        totalAmountToday: totalToday,
+        nextMonthPayment: monthlyPrice,
+    });
+
+    return totalToday;
+};
     console.log("All Available Dates:", Array.from(sessionDatesSet));
 
     const renderContent = (content) => {
@@ -1296,27 +1301,24 @@ const List = () => {
 
                             </div>
                         </div>
-                        <div className="mb-5">
-                            <label htmlFor="" className="text-base font-semibold">Starter Pack</label>
-                            <div className="relative mt-2 ">
-                                <input
-                                    type="text"
-                                    placeholder=" Starter Pack"
-                                    value={singleClassSchedulesOnly?.starterPack?.[0]?.price != null ? `£${singleClassSchedulesOnly?.starterPack?.[0]?.price}` : ""}
-                                    readOnly
-                                    className="w-full border border-gray-300 rounded-xl px-3 text-[16px] py-3  focus:outline-none"
-                                />
-                                {/* <Select
-                                    options={[{ label: "None", value: "none" }]} // Replace with your relationOptions
-                                    value={null}
-                                    onChange={() => { }}
-                                    placeholder="Choose Joining fee"
-                                    className="mt-2"
-                                    classNamePrefix="react-select"
-                                /> */}
-
-                            </div>
-                        </div>
+                       {singleClassSchedulesOnly?.venue?.starterPack && (
+    <div className="mb-5">
+        <label className="text-base font-semibold">Starter Pack</label>
+        <div className="relative mt-2">
+            <input
+                type="text"
+                placeholder="Starter Pack"
+                value={
+                    singleClassSchedulesOnly?.starterPack?.[0]?.price != null
+                        ? `£${singleClassSchedulesOnly?.starterPack?.[0]?.price}`
+                        : ""
+                }
+                readOnly
+                className="w-full border border-gray-300 rounded-xl px-3 text-[16px] py-3 focus:outline-none"
+            />
+        </div>
+    </div>
+)}
                     </div>
 
                     <div className="space-y-3 bg-white p-6 rounded-3xl shadow-sm ">
@@ -1455,10 +1457,12 @@ const List = () => {
                                     <span>Monthly Subscription Fee</span>
                                     <span>£{membershipPlan?.all?.priceLesson} p/m</span>
                                 </div>
-                                <div className="flex justify-between text-[#333]">
-                                    <span>Starter Pack</span>
-                                    <span>£{singleClassSchedulesOnly?.starterPack?.[0]?.price || 0}</span>
-                                </div>
+                                {singleClassSchedulesOnly?.venue?.starterPack && (
+                                    <div className="flex justify-between text-[#333]">
+                                        <span>Starter Pack</span>
+                                        <span>£{singleClassSchedulesOnly?.starterPack?.[0]?.price || 0}</span>
+                                    </div>
+                                )}
                                 <div className="flex justify-between text-[#333]">
                                     <span>Number of lessons pro-rated</span>
                                     <span>{pricingBreakdown.numberOfLessonsProRated}</span>
@@ -2118,16 +2122,21 @@ const List = () => {
                                     </div>
                                     <div className="text-left directDebitBg p-6 mb-4 m-6 rounded-2xl ">
                                         <p className="text-white text-[16px]">{membershipPlan?.label || ''}</p>
-                                        <p className="font-bold text-white text-[24px]">
-                                            £{pricingBreakdown.costOfProRatedLessons}
-                                            <sup className="text-[12px] ml-1">(Price per lesson)</sup>
-                                            {" + "}
-                                            £{singleClassSchedulesOnly?.starterPack?.[0]?.price}
-                                            <sup className="text-[12px] ml-1">(Starter Pack)</sup>
-                                            {" = "}
-                                            £{calculatedAmount}
-                                        </p>
+                                     <p className="font-bold text-white text-[24px]">
+    £{pricingBreakdown.costOfProRatedLessons}
+    <sup className="text-[12px] ml-1">(Price per lesson)</sup>
 
+    {singleClassSchedulesOnly?.venue?.starterPack && (
+        <>
+            {" + "}
+            £{singleClassSchedulesOnly?.starterPack?.[0]?.price}
+            <sup className="text-[12px] ml-1">(Starter Pack)</sup>
+        </>
+    )}
+
+    {" = "}
+    £{calculatedAmount}
+</p>
                                     </div>
                                     {/* {singleClassSchedulesOnly?.venue?.starterPack && (
                                         <p className="text-[18px] py-3 px-6 font-semibold ">

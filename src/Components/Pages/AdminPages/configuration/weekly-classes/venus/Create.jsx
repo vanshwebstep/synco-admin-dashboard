@@ -23,6 +23,7 @@ const Create = ({ groups, termGroup }) => {
   const [selectedTerms, setSelectedTerms] = useState([]);
   const [selectedSub, setSelectedSub] = useState(null);
   const [selectedTermIds, setSelectedTermIds] = useState([]);
+  console.log('formData', formData);  
   const validateForm = () => {
     if (!formData.area?.trim()) return 'Area is required';
     if (!formData.name?.trim()) return 'Name of Venue is required';
