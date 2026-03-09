@@ -104,8 +104,8 @@ const List = () => {
         lastName: "",
         email: "",
         price: '',
-        addressLine1: "",
-        addressLine2: "",
+        line1: "",
+        // town: "",
         city: "",
         postalCode: "",
 
@@ -355,7 +355,7 @@ const List = () => {
             !payment.account_holder_name ||
             !payment.firstName ||
             !payment.email ||
-            !payment.addressLine1 ||
+            !payment.line1 ||
             !payment.city ||
             !payment.postalCode ||
             !payment.account_number ||
@@ -677,10 +677,10 @@ const List = () => {
                         firstName: filteredPayment.firstName,
                         lastName: filteredPayment.lastName,
                         email: filteredPayment.email,
-                        addressLine1: filteredPayment.addressLine1,
-                        addressLine2: filteredPayment.addressLine2,
+                        line1: filteredPayment.line1,
+                        // town: filteredPayment.town,
                         city: filteredPayment.city,
-                        postalCode: filteredPayment.postalCode,
+                        postcode: filteredPayment.postalCode,
                         account_number: filteredPayment.account_number,
                         branch_code: filteredPayment.branch_code,
                         account_holder_name: filteredPayment.account_holder_name,
@@ -2303,28 +2303,28 @@ const List = () => {
                                                         required
                                                         placeholder="Street address"
                                                         className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                        value={payment.addressLine1}
+                                                        value={payment.line1}
                                                         onChange={(e) =>
-                                                            setPayment({ ...payment, addressLine1: e.target.value })
+                                                            setPayment({ ...payment, line1: e.target.value })
                                                         }
                                                     />
                                                 </div>
 
                                                 {/* Address Line 2 */}
-                                                <div>
+                                                {/* <div>
                                                     <label className="block text-[16px] font-semibold">
-                                                        Address Line 2
+                                                        Town
                                                     </label>
                                                     <input
                                                         type="text"
-                                                        placeholder="Apartment, suite, etc."
+                                                        placeholder="Town"
                                                         className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                        value={payment.addressLine2}
+                                                        value={payment.town}
                                                         onChange={(e) =>
-                                                            setPayment({ ...payment, addressLine2: e.target.value })
+                                                            setPayment({ ...payment, town: e.target.value })
                                                         }
                                                     />
-                                                </div>
+                                                </div> */}
 
                                                 {/* City & Postal Code */}
                                                 <div className="flex gap-4">
