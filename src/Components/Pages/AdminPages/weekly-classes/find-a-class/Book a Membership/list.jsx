@@ -136,6 +136,10 @@ const List = () => {
     // console.log('TrialData', TrialData)
     // console.log('classId', classId)
     const { fetchFindClassID, singleClassSchedulesOnly, loading } = useClassSchedule() || {};
+    
+    const isFranchisee =
+        singleClassSchedulesOnly?.venue?.admins?.role?.role === "Franchisee";
+
     const [students, setStudents] = useState([
         {
             studentFirstName: '',
@@ -348,27 +352,26 @@ const List = () => {
             }
         });
     };
-    const isCardInvalid =
-        payment.paymentType === "accesspaysuite" &&
-        (
-            !payment.account_holder_name ||
-            !payment.firstName ||
-            !payment.email ||
-            !payment.line1 ||
-            !payment.city ||
-            !payment.postalCode ||
-            !payment.account_number ||
-            !payment.branch_code
-        );
-
+   const isCardInvalid =
+  !isFranchisee &&
+  (
+    !payment.account_holder_name ||
+    !payment.firstName ||
+    !payment.email ||
+    !payment.line1 ||
+    !payment.city ||
+    !payment.postalCode ||
+    !payment.account_number ||
+    !payment.branch_code
+  );
     const isBankInvalid =
-        payment.paymentType === "bank" &&
-        (
-            !payment.account_holder_name ||
-            !payment.firstName ||
-            !payment.account_number ||
-            !payment.branch_code
-        );
+  isFranchisee &&
+  (
+    !payment.account_holder_name ||
+    !payment.firstName ||
+    !payment.account_number ||
+    !payment.branch_code
+  );
     // console.log('isCardInvalid', isCardInvalid)
     // console.log('isBankInvalid', isBankInvalid)
     const formatLocalDate = (date) => {
@@ -669,43 +672,37 @@ const List = () => {
         setIsSubmitting(true);
         const amountToSend = calculateAmount(selectedDate);
         const paymentData =
-            Object.keys(filteredPayment).length > 0
-                ? filteredPayment.paymentType === "accesspaysuite"
-                    ? {
-                        paymentType: "accesspaysuite",
-                        firstName: filteredPayment.firstName,
-                        lastName: filteredPayment.lastName,
-                        email: filteredPayment.email,
-                        line1: filteredPayment.line1,
-                        // town: filteredPayment.town,
-                        city: filteredPayment.city,
-                        postcode: filteredPayment.postalCode,
-                        account_number: filteredPayment.account_number,
-                        branch_code: filteredPayment.branch_code,
-                        account_holder_name: filteredPayment.account_holder_name,
-                        authorise: filteredPayment.authorise,
-                        price: pricingBreakdown.nextMonthPayment,
-                        calculateAmount: amountToSend,
-                        proRataAmount:
-                            pricingBreakdown.costOfProRatedLessons,
-                    }
-                    : filteredPayment.paymentType === "bank"
-                        ? {
-                            paymentType: "bank",
-                            firstName: filteredPayment.firstName,
-                            lastName: filteredPayment.lastName,
-                            email: filteredPayment.email,
-                            account_number: filteredPayment.account_number,
-                            branch_code: filteredPayment.branch_code,
-                            account_holder_name: filteredPayment.account_holder_name,
-                            authorise: filteredPayment.authorise,
-                            price: pricingBreakdown.nextMonthPayment,
-                            // calculateAmount: amountToSend,
-                            proRataAmount:
-                                pricingBreakdown.costOfProRatedLessons,
-                        }
-                        : null
-                : null;
+  Object.keys(filteredPayment).length > 0
+    ? isFranchisee
+      ? {
+          paymentType: "bank",
+          firstName: filteredPayment.firstName,
+          lastName: filteredPayment.lastName,
+          email: filteredPayment.email,
+          account_number: filteredPayment.account_number,
+          branch_code: filteredPayment.branch_code,
+          account_holder_name: filteredPayment.account_holder_name,
+          authorise: filteredPayment.authorise,
+          price: pricingBreakdown.nextMonthPayment,
+          proRataAmount: pricingBreakdown.costOfProRatedLessons,
+        }
+      : {
+          paymentType: "accesspaysuite",
+          firstName: filteredPayment.firstName,
+          lastName: filteredPayment.lastName,
+          email: filteredPayment.email,
+          line1: filteredPayment.line1,
+          city: filteredPayment.city,
+          postcode: filteredPayment.postalCode,
+          account_number: filteredPayment.account_number,
+          branch_code: filteredPayment.branch_code,
+          account_holder_name: filteredPayment.account_holder_name,
+          authorise: filteredPayment.authorise,
+          price: pricingBreakdown.nextMonthPayment,
+          calculateAmount: amountToSend,
+          proRataAmount: pricingBreakdown.costOfProRatedLessons,
+        }
+    : null;
 
         const payload = {
             venueId: singleClassSchedulesOnly?.venue?.id,
@@ -724,8 +721,8 @@ const List = () => {
 
             parents: parents.map(({ id, ...rest }) => rest),
             starterPack: singleClassSchedulesOnly?.venue?.starterPack
-        ? membershipPlan?.starterPackPrice || 0
-        : 0,
+                ? membershipPlan?.starterPackPrice || 0
+                : 0,
             emergency,
             paymentPlanId: membershipPlan?.value ?? null,
 
@@ -1096,6 +1093,7 @@ const List = () => {
 
         return totalToday;
     };
+
     console.log('pricingBreakdown', pricingBreakdown);
     console.log("All Available Dates:", Array.from(sessionDatesSet));
 
@@ -1107,8 +1105,6 @@ const List = () => {
             />
         );
     };
-
-
 
     if (loading) return <Loader />;
 
@@ -1328,53 +1324,53 @@ const List = () => {
                             <h2 className="text-[24px] font-semibold">Select start date </h2>
                             <div className="rounded p-4 mt-6 text-center text-base w-full max-w-md mx-auto">
                                 {/* Header */}
-                              <div className="flex justify-center gap-5 items-center mb-3">
+                                <div className="flex justify-center gap-5 items-center mb-3">
 
-  {/* Previous Month */}
-  <div className="relative group">
-    <button
-      onClick={membershipPlan ? goToPreviousMonth : undefined}
-      className={`w-8 h-8 rounded-full border border-black flex items-center justify-center
-      ${!membershipPlan 
-        ? "bg-white text-black opacity-40 cursor-not-allowed" 
-        : "bg-white text-black hover:bg-black hover:text-white"}
+                                    {/* Previous Month */}
+                                    <div className="relative group">
+                                        <button
+                                            onClick={membershipPlan ? goToPreviousMonth : undefined}
+                                            className={`w-8 h-8 rounded-full border border-black flex items-center justify-center
+      ${!membershipPlan
+                                                    ? "bg-white text-black opacity-40 cursor-not-allowed"
+                                                    : "bg-white text-black hover:bg-black hover:text-white"}
       `}
-    >
-      <ChevronLeft className="w-5 h-5" />
-    </button>
+                                        >
+                                            <ChevronLeft className="w-5 h-5" />
+                                        </button>
 
-    {!membershipPlan && (
-      <span className="absolute hidden group-hover:block bottom-10 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-        Please select membership plan first
-      </span>
-    )}
-  </div>
+                                        {!membershipPlan && (
+                                            <span className="absolute hidden group-hover:block bottom-10 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                                                Please select membership plan first
+                                            </span>
+                                        )}
+                                    </div>
 
-  <p className="font-semibold text-[20px]">
-    {currentDate.toLocaleString("default", { month: "long" })} {year}
-  </p>
+                                    <p className="font-semibold text-[20px]">
+                                        {currentDate.toLocaleString("default", { month: "long" })} {year}
+                                    </p>
 
-  {/* Next Month */}
-  <div className="relative group">
-    <button
-      onClick={membershipPlan ? goToNextMonth : undefined}
-      className={`w-8 h-8 rounded-full border border-black flex items-center justify-center
-      ${!membershipPlan 
-        ? "bg-white text-black opacity-40 cursor-not-allowed" 
-        : "bg-white text-black hover:bg-black hover:text-white"}
+                                    {/* Next Month */}
+                                    <div className="relative group">
+                                        <button
+                                            onClick={membershipPlan ? goToNextMonth : undefined}
+                                            className={`w-8 h-8 rounded-full border border-black flex items-center justify-center
+      ${!membershipPlan
+                                                    ? "bg-white text-black opacity-40 cursor-not-allowed"
+                                                    : "bg-white text-black hover:bg-black hover:text-white"}
       `}
-    >
-      <ChevronRight className="w-5 h-5" />
-    </button>
+                                        >
+                                            <ChevronRight className="w-5 h-5" />
+                                        </button>
 
-    {!membershipPlan && (
-      <span className="absolute hidden group-hover:block bottom-10 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-        Please select membership plan first
-      </span>
-    )}
-  </div>
+                                        {!membershipPlan && (
+                                            <span className="absolute hidden group-hover:block bottom-10 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                                                Please select membership plan first
+                                            </span>
+                                        )}
+                                    </div>
 
-</div>
+                                </div>
 
                                 {/* Day Labels */}
                                 <div className="grid grid-cols-7 text-xs gap-1 text-[18px] text-gray-500 mb-1">
@@ -1412,33 +1408,32 @@ const List = () => {
                                                     const isPastAvailable = isAvailable && current < today;
 
                                                     return (
-                                                     <div
-  key={i}
-  className="relative group"
->
-  <div
-    onClick={() => isAvailable && handleDateClick(date)}
-    className={`w-8 h-8 flex text-[18px] items-center justify-center mx-auto text-base rounded-full
-    ${
-      !membershipPlan
-        ? "cursor-not-allowed opacity-40 bg-white"
-        : isPastAvailable
-        ? "bg-red-200 text-red-700 cursor-not-allowed"
-        : isAvailable
-        ? "cursor-pointer bg-sky-200"
-        : "cursor-not-allowed opacity-40 bg-white"
-    }
+                                                        <div
+                                                            key={i}
+                                                            className="relative group"
+                                                        >
+                                                            <div
+                                                                onClick={() => isAvailable && handleDateClick(date)}
+                                                                className={`w-8 h-8 flex text-[18px] items-center justify-center mx-auto text-base rounded-full
+    ${!membershipPlan
+                                                                        ? "cursor-not-allowed opacity-40 bg-white"
+                                                                        : isPastAvailable
+                                                                            ? "bg-red-200 text-red-700 cursor-not-allowed"
+                                                                            : isAvailable
+                                                                                ? "cursor-pointer bg-sky-200"
+                                                                                : "cursor-not-allowed opacity-40 bg-white"
+                                                                    }
     ${isSelected ? "selectedDate text-white font-bold" : ""}`}
-  >
-    {date.getDate()}
-  </div>
+                                                            >
+                                                                {date.getDate()}
+                                                            </div>
 
-  {!membershipPlan && (
-    <span className="absolute hidden group-hover:block bottom-10 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-      Please select membership plan first
-    </span>
-  )}
-</div>
+                                                            {!membershipPlan && (
+                                                                <span className="absolute hidden group-hover:block bottom-10 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                                                                    Please select membership plan first
+                                                                </span>
+                                                            )}
+                                                        </div>
 
 
                                                     );
@@ -2212,31 +2207,16 @@ const List = () => {
                                         <h3 className="font-semibold text-[20px] pt-2">Bank Details</h3>
 
                                         <div className="flex gap-6 mt-3">
-                                            <label className="flex items-center gap-2">
-                                                <input
-                                                    type="radio"
-                                                    name="paymentType"
-                                                    value="bank"
-                                                    checked={payment.paymentType === "bank"}
-                                                    onChange={(e) => setPayment({ ...payment, paymentType: e.target.value })}
-                                                />
-                                                <span>Gocardless</span>
-                                            </label>
-
-                                            <label className="flex items-center gap-2">
-                                                <input
-                                                    type="radio"
-                                                    name="paymentType"
-                                                    value="accesspaysuite"
-                                                    checked={payment.paymentType === "accesspaysuite"}
-                                                    onChange={(e) => setPayment({ ...payment, paymentType: e.target.value })}
-                                                />
-                                                <span>Access Pay Suite</span>
-                                            </label>
-                                        </div>
+  <p className="text-[16px] font-semibold">
+    Payment Method:{" "}
+    <span className="font-normal">
+      {isFranchisee ? "GoCardless" : "Access Pay Suite"}
+    </span>
+  </p>
+</div>
 
                                         {/* ================= BANK (GOCARDLESS) ================= */}
-                                        {payment.paymentType === "bank" && (
+                                        {isFranchisee && (
                                             <div className="mt-4 space-y-4">
 
                                                 {/* Account Holder Name (AUTO SPLIT) */}
@@ -2300,7 +2280,7 @@ const List = () => {
                                         )}
 
                                         {/* ================= CARD (ACCESS PAY SUITE) ================= */}
-                                        {payment.paymentType === "accesspaysuite" && (
+                                        {!isFranchisee && (
                                             <div className="mt-5 space-y-4">
 
                                                 {/* Account Holder Name (AUTO SPLIT) */}
@@ -2474,13 +2454,11 @@ const List = () => {
                                     <div className="w-full mx-auto flex justify-center" >
                                         <button
                                             type="button"
-                                            disabled={
-                                                isSubmitting || // disable while submitting
-                                                !payment.authorise ||
-                                                (payment.paymentType === "bank" && isBankInvalid) ||
-                                                (payment.paymentType === "accesspaysuite" &&
-                                                    (isCardInvalid))
-                                            }
+                                           disabled={
+  isSubmitting ||
+  !payment.authorise ||
+  (isFranchisee ? isBankInvalid : isCardInvalid)
+}
                                             onClick={async () => {
                                                 setIsSubmitting(true); // start loading
                                                 try {
@@ -2492,13 +2470,13 @@ const List = () => {
                                                 }
                                             }}
                                             className={`w-full max-w-[90%] mx-auto my-3 text-white text-[16px] py-3 rounded-lg font-semibold
-${isSubmitting ||
-                                                    !payment.authorise ||
-                                                    isCardInvalid ||
-                                                    isBankInvalid
-                                                    ? "bg-gray-400 cursor-not-allowed"
-                                                    : "bg-[#237FEA] cursor-pointer"
-                                                }`}
+${
+  isSubmitting ||
+  !payment.authorise ||
+  (isFranchisee ? isBankInvalid : isCardInvalid)
+    ? "bg-gray-400 cursor-not-allowed"
+    : "bg-[#237FEA] cursor-pointer"
+}`}
 
                                         >
                                             {isSubmitting ? "Submitting..." : "Set up Direct Debit"}

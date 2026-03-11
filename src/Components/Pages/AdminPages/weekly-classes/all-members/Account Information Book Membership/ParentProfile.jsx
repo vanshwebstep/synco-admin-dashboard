@@ -986,21 +986,25 @@ const ParentProfile = ({ profile }) => {
                                     </button>
                                 )}
 
-                                {(!profile.freezeBooking && (status === "active" || (status === "request_to_cancel" && canCancelTrial))) ? (
-                                    <button
-                                        onClick={() => setFreezeMembership(true)}
-                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
-                                    >
-                                        Freeze Membership
-                                    </button>
-                                ) : profile.freezeBooking ? (
-                                    <button
-                                        onClick={() => setReactivateMembership(true)}
-                                        className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
-                                    >
-                                        (Freezing Progress) Reactivate Membership
-                                    </button>
-                                ) : null}
+                              {(
+    !profile.freezeBooking &&
+    (status === "active" || (status === "request_to_cancel" && canCancelTrial)) &&
+    !(profile?.paymentPlan?.duration === 1 && profile?.paymentPlan?.interval === "Month")
+) ? (
+    <button
+        onClick={() => setFreezeMembership(true)}
+        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+    >
+        Freeze Membership
+    </button>
+) : profile.freezeBooking ? (
+    <button
+        onClick={() => setReactivateMembership(true)}
+        className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+    >
+        (Freezing Progress) Reactivate Membership
+    </button>
+) : null}
 
 
                                 {(status === "active" || (status === "request_to_cancel" && canCancelTrial)) && (
