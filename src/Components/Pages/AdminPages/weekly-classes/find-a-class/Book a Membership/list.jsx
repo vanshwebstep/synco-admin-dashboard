@@ -733,7 +733,7 @@ const List = () => {
         };
         console.log('amountToSend', amountToSend);
         console.log('payload', payload);
-        return;
+        // return;
         try {
             if (comesFrom === "trials") {
                 await createBookMembershipByfreeTrial(payload, TrialData.id);
