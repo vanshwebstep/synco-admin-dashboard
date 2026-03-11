@@ -49,6 +49,7 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
     classSchedule,
     paymentPlan,
     attempt,
+    payments,
     bookedByAdmin,
     startDate,
     dateBooked,
@@ -56,7 +57,7 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
     icon,    // header icon
     progress // e.g. "6/12 months"
   } = serviceHistory;
-  console.log('bookedBy')
+  console.log('payments',payments)
   const statusStyles = {
     attended: "bg-green-500 text-white",
     active: "bg-green-500 text-white",
@@ -66,6 +67,9 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
     cancelled: "bg-red-500 text-white",
     request_to_cancel: "bg-white text-red-500 ",
   };
+  const recurringPayment = payments?.find(
+  (p) => p.paymentCategory === "recurring"
+);
   return (
     <div className="transition-all duration-300 flex-1 bg-white">
       <div className="rounded-4xl w-full">
@@ -196,14 +200,13 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
                         {labels.price || "Price"}
                       </div>
                       <div className="text-[16px] font-semibold text-[#384455]">
-                        {paymentPlan?.price ? (
-                          <>
-                            £
-                            {paymentPlan?.price}
-                          </>
-                        ) : (
-                          "-"
-                        )}
+                      {recurringPayment?.price ? (
+  <>£{recurringPayment.price}</>
+) : paymentPlan?.price ? (
+  <>£{paymentPlan.price}</>
+) : (
+  "-"
+)}
                       </div>
                     </div>
                   )}

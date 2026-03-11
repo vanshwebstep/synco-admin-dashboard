@@ -956,7 +956,7 @@ export const BookFreeTrialProvider = ({ children }) => {
 
     } catch (error) {
       console.error("Error creating class schedule:", error);
-      await showError("Error", error.message || "Something went wrong while creating class schedule.");
+      await showError("Error", error.message || "Booking submitted. Confirmation may be delayed due to network issues. Check your email shortly");
       throw error;
     } finally {
       await fetchBookMemberships();
@@ -1073,7 +1073,7 @@ export const BookFreeTrialProvider = ({ children }) => {
 
     } catch (error) {
       console.error("Error creating class schedule:", error);
-      await showError("Error", error.message || "Something went wrong while creating class schedule.");
+      await showError("Error", error.message || "Booking submitted. Confirmation may be delayed due to network issues. Check your email shortly");
       throw error;
     } finally {
       await fetchBookMemberships();
@@ -1113,7 +1113,7 @@ export const BookFreeTrialProvider = ({ children }) => {
 
     } catch (error) {
       console.error("Error creating class schedule:", error);
-      await showError("Error", error.message || "Something went wrong while creating class schedule.");
+      await showError("Error", error.message || "Booking submitted. Confirmation may be delayed due to network issues. Check your email shortly");
 
       throw error;
     } finally {

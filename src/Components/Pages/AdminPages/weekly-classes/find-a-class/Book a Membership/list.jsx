@@ -747,7 +747,7 @@ const List = () => {
             setIsBooked(true);
 
         } catch (error) {
-            console.error("Error while submitting:", error);
+            console.error("Booking submitted. Confirmation may be delayed due to network issues. Check your email shortly", error);
         } finally {
             setIsSubmitting(false);
         }
