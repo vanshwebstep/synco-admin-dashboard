@@ -1181,10 +1181,8 @@ const Create = () => {
                                 <button
                                     className={`min-w-40 font-semibold px-6 py-3 rounded-lg text-[14px] w-full md:w-auto 
         ${!isGroupSaved ? 'bg-gray-400 cursor-not-allowed text-white' : 'bg-[#237FEA] hover:bg-blue-700 text-white'}`}
-                                    onClick={() => {
-                                        const activeTerm = terms.find(t => t.isOpen);
-                                        if (activeTerm) handleSaveTerm(activeTerm);
-                                    }} disabled={!isGroupSaved || isLoading}
+                                      onClick={handleSaveAll}
+                                    disabled={!isGroupSaved || isLoading}
                                 >
                                     {'Save All'}
                                 </button>

@@ -195,36 +195,44 @@ const Update = () => {
     setPermissions([]);
     setShowRoleModal(true);
   };
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setOriginalData(formData); // update backup on save
-    setEditPersonal(false);
-    setEditAddress(false);
-    const requiredFields = [
-      "firstName",
-      "lastName",
-      "email",
-      "city",
-      "postalCode",
-      "gcFranchiseToken",
-    ];
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setOriginalData(formData);
+  setEditPersonal(false);
+  setEditAddress(false);
 
-    const fieldLabels = {
-      firstName: "First Name",
-      lastName: "Last Name",
-      email: "Email",
-      city: "City",
-      postalCode: "Postal Code",
-      gcFranchiseToken: "API Token", // 👈 custom label
-    };
+  let requiredFields = [
+    "firstName",
+    "lastName",
+    "email",
+    "city",
+    "postalCode",
+  ];
 
-    const missing = requiredFields.filter((f) => !formData[f]);
+  // 👇 Only add API token if role is Franchisee
+  if (
+    formData?.role?.label === "Franchisee" ||
+    formData?.role?.value === "Franchisee"
+  ) {
+    requiredFields.push("gcFranchiseToken");
+  }
 
-    if (missing.length > 0) {
-      const formattedFields = missing.map((f) => fieldLabels[f] || f);
-      showError("Missing Fields", `Please fill in: ${formattedFields.join(", ")}`);
-      return;
-    }
+  const fieldLabels = {
+    firstName: "First Name",
+    lastName: "Last Name",
+    email: "Email",
+    city: "City",
+    postalCode: "Postal Code",
+    gcFranchiseToken: "API Token",
+  };
+
+  const missing = requiredFields.filter((f) => !formData[f]);
+
+  if (missing.length > 0) {
+    const formattedFields = missing.map((f) => fieldLabels[f] || f);
+    showError("Missing Fields", `Please fill in: ${formattedFields.join(", ")}`);
+    return;
+  }
     const data = new FormData();
     data.append("firstName", formData.firstName);
     if (formData.lastName) {

@@ -544,7 +544,13 @@ const StudentProfile = ({ profile }) => {
         (cls) => cls.value === waitingListData?.classScheduleId
     );
     if (loading) return <Loader />;
-
+    const classInfo = (profile?.students || [])
+        .map((student) => {
+            const className = student?.classSchedule?.className || "-";
+            const studentName = `${student?.studentFirstName || ""} ${student?.studentLastName || ""}`.trim();
+            return `${className} (${studentName})`;
+        })
+        .join(", ");
 
     return (
         <>
@@ -911,14 +917,7 @@ const StudentProfile = ({ profile }) => {
                                         )}
                                     </button>
                                 </div>
-                                {(status === "frozen" || status === "cancelled") && canRebooking && (
-                                    <button
-                                        onClick={() => setReactivateMembership(true)}
-                                        className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
-                                    >
-                                        Reactivate Membership
-                                    </button>
-                                )}
+                           
 
                                 {(status === "active" || status === "frozen" || status === "cancelled" || status === "request_to_cancel") && (
                                     <button
@@ -933,25 +932,25 @@ const StudentProfile = ({ profile }) => {
                                     </button>
                                 )}
 
-                               {(
-    !profile.freezeBooking &&
-    (status === "active" || (status === "request_to_cancel" && canCancelTrial)) &&
-    !(profile?.paymentPlan?.duration === 1 && profile?.paymentPlan?.interval === "Month")
-) ? (
-    <button
-        onClick={() => setFreezeMembership(true)}
-        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
-    >
-        Freeze Membership
-    </button>
-) : profile.freezeBooking ? (
-    <button
-        onClick={() => setReactivateMembership(true)}
-        className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
-    >
-        (Freezing Progress) Reactivate Membership
-    </button>
-) : null}
+                                {(
+                                    !profile.freezeBooking &&
+                                    (status === "active" || (status === "request_to_cancel" && canCancelTrial)) &&
+                                    !(profile?.paymentPlan?.duration === 1 && profile?.paymentPlan?.interval === "Month")
+                                ) ? (
+                                    <button
+                                        onClick={() => setFreezeMembership(true)}
+                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                    >
+                                        Freeze Membership
+                                    </button>
+                                ) : profile.freezeBooking ? (
+                                    <button
+                                        onClick={() => setReactivateMembership(true)}
+                                        className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+                                    >
+                                        Reactivate Membership
+                                    </button>
+                                ) : null}
 
 
                                 {(status === "active" || (status === "request_to_cancel" && canCancelTrial)) && (
@@ -1294,7 +1293,7 @@ const StudentProfile = ({ profile }) => {
                                     <input
                                         type="text"
                                         className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                        value={classSchedule?.className || "-"}
+                                        value={classInfo || "-"}
                                         readOnly
                                     />
                                 </div>
