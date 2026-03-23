@@ -68,23 +68,35 @@ export const PaymentPlanContextProvider = ({ children }) => {
   }, [token, fetchPackages]);
 
   // Update package
-  const updatePackage = useCallback(async (id, data) => {
-    if (!token) return;
-    try {
-      await fetch(`${API_BASE_URL}/api/admin/payment-plan/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
-      await fetchPackages();
-    } catch (err) {
-      console.error("Failed to update package:", err);
-    }
-  }, [token, fetchPackages]);
+const updatePackage = useCallback(async (id, data) => {
+  if (!token) return { status: false, message: "No token" };
 
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/payment-plan/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    const res = await response.json(); // ✅ IMPORTANT
+
+    // ❗ If API failed
+    if (!response.ok || !res?.status) {
+      return res;
+    }
+
+    // 👉 Optional: refresh list
+    await fetchPackages();
+
+    return res; // ✅ RETURN response
+  } catch (err) {
+    console.error("Failed to update package:", err);
+    return { status: false, message: "Network error" };
+  }
+}, [token, fetchPackages]);
   // Delete package
   const deletePackage = useCallback(async (id) => {
     if (!token) return;

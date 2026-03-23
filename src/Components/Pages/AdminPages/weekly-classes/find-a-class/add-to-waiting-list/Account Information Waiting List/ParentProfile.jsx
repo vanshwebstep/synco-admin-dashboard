@@ -18,12 +18,12 @@ import { showSuccess, showError, showConfirm, showWarning } from '../../../../..
 import { useNavigate } from 'react-router-dom';
 import PhoneInput from 'react-phone-input-2';
 const ParentProfile = ({ profile }) => {
-    
-        const [textloading, setTextLoading] = useState(null);
-    
+
+    const [textloading, setTextLoading] = useState(null);
+
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const {
-        loading,serviceHistoryWaitingList,
+        loading, serviceHistoryWaitingList,
         addtoWaitingListSubmit, cancelMembershipSubmit,
         sendWaitingListMail, transferMembershipSubmit,
         freezerMembershipSubmit, reactivateDataSubmit, cancelWaitingListSpot, updateWaitingListFamily
@@ -59,6 +59,7 @@ const ParentProfile = ({ profile }) => {
     const [editingIndex, setEditingIndex] = useState(null);
 
     const students = profile?.students || [];
+    console.log('students', students)
     const [parents, setParents] = useState(profile.parents || []);
     const [emergencyContacts, setEmergencyContacts] = useState(profile?.emergency || []);
     console.log('profile', profile)
@@ -464,6 +465,20 @@ const ParentProfile = ({ profile }) => {
             if (result.isConfirmed) {
                 // Navigate to your component/route
                 navigate("/weekly-classes/find-a-class/book-a-membership", {
+                    state: { TrialData: profile, comesFrom: "waitingList" },
+                });
+            }
+        });
+    };
+     const handleBookFreeTrial = () => {
+        showConfirm(
+            "Are you sure?",
+            "Do you want to book a free trial?",
+            "Yes, Book it!"
+        ).then((result) => {
+            if (result.isConfirmed) {
+                // Navigate to your component/route
+                navigate("/weekly-classes/find-a-class/book-a-free-trial", {
                     state: { TrialData: profile, comesFrom: "waitingList" },
                 });
             }
@@ -935,8 +950,8 @@ const ParentProfile = ({ profile }) => {
                                     </button>
 
                                     <button disabled={textloading} onClick={() => sendText([id])} className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
-                                        <img src="/images/icons/sendText.png" alt="" /> 
-                                         {textloading ? (
+                                        <img src="/images/icons/sendText.png" alt="" />
+                                        {textloading ? (
                                             <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
                                         ) : (
                                             <>
@@ -998,7 +1013,15 @@ const ParentProfile = ({ profile }) => {
                                         >
                                             Remove Waiting List
                                         </button>
-                                        {!profile?.paymentPlans?.length && profile?.classSchedule?.capacity !== 0 && (
+                                        {students?.[0]?.classSchedule?.capacity !== 0 && (
+                                            <button
+                                                onClick={handleBookFreeTrial}
+                                                className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                            >
+                                                Book a Free Trial
+                                            </button>
+                                        )}
+                                        {!profile?.paymentPlans?.length && students?.[0]?.classSchedule?.capacity !== 0 && (
 
                                             <button
                                                 onClick={handleBookMembership}

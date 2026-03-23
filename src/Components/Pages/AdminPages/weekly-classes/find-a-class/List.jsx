@@ -723,7 +723,12 @@ const List = () => {
 
 
                                             <div className="font-bold text-[16px] text-[#282829] w-40">
-                                              Class {i + 1} - ({levelNames[i] || ""})
+                                              Class {i + 1} 
+                                              <br />
+                                              {s?.level &&(
+                                              <span className='
+                                              text-[#717073] font-medium text-[15px]'>({s?.level})</span>
+                                              )}
                                             </div>
 
                                             {/* Age Range / Name */}

@@ -14,20 +14,24 @@ const ViewSessions = () => {
     Trials: { subject: "", emailBody: "", deliveryMethod: "Email", templateKey: "cancel_trialist" },
     Coaches: { subject: "", emailBody: "", deliveryMethod: "Email", templateKey: "cancel_coach" },
   });
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const [templates, setTemplates] = useState([]);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [attendance, setAttendance] = useState([true, false, true]);
-  const [reasonForCancelling, setReasonForCancelling] = useState('Weather');
+  const [reasonForCancelling, setReasonForCancelling] = useState('');
   const [notifyMembers, setNotifyMembers] = useState(true);
   const [creditMembers, setcreditMembers] = useState(true);
   const [notifyTrialists, setnotifyTrialists] = useState(true);
   const [notifyCoaches, setNotifyCoaches] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
-
+  const token = localStorage.getItem("adminToken");
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [messageType, setMessageType] = useState('Email');
   const [subject, setSubject] = useState('Class cancellation');
   const [emailText, setEmailText] = useState('');
 
   const navigate = useNavigate();
-  const { schedule, sessionId, classScheduleId, statusIs, cancelSession ,sessionDate } = location.state || {};
+  const { schedule, sessionId, classScheduleId, statusIs, cancelSession, sessionDate } = location.state || {};
   console.log('sessionId', sessionId)
   console.log("Filtered Schedules in cancessl:", cancelSession);
 
@@ -67,7 +71,7 @@ const ViewSessions = () => {
     }
   }, [cancelSession]);
 
-
+  console.log("Selected Category ID:", selectedCategoryId);
 
 
   function formatDate(isoDate) {
@@ -135,6 +139,7 @@ const ViewSessions = () => {
 
       // Gather all data
       const payload = {
+        templateCategoryId: selectedCategoryId,
         reasonForCancelling,
         notifyMembers: notifyMembers ? "Yes" : "No",
         creditMembers: creditMembers ? "Yes" : "No",
@@ -154,10 +159,81 @@ const ViewSessions = () => {
   };
   console.log('cancelSession', cancelSession)
   const isCancel = cancelSession && Object.keys(cancelSession).length > 0;
+const handleReasonChange = async (value) => {
+  // ✅ state update
+  setReasonForCancelling(value);
 
+  // ✅ parent change → child reset
+  setSelectedTemplate(null);
+  setSelectedCategoryId(null);
+  setTemplates([]);
 
+  // ✅ subject + body bhi reset karo (important)
+  setRolesData({
+    ...rolesData,
+    [activeTab]: {
+      ...rolesData[activeTab],
+      subject: "",
+      emailBody: ""
+    }
+  });
+
+  // ❌ agar empty select hai toh API call mat karo
+  if (!value) return;
+
+  // 🔥 mapping
+  const categoryMap = {
+    Weather: "weather",
+    Illness: "illness",
+    "Unavailable Venue": "venue",
+    Other: "other",
+  };
+
+  const category = categoryMap[value];
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/admin/holiday/custom-template/by-category?category=${category}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const result = await response.json();
+
+    if (result.status) {
+      const type =
+        rolesData[activeTab].deliveryMethod === "Email"
+          ? "email"
+          : "text";
+
+      const templateList = result.data[type]?.[0]?.templates || [];
+
+      setTemplates(templateList);
+    }
+  } catch (err) {
+    console.error("API Error:", err);
+  }
+};
   console.log('isCancel', isCancel)
+  const handleDeliveryChange = (type) => {
+    setRolesData({
+      ...rolesData,
+      [activeTab]: {
+        ...rolesData[activeTab],
+        deliveryMethod: type
+      }
+    });
 
+    // re-filter templates
+    if (apiResponse) {
+      const list = apiResponse.data[type.toLowerCase()]?.[0]?.templates || [];
+      setTemplates(list);
+    }
+  };
   return (
     <div className="p-4 md:p-6 bg-gray-50 ">
       <div className="flex justify-between items-start md:items-center mb-6">
@@ -205,17 +281,21 @@ const ViewSessions = () => {
             {/* Left Form Area */}
             <div className="space-y-4">
               <div>
-                <label className="block text-[18px] font-semibold mb-2">Reason for cancelling</label>
+                <label className="block text-[18px] font-semibold mb-2">
+                  Reason for cancelling
+                </label>
+
                 <select
                   value={reasonForCancelling}
-                  onChange={(e) => setReasonForCancelling(e.target.value)}
+                  onChange={(e) => handleReasonChange(e.target.value)}
                   disabled={isCancel}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2"
                 >
-                  <option>Weather</option>
-                  <option>Illness</option>
-                  <option>Unavailable Venue</option>
-                  <option>Other</option>
+                  <option value="">Select reason</option>
+                  <option value="Weather">Weather</option>
+                  <option value="Illness">Illness</option>
+                  <option value="Unavailable Venue">Unavailable Venue</option>
+                  <option value="Other">Other</option>
                 </select>
               </div>
 
@@ -263,8 +343,55 @@ const ViewSessions = () => {
 
               <div className="space-y-3">
                 <label className="block text-sm md:text-base font-semibold">Select cancellation template</label>
-                <select className="w-full border border-gray-300 rounded-lg px-3 py-2">
-                  <option>{reasonForCancelling} {activeTab} Members</option>
+               <select
+  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+  onChange={(e) => {
+    const value = e.target.value;
+
+    if (!value) {
+      // ❌ deselect case (Select Template)
+      setSelectedTemplate(null);
+      setSelectedCategoryId(null);
+
+      setRolesData({
+        ...rolesData,
+        [activeTab]: {
+          ...rolesData[activeTab],
+          subject: "",
+          emailBody: ""
+        }
+      });
+
+      return;
+    }
+
+    const selected = templates.find(t => t.id === Number(value));
+    console.log("Selected Template:", selected);
+
+    if (selected) {
+      setSelectedTemplate(selected);
+
+      const parsedId = selected.id;
+      setSelectedCategoryId(parsedId);
+
+      setRolesData({
+        ...rolesData,
+        [activeTab]: {
+          ...rolesData[activeTab],
+          subject: selected.content.subject || "",
+          // emailBody: selected.content.htmlContent || ""
+        }
+      });
+    }
+  }}
+>
+                  <option value="">Select Template</option>
+
+                  {templates.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.title}
+                    </option>
+                  ))}
                 </select>
 
                 <label className="block text-sm md:text-base font-semibold mt-2">Subject Line</label>
@@ -296,27 +423,16 @@ const ViewSessions = () => {
                   <label>
                     <input
                       type="radio"
-                      disabled={isCancel}
                       checked={rolesData[activeTab].deliveryMethod === "Email"}
-                      onChange={() =>
-                        setRolesData({
-                          ...rolesData,
-                          [activeTab]: { ...rolesData[activeTab], deliveryMethod: "Email" }
-                        })
-                      }
-                    /> Email
+                      onChange={() => handleDeliveryChange("Email")}
+                    />Email
                   </label>
                   <label>
                     <input
                       type="radio"
                       checked={rolesData[activeTab].deliveryMethod === "Text"}
-                      onChange={() =>
-                        setRolesData({
-                          ...rolesData,
-                          [activeTab]: { ...rolesData[activeTab], deliveryMethod: "Text" }
-                        })
-                      }
-                    /> Text
+                      onChange={() => handleDeliveryChange("Text")}
+                    />Text
                   </label>
                 </div>
 

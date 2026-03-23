@@ -1,7 +1,7 @@
 import Select from "react-select";
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, Eye, Check, ChevronDown, ChevronUp, Search } from 'lucide-react';
+import { Trash2, Eye, Check, ChevronDown, ChevronUp, Search, Pencil } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
 import Loader from '../../../contexts/Loader';
@@ -15,12 +15,13 @@ import { usePermission } from "../../../Common/permission";
 const AddPaymentPlanGroup = () => {
     const [isSavePlan, setIsSavePlan] = useState(false);
     const MultiValue = () => null; // Hides the default selected boxes
-
+    const [editIndex, setEditIndex] = useState(null);
+    const [isViewMode, setIsViewMode] = useState(false);
     const [submitloading, setSubmitLoading] = useState(false);
 
     const [groupName, setGroupName] = useState('');
     const [previewShowModal, setPreviewShowModal] = useState(false);
-    const { fetchPackages, groups, createPackage, fetchGroupById, loading, createGroup, selectedGroup, packages, updateGroup, setPackages } = usePayments();
+    const { fetchPackages, groups, createPackage, fetchGroupById, loading, createGroup, selectedGroup, packages, updateGroup, updatePackage, setPackages } = usePayments();
     const [selectedPlans, setSelectedPlans] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
@@ -170,59 +171,75 @@ const AddPaymentPlanGroup = () => {
     };
     const priceFields = ["price", "priceLesson"];
 
-    const handleSavePlan = async () => {
+ const handleSavePlan = async () => {
+    if (isViewMode) return;
 
+    const { title, price, priceLesson, interval, duration, students } = formData;
 
-        const { title, price, priceLesson, interval, duration, students } = formData;
+    if (!title || !price || !interval || !priceLesson || !duration || !students) {
+        showWarning(
+            "Missing Fields",
+            "Please fill in all required fields: Title, Price, Interval, Duration, and Number of Students."
+        );
+        return;
+    }
 
-        // ✅ Validation
-
-        if (!title || !price || !interval || !priceLesson || !duration || !students) {
-            showWarning("Missing Fields", "Please fill in all required fields: Title, Price, Interval, Duration, and Number of Students.");
-            return;
-        }
-
-        const newPlan = {
-            title,
-            price,
-            priceLesson,
-            interval,
-            duration,
-            students,
-            termsAndCondition: formData.termsAndCondition,
-            HolidayCampPackage: formData.HolidayCampPackage
-        };
-
-        setIsSavePlan(true);
-
-        try {
-            await createPackage(newPlan);
-
-            // Success
-            showSuccess("Saved", "Plan saved successfully!");
-
-            // Clear form
-            setFormData({
-                title: '',
-                price: '',
-                interval: '',
-                duration: '',
-                students: '',
-                termsAndCondition: '',
-                HolidayCampPackage: ''
-            });
-
-            setPackageDetails('');
-            setTerms('');
-            setOpenForm(false);
-        } catch (err) {
-            console.error('Error saving plan:', err);
-            console.error('Error saving plan:', err);
-            showError("Save Failed", "There was an error saving the plan. Please try again.");
-        } finally {
-            setIsSavePlan(false);
-        }
+    const newPlan = {
+        title,
+        price,
+        priceLesson,
+        interval,
+        duration,
+        students,
+        termsAndCondition: formData.termsAndCondition,
+        HolidayCampPackage: formData.HolidayCampPackage
     };
+
+    setIsSavePlan(true);
+
+    try {
+    if (editIndex !== null && selectedPlans[editIndex]) {
+    const updatedPlans = [...selectedPlans];
+    const currentPlan = updatedPlans[editIndex];
+
+    const res = await updatePackage(currentPlan.id, newPlan);
+
+    // ❗ Handle failure
+    if (!res?.status) {
+        showError("Update Failed", res?.message || "Something went wrong");
+        return;
+    }
+
+    // ✅ Use API response data (IMPORTANT)
+    updatedPlans[editIndex] = res.data;
+
+    setSelectedPlans(updatedPlans);
+
+    showSuccess("Updated", res.message || "Plan updated successfully!");
+}
+
+        // 👉 Reset form only on success
+        setFormData({
+            title: '',
+            price: '',
+            interval: '',
+            duration: '',
+            students: '',
+            termsAndCondition: '',
+            HolidayCampPackage: ''
+        });
+
+        setPackageDetails('');
+        setTerms('');
+        setOpenForm(false);
+
+    } catch (err) {
+        console.error('Error saving plan:', err);
+        showError("Save Failed", "There was an error saving the plan. Please try again.");
+    } finally {
+        setIsSavePlan(false);
+    }
+};
 
     useEffect(() => {
         if (id && selectedGroup) {
@@ -253,6 +270,191 @@ const AddPaymentPlanGroup = () => {
         checkPermission({ module: 'payment-plan', action: 'create' });
 
     console.log('formData.HolidayCampPackage', formData.HolidayCampPackage)
+    const handleViewPlan = (index) => {
+        // 👇 agar same item already open hai → close kar do
+        if (openForm && editIndex === index && isViewMode) {
+            handleCloseForm();
+            return;
+        }
+
+        const plan = selectedPlans[index];
+
+        setFormData({
+            title: plan.title || "",
+            price: plan.price || "",
+            priceLesson: plan.priceLesson || "",
+            interval: plan.interval || "",
+            duration: plan.duration || "",
+            students: plan.students || "",
+            HolidayCampPackage: plan.HolidayCampPackage || "",
+            termsAndCondition: plan.termsAndCondition || "",
+        });
+
+        setEditIndex(index);
+        setIsViewMode(true);
+        setOpenForm(true);
+    };
+    const handleEditPlan = (index) => {
+
+        // 👇 agar same plan already open hai → toggle close
+        if (openForm && editIndex === index && !isViewMode) {
+            handleCloseForm();
+            return;
+        }
+
+        const plan = selectedPlans[index];
+
+        setFormData({
+            title: plan.title || "",
+            price: plan.price || "",
+            priceLesson: plan.priceLesson || "",
+            interval: plan.interval || "",
+            duration: plan.duration || "",
+            students: plan.students || "",
+            HolidayCampPackage: plan.HolidayCampPackage || "",
+            termsAndCondition: plan.termsAndCondition || "",
+        });
+
+        setEditIndex(index);
+        setIsViewMode(false); // 👈 edit mode
+        setOpenForm(true); // 👈 open form
+    };
+    const handleCloseForm = () => {
+        setOpenForm(false);
+        setIsViewMode(false);
+        setEditIndex(null);
+
+        setFormData({
+            title: '',
+            price: '',
+            priceLesson: '',
+            interval: '',
+            duration: '',
+            students: '',
+            termsAndCondition: '',
+            HolidayCampPackage: ''
+        });
+    };
+ const ViewPlanCard = ({ data }) => {
+    const getDurationLabel = () => {
+        if (!data.duration || !data.interval) return "N/A";
+
+        const unit =
+            data.interval === "Month"
+                ? "month"
+                : data.interval === "Year"
+                ? "year"
+                : "quarter";
+
+        return `${data.duration} ${unit}${data.duration > 1 ? "s" : ""}`;
+    };
+
+    return (
+        <div className="w-full bg-white rounded-2xl p-5">
+
+            {/* Title */}
+            <h2 className="text-lg font-bold text-[#282829] mb-6">
+                {data.title || "Membership Plan"}
+            </h2>
+
+            <div className="grid grid-cols-2 gap-6">
+
+                {/* Title */}
+                <div className="col-span-2">
+                    <label className="block text-[18px] font-semibold mb-2">Title</label>
+                    <input
+                        type="text"
+                        disabled
+                        value={data.title || ""}
+                        className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg text-[#282829] font-semibold"
+                    />
+                </div>
+
+                {/* Price */}
+                <div>
+                    <label className="block text-[18px] font-semibold mb-2">Price (₹)</label>
+                    <input
+                        type="text"
+                        disabled
+                        value={data.price || ""}
+                        className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg font-semibold"
+                    />
+                </div>
+
+                {/* Price per lesson */}
+                <div>
+                    <label className="block text-[18px] font-semibold mb-2">Price per lesson (₹)</label>
+                    <input
+                        type="text"
+                        disabled
+                        value={data.priceLesson || ""}
+                        className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg font-semibold"
+                    />
+                </div>
+
+                {/* Interval */}
+                <div>
+                    <label className="block text-[18px] font-semibold mb-2">Interval</label>
+                    <input
+                        type="text"
+                        disabled
+                        value={data.interval || ""}
+                        className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg font-semibold"
+                    />
+                </div>
+
+                {/* Duration */}
+                <div>
+                    <label className="block text-[18px] font-semibold mb-2">Duration</label>
+                    <input
+                        type="text"
+                        disabled
+                        value={getDurationLabel()}
+                        className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg font-semibold"
+                    />
+                </div>
+
+                {/* Students */}
+                <div className="col-span-2">
+                    <label className="block text-[18px] font-semibold mb-2">Number of Students</label>
+                    <input
+                        type="text"
+                        disabled
+                        value={data.students || ""}
+                        className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg font-semibold"
+                    />
+                </div>
+
+                {/* Holiday Package */}
+                <div className="col-span-2">
+                    <label className="block text-[18px] font-semibold mb-2">
+                        Membership Package Details
+                    </label>
+                    <div
+                        className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg text-[#282829] text-[16px]"
+                        dangerouslySetInnerHTML={{
+                            __html: data.HolidayCampPackage || "<p>N/A</p>",
+                        }}
+                    />
+                </div>
+
+                {/* Terms */}
+                <div className="col-span-2">
+                    <label className="block text-[18px] font-semibold mb-2">
+                        Terms & Conditions
+                    </label>
+                    <div
+                        className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg text-[#282829] text-[16px]"
+                        dangerouslySetInnerHTML={{
+                            __html: data.termsAndCondition || "<p>N/A</p>",
+                        }}
+                    />
+                </div>
+
+            </div>
+        </div>
+    );
+};
     return (
         <div className=" md:p-6 bg-gray-50 min-h-screen">
 
@@ -375,17 +577,38 @@ const AddPaymentPlanGroup = () => {
 
                                         {/* Selected summary */}
                                         <div className="w-full mb-5 px-4 font-semibold py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                            {selectedPlans.length > 0 ? (
-                                                selectedPlans.map((plan, idx) => (
-                                                    <div
-                                                        key={plan.id || idx}
-                                                        className="flex items-center justify-between font-semibold"
-                                                    >
-                                                        <span>
-                                                            {plan.students > 0
-                                                                ? `${plan.title}: ${plan.students} ${plan.students === 1 ? 'Student' : 'Students'}`
-                                                                : ''}
-                                                        </span>
+                                            {selectedPlans.map((plan, idx) => (
+                                                <div
+                                                    key={plan.id || idx}
+                                                    className="flex items-center justify-between font-semibold"
+                                                >
+                                                    <span>
+                                                        {plan.students > 0
+                                                            ? `${plan.title}: ${plan.students} ${plan.students === 1 ? "Student" : "Students"
+                                                            }`
+                                                            : ""}
+                                                    </span>
+
+                                                    <div className="flex items-center gap-2">
+                                                        {/* 👁 View */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleViewPlan(idx)}
+                                                            className="text-gray-500 hover:text-blue-500"
+                                                        >
+                                                            <Eye size={19} />
+                                                        </button>
+
+                                                        {/* ✏️ Edit */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleEditPlan(idx)}
+                                                            className="text-gray-500 hover:text-green-500"
+                                                        >
+                                                            <Pencil size={19} />
+                                                        </button>
+
+                                                        {/* 🗑 Delete */}
                                                         <button
                                                             type="button"
                                                             onClick={() => handleRemovePlan(idx)}
@@ -394,12 +617,8 @@ const AddPaymentPlanGroup = () => {
                                                             <Trash2 size={18} />
                                                         </button>
                                                     </div>
-                                                ))
-                                            ) : (
-                                                <div className="text-[#717073]">
-                                                    No plans selected
                                                 </div>
-                                            )}
+                                            ))}
                                         </div>
 
                                         {/* Select (always visible) */}
@@ -536,168 +755,242 @@ const AddPaymentPlanGroup = () => {
                                     className="w-full md:w-1/2 bg-white rounded-3xl p-6 shadow-2xl relative"
                                 >
                                     <button
-                                        onClick={() => setOpenForm(false)}
+                                        onClick={handleCloseForm}
                                         className="absolute top-2 right-3  hover:text-[#282829] text-5xl"
                                         title="Close"
                                     >
                                         &times;
                                     </button>
-                                    {/* Add your form content here */}
-                                    <div className="text-[24px] font-semibold mb-4">Membership Plan</div>
-                                    {[
-                                        { label: "Title", name: "title", type: "text" },
-                                        { label: "Price (£)", name: "price", type: "number" },
-                                        { label: "Price per lesson(£)", name: "priceLesson", type: "number" },
-                                        {
-                                            label: "Interval",
-                                            name: "interval",
-                                            type: "dropdown",
-                                            options: ["Month", "Quarter", "Year"]
-                                        },
-                                        { label: "Duration", name: "duration", type: "number" },
-                                        { label: "Number of Students", name: "students", type: "number" },
-                                    ].map((field) => {
-                                        // Duration options for dropdown
-                                        let durationOptions = [];
-                                        if (field.name === "duration") {
-                                            if (formData.interval === "Month") {
-                                                durationOptions = Array.from({ length: 12 }, (_, i) => ({
-                                                    label: `${i + 1} month${i + 1 > 1 ? "s" : ""}`,
-                                                    value: i + 1
-                                                }));
-                                            } else if (formData.interval === "Year") {
-                                                durationOptions = Array.from({ length: 20 }, (_, i) => ({
-                                                    label: `${i + 1} year${i + 1 > 1 ? "s" : ""}`,
-                                                    value: i + 1
-                                                }));
-                                            } else if (formData.interval === "Quarter") {
-                                                durationOptions = Array.from({ length: 8 }, (_, i) => ({
-                                                    label: `${i + 1} quarter${i + 1 > 1 ? "s" : ""}`,
-                                                    value: i + 1
-                                                }));
-                                            }
-                                        }
+                                    {isViewMode ? (
+                                        <ViewPlanCard data={formData} />
+                                    ) : (
+                                        <>
+                                            <div className="text-[24px] font-semibold mb-4">Membership Plan</div>
+                                            {[
+                                                { label: "Title", name: "title", type: "text" },
+                                                { label: "Price (£)", name: "price", type: "number" },
+                                                { label: "Price per lesson(£)", name: "priceLesson", type: "number" },
+                                                {
+                                                    label: "Interval",
+                                                    name: "interval",
+                                                    type: "dropdown",
+                                                    options: ["Month", "Quarter", "Year"]
+                                                },
+                                                { label: "Duration", name: "duration", type: "number" },
+                                                { label: "Number of Students", name: "students", type: "number" },
+                                            ].map((field) => {
+                                                // Duration options for dropdown
+                                                let durationOptions = [];
+                                                if (field.name === "duration") {
+                                                    if (formData.interval === "Month") {
+                                                        durationOptions = Array.from({ length: 12 }, (_, i) => ({
+                                                            label: `${i + 1} month${i + 1 > 1 ? "s" : ""}`,
+                                                            value: i + 1
+                                                        }));
+                                                    } else if (formData.interval === "Year") {
+                                                        durationOptions = Array.from({ length: 20 }, (_, i) => ({
+                                                            label: `${i + 1} year${i + 1 > 1 ? "s" : ""}`,
+                                                            value: i + 1
+                                                        }));
+                                                    } else if (formData.interval === "Quarter") {
+                                                        durationOptions = Array.from({ length: 8 }, (_, i) => ({
+                                                            label: `${i + 1} quarter${i + 1 > 1 ? "s" : ""}`,
+                                                            value: i + 1
+                                                        }));
+                                                    }
+                                                }
 
-                                        return (
-                                            <div key={field.name} className="mb-4">
-                                                <label className="block text-[18px] font-semibold text-[#282829] mb-2">
-                                                    {field.label}
-                                                </label>
+                                                return (
+                                                    <div key={field.name} className="mb-4">
+                                                        <label className="block text-[18px] font-semibold text-[#282829] mb-2">
+                                                            {field.label}
+                                                        </label>
 
-                                                {field.name === "interval" ? (
-                                                    <Select
-                                                        options={field.options.map((opt) => ({ label: opt, value: opt }))}
-                                                        value={
-                                                            formData.interval
-                                                                ? { label: formData.interval, value: formData.interval }
-                                                                : null
-                                                        }
-                                                        onChange={(selected) =>
-                                                            setFormData({ ...formData, interval: selected.value })
-                                                        }
-                                                        className="text-[18px] font-semibold"
-                                                        classNamePrefix="react-select"
-                                                        styles={{
-                                                            control: (provided) => ({
-                                                                ...provided,
-                                                                borderRadius: "0.5rem",
-                                                                padding: "4px",
-                                                                borderColor: "#E5E7EB", // gray-200
-                                                                boxShadow: "none",
-                                                                "&:hover": { borderColor: "#3B82F6" } // blue-500
-                                                            }),
-                                                            dropdownIndicator: (provided) => ({
-                                                                ...provided,
-                                                                display: "none" // hides arrow icon
-                                                            }),
-                                                            indicatorSeparator: () => ({ display: "none" })
-                                                        }}
-                                                        placeholder=""
-                                                    />
-                                                ) : field.name === "duration" && formData.interval ? (
-                                                    <select
-                                                        value={formData.duration}
-                                                        onChange={(e) =>
-                                                            setFormData({ ...formData, duration: e.target.value })
-                                                        }
-                                                        className="w-full px-4 py-3 font-semibold text-[18px] text-[#282829]  border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-transparent"
-                                                    >
-                                                        <option value="" disabled>
-                                                            Select Duration
-                                                        </option>
-                                                        {durationOptions.map((opt) => (
-                                                            <option key={opt.value} value={opt.value}>
-                                                                {opt.label}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                ) : field.type === "number" ? (
-                                                    <input
-                                                        type="text"
-                                                        value={formData[field.name]}
-                                                        onChange={(e) => {
-                                                            const value = e.target.value;
-
-                                                            // Allow only valid price format for price fields
-                                                            if (priceFields.includes(field.name)) {
-                                                                if (/^\d*\.?\d{0,2}$/.test(value)) {
-                                                                    setFormData({ ...formData, [field.name]: value });
+                                                        {field.name === "interval" ? (
+                                                            <Select
+                                                                disabled={isViewMode}
+                                                                options={field.options.map((opt) => ({ label: opt, value: opt }))}
+                                                                value={
+                                                                    formData.interval
+                                                                        ? { label: formData.interval, value: formData.interval }
+                                                                        : null
                                                                 }
-                                                                return;
-                                                            }
+                                                                onChange={(selected) =>
+                                                                    setFormData({ ...formData, interval: selected.value })
+                                                                }
+                                                                className="text-[18px] font-semibold"
+                                                                classNamePrefix="react-select"
+                                                                styles={{
+                                                                    control: (provided) => ({
+                                                                        ...provided,
+                                                                        borderRadius: "0.5rem",
+                                                                        padding: "4px",
+                                                                        borderColor: "#E5E7EB", // gray-200
+                                                                        boxShadow: "none",
+                                                                        "&:hover": { borderColor: "#3B82F6" } // blue-500
+                                                                    }),
+                                                                    dropdownIndicator: (provided) => ({
+                                                                        ...provided,
+                                                                        display: "none" // hides arrow icon
+                                                                    }),
+                                                                    indicatorSeparator: () => ({ display: "none" })
+                                                                }}
+                                                                placeholder=""
+                                                            />
+                                                        ) : field.name === "duration" && formData.interval ? (
+                                                            <select
+                                                                value={formData.duration}
+                                                                onChange={(e) =>
+                                                                    setFormData({ ...formData, duration: e.target.value })
+                                                                }
+                                                                className="w-full px-4 py-3 font-semibold text-[18px] text-[#282829]  border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-transparent"
+                                                            >
+                                                                <option value="" disabled>
+                                                                    Select Duration
+                                                                </option>
+                                                                {durationOptions.map((opt) => (
+                                                                    <option key={opt.value} value={opt.value}>
+                                                                        {opt.label}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        ) : field.type === "number" ? (
+                                                            <input
+                                                                type="text"
+                                                                disabled={isViewMode}
+                                                                value={formData[field.name]}
+                                                                onChange={(e) => {
+                                                                    const value = e.target.value;
 
-                                                            // Normal text fields
-                                                            setFormData({ ...formData, [field.name]: value });
-                                                        }}
-                                                        onPaste={(e) => {
-                                                            const paste = e.clipboardData.getData("text");
+                                                                    // Allow only valid price format for price fields
+                                                                    if (priceFields.includes(field.name)) {
+                                                                        if (/^\d*\.?\d{0,2}$/.test(value)) {
+                                                                            setFormData({ ...formData, [field.name]: value });
+                                                                        }
+                                                                        return;
+                                                                    }
 
-                                                            if (
-                                                                priceFields.includes(field.name) &&
-                                                                !/^\d*\.?\d{0,2}$/.test(paste)
-                                                            ) {
-                                                                e.preventDefault();
-                                                            }
-                                                        }}
-                                                        className="w-full px-4 py-3 font-semibold text-[18px] text-[#282829]
+                                                                    // Normal text fields
+                                                                    setFormData({ ...formData, [field.name]: value });
+                                                                }}
+                                                                onPaste={(e) => {
+                                                                    const paste = e.clipboardData.getData("text");
+
+                                                                    if (
+                                                                        priceFields.includes(field.name) &&
+                                                                        !/^\d*\.?\d{0,2}$/.test(paste)
+                                                                    ) {
+                                                                        e.preventDefault();
+                                                                    }
+                                                                }}
+                                                                className="w-full px-4 py-3 font-semibold text-[18px] text-[#282829]
                border border-gray-200 rounded-lg focus:outline-none
                focus:ring-2 focus:ring-blue-500 appearance-none bg-transparent"
-                                                    />
-                                                ) : (
-                                                    <input
-                                                        type="text"
-                                                        value={formData[field.name]}
-                                                        onChange={(e) =>
-                                                            setFormData({ ...formData, [field.name]: e.target.value })
+                                                            />
+                                                        ) : (
+                                                            <input
+                                                                type="text"
+                                                                value={formData[field.name]}
+                                                                disabled={isViewMode}
+                                                                onChange={(e) =>
+                                                                    setFormData({ ...formData, [field.name]: e.target.value })
+                                                                }
+                                                                className="w-full  text-[#282829] px-4 py-3 font-semibold text-[18px] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-transparent"
+                                                            />
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+
+                                            <div className="mb-4 relative">
+                                                <label className="block text-[18px] font-semibold text-[#282829] mb-2">
+                                                    Membership Package Details
+                                                </label>
+                                                <div className="rounded-md border border-gray-300 bg-gray-100 p-1">
+                                                    <Editor
+                                                        apiKey="sqe5er2lyngzjf0armhqaw1u7ffh0xgjyzmb7unv5irietwa"
+                                                        value={formData.HolidayCampPackage}
+                                                        onEditorChange={(content) =>
+                                                            setFormData({ ...formData, HolidayCampPackage: content })
                                                         }
-                                                        className="w-full  text-[#282829] px-4 py-3 font-semibold text-[18px] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-transparent"
+                                                        init={{
+                                                            readonly: isViewMode ? 1 : 0,
+                                                            menubar: false,
+                                                            plugins: 'lists advlist',
+                                                            toolbar: 'fontsizeselect capitalize bold italic underline alignleft aligncenter alignjustify',
+                                                            height: 200,
+                                                            branding: false,
+                                                            content_style: `
+  body {
+    background-color: #f3f4f6;
+ font-family: "Poppins", sans-serif !important;
+    font-size: 1rem;
+    padding: 0px; /* reduced padding */
+    color: #111827;
+  }
+
+  * {
+    font-family:"Poppins", sans-serif !important;
+  }
+`,
+                                                            setup: (editor) => {
+                                                                // Custom capitalize button
+                                                                editor.ui.registry.addIcon(
+                                                                    'capitalize-icon',
+                                                                    '<img src="/images/icons/smallcaps.png" style="width:16px;height:16px;" />'
+                                                                );
+                                                                editor.ui.registry.addButton('capitalize', {
+                                                                    icon: 'capitalize-icon',
+                                                                    tooltip: 'Capitalize Text',
+                                                                    onAction: () => {
+                                                                        editor.formatter.register('capitalize', {
+                                                                            inline: 'span',
+                                                                            styles: { textTransform: 'capitalize' },
+                                                                        });
+                                                                        editor.formatter.toggle('capitalize');
+                                                                    },
+                                                                });
+
+                                                                // Remove className from content on init
+                                                                editor.on('BeforeSetContent', (e) => {
+                                                                    if (e.content) {
+                                                                        e.content = e.content.replace(/\sclass="[^"]*"/g, '');
+                                                                    }
+                                                                });
+
+                                                                // Also clean pasted content
+                                                                editor.on('PastePostProcess', (e) => {
+                                                                    e.node.innerHTML = e.node.innerHTML.replace(/\sclass="[^"]*"/g, '');
+                                                                });
+                                                            },
+                                                        }}
                                                     />
-                                                )}
+
+
+                                                </div>
                                             </div>
-                                        );
-                                    })}
 
+                                            <div className="mb-4 relative">
+                                                <label className="block text-[18px] font-semibold text-[#282829] mb-2">
+                                                    Terms & Conditions
+                                                </label>
+                                                <div className="rounded-md border border-gray-300 bg-gray-100 p-1">
+                                                    <Editor
+                                                        apiKey="sqe5er2lyngzjf0armhqaw1u7ffh0xgjyzmb7unv5irietwa"
 
-
-
-                                    <div className="mb-4 relative">
-                                        <label className="block text-[18px] font-semibold text-[#282829] mb-2">
-                                            Membership Package Details
-                                        </label>
-                                        <div className="rounded-md border border-gray-300 bg-gray-100 p-1">
-                                            <Editor
-                                                apiKey="sqe5er2lyngzjf0armhqaw1u7ffh0xgjyzmb7unv5irietwa"
-                                                value={formData.HolidayCampPackage}
-                                                onEditorChange={(content) =>
-                                                    setFormData({ ...formData, HolidayCampPackage: content })
-                                                }
-                                                init={{
-                                                    menubar: false,
-                                                    plugins: 'lists advlist',
-                                                    toolbar: 'fontsizeselect capitalize bold italic underline alignleft aligncenter alignjustify',
-                                                    height: 200,
-                                                    branding: false,
-                                                    content_style: `
+                                                        value={formData.termsAndCondition}
+                                                        onEditorChange={(content) =>
+                                                            setFormData({ ...formData, termsAndCondition: content })
+                                                        }
+                                                        init={{
+                                                            readonly: isViewMode ? 1 : 0,
+                                                            menubar: false,
+                                                            plugins: 'lists advlist',
+                                                            toolbar:
+                                                                'fontsizeselect capitalize bold italic underline alignleft aligncenter alignjustify',
+                                                            height: 200,
+                                                            branding: false,
+                                                            content_style: `
   body {
     background-color: #f3f4f6;
  font-family: "Poppins", sans-serif !important;
@@ -710,117 +1003,54 @@ const AddPaymentPlanGroup = () => {
     font-family:"Poppins", sans-serif !important;
   }
 `,
-                                                    setup: (editor) => {
-                                                        // Custom capitalize button
-                                                        editor.ui.registry.addIcon(
-                                                            'capitalize-icon',
-                                                            '<img src="/images/icons/smallcaps.png" style="width:16px;height:16px;" />'
-                                                        );
-                                                        editor.ui.registry.addButton('capitalize', {
-                                                            icon: 'capitalize-icon',
-                                                            tooltip: 'Capitalize Text',
-                                                            onAction: () => {
-                                                                editor.formatter.register('capitalize', {
-                                                                    inline: 'span',
-                                                                    styles: { textTransform: 'capitalize' },
+                                                            setup: (editor) => {
+                                                                // Register custom icon
+                                                                editor.ui.registry.addIcon(
+                                                                    'capitalize-icon',
+                                                                    '<img src="/images/icons/smallcaps.png" style="width:16px;height:16px;" />'
+                                                                );
+
+                                                                // Register and add button
+                                                                editor.ui.registry.addButton('capitalize', {
+                                                                    icon: 'capitalize-icon',
+                                                                    tooltip: 'Capitalize Text',
+                                                                    onAction: () => {
+                                                                        editor.formatter.register('capitalize', {
+                                                                            inline: 'span',
+                                                                            styles: { textTransform: 'capitalize' },
+                                                                        });
+
+                                                                        editor.formatter.toggle('capitalize');
+                                                                    },
                                                                 });
-                                                                editor.formatter.toggle('capitalize');
                                                             },
-                                                        });
+                                                        }}
+                                                        onInit={(evt, editor) => {
+                                                            console.log('Editor initialized', editor);
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
 
-                                                        // Remove className from content on init
-                                                        editor.on('BeforeSetContent', (e) => {
-                                                            if (e.content) {
-                                                                e.content = e.content.replace(/\sclass="[^"]*"/g, '');
-                                                            }
-                                                        });
+                                            <div className="text-right">
+                                                <button
+                                                    onClick={handleSavePlan}
+                                                    disabled={isSavePlan || isViewMode}
+                                                    className={`bg-[#237FEA] text-white mt-5 min-w-50 font-semibold px-6 py-2 rounded-lg 
+  ${isSavePlan || isViewMode ? 'bg-gray-400 cursor-not-allowed' : 'hover:bg-blue-700'}`}
+                                                >
+                                                    {isViewMode
+                                                        ? "View Mode"
+                                                        : isSavePlan
+                                                            ? "Saving..."
+                                                            : editIndex !== null
+                                                                ? "Update Plan"
+                                                                : "Save Plan"}
+                                                </button>
 
-                                                        // Also clean pasted content
-                                                        editor.on('PastePostProcess', (e) => {
-                                                            e.node.innerHTML = e.node.innerHTML.replace(/\sclass="[^"]*"/g, '');
-                                                        });
-                                                    },
-                                                }}
-                                            />
-
-
-                                        </div>
-                                    </div>
-
-                                    <div className="mb-4 relative">
-                                        <label className="block text-[18px] font-semibold text-[#282829] mb-2">
-                                            Terms & Conditions
-                                        </label>
-                                        <div className="rounded-md border border-gray-300 bg-gray-100 p-1">
-                                            <Editor
-                                                apiKey="sqe5er2lyngzjf0armhqaw1u7ffh0xgjyzmb7unv5irietwa"
-
-                                                value={formData.termsAndCondition}
-                                                onEditorChange={(content) =>
-                                                    setFormData({ ...formData, termsAndCondition: content })
-                                                }
-                                                init={{
-                                                    menubar: false,
-                                                    plugins: 'lists advlist',
-                                                    toolbar:
-                                                        'fontsizeselect capitalize bold italic underline alignleft aligncenter alignjustify',
-                                                    height: 200,
-                                                    branding: false,
-                                                    content_style: `
-  body {
-    background-color: #f3f4f6;
- font-family: "Poppins", sans-serif !important;
-    font-size: 1rem;
-    padding: 0px; /* reduced padding */
-    color: #111827;
-  }
-
-  * {
-    font-family:"Poppins", sans-serif !important;
-  }
-`,
-                                                    setup: (editor) => {
-                                                        // Register custom icon
-                                                        editor.ui.registry.addIcon(
-                                                            'capitalize-icon',
-                                                            '<img src="/images/icons/smallcaps.png" style="width:16px;height:16px;" />'
-                                                        );
-
-                                                        // Register and add button
-                                                        editor.ui.registry.addButton('capitalize', {
-                                                            icon: 'capitalize-icon',
-                                                            tooltip: 'Capitalize Text',
-                                                            onAction: () => {
-                                                                editor.formatter.register('capitalize', {
-                                                                    inline: 'span',
-                                                                    styles: { textTransform: 'capitalize' },
-                                                                });
-
-                                                                editor.formatter.toggle('capitalize');
-                                                            },
-                                                        });
-                                                    },
-                                                }}
-                                                onInit={(evt, editor) => {
-                                                    console.log('Editor initialized', editor);
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="text-right">
-                                        <button
-                                            onClick={handleSavePlan}
-                                            disabled={isSavePlan}
-                                            className={`bg-[#237FEA] text-white mt-5 min-w-50 font-semibold px-6 py-2 rounded-lg 
-        ${isSavePlan ? 'bg-gray-400 cursor-not-allowed' : 'hover:bg-blue-700'}`}
-                                        >
-                                            {isSavePlan ? 'Saving...' : 'Save Plan'}
-                                        </button>
-
-                                    </div>
-
-
+                                            </div>
+                                        </>
+                                    )}
 
                                 </motion.div>
                             )}

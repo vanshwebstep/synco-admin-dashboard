@@ -737,7 +737,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                     )}
 
                                 </div>
-                                {ParentProfile.cancelData.cancelDate && (
+                                {ParentProfile?.cancelData?.cancelDate && (
                                     <div className="border-t border-[#495362] py-5">
                                         <div className=" text-[20px] text-white">Request to Cancel Date </div>
                                         <div className="text-[16px]  mt-1 text-gray-400">{formatDate(ParentProfile.cancelData.cancelDate)}</div>
