@@ -1,0 +1,898 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
+
+@font-face {
+  font-family: 'Gilroy';
+  src: url('Components/Font/Gilroy-ExtraBold.woff2') format('woff2'),
+    url('Components//Font/Gilroy-ExtraBold.woff') format('woff');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Gilroy';
+  src: url('Components/Font/Gilroy-Medium.woff2') format('woff2'),
+    url('Components/Font/Gilroy-Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Gilroy';
+  src: url('Components/Font/Gilroy-Light.woff2') format('woff2'),
+    url('Components/Font/Gilroy-Light.woff') format('woff');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Gilroy';
+  src: url('Components/Font/Gilroy-Semibold.woff2') format('woff2'),
+    url('Components/Font/Gilroy-Semibold.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+
+/* index.css or your global stylesheet */
+.inter {
+  font-family: "Inter", sans-serif;
+}
+
+.gilory {
+  font-family: 'Gilroy';
+}
+
+
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  font-family: "Gilroy", sans-serif;
+
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-weight: normal;
+  box-sizing: border-box;
+}
+
+
+.Gilroy {
+  font-family: "Gilroy";
+  color: #282829;
+
+}
+
+.poppins,
+input,
+select,
+button,
+a,
+label,
+textarea {
+  font-family: "Poppins", sans-serif;
+}
+
+input,
+label,
+select,
+textarea,
+button {
+  font-family: "Gilroy", sans-serif;
+}
+
+.bg-blue {
+  background-color: #237FEA;
+}
+
+img {
+  max-width: 100%;
+}
+
+.adminlogoimg {
+  top: 0;
+  position: absolute;
+  left: 0;
+}
+
+/* App.css */
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+
+
+.login-container {
+  min-height: 100%;
+  background-color: #ffde14;
+  /* border: 10px solid #fff; */
+  border-radius: 20px;
+
+}
+
+.login-container-inner {
+  min-height: 100vh;
+  display: flex;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+  background: url(/images/adminlogoimg.png?t=1751629104288);
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.login-container-inner.forgetPass {
+  min-height: 100vh;
+  display: flex;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+  background: url(/images/forgetpassBanner.png) !important;
+  background-repeat: no-repeat !important;
+  background-size: contain !important;
+}
+
+.adminlogoimg img {
+  max-height: 100%;
+}
+
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+
+.bg-blue-color {
+  background-color: #237FEA;
+}
+
+.hover-bg-blue-color:hover {
+  background-color: #237FEA;
+}
+
+.clip-hexagon {
+  clip-path: polygon(25% 0%,
+      75% 0%,
+      100% 50%,
+      75% 100%,
+      25% 100%,
+      0% 50%);
+}
+
+.highlight {
+  background-color: #ffde14;
+  color: #000;
+  padding: 3px;
+  border-radius: 8px;
+
+}
+
+.react-select__control {
+  border-radius: 0.75rem !important;
+  border-color: #E2E1E5 !important;
+  padding: 2px;
+}
+
+.react-select__control--is-focused {
+  box-shadow: 0 0 0 2px #3B82F6 !important;
+  border-color: #3B82F6 !important;
+}
+
+
+/* Add to global.css for fade animation */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-in-out;
+}
+
+.tox.tox-tinymce {
+  position: static !important;
+}
+
+.tox-editor-header {
+  position: absolute !important;
+  top: -10px !important;
+  background: none !important;
+  right: 0 !important;
+  box-shadow: none !important;
+}
+
+.tox .tox-toolbar-overlord {
+  background: none !important;
+}
+
+.tox-toolbar__primary {
+  background: none !important;
+}
+
+.tox .tox-tbtn {
+  background: none !important;
+}
+
+body#tinymce {
+  padding: 0px !important;
+}
+
+.tox-statusbar {
+  display: none !important;
+}
+
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+.react-tel-input .flag-dropdown {
+  background: none;
+  border: none;
+  padding: 0px;
+  /* space around flag */
+}
+
+.react-tel-input .flag {
+  transform: scale(1.5);
+  /* Adjust size as needed */
+  margin-right: 10px;
+
+}
+
+.custom-phone .flag {
+  transform: scale(1.5);
+}
+
+.custom-phone .flag {
+  transform: scale(1.5);
+  transform-origin: center;
+  margin-top: 2px;
+}
+
+.bookCheck {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.dayssss {
+  position: absolute;
+  left: -7em;
+}
+
+.facility {
+  position: absolute;
+  left: -7.8em;
+}
+
+.directDebitBg {
+  background-image: url(/public/images/directDebitBG.png);
+  object-fit: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+button {
+  cursor: pointer;
+}
+
+.tox-toolbar__group span.tox-icon.tox-tbtn__icon-wrap {
+  cursor: pointer;
+}
+
+/* // for hide scrolbar .scrollbar-hide */
+.react-select__control {
+  padding: 8px 5px;
+}
+
+ul.pl-10.list-disc.space-y-1 li.mb-2.text-lg a {
+  display: block;
+}
+
+/* For mobile screens only */
+@media screen and (max-width: 768px) {
+  .login-container {
+    border-radius: 0;
+  }
+
+  .dayssss {
+    position: relative;
+    left: 0;
+  }
+
+  .dynamicpadding {
+    padding-top: 80px;
+    padding-bottom: 80px;
+  }
+}
+
+@media (min-width: 620px) and (max-width: 998px) {
+  .dynamic-height {
+    min-height: 500px;
+  }
+}
+
+
+.fixerhe {
+  overflow: hidden;
+  max-height: 100%;
+  height: 100vh;
+}
+
+aside.hidden.md\:w-2\/12.lg\:flex.w-72.bg-white.border-r.border-gray-100.flex-col.shadow-lg {
+  max-height: 100%;
+  height: 100vh;
+}
+
+.leftEnd {
+  margin: 0 0 0 auto;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.spin-slow {
+  animation: spin 10s linear infinite;
+}
+
+
+.react-datepicker__month {
+  min-height: 320px !important;
+}
+
+.selectedDate {
+  background-color: #237FEA !important;
+}
+
+
+
+
+
+
+
+.tox .tox-tbtn svg {
+  display: block;
+  fill: #717073 !important;
+}
+
+span.tox-tbtn.tox-split-button__chevron {
+  display: none;
+}
+
+
+
+.w-full.bg-white.lg\:w-1\/2.flex.gap-2 {
+  gap: 0;
+}
+
+.prose p strong {
+  font-size: 18px;
+  font-weight: 600;
+  /* margin-bottom: 10px; */
+  line-height: 3;
+  color: #000;
+}
+
+.prose p {
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.prose li {
+  list-style: auto;
+  margin-left: 18px;
+}
+
+.prose ol li {
+  list-style: decimal;
+}
+
+.prose ul li {
+  list-style: disc;
+}
+
+/*  */
+@media (min-width: 1200px) and (max-width: 1550px) {
+  .md\:text-\[38px\] {
+    font-size: 28px;
+  }
+
+  .md\:max-w-\[40px\].max-w-\[20px\].text-black {
+    width: 30px;
+  }
+
+  h2.text-\[28px\] {
+    font-size: 22px;
+  }
+
+  .text-\[24px\] {
+    font-size: 20px;
+  }
+
+  .text-\[16px\] {
+    font-size: 14px;
+  }
+
+  .text-\[14px\] {
+    font-size: 12px;
+  }
+
+  .w-6.h-6 {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    min-height: 18px;
+  }
+
+  button.text-gray-800 svg {
+    width: 18px;
+    height: 18px;
+  }
+
+
+
+  .md\:min-w-\[374px\] {
+    min-width: 300px;
+  }
+
+  .bg-white.border.border-gray-300.p-3.mb-2.rounded-xl.flex.justify-between.items-center {
+    padding: 10px;
+  }
+
+  .text-\[18px\] {
+    font-size: 16px;
+  }
+
+  span.w-6.h-6.sm\:w-8.sm\:h-8.flex.items-center.justify-center.rounded {
+    width: auto;
+  }
+
+  .text-\[22px\] {
+    font-size: 18px;
+  }
+
+  .w-72 {
+    width: 230px;
+  }
+
+  .md\:p-12 {
+    padding: 15px;
+  }
+
+  .text-\[19\.28px\] {
+    font-size: 16px;
+  }
+
+  .flex.gap-4 {
+    gap: 6px;
+  }
+
+  button.min-w-50 {
+    min-width: 30px;
+  }
+
+  .text-\[20px\] {
+    font-size: 16px;
+  }
+
+  button.px-6.py-2.rounded-xl.text-\[18px\] {
+    padding: 8px 12px;
+  }
+
+}
+
+@media (min-width: 1200px) and (max-width: 1300px) {
+  .text-\[19\.28px\] {
+    font-size: 12px;
+  }
+
+  .w-full.bg-white.lg\:w-1\/2.flex.gap-2 {
+    gap: 0;
+  }
+
+  .text-\[18px\] {
+    font-size: 14px;
+  }
+
+  button {
+    font-size: 14px I !important;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .tabBar button {
+    width: 100%;
+  }
+
+  .mobileBlock {
+    display: block;
+  }
+
+  .fullWidthTabMobile {
+    width: 100%;
+  }
+}
+
+.selected-date {
+  background-color: #3b82f6 !important;
+  color: white !important;
+  border-radius: 50%;
+}
+
+.exclusion-date {
+  background-color: #9ca3af !important;
+  /* gray for disabled/excluded */
+  color: white !important;
+  border-radius: 50%;
+}
+
+/* Hide country code in the dropdown */
+.react-tel-input .selected-flag .dial-code,
+.react-tel-input .country-list .dial-code {
+  display: none !important;
+}
+
+button.cursor-not-allowed {
+  cursor: not-allowed;
+}
+
+.preview-sec ul li {
+  list-style: disc;
+}
+
+.preview-sec ol li {
+  list-style: decimal;
+}
+
+.react-tel-input {
+  max-width: 60px;
+}
+
+.prose p strong {
+  line-height: normal;
+}
+
+p strong {
+  line-height: normal;
+}
+
+strong {
+  line-height: normal;
+}
+
+p {
+  line-height: normal;
+}
+
+.prose p {
+  margin-bottom: 15px;
+}
+
+ul.innersub li a .subitems {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.reward {
+  background: url(/images/reward-card.png);
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+/*ul.innersub li a .subitems::after {
+  content: "+";
+  font-weight: bold;
+  margin-left: 8px;
+  transition: transform 0.2s ease;
+}
+
+ul.innersub li.opened a .subitems::after {
+  content: "–";
+} */
+
+
+@media(min-width:1200px) and (max-width:1600px) {
+  .fullwidth20 {
+    width: 23%;
+  }
+
+  .fullwidth20 .rounded.p-4.mt-6.text-center.text-base.w-full.max-w-md.mx-auto {
+    padding: 0;
+  }
+
+  .fullwidth80 {
+    width: 77%;
+  }
+
+  .blockButton {
+    display: block;
+  }
+
+  .blockButton button {
+    width: 100%;
+    margin: 10px 0;
+  }
+
+  .fullwidth20 .rounded.p-4.mt-6.text-center.text-base.w-full.max-w-md.mx-auto {
+    padding: 0;
+  }
+
+  .fullwidth20 .w-full.h-12.aspect-square.flex.items-center.justify-center.transition-all.duration-200.hover\:bg-gray-100.text-gray-800 {
+    font-size: 13px;
+  }
+
+  .fullwidth20 .font-medium.text-center {
+    font-size: 13px;
+  }
+
+  .fullwidth20 span {
+    font-size: 13px;
+  }
+
+  .fullwidth20 button.w-8.h-8.rounded-full.bg-white.text-black.hover\:bg-black.hover\:text-white.border.border-black.flex.items-center.justify-center {
+    height: 23px;
+    width: 23px;
+  }
+
+  .fullwidth20 h3.font-semibold.text-black.text-\[24px\] {
+    font-size: 16px;
+  }
+
+  .fullwidth20 button.px-5.mt-4.bg-\[\#237FEA\].hover\:bg-blue-700.text-white.flex.gap-2.items-center.text-sm.py-2.rounded-lg.transition {
+    padding: 8px;
+  }
+
+  p {
+    line-height: 1.4;
+  }
+
+  .fullwidth20 .p-4.bg-\[\#FAFAFA\].rounded-lg.mb-4 {
+    padding: 5px;
+  }
+}
+
+button.tox-tbtn.tox-tbtn--enabled,
+.tox-tbtn:active {
+  background-color: #e5e7eb !important;
+  /* Tailwind gray-200 */
+  border-radius: 6px !important;
+}
+
+.tox-tbtn:hover {
+  background-color: #f3f4f6 !important;
+  /* Light hover gray */
+}
+
+@media(min-width:2000px) {
+  .mainLayout {
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+}
+
+/* Icon background black + icon white */
+.swal-icon-custom {
+  background-color: #000 !important;
+  color: #fff !important;
+  border: none;
+  font-family: 'Gilroy';
+}
+
+/* Confirm button: white bg, black text, black border */
+.swal-confirm-btn {
+  background: #fff !important;
+  color: #000 !important;
+  border: 2px solid #000 !important;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  margin-right: 10px;
+  font-family: 'Gilroy';
+}
+
+/* Cancel button: black bg, white text */
+.swal-cancel-btn {
+  background: #000 !important;
+  color: #fff !important;
+  border: 2px solid #000 !important;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-family: 'Gilroy';
+}
+
+/* Optional hover effects */
+.swal-confirm-btn:hover {
+  background: #000 !important;
+  color: #fff !important;
+}
+
+.swal-cancel-btn:hover {
+  opacity: 0.85;
+}
+
+.swal-title-custom {
+  color: #000;
+  font-family: 'Gilroy';
+  font-weight: 700;
+  font-size: 24px;
+}
+
+.swal-text-custom {
+  color: #333;
+  font-weight: 500;
+  font-family: 'Gilroy';
+  font-size: 16px;
+  padding-top: 5px !important;
+  padding-bottom: 10px !important;
+}
+
+.swal2-popup {
+  border-radius: 15px;
+}
+
+/* --- Custom SweetAlert Theme (Black & White) --- */
+
+/* Toast Customization */
+.swal-toast-custom {
+  border: 1px solid #333;
+}
+
+/* Ensure toast icons are high contrast if needed, but default success is green usually. 
+   User said "icons also black bg colors text icon color white".
+   For Toast (Success), often standard colors are better, but if we want B&W:
+*/
+div:where(.swal2-icon).swal2-success {
+  border-color: #fff !important;
+  color: #fff !important;
+}
+
+div:where(.swal2-icon).swal2-success [class^=swal2-success-line] {
+  background-color: #fff !important;
+}
+
+div:where(.swal2-icon).swal2-success .swal2-success-ring {
+  border: .25em solid rgba(255, 255, 255, .3) !important;
+}
+
+
+/* Modal Buttons */
+.swal-confirm-btn {
+  background-color: #000 !important;
+  color: #fff !important;
+  border: 1px solid #000 !important;
+  padding: 12px 24px !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+  margin: 0 5px !important;
+  box-shadow: none !important;
+}
+
+.swal-confirm-btn:hover {
+  background-color: #333 !important;
+}
+
+.swal-cancel-btn {
+  background-color: #fff !important;
+  color: #000 !important;
+  border: 1px solid #ccc !important;
+  padding: 12px 24px !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+  margin: 0 5px !important;
+}
+
+.swal-cancel-btn:hover {
+  background-color: #f5f5f5 !important;
+}
+
+/* Modal Icons - Black Background, White Icon */
+/* Success */
+div:where(.swal2-icon).swal2-success {
+  border-color: #000 !important;
+  /* Outer ring matches bg or black */
+  color: #fff !important;
+  /* Icon color */
+  background-color: #000 !important;
+  /* Black background */
+}
+
+/* Fix inner lines for success */
+div:where(.swal2-icon).swal2-success [class^=swal2-success-line] {
+  background-color: #fff !important;
+}
+
+div:where(.swal2-icon).swal2-success .swal2-success-ring {
+  border: .25em solid rgba(0, 0, 0, 0) !important;
+  /* Hide standard ring or make it match */
+}
+
+/* Error */
+div:where(.swal2-icon).swal2-error {
+  border-color: #000 !important;
+  color: #fff !important;
+  background-color: #000 !important;
+}
+
+div:where(.swal2-icon).swal2-error [class^=swal2-x-mark-line] {
+  background-color: #fff !important;
+}
+
+/* Warning */
+div:where(.swal2-icon).swal2-warning {
+  border-color: #000 !important;
+  color: #fff !important;
+  /* Usually orange, but user requested white/black theme */
+  background-color: #000 !important;
+}
+
+/* Info */
+div:where(.swal2-icon).swal2-info {
+  border-color: #000 !important;
+  color: #fff !important;
+  background-color: #000 !important;
+}
+
+/* Text Styling */
+.swal-title-custom {
+  color: #000 !important;
+  font-family: 'Gilroy', sans-serif !important;
+  font-size: 22px !important;
+}
+
+.swal-text-custom {
+  color: #555 !important;
+  font-family: 'Gilroy', sans-serif !important;
+  font-size: 16px !important;
+}
+
+iframe {
+  height: 800px !important;
+}
+.manrope {
+  font-family: "Manrope", sans-serif;
+}
