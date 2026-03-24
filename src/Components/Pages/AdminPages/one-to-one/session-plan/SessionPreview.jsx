@@ -231,7 +231,7 @@ const SessionPreview = ({ item, sessionData }) => {
                    <h2 className="text-[20px] flex items-center gap-2 font-semibold my-3">
                   {currentContent?.player}
                 </h2>
-                <h2 className="font-semibold text-[28px] mb-0 mt-5">
+                <h2 className="font-semibold text-[28px] mb-0">
                   Skill of the Day
                 </h2>
                 <p className="text-[20px] flex items-center gap-2 font-semibold my-3">

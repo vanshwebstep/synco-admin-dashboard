@@ -129,7 +129,12 @@ const List = () => {
         const saved = localStorage.getItem("openClassIndex");
         return saved ? JSON.parse(saved) : null;
     });
-
+    const levelOptions = [
+        { value: "Beginner", label: "Beginner" },
+        { value: "Intermediate", label: "Intermediate" },
+        { value: "Advanced", label: "Advanced" },
+        { value: "Pro", label: "Pro" }
+    ];
     const toggleSessions = (index) => {
         setOpenClassIndex((prev) => {
             const newIndex = prev === index ? null : index;
@@ -175,6 +180,7 @@ const List = () => {
     const [formData, setFormData] = useState({
         className: '',
         capacity: '',
+        level: '',
         day: days[0], // default selected
         startTime: null,
         endTime: null,
@@ -228,6 +234,11 @@ const List = () => {
             return;
         }
 
+        if (!formData.level) {
+            showError("Validation Error", "Please select a level");
+            return;
+        }
+
         if (!formData.day) {
             showError("Validation Error", "Please select a day");
             return;
@@ -265,6 +276,7 @@ const List = () => {
             className: "",
             capacity: "",
             day: "",
+            level: "",
             startTime: "",
             endTime: "",
             allowFreeTrial: false,
@@ -373,7 +385,21 @@ const List = () => {
     //  console.log("filteredSchedules", filteredSchedules)
     console.log('formData', formData)
     const { checkPermission } = usePermission();
-
+const inputClass =
+  "w-full h-[48px] border border-[#E2E1E5] rounded-xl px-3 text-sm";
+  const customSelectStyles = {
+control: (provided) => ({
+  ...provided,
+  minHeight: "48px",
+  height: "48px",
+  borderRadius: "12px",
+  borderColor: "#E2E1E5",
+  boxShadow: "none",
+  "&:hover": {
+    borderColor: "#E2E1E5",
+  },
+}),
+};
     const canCreate =
         checkPermission({ module: 'class-schedule', action: 'create' });
 
@@ -397,7 +423,7 @@ const List = () => {
                     localStorage.removeItem("openTerms"); // clear all stored states
 
                 }} className="md:text-[28px] cursor-pointer hover:opacity-80 font-semibold mb-4 flex gap-2 items-center  p-5"><img src="/members/Arrow - Left.png" className="w-6" alt="" /> Edit Class Schedule</h2>
-                {canCreate && filteredSchedules.length < 4 && (
+                {canCreate &&(
                     <button
                         onClick={() => handleAddNew()}
                         className="bg-[#237FEA] flex items-center gap-2 cursor-pointer text-white px-4 py-[10px] rounded-xl hover:bg-blue-700 text-[16px] font-semibold"
@@ -427,7 +453,7 @@ const List = () => {
                                             {/* Class info block */}
                                             <div className="grid grid-cols-2 md:grid-cols-8 gap-4 w-full text-sm">
                                                 <div>
-                                                    <p className="font-semibold text-[16px]">Class {index + 1} - ({levelNames[index] || ""})</p>
+                                                    <p className="font-semibold text-[16px]">Class {index + 1} - ({item.level})</p>
                                                     <p className="text-xs font-semibold text-[16px]">{item.className}</p>
                                                 </div>
                                                 <div>
@@ -714,17 +740,34 @@ const List = () => {
 
                                 <div className="space-y-4">
                                     <div className="flex gap-4">
-                                        <div className='block md:w-1/2'>
+                                        <div className='block md:w-1/3'>
                                             <label htmlFor="" className='text-base'>Class 1 Name </label>
                                             <input
                                                 type="text"
                                                 value={formData.className}
 
                                                 onChange={(e) => handleChange('className', e.target.value)}
-                                                className="w-full border border-[#E2E1E5] rounded-xl p-3 text-sm"
+                                                className={inputClass}
+
                                             />
                                         </div>
-                                        <div className='block md:w-1/2'>
+                                        <div className='block md:w-1/3'>
+                                            <label className='text-base'>Level</label>
+
+                                            <Select
+                                                options={levelOptions}
+                                                value={levelOptions.find(
+                                                    (option) => option.value === formData.level
+                                                )}
+                                                onChange={(selectedOption) =>
+                                                    handleChange("level", selectedOption.value)
+                                                }
+                                                styles={customSelectStyles}
+                                                classNamePrefix="react-select"
+                                                placeholder="Select Level"
+                                            />
+                                        </div>
+                                        <div className='block md:w-1/3'>
                                             <label htmlFor="">Capacity</label>
                                             <input
                                                 type="number"
@@ -745,7 +788,7 @@ const List = () => {
                                                 onChange={(selectedOption) => handleChange('day', selectedOption?.value || '')}
                                                 options={dayOptions}
                                                 isClearable
-                                                className="w-full text-sm"
+                                                styles={customSelectStyles}
                                                 classNamePrefix="react-select"
                                             />
                                         </div>
@@ -762,7 +805,8 @@ const List = () => {
                                                         dateFormat="h:mm aa"
                                                         timeCaption="Time"
                                                         onCalendarOpen={scrollTo8AM}
-                                                        className="w-full px-3 py-2 border border-gray-300 rounded-xl"
+                                                        className={inputClass}
+
                                                     />
                                                 </div>
 
@@ -777,7 +821,7 @@ const List = () => {
                                                         dateFormat="h:mm aa"
                                                         timeCaption="Time"
                                                         onCalendarOpen={scrollToStartTime}
-                                                        className="w-full px-3 py-2 border border-gray-300 rounded-xl"
+                                                        className={inputClass}
                                                     />
                                                 </div>
                                             </div>

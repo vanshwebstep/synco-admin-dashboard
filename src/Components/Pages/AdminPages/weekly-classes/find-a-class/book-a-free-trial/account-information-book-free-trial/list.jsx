@@ -21,7 +21,7 @@ import Feedback from "./Feedback";
 const list = () => {
   const { serviceHistoryFetchById, serviceHistory, loading } = useBookFreeTrial();
 
-  console.log('serviceHistory',serviceHistory)
+  console.log('serviceHistory', serviceHistory)
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -153,7 +153,7 @@ const list = () => {
         {activeTab === "Student Profile" && <StudentProfile StudentProfile={serviceHistory} />}
         {activeTab === "Parent Profile" && <ParentProfile ParentProfile={serviceHistory} />}
         {activeTab === "Feedback" && (
-          <Feedback profile={serviceHistory}  />
+          <Feedback profile={serviceHistory} />
         )}
       </div>
     </>

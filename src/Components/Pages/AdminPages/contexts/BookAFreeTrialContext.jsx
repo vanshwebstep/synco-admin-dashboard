@@ -344,6 +344,55 @@ export const BookFreeTrialProvider = ({ children }) => {
       setLoading(false);
     }
   };
+   const createBookFreeTrialsByWaitingList = async (bookFreeTrialData, islead) => {
+    setLoading(true);
+    console.log('bookFreeTrialData', bookFreeTrialData)
+    console.log('islead', islead)
+
+    const headers = {
+      "Content-Type": "application/json",
+    };
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    let url = `${API_BASE_URL}/api/admin/waiting-list/convert-to-trial/`;
+
+    if (islead) {
+      // if isLead exists (true / string / non-null)  
+      url += `${encodeURIComponent(islead)}`;
+    }
+
+    try {
+      const response = await fetch(url, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify(bookFreeTrialData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || result.keyInformation || "Failed to create class schedule");
+      }
+      setIsBooked(true);
+
+      await showSuccess("Success!", result.message || "Free Trial has been created successfully.");
+
+      setTimeout(() => {
+        navigate(`/weekly-classes/trial/list`)
+      }, 1000);
+      return result;
+
+    } catch (error) {
+      console.error("Error creating class schedule:", error);
+      await showError("Error", error.message || "Something went wrong while creating class schedule.");
+      throw error;
+    } finally {
+      await fetchBookFreeTrials();
+      setLoading(false);
+    }
+  };
   const updateBookFreeTrials = async (bookFreeTrialId, updatedBookFreeTrialData) => {
     setLoading(true);
 
@@ -2580,6 +2629,7 @@ const fetchMembershipByParent = useCallback(async (ID) => {
       value={{// Free Trials
         bookFreeTrials,
         createBookFreeTrials,
+        createBookFreeTrialsByWaitingList,
         setLoading,
         updateBookFreeTrials,
         deleteBookFreeTrial,

@@ -265,7 +265,7 @@ if (t.mode_of_communication === "email" && t.content) {
         console.log("Template Updated ✅", payload);
         navigate('/templates/settingList');
     };
-
+console.log(`templateCategories`,templateCategories        )
     return (
         <>
 
@@ -436,13 +436,13 @@ if (t.mode_of_communication === "email" && t.content) {
                                         {categoryOpen && (
                                             <div className="absolute top-full left-0 w-full bg-white mt-2 p-4 rounded-2xl shadow-xl z-50">
                                                 {/* Add new category input */}
-                                              <input
-  type="text"
-  placeholder="Add new category"
-  value={categorySearch || ""}
-  onChange={(e) => setCategorySearch(e.target.value)}
-  className="w-full border rounded-xl pl-4 py-2 border-gray-200 focus:outline-none min-h-[40px]"
-/>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Add new category"
+                                                    value={categorySearch || ""}
+                                                    onChange={(e) => setCategorySearch(e.target.value)}
+                                                    className="w-full border rounded-xl pl-4 py-2 border-gray-200 focus:outline-none min-h-[40px]"
+                                                />
 
                                                 {/* Category List (render names, store IDs) */}
                                                 <div className="mt-3 space-y-2 max-h-40 overflow-y-auto">

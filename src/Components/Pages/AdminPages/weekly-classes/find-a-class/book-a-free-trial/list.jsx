@@ -42,7 +42,7 @@ const List = () => {
 
     const navigate = useNavigate();
     const location = useLocation();
-    const { classId, existingparentid, from_lead, leadId } = location.state || {};
+    const { classId, existingparentid, TrialData, comesFrom, from_lead, leadId } = location.state || {};
     console.log('existingparentid-', existingparentid)
     const popup1Ref = useRef(null);
     const popup2Ref = useRef(null);
@@ -52,9 +52,11 @@ const List = () => {
     const img2Ref = useRef(null);
     const { pathname } = useLocation();
     const [isOpen, setIsOpen] = useState(false);
+    console.log('TrialData', TrialData)
+    console.log('comesFrom', comesFrom)
     // console.log('classId', classId)
     const { fetchFindClassID, singleClassSchedulesOnly, loading } = useClassSchedule() || {};
-    const { createBookFreeTrials, isBooked, setIsBooked, fetchMembershipByParent, parentData, } = useBookFreeTrial()
+    const { createBookFreeTrials, isBooked, setIsBooked, fetchMembershipByParent, parentData, createBookFreeTrialsByWaitingList, } = useBookFreeTrial()
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { keyInfoData, fetchKeyInfo } = useMembers();
     const { adminInfo, setAdminInfo } = useNotification();
@@ -97,7 +99,7 @@ const List = () => {
     const indexOfFirstComment = indexOfLastComment - commentsPerPage;
     const currentComments = commentsList.slice(indexOfFirstComment, indexOfLastComment);
     const totalPages = Math.ceil(commentsList.length / commentsPerPage);
-
+    const finalClassId = classId || TrialData?.classScheduleId || TrialData?.students?.[0]?.classSchedule?.id;
     const goToPage = (page) => {
         if (page < 1) page = 1;
         if (page > totalPages) page = totalPages;
@@ -191,6 +193,7 @@ const List = () => {
     const trialKeyInfo = Array.isArray(keyInfoData)
         ? keyInfoData.find(item => item.serviceType === 'trial')?.keyInformationRaw
         : keyInfoData?.keyInformationRaw;
+
     const renderContent = (content) => {
         return (
             <div
@@ -403,6 +406,32 @@ const List = () => {
             exclusions.some(ex => ex.toDateString() === date?.toDateString())
         );
     };
+    useEffect(() => {
+        if (TrialData) {
+            // console.log('stp1')
+            if (Array.isArray(TrialData.students) && TrialData.students.length > 0) {
+                // console.log('stp2')
+                setStudents(TrialData.students);
+                setNumberOfStudents(TrialData?.totalStudents);
+                // console.log('comesfromtrialdaata', TrialData)
+            }
+            // console.log('stp3')
+            if (Array.isArray(TrialData.parents) && TrialData.parents.length > 0) {
+                setParents(
+                    TrialData.parents.map((p, idx) => ({
+                        id: idx + 1,
+                        ...p,
+                    }))
+                );
+            }
+            if (Array.isArray(TrialData.emergency) && TrialData.emergency.length > 0) {
+                setEmergency({
+                    sameAsAbove: false,
+                    ...TrialData.emergency[0],
+                });
+            }
+        }
+    }, [TrialData]);
     const [dob, setDob] = useState('');
     const [age, setAge] = useState(null);
     const [time, setTime] = useState('');
@@ -679,6 +708,8 @@ const List = () => {
         // PURE DATE, NO TIMEZONE CONVERSION POSSIBLE
         return `${year}-${month}-${day}`;
     };
+    console.log('students', students)
+    console.log('emergency', emergency)
     const handleSubmit = async () => {
         if (!selectedDate) {
             showWarning("Trial Date Required", "Please select a trial date before submitting.");
@@ -718,35 +749,74 @@ const List = () => {
             parents: parents.map(({ id, ...rest }) => rest),
             emergency,
         };
+        const payloadwaitinglist = {
+            bookingId: TrialData?.bookingId,
+            keyInformation: selectedKeyInfo,
+            venueId: singleClassSchedulesOnly?.venue?.id,
+            trialDate: selectedDate,
+            totalStudents: students.length,
+
+            students: students.map((s, index) => ({
+                id: s.id, // include ID for waiting list update
+                studentFirstName: s.studentFirstName,
+                studentLastName: s.studentLastName,
+                gender: s.gender,
+                age: s.age,
+                medicalInformation: s.medicalInformation || "",
+                dateOfBirth: toDateOnly(s.dateOfBirth),
+
+                // 👇 IMPORTANT
+                classScheduleId:
+                    index === 0
+                        ? singleClassSchedulesOnly?.id
+                        : s.selectedClassData?.id
+            })),
+
+            parents: parents.map((p) => ({
+                id: p.id,
+                parentFirstName: p.parentFirstName,
+                parentLastName: p.parentLastName,
+                parentEmail: p.parentEmail,
+                parentPhoneNumber: p.parentPhoneNumber,
+                relationToChild: p.relationToChild,
+                howDidYouHear: p.howDidYouHear
+            })),
+            emergency,
+        };
+
 
 
 
         try {
-            if (from_lead) {
-                await createBookFreeTrials(payload, leadId); // assume it's a promise
-            }
-            else {
-                await createBookFreeTrials(payload); // assume it's a promise
+            if (comesFrom === "waitingList") {
+                await createBookFreeTrialsByWaitingList(payloadwaitinglist, TrialData.id);
+            } else {
+                const finalPayload = from_lead ? payload : payload;
+                const finalLeadId = from_lead ? leadId : undefined;
 
+                await createBookFreeTrials(finalPayload, finalLeadId);
             }
+
             setIsBooked(true);
-            // console.log("Final Payload:", JSON.stringify(payload, null, 2));
-            // Optionally show success alert or reset form
+
         } catch (error) {
             console.error("Error while submitting:", error);
-            // Optionally show error alert
         } finally {
-            setIsSubmitting(false); // Stop loading
+            setIsSubmitting(false);
         }
     };
 
-
+    useEffect(() => {
+        if (!finalClassId) {
+            navigate("/weekly-classes/find-a-class", { replace: true });
+        }
+    }, [finalClassId, navigate]);
     useEffect(() => {
         const fetchData = async () => {
-            if (classId) {
+            if (finalClassId) {
                 setIsBooked(false);
 
-                await fetchFindClassID(classId);
+                await fetchFindClassID(finalClassId);
                 await fetchKeyInfo();
                 await fetchComments();
 
@@ -758,7 +828,7 @@ const List = () => {
         };
 
         fetchData();
-    }, [classId, existingparentid, fetchFindClassID]);
+    }, [finalClassId, existingparentid, fetchFindClassID]);
 
     const handleClick = (val) => {
         if (val === 'AC') {
@@ -872,6 +942,7 @@ const List = () => {
         keyInfoOptions.find((opt) => opt.value === selectedKeyInfo)?.label ||
         "Key Information";
     const sessionDatesSet = new Set(sessionDates);
+    console.log('sessionDatesSet', sessionDatesSet);
     useEffect(() => {
         // Run only once, and only if there are session dates
         if (hasInitialized.current || !sessionDatesSet || sessionDatesSet.size === 0) return;
