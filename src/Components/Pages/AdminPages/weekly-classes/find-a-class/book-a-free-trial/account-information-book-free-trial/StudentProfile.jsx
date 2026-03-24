@@ -554,28 +554,16 @@ const StudentProfile = ({ StudentProfile }) => {
                         </div>
 
                         {/* Comment list */}
-                        {commentsList && commentsList.length > 0 ? (
+                          {commentsList && commentsList.length > 0 ? (
                             <div className="space-y-4">
                                 {currentComments.map((c, i) => (
                                     <div key={i} className="bg-gray-50 rounded-xl p-4 text-sm">
 
-                                        {/* LEFT: Comment Text */}
-                                        <p className="text-gray-700 text-[16px] font-semibold mb-3 text-left">
-                                            {c.comment}
-                                        </p>
-
-                                        {/* RIGHT: User Info */}
                                         <div className="flex justify-end items-center gap-3">
 
                                             {/* Time */}
                                             <div className="flex flex-wrap justify-end flex-col">
-
-                                                <span className="text-gray-400 text-right text-[14px] whitespace-nowrap">
-                                                    {formatTimeAgo(c.createdAt)}
-                                                </span>
-
-                                                {/* Name + Image */}
-                                                <div className="flex items-center gap-3">
+                                                <div className="flex items-center gap-3 mb-4">
                                                     <img
                                                         src={
                                                             c?.bookedByAdmin?.profile
@@ -597,6 +585,23 @@ const StudentProfile = ({ StudentProfile }) => {
 
 
                                                 </div>
+                                            </div>
+                                        </div>
+                                        <p className="text-gray-700 text-[16px] font-semibold mb-3 text-left">
+                                            {c.comment}
+                                        </p>
+
+                                        {/* RIGHT: User Info */}
+                                        <div className="flex justify-end items-center gap-3">
+
+                                            {/* Time */}
+                                            <div className="flex flex-wrap justify-end flex-col">
+
+                                                <span className="text-gray-400 text-right text-[14px] whitespace-nowrap">
+                                                    {formatTimeAgo(c.createdAt)}
+                                                </span>
+
+
                                             </div>
                                         </div>
                                     </div>

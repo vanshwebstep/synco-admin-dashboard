@@ -1220,11 +1220,18 @@ export const BookFreeTrialProvider = ({ children }) => {
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
+      const payload = {
+            ...bookingIds,
+            cancelReason:
+                bookingIds.cancelReason === "other"
+                    ? bookingIds.otherReason
+                    : bookingIds.cancelReason,
+        };
     try {
       const response = await fetch(`${API_BASE_URL}/api/admin/cancel-membership/`, {
         method: "POST",
         headers,
-        body: JSON.stringify(bookingIds, // make sure bookingIds is an array like [96, 97]
+        body: JSON.stringify(payload, // make sure bookingIds is an array like [96, 97]
         ),
       });
 
@@ -2247,6 +2254,7 @@ export const BookFreeTrialProvider = ({ children }) => {
         if (filteredVenues.length > 0) {
           setMyVenues(filteredVenues);
         }
+        setStatsFreeTrial(resultRaw.data.stats)
         setBookFreeTrials(result);
       } catch (error) {
         console.error("Failed to fetch bookFreeTrials:", error);

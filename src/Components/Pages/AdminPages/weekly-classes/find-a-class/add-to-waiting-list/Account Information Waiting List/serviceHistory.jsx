@@ -20,7 +20,7 @@ const formatDate = (dateString, withTime = false) => {
   return date.toLocaleDateString("en-US", options);
 };
 
-const ServiceHistory = ({ serviceHistory }) => {
+const ServiceHistory = ({ serviceHistory , itemId, labels = {}, comesFrom }) => {
   if (!serviceHistory || serviceHistory.length === 0) return null;
   const {
     bookingId,
@@ -36,7 +36,7 @@ const ServiceHistory = ({ serviceHistory }) => {
     bookedBy,
     bookedByAdmin,
   } = serviceHistory;
-   console.log('status', status)
+  console.log('status', status)
   // pick first payment if exists
   const payment = payments?.[0];
   const navigate = useNavigate();
@@ -70,10 +70,10 @@ const ServiceHistory = ({ serviceHistory }) => {
             {/* Status */}
             <div
               className={`flex gap-2 items-center p-2 rounded-xl flex-wrap  ${status === "active"
-                ? "bg-green-500 text-white " :  status === 'waiting list' ? "bg-gray-300 text-black"
-                : status === "pending"
-                  ? "bg-yellow-500 text-white  "
-                  : "bg-red-500 text-white  "
+                ? "bg-green-500 text-white " : status === 'waiting list' ? "bg-gray-300 text-black"
+                  : status === "pending"
+                    ? "bg-yellow-500 text-white  "
+                    : "bg-red-500 text-white  "
                 }`}
             >
               <div className="block">
@@ -168,7 +168,9 @@ const ServiceHistory = ({ serviceHistory }) => {
             {/* Buttons */}
             <div className="flex flex-col w-full space-y-4">
               <div className="flex gap-2 flex-wrap justify-start">
-                <button onClick={() => navigate('/weekly-classes/all-members/see-details')}
+                <button onClick={() => navigate(`/weekly-classes/all-members/see-details?id=${itemId || serviceHistory.id || ""}`, {
+                  state: { itemId: serviceHistory.id, memberInfo: "waitingList" },
+                })}
                   className="font-semibold whitespace-nowrap border border-[#BEBEBE] px-3 py-2 rounded-xl text-[15px] font-medium">
                   See Details
                 </button>

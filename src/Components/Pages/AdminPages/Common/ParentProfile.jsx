@@ -31,7 +31,7 @@ const ParentProfile = ({ ParentProfile }) => {
         { value: "Family emergency - cannot attend", label: "Family emergency - cannot attend" },
         { value: "Health issue", label: "Health issue" },
         { value: "Schedule conflict", label: "Schedule conflict" },
-        { value: "other", label: "Other reason" },
+        { value: "other", label: "Other sreason" },
     ];
     const [commentsList, setCommentsList] = useState([]);
     const [loadingComment, setLoadingComment] = useState(false);
@@ -508,23 +508,11 @@ const ParentProfile = ({ ParentProfile }) => {
                                 {currentComments.map((c, i) => (
                                     <div key={i} className="bg-gray-50 rounded-xl p-4 text-sm">
 
-                                        {/* LEFT: Comment Text */}
-                                        <p className="text-gray-700 text-[16px] font-semibold mb-3 text-left">
-                                            {c.comment}
-                                        </p>
-
-                                        {/* RIGHT: User Info */}
                                         <div className="flex justify-end items-center gap-3">
 
                                             {/* Time */}
                                             <div className="flex flex-wrap justify-end flex-col">
-
-                                                <span className="text-gray-400 text-right text-[14px] whitespace-nowrap">
-                                                    {formatTimeAgo(c.createdAt)}
-                                                </span>
-
-                                                {/* Name + Image */}
-                                                <div className="flex items-center gap-3">
+                                                <div className="flex items-center gap-3 mb-4">
                                                     <img
                                                         src={
                                                             c?.bookedByAdmin?.profile
@@ -546,6 +534,23 @@ const ParentProfile = ({ ParentProfile }) => {
 
 
                                                 </div>
+                                            </div>
+                                        </div>
+                                        <p className="text-gray-700 text-[16px] font-semibold mb-3 text-left">
+                                            {c.comment}
+                                        </p>
+
+                                        {/* RIGHT: User Info */}
+                                        <div className="flex justify-end items-center gap-3">
+
+                                            {/* Time */}
+                                            <div className="flex flex-wrap justify-end flex-col">
+
+                                                <span className="text-gray-400 text-right text-[14px] whitespace-nowrap">
+                                                    {formatTimeAgo(c.createdAt)}
+                                                </span>
+
+
                                             </div>
                                         </div>
                                     </div>
@@ -609,7 +614,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                     </div>
                                     <div className="text-[16px] text-gray-300">
                                         {status === 'request_to_cancel' || status === 'cancelled'
-                                            ? `${bookedBy.firstName} ${bookedBy.lastName}`
+                                            ? `${bookedBy?.firstName} ${bookedBy?.lastName}`
                                             : ``}
                                     </div>
                                 </div>

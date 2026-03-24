@@ -42,7 +42,11 @@ const HistoryOfPayments = ({ stateData }) => {
 
           <div className="col-span-1 text-gray-500 border-b border-gray-200 pb-4">Address</div>
           <div className="col-span-1 text-end border-b border-gray-200 pb-4">
-            {safeValue(stateData?.payments?.[0]?.billingAddress)}
+            {safeValue(
+  stateData?.payments?.length
+    ? stateData.payments[stateData.payments.length - 1]?.billingAddress
+    : null
+)}
           </div>
 
           <div className="col-span-1 text-gray-500">Email</div>

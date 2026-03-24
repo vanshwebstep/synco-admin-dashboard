@@ -159,6 +159,7 @@ const ViewSessions = () => {
   };
   console.log('cancelSession', cancelSession)
   const isCancel = cancelSession && Object.keys(cancelSession).length > 0;
+  
 const handleReasonChange = async (value) => {
   // ✅ state update
   setReasonForCancelling(value);

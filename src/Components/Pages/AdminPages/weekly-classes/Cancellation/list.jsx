@@ -51,7 +51,7 @@ const CancellationList = () => {
                 : [...prev, studentId] // add if not selected
         );
     };
-
+console.log('statsFreeTrial',statsFreeTrial)
     const sendText = async (id) => {
         setTextLoading(true);
 

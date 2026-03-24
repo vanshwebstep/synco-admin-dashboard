@@ -44,17 +44,26 @@ const SeeDetails = () => {
     }, [itemId, serviceHistoryMembership]);
     const [activeTab, setActiveTab] = useState("Parent Profile");
 
-    const navigateTo =
-        memberInfo === "allMembers" || memberInfo === "freeTrial"
-            ? {
-                pathname: "/weekly-classes/trial/find-a-class/book-a-free-trial/account-info/list",
-                state: { itemId: itemId }
-            }
-            : {
-                pathname: "/weekly-classes/all-members/account-info",
-                  state: { itemId: itemId }
-            };
-
+  const navigateTo =
+    memberInfo === "allMembers" || memberInfo === "freeTrial"
+        ? {
+            pathname: "/weekly-classes/trial/find-a-class/book-a-free-trial/account-info/list",
+            state: { itemId: itemId }
+        }
+        : memberInfo === "cancellation"
+        ? {
+            pathname: "/weekly-classes/cancellation/account-info/list",
+            state: { itemId: itemId }
+        }
+          : memberInfo === "waitingList"
+        ? {
+            pathname: "/weekly-classes/add-to-waiting-list/account-info",
+            state: { itemId: itemId }
+        }
+        : {
+            pathname: "/weekly-classes/all-members/account-info",
+            state: { itemId: itemId }
+        };
     return (
         <>
             <div className=" flex justify-between items-end mb-5 gap-2 md:gap-3">

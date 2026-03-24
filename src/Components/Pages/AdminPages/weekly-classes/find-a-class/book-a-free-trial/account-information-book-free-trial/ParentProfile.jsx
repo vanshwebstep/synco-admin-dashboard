@@ -533,7 +533,7 @@ const ParentProfile = ({ ParentProfile }) => {
                             </div>
                         ))}
                     </div>
-                    {emergencyContacts.map((emergency, index) => (
+                    {emergencyContacts?.map((emergency, index) => (
                         <div key={index} className="bg-white p-6 rounded-3xl shadow-sm space-y-6">
                             <div className="flex justify-between items-start">
                                 <h2 className="text-[20px] font-semibold">Emergency contact details</h2>
@@ -637,28 +637,16 @@ const ParentProfile = ({ ParentProfile }) => {
                         </div>
 
                         {/* Comment list */}
-                        {commentsList && commentsList.length > 0 ? (
+                         {commentsList && commentsList.length > 0 ? (
                             <div className="space-y-4">
                                 {currentComments.map((c, i) => (
                                     <div key={i} className="bg-gray-50 rounded-xl p-4 text-sm">
 
-                                        {/* LEFT: Comment Text */}
-                                        <p className="text-gray-700 text-[16px] font-semibold mb-3 text-left">
-                                            {c.comment}
-                                        </p>
-
-                                        {/* RIGHT: User Info */}
                                         <div className="flex justify-end items-center gap-3">
 
                                             {/* Time */}
                                             <div className="flex flex-wrap justify-end flex-col">
-
-                                                <span className="text-gray-400 text-right text-[14px] whitespace-nowrap">
-                                                    {formatTimeAgo(c.createdAt)}
-                                                </span>
-
-                                                {/* Name + Image */}
-                                                <div className="flex items-center gap-3">
+                                                <div className="flex items-center gap-3 mb-4">
                                                     <img
                                                         src={
                                                             c?.bookedByAdmin?.profile
@@ -680,6 +668,23 @@ const ParentProfile = ({ ParentProfile }) => {
 
 
                                                 </div>
+                                            </div>
+                                        </div>
+                                        <p className="text-gray-700 text-[16px] font-semibold mb-3 text-left">
+                                            {c.comment}
+                                        </p>
+
+                                        {/* RIGHT: User Info */}
+                                        <div className="flex justify-end items-center gap-3">
+
+                                            {/* Time */}
+                                            <div className="flex flex-wrap justify-end flex-col">
+
+                                                <span className="text-gray-400 text-right text-[14px] whitespace-nowrap">
+                                                    {formatTimeAgo(c.createdAt)}
+                                                </span>
+
+
                                             </div>
                                         </div>
                                     </div>
@@ -895,22 +900,22 @@ const ParentProfile = ({ ParentProfile }) => {
 
                                 {status === 'attended' && (
                                     <>
-                                    <div className="flex gap-7">
-                                        <button onClick={() => setNoMembershipSelect(true)} className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium">
-                                            No Membership
-                                        </button>
+                                        <div className="flex gap-7">
+                                            <button onClick={() => setNoMembershipSelect(true)} className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium">
+                                                No Membership
+                                            </button>
 
-                                        <button onClick={handleBookMembership} className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium">
-                                            Book a Membership
+                                            <button onClick={handleBookMembership} className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium">
+                                                Book a Membership
+                                            </button>
+
+                                        </div>
+                                        <button
+                                            onClick={() => setshowCancelTrial(true)}
+                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                        >
+                                            Cancel Trial
                                         </button>
-                                        
-                                    </div>
-                                    <button
-                                        onClick={() => setshowCancelTrial(true)}
-                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
-                                    >
-                                        Cancel Trial
-                                    </button>
                                     </>
                                 )}
 

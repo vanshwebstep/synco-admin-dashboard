@@ -31,11 +31,13 @@ const List = () => {
     const [numberOfStudents, setNumberOfStudents] = useState('1');
     const { keyInfoData, fetchKeyInfo } = useMembers();
     const token = localStorage.getItem("adminToken");
+    const [isDiscountLoading, setIsDiscountLoading] = useState(false);
     const { adminInfo, setAdminInfo } = useNotification();
     const [country, setCountry] = useState("uk"); // default country
     const [country2, setCountry2] = useState("uk"); // default country
     const [dialCode, setDialCode] = useState("+44"); // store selected code silently
     const [dialCode2, setDialCode2] = useState("+44");
+    const [isChecked, setIsChecked] = useState(false);
     const [calculatedAmount, setCalculatedAmount] = useState(0);
     const [remainingLessons, setRemainingLessons] = useState(0);
     const [loadingData, setLoadingData] = useState(false);
@@ -55,6 +57,11 @@ const List = () => {
     const handleChange2 = (value, data) => {
         // When library fires onChange, just update the dial code
         setDialCode("+" + data.dialCode);
+    };
+    const handleDiscountChange = (e) => {
+        setDiscountCode(e.target.value);
+        setIsChecked(false);
+        setIsApplied(false);
     };
 
     const handleCountryChange = (countryData) => {
@@ -218,7 +225,11 @@ const List = () => {
 
             // If currently selected plan doesn't match new number, reset it
             if (membershipPlan && membershipPlan.all?.students !== val) {
-                setMembershipPlan(null);
+                // optional: find matching plan instead of null
+                const matchedPlan = paymentPlanOptions.find(
+                    (p) => p.all?.students === val
+                );
+                setMembershipPlan(matchedPlan || null);
             }
         }
     };
@@ -314,6 +325,9 @@ const List = () => {
     const [congestionNote, setCongestionNote] = useState(null);
     const [selectedDate, setSelectedDate] = useState(null);
     const [membershipPlan, setMembershipPlan] = useState(null);
+    const [discountCode, setDiscountCode] = useState("");
+    const [appliedDiscount, setAppliedDiscount] = useState(null);
+    const [isApplied, setIsApplied] = useState(false);
     const today = new Date();
     const [currentDate, setCurrentDate] = useState(new Date());
     const [fromDate, setFromDate] = useState(new Date(currentDate.getFullYear(), currentDate.getMonth(), 11));
@@ -1007,6 +1021,11 @@ const List = () => {
 
     const sessionDatesSet = new Set(sessionDates);
     useEffect(() => {
+        if (selectedDate && membershipPlan) {
+            calculateAmount(selectedDate);
+        }
+    }, [numberOfStudents, membershipPlan, selectedDate]);
+    useEffect(() => {
         // Run only once, and only if there are session dates
         if (hasInitialized.current || !sessionDatesSet || sessionDatesSet.size === 0) return;
 
@@ -1096,7 +1115,50 @@ const List = () => {
 
     console.log('pricingBreakdown', pricingBreakdown);
     console.log("All Available Dates:", Array.from(sessionDatesSet));
+    const handleApplyDiscount = async () => {
+        if (!discountCode.trim()) {
+            setIsChecked(true);
+            setIsApplied(false);
+            return;
+        }
 
+        setIsChecked(true);
+        setIsDiscountLoading(true);
+
+        const payload = {
+            starterPack: singleClassSchedulesOnly?.starterPack?.[0]?.price || 0,
+            code: discountCode
+        };
+
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/api/admin/book-membership/apply-discount`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(payload),
+                }
+            );
+
+            const result = await response.json();
+
+            if (response.ok && result?.status) {
+                setAppliedDiscount(result); // ✅ {finalPrice, discountAmount}
+                setIsApplied(true);
+            } else {
+                setAppliedDiscount(null);
+                setIsApplied(false);
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            setIsApplied(false);
+        } finally {
+            setIsDiscountLoading(false);
+        }
+    };
     const renderContent = (content) => {
         return (
             <div
@@ -1307,8 +1369,8 @@ const List = () => {
                                         type="text"
                                         placeholder="Starter Pack"
                                         value={
-                                            singleClassSchedulesOnly?.starterPack?.[0]?.price != null
-                                                ? `£${singleClassSchedulesOnly?.starterPack?.[0]?.price}`
+                                            appliedDiscount?.data?.finalPrice || singleClassSchedulesOnly?.starterPack?.[0]?.price != null
+                                                ? `£${appliedDiscount?.data?.finalPrice || singleClassSchedulesOnly?.starterPack?.[0]?.price}`
                                                 : ""
                                         }
                                         readOnly
@@ -1317,6 +1379,92 @@ const List = () => {
                                 </div>
                             </div>
                         )}
+                        <div className="mb-5">
+                            <label className="text-base font-semibold">Discount Code</label>
+
+                            <div className="relative mt-2">
+                                <input
+                                    type="text"
+                                    placeholder="Enter Discount Code"
+                                    value={discountCode}
+                                    onChange={handleDiscountChange}
+                                    className="w-full border border-gray-300 rounded-xl px-3 text-[16px] py-3 focus:outline-none"
+                                />
+
+                                {/* Loading */}
+
+                                <div className="absolute top-[4px]       right-1">
+                                    <button
+                                        onClick={handleApplyDiscount}
+                                        disabled={isDiscountLoading}
+                                        className={`
+    px-5 py-2 
+    rounded-xl 
+    font-medium 
+    transition-all duration-200 ease-in-out
+    shadow-sm
+    ${isDiscountLoading
+                                                ? "bg-[#0098d9] text-white cursor-not-allowed"
+                                                : "bg-[#003997] text-white hover:bg-gray-900 active:scale-95 hover:shadow-md"
+                                            }
+  `}
+                                    >
+                                        {isDiscountLoading ? (
+                                            <span className="flex items-center gap-2">
+                                                <svg
+                                                    className="w-4 h-4 animate-spin"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                >
+                                                    <circle
+                                                        className="opacity-25"
+                                                        cx="12"
+                                                        cy="12"
+                                                        r="10"
+                                                        stroke="currentColor"
+                                                        strokeWidth="4"
+                                                    />
+                                                    <path
+                                                        className="opacity-75"
+                                                        fill="currentColor"
+                                                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                                    />
+                                                </svg>
+                                                Applying...
+                                            </span>
+                                        ) : (
+                                            "Apply"
+                                        )}
+                                    </button>
+                                </div>
+                                <div>
+                                    {isDiscountLoading && (
+                                        <p className="text-blue-500 mt-3">Checking...</p>
+                                    )}
+
+                                    {/* Success */}
+                                    {isChecked && isApplied && !isDiscountLoading && (
+                                        <p className="text-green-600 mt-2">
+                                            ✅ {appliedDiscount.message}
+                                        </p>
+                                    )}
+                                    {/* {isApplied && appliedDiscount && (
+                                        <p className="text-blue-600 mt-1">
+                                            Final Price: ₹{appliedDiscount.data.finalPrice}
+                                        </p>
+                                    )} */}
+                                    {/* Error */}
+                                    {isChecked && !isApplied && !isDiscountLoading && (
+                                        <p className="text-red-600 mt-3">
+                                            ❌ Invalid Discount Code
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                        </div>
+                       
+
                     </div>
 
                     <div className="space-y-3 bg-white p-6 rounded-3xl shadow-sm ">
@@ -1501,21 +1649,25 @@ const List = () => {
                                 {singleClassSchedulesOnly?.venue?.starterPack && (
                                     <div className="flex justify-between text-[#333]">
                                         <span>Starter Pack</span>
-                                        <span>£{singleClassSchedulesOnly?.starterPack?.[0]?.price || 0}</span>
+                                        <span>£{appliedDiscount?.data?.finalPrice || singleClassSchedulesOnly?.starterPack?.[0]?.price || 0}</span>
                                     </div>
                                 )}
-                                <div className="flex justify-between text-[#333]">
-                                    <span>Number of lessons pro-rated</span>
-                                    <span>{pricingBreakdown.numberOfLessonsProRated}</span>
-                                </div>
+                                {pricingBreakdown.numberOfLessonsProRated !== 0 && (
+                                    <div className="flex justify-between text-[#333]">
+                                        <span>Number of lessons pro-rated</span>
+                                        <span>{pricingBreakdown.numberOfLessonsProRated}</span>
+                                    </div>
+                                )}
                                 <div className="flex justify-between text-[#333]">
                                     <span>Price per class per lessons</span>
                                     <span>£{pricingBreakdown.pricePerClassPerChild}</span>
                                 </div>
-                                <div className="flex justify-between text-[#000]">
-                                    <span>Cost of pro-rated lessons</span>
-                                    <span>£{pricingBreakdown.costOfProRatedLessons}</span>
-                                </div>
+                                {pricingBreakdown.numberOfLessonsProRated !== 0 && (
+                                    <div className="flex justify-between text-[#000]">
+                                        <span>Cost of pro-rated lessons</span>
+                                        <span>£{pricingBreakdown.costOfProRatedLessons}</span>
+                                    </div>
+                                )}
                             </motion.div>
                         )}
                     </div>
@@ -2045,23 +2197,11 @@ const List = () => {
                                     {currentComments.map((c, i) => (
                                         <div key={i} className="bg-gray-50 rounded-xl p-4 text-sm">
 
-                                            {/* LEFT: Comment Text */}
-                                            <p className="text-gray-700 text-[16px] font-semibold mb-3 text-left">
-                                                {c.comment}
-                                            </p>
-
-                                            {/* RIGHT: User Info */}
                                             <div className="flex justify-end items-center gap-3">
 
                                                 {/* Time */}
                                                 <div className="flex flex-wrap justify-end flex-col">
-
-                                                    <span className="text-gray-400 text-right text-[14px] whitespace-nowrap">
-                                                        {formatTimeAgo(c.createdAt)}
-                                                    </span>
-
-                                                    {/* Name + Image */}
-                                                    <div className="flex items-center gap-3">
+                                                    <div className="flex items-center gap-3 mb-4">
                                                         <img
                                                             src={
                                                                 c?.bookedByAdmin?.profile
@@ -2083,6 +2223,23 @@ const List = () => {
 
 
                                                     </div>
+                                                </div>
+                                            </div>
+                                            <p className="text-gray-700 text-[16px] font-semibold mb-3 text-left">
+                                                {c.comment}
+                                            </p>
+
+                                            {/* RIGHT: User Info */}
+                                            <div className="flex justify-end items-center gap-3">
+
+                                                {/* Time */}
+                                                <div className="flex flex-wrap justify-end flex-col">
+
+                                                    <span className="text-gray-400 text-right text-[14px] whitespace-nowrap">
+                                                        {formatTimeAgo(c.createdAt)}
+                                                    </span>
+
+
                                                 </div>
                                             </div>
                                         </div>
@@ -2150,80 +2307,106 @@ const List = () => {
 
                                     </div>
                                     <div className="flex gap justify-center items-start px-6">
-                
-                                            <div className="bg-[#F5F7FB] rounded-2xl p-6 mt-4 w-full max-w-md w-[50%]">
 
-                                                {/* Title */}
-                                                <h3 className="text-[#042C89] poppins font-bold text-[21px] mb-4">
-                                                    Summary
-                                                </h3>
+                                        <div className="bg-[#F5F7FB] rounded-2xl p-6 mt-4 w-full max-w-md w-[50%]">
 
-                                                {/* Plan */}
-                                                <div className="mb-3">
-                                                    <p className=" text-[#042C89] poppins font-semibold text-[18px]">
-                                                        {membershipPlan?.all?.duration} {membershipPlan?.all?.interval} Plan
-                                                    </p>
-                                                    <div className="flex justify-between font-semibold text-[16px] text-gray-700 mt-1 relative">
-                                                        <span>{membershipPlan?.all?.students} Student{membershipPlan?.all?.students === 1 ? '' : 's'} </span>
-                                                        <span className="text-[18px] block absolute right-0 top-[-10px]">£{membershipPlan?.all?.price} <span className="text-[11px] block">per month</span></span>
-                                                    </div>
-                                                </div>
+                                            {/* Title */}
+                                            <h3 className="text-[#042C89] poppins font-bold text-[21px] mb-4">
+                                                Summary
+                                            </h3>
 
-                                                {/* Dates */}
-                                                <div className="text-[16px] text-gray-700 font-semibold mb-4 space-y-1">
-                                                    <p>Start Date: {selectedDate}</p>
-                                                    {/* <p>First monthly payment: {pricingBreakdown?.firstPaymentDate}</p> */}
-                                                </div>
-
-                                                <hr className="border-gray-300 mb-4" />
-
-                                                {/* Joining Fee */}
-                                                {membershipPlan?.all?.joiningFee && (
-                                                    <div className="flex justify-between text-[14px] mb-3">
-                                                        <span className="text-[#2B3A67] font-semibold">Joining Fee</span>
-                                                        <span>£{membershipPlan?.all?.joiningFee}</span>
-                                                    </div>
-                                                )}
-
-                                                {/* Starter Pack */}
-                                                {singleClassSchedulesOnly?.venue?.starterPack && (
-                                                    <div className="flex justify-between text-[18px] mb-3">
-                                                        <span className="text-gray-700  font-semibold   ">Starter Pack</span>
-                                                        <span>£{singleClassSchedulesOnly?.starterPack?.[0]?.price}</span>
-                                                    </div>
-                                                )}
-
-                                                {/* Pro-rata Section */}
-                                                {pricingBreakdown.numberOfLessonsProRated !== 0 && (
-                                                    <div className="mb-2">
-                                                        <p className=" text-[#042C89] poppins font-semibold text-[18px] mb-2">
-                                                            Pro-rata lessons
-                                                        </p>
-
-                                                        <div className="flex justify-between font-semibold text-[16px] text-gray-700">
-                                                            <span>Number of lessons</span>
-                                                            <span>{pricingBreakdown.numberOfLessonsProRated}</span>
-                                                        </div>
-
-                                                        <div className="flex justify-between font-semibold text-[16px] text-gray-700 mt-1">
-                                                            <span>Fee</span>
-                                                            <span>£{pricingBreakdown.costOfProRatedLessons}</span>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                                <hr className="border-gray-300 my-4" />
-
-                                                {/* Total */}
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-gray-700 font-semibold text-[18px]">
-                                                        Total to pay now
-                                                    </span>
-                                                    <span className="text-[#042C89] font-bold text-[18px]">
-                                                        £{calculatedAmount}
-                                                    </span>
+                                            {/* Plan */}
+                                            <div className="mb-3">
+                                                <p className=" text-[#042C89] poppins font-semibold text-[18px]">
+                                                    {membershipPlan?.all?.duration} {membershipPlan?.all?.interval} Plan
+                                                </p>
+                                                <div className="flex justify-between font-semibold text-[16px] text-gray-700 mt-1 relative">
+                                                    <span>{membershipPlan?.all?.students} Student{membershipPlan?.all?.students === 1 ? '' : 's'} </span>
+                                                    <span className="text-[18px] block absolute right-0 top-[-10px]">£{pricingBreakdown?.nextMonthPayment} <span className="text-[11px] block">per month</span></span>
                                                 </div>
                                             </div>
-                                      
+
+                                            {/* Dates */}
+                                            <div className="text-[16px] text-gray-700 font-semibold mb-4 space-y-1">
+                                                <p>Start Date: {selectedDate}</p>
+                                                {/* <p>First monthly payment: {pricingBreakdown?.firstPaymentDate}</p> */}
+                                            </div>
+
+                                            <hr className="border-gray-300 mb-4" />
+
+                                            {/* Joining Fee */}
+                                            {membershipPlan?.all?.joiningFee && (
+                                                <div className="flex justify-between text-[14px] mb-3">
+                                                    <span className="text-[#2B3A67] font-semibold">Joining Fee</span>
+                                                    <span>£{membershipPlan?.all?.joiningFee}</span>
+                                                </div>
+                                            )}
+
+                                            {/* Starter Pack */}
+             {singleClassSchedulesOnly?.venue?.starterPack && (
+    <div className="flex justify-between items-center mb-4">
+
+        <span className="text-gray-800 font-semibold text-[18px]">
+            Starter Pack
+        </span>
+
+        {isApplied && appliedDiscount?.data ? (
+            <div className="flex flex-col items-end leading-tight">
+
+                {/* Old Price */}
+                <span className="text-gray-400 line-through text-sm">
+                    £{singleClassSchedulesOnly?.starterPack?.[0]?.price}
+                </span>
+
+                {/* New Price */}
+                <span className="text-green-600 font-bold text-[20px]">
+                    £{appliedDiscount.data.finalPrice}
+                </span>
+
+                {/* Discount */}
+                <span className="text-red-500 text-xs font-medium">
+                    -£{appliedDiscount.data.discountAmount} OFF
+                </span>
+
+            </div>
+        ) : (
+            <span className="text-[18px] font-semibold text-gray-900">
+                £{singleClassSchedulesOnly?.starterPack?.[0]?.price || 0}
+            </span>
+        )}
+    </div>
+)}
+                                            {/* Pro-rata Section */}
+                                            {pricingBreakdown.numberOfLessonsProRated !== 0 && (
+                                                <div className="mb-2">
+                                                    <p className=" text-[#042C89] poppins font-semibold text-[18px] mb-2">
+                                                        Pro-rata lessons
+                                                    </p>
+
+                                                    <div className="flex justify-between font-semibold text-[16px] text-gray-700">
+                                                        <span>Number of lessons</span>
+                                                        <span>{pricingBreakdown.numberOfLessonsProRated}</span>
+                                                    </div>
+
+                                                    <div className="flex justify-between font-semibold text-[16px] text-gray-700 mt-1">
+                                                        <span>Fee</span>
+                                                        <span>£{pricingBreakdown.costOfProRatedLessons}</span>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <hr className="border-gray-300 my-4" />
+
+                                            {/* Total */}
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-gray-700 font-semibold text-[18px]">
+                                                    Total to pay now
+                                                </span>
+                                                <span className="text-[#042C89] font-bold text-[18px]">
+                                                    £{calculatedAmount}
+                                                </span>
+                                            </div>
+                                        </div>
+
                                         <div className="w-[50%]">
                                             {/* <div className="text-left directDebitBg p-6 mb-4 m-6 rounded-2xl ">
                                         <p className="font-bold text-white text-[24px]">
