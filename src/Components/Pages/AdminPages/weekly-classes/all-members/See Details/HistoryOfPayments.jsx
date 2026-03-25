@@ -26,7 +26,7 @@ const HistoryOfPayments = ({ stateData }) => {
         <h2 className="text-[24px] font-semibold mb-4">Details</h2>
         <div className="grid grid-cols-2 gap-y-4 text-[16px]">
           <div className="col-span-1 text-gray-500 border-b border-gray-200 pb-4">Status</div>
-          <div className="col-span-1 font-medium text-green-600 text-end border-b border-gray-200 pb-4">
+          <div className="col-span-1 font-medium text-green-600 text-end border-b border-gray-200 pb-4 capitalize ">
             {safeValue(stateData.status)}
           </div>
 
@@ -84,65 +84,78 @@ const HistoryOfPayments = ({ stateData }) => {
           </thead>
           <tbody className="divide-y divide-gray-300 p-6">
             {stateData?.payments?.length > 0 ? (
-              stateData.payments.map((payment, index) => {
-                const isFailed = payment.paymentStatus !== "paid";
-                const isSuccess = payment.paymentStatus === "paid";
+              stateData.payments
+                // 🔥 yaha filter
+                .map((payment, index) => {
+                  const isFailed = payment.paymentStatus !== "paid";
+                  const isPending = payment.paymentStatus === "pending";
+                  const isSuccess = payment.paymentStatus === "paid";
 
-                return (
-                  <tr key={payment.id || index} className="relative">
-                    {/* Description */}
-                    <td className="py-3 px-6 font-medium relative">
-                      <div
-                        className={`flex gap-2 items-center ${
-                          isFailed ? "cursor-pointer" : ""
-                        }`}
-                        onClick={() =>
-                          isFailed &&
-                          setShowPopup(showPopup === payment.id ? null : payment.id)
-                        }
-                      >
-                        <div className={isFailed ? "text-red-500" : "text-green-500"}>●</div>
-                        <span>{safeValue(payment.description, "Membership Fee")}</span>
-                      </div>
-
-                      {/* Popup */}
-                      {showPopup === payment.id && isFailed && (
-                        <div className="absolute right-[200px] top-[-30px] mt-2 w-72 bg-white shadow-lg rounded-xl p-4 z-10">
-                          <div className="text-red-500 font-semibold mb-2">Payment Failed</div>
-                          <div className="text-gray-700 mb-2">
-                            Unsuccessful payment of {safeValue(payment.firstName)}{" "}
-                            {safeValue(payment.lastName)}'s subscription for{" "}
-                            {safeValue(payment.description, "this month")}.
-                          </div>
-                          <a href="/failed-payments" className="text-blue-600 hover:underline">
-                            Go to the failed payments page
-                          </a>
+                  return (
+                    <tr key={payment.id || index} className="relative">
+                      {/* Description */}
+                      <td className="py-3 px-6 font-medium relative">
+                        <div
+                          className={`flex gap-2 items-center ${isFailed ? "cursor-pointer" : ""
+                            }`}
+                          onClick={() =>
+                            isFailed &&
+                            setShowPopup(showPopup === payment.id ? null : payment.id)
+                          }
+                        >
+                          <div className={isFailed ? "text-red-500" : "text-green-500"}>●</div>
+                          <span>{safeValue(payment.description, "Membership Fee")}</span>
                         </div>
-                      )}
-                    </td>
 
-                    <td>{safeValue(payment.merchantRef)}</td>
-                    <td>{formatDate(payment.createdAt)}</td>
-                    <td>{safeValue(payment.gatewayResponse?.paymentMethod?.card?.cardType)}</td>
-                    <td>
-                      {safeValue(payment.gatewayResponse?.transaction?.amount)}{" "}
-                      {safeValue(payment.currency, "GBP")}
-                    </td>
+                        {/* Popup */}
+                        {showPopup === payment.id && isFailed && (
+                          <div className="absolute right-[200px] top-[-30px] mt-2 w-72 bg-white shadow-lg rounded-xl p-4 z-10">
+                            <div className="text-red-500 font-semibold mb-2">Payment Failed</div>
+                            <div className="text-gray-700 mb-2">
+                              Unsuccessful payment of {safeValue(payment.firstName)}{" "}
+                              {safeValue(payment.lastName)}'s subscription for{" "}
+                              {safeValue(payment.description, "this month")}.
+                            </div>
+                            <a href="/failed-payments" className="text-blue-600 hover:underline">
+                              Go to the failed payments page
+                            </a>
+                          </div>
+                        )}
+                      </td>
 
-                    <td className="text-left w-30">
-                      {isFailed ? (
-                        <button className="text-blue-500 text-sm font-medium hover:underline">
-                          Retry Payment
-                        </button>
-                      ) : (
-                        <span className="text-green-600 text-sm font-semibold">
-                          Paid Successfully
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })
+                      <td className="capitalize">
+                        {payment.paymentCategory === "starter_pack"
+                          ? "Stripe"
+                          : safeValue(payment.paymentType)}
+                      </td>                      <td>
+                        {payment.paymentCategory === "starter_pack"
+                          ? formatDate(payment.updatedAt)   // ✅ starter_pack → updatedAt
+                          : formatDate(payment.dueDate)     // ✅ baaki → dueDate
+                        }
+                      </td>
+                      <td className="capitalize">{safeValue(payment.paymentStatus)}</td>
+                      <td>
+                        {safeValue(payment.price)} {safeValue(payment.currency, "GBP")}
+                      </td>
+
+                      <td className="text-left w-30">
+                        {payment.paymentStatus === "failed" ? (
+                          <button className="text-blue-500 text-sm font-medium hover:underline">
+                            Retry Payment
+                          </button>
+                        ) : payment.paymentStatus === "pending" ? (
+                          <span className="text-yellow-500 text-sm font-semibold">
+                            Payment Pending
+                          </span>
+                        ) : (
+                          <span className="text-green-600 text-sm font-semibold">
+                            Paid Successfully
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
             ) : (
               <tr>
                 <td colSpan={6} className="text-center py-6 text-gray-500">

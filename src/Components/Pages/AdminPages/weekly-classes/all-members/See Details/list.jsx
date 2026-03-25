@@ -20,8 +20,8 @@ const SeeDetails = () => {
     const location = useLocation();
     const [itemId, setItemId] = useState(null);
     const [memberInfo, setMemberInfo] = useState(null);
-console.log('serviceHistory',serviceHistory)
-    
+    console.log('memberInfo', memberInfo)
+
 
     useEffect(() => {
         if (location.state?.itemId) {
@@ -44,7 +44,16 @@ console.log('serviceHistory',serviceHistory)
     }, [itemId, serviceHistoryMembership]);
     const [activeTab, setActiveTab] = useState("Parent Profile");
 
-
+    const navigateTo =
+        memberInfo === "allMembers" || memberInfo === "freeTrial"
+            ? {
+                pathname: "/weekly-classes/trial/find-a-class/book-a-free-trial/account-info/list",
+                state: { itemId: itemId }
+            }
+            : {
+                pathname: "/weekly-classes/all-members/account-info",
+                  state: { itemId: itemId }
+            };
 
     return (
         <>
@@ -52,11 +61,9 @@ console.log('serviceHistory',serviceHistory)
                 <div className=" flex items-center gap-2 md:gap-3">
                     <h2
                         onClick={() => {
-                            navigate(
-                                memberInfo === 'allMembers'
-                                    ? "/weekly-classes/all-members/list"
-                                    : "/weekly-classes/all-members/membership-sales"
-                            );
+                            navigate(navigateTo.pathname, {
+                                state: navigateTo.state
+                            });
                         }}
                         className="text-xl md:text-2xl font-semibold cursor-pointer hover:opacity-80 transition-opacity duration-200"
                     >

@@ -533,7 +533,7 @@ const List = () => {
 
 
 
-    // console.log('membershipPlan', membershipPlan)
+    console.log('membershipPlan', membershipPlan)
 
     const handleAddParent = () => {
         setParents((prev) => [
@@ -2137,7 +2137,7 @@ const List = () => {
 
                         {showPopup && (
                             <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
-                                <div className="bg-white rounded-2xl max-w-[541px] min-w-[541px] max-h-[90%] overflow-y-scroll space-y-6 relative scrollbar-hide">
+                                <div className="bg-white rounded-2xl max-w-[70%] min-w-[70%] max-h-[90%] overflow-y-scroll space-y-6 relative scrollbar-hide">
                                     <button
                                         className="absolute top-3 p-6 left-4 text-xl font-bold"
                                         onClick={() => setShowPopup(false)}
@@ -2149,7 +2149,83 @@ const List = () => {
                                         <h2 className="font-semibold  text-[24px] mb-2 py-6  border-b border-gray-400 ">Direct Debit Details</h2>
 
                                     </div>
-                                    <div className="text-left directDebitBg p-6 mb-4 m-6 rounded-2xl ">
+                                    <div className="flex gap justify-center items-start px-6">
+                
+                                            <div className="bg-[#F5F7FB] rounded-2xl p-6 mt-4 w-full max-w-md w-[50%]">
+
+                                                {/* Title */}
+                                                <h3 className="text-[#042C89] poppins font-bold text-[21px] mb-4">
+                                                    Summary
+                                                </h3>
+
+                                                {/* Plan */}
+                                                <div className="mb-3">
+                                                    <p className=" text-[#042C89] poppins font-semibold text-[18px]">
+                                                        {membershipPlan?.all?.duration} {membershipPlan?.all?.interval} Plan
+                                                    </p>
+                                                    <div className="flex justify-between font-semibold text-[16px] text-gray-700 mt-1 relative">
+                                                        <span>{membershipPlan?.all?.students} Student{membershipPlan?.all?.students === 1 ? '' : 's'} </span>
+                                                        <span className="text-[18px] block absolute right-0 top-[-10px]">£{membershipPlan?.all?.price} <span className="text-[11px] block">per month</span></span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Dates */}
+                                                <div className="text-[16px] text-gray-700 font-semibold mb-4 space-y-1">
+                                                    <p>Start Date: {selectedDate}</p>
+                                                    {/* <p>First monthly payment: {pricingBreakdown?.firstPaymentDate}</p> */}
+                                                </div>
+
+                                                <hr className="border-gray-300 mb-4" />
+
+                                                {/* Joining Fee */}
+                                                {membershipPlan?.all?.joiningFee && (
+                                                    <div className="flex justify-between text-[14px] mb-3">
+                                                        <span className="text-[#2B3A67] font-semibold">Joining Fee</span>
+                                                        <span>£{membershipPlan?.all?.joiningFee}</span>
+                                                    </div>
+                                                )}
+
+                                                {/* Starter Pack */}
+                                                {singleClassSchedulesOnly?.venue?.starterPack && (
+                                                    <div className="flex justify-between text-[18px] mb-3">
+                                                        <span className="text-gray-700  font-semibold   ">Starter Pack</span>
+                                                        <span>£{singleClassSchedulesOnly?.starterPack?.[0]?.price}</span>
+                                                    </div>
+                                                )}
+
+                                                {/* Pro-rata Section */}
+                                                {pricingBreakdown.numberOfLessonsProRated !== 0 && (
+                                                    <div className="mb-2">
+                                                        <p className=" text-[#042C89] poppins font-semibold text-[18px] mb-2">
+                                                            Pro-rata lessons
+                                                        </p>
+
+                                                        <div className="flex justify-between font-semibold text-[16px] text-gray-700">
+                                                            <span>Number of lessons</span>
+                                                            <span>{pricingBreakdown.numberOfLessonsProRated}</span>
+                                                        </div>
+
+                                                        <div className="flex justify-between font-semibold text-[16px] text-gray-700 mt-1">
+                                                            <span>Fee</span>
+                                                            <span>£{pricingBreakdown.costOfProRatedLessons}</span>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                <hr className="border-gray-300 my-4" />
+
+                                                {/* Total */}
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-gray-700 font-semibold text-[18px]">
+                                                        Total to pay now
+                                                    </span>
+                                                    <span className="text-[#042C89] font-bold text-[18px]">
+                                                        £{calculatedAmount}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                      
+                                        <div className="w-[50%]">
+                                            {/* <div className="text-left directDebitBg p-6 mb-4 m-6 rounded-2xl ">
                                         <p className="font-bold text-white text-[24px]">
                                             £{pricingBreakdown.costOfProRatedLessons === 0
                                                 ? pricingBreakdown?.nextMonthPayment
@@ -2170,134 +2246,134 @@ const List = () => {
                                             {" = "}
                                             £{calculatedAmount}
                                         </p>
-                                    </div>
-                                    {/* {singleClassSchedulesOnly?.venue?.starterPack && (
+                                    </div> */}
+                                            {/* {singleClassSchedulesOnly?.venue?.starterPack && (
                                         <p className="text-[18px] py-3 px-6 font-semibold ">
                                             Starter Pack:<b> {singleClassSchedulesOnly?.starterPack?.[0]?.price}</b>
                                         </p>
                                     )} */}
-                                    <div className="space-y-2 px-6 pb-6">
+                                            <div className="space-y-2 px-6 pb-6">
 
-                                        {/* ================= Personal Details ================= */}
-                                        <h3 className="font-semibold text-[20px]">Personal Details</h3>
+                                                {/* ================= Personal Details ================= */}
+                                                <h3 className="font-semibold text-[20px]">Personal Details</h3>
 
-                                        <div>
-                                            <label className="block text-[16px] font-semibold">Email address</label>
-                                            <input
-                                                type="email"
-                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                value={payment.email}
-                                                onChange={(e) => setPayment({ ...payment, email: e.target.value })}
-                                            />
-                                        </div>
-
-                                        {/* ================= Payment Type ================= */}
-                                        <h3 className="font-semibold text-[20px] pt-2">Bank Details</h3>
-
-                                        <div className="flex gap-6 mt-3">
-                                            <p className="text-[16px] font-semibold">
-                                                Payment Method:{" "}
-                                                <span className="font-normal">
-                                                    {isFranchisee ? "GoCardless" : "Access Pay Suite"}
-                                                </span>
-                                            </p>
-                                        </div>
-
-                                        {/* ================= BANK (GOCARDLESS) ================= */}
-                                        {isFranchisee && (
-                                            <div className="mt-4 space-y-4">
-
-                                                {/* Account Holder Name (AUTO SPLIT) */}
                                                 <div>
-                                                    <label className="block text-[16px] font-semibold">Account Holder Name</label>
+                                                    <label className="block text-[16px] font-semibold">Email address</label>
                                                     <input
-                                                        type="text"
-                                                        placeholder="Enter full name (e.g. Saroj Singh)"
+                                                        type="email"
                                                         className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                        value={payment.account_holder_name}
-                                                        onChange={(e) => {
-                                                            const fullName = e.target.value;
-                                                            const parts = fullName.trim().split(" ");
-
-                                                            setPayment({
-                                                                ...payment,
-                                                                account_holder_name: fullName,
-                                                                firstName: parts[0] || "",
-                                                                lastName: parts.slice(1).join(" "),
-                                                            });
-                                                        }}
+                                                        value={payment.email}
+                                                        onChange={(e) => setPayment({ ...payment, email: e.target.value })}
                                                     />
                                                 </div>
 
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="block text-[16px] font-semibold">Account Number</label>
-                                                        <input
-                                                            type="text"
-                                                            inputMode="numeric"
-                                                            placeholder="Enter account number"
-                                                            className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                            value={payment.account_number}
-                                                            onChange={(e) =>
-                                                                setPayment({
-                                                                    ...payment,
-                                                                    account_number: e.target.value.replace(/\D/g, ""),
-                                                                })
-                                                            }
-                                                        />
-                                                    </div>
+                                                {/* ================= Payment Type ================= */}
+                                                <h3 className="font-semibold text-[20px] pt-2">Bank Details</h3>
 
-                                                    <div>
-                                                        <label className="block text-[16px] font-semibold">Sort Code</label>
-                                                        <input
-                                                            type="text"
-                                                            inputMode="numeric"
-                                                            placeholder="Enter Sort code"
-                                                            className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                            value={payment.branch_code}
-                                                            onChange={(e) =>
-                                                                setPayment({
-                                                                    ...payment,
-                                                                    branch_code: e.target.value.replace(/\D/g, ""),
-                                                                })
-                                                            }
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* ================= CARD (ACCESS PAY SUITE) ================= */}
-                                        {!isFranchisee && (
-                                            <div className="mt-5 space-y-4">
-
-                                                {/* Account Holder Name (AUTO SPLIT) */}
-                                                <div>
-                                                    <label className="block text-[16px] font-semibold">
-                                                        Account Holder Name
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        required
-                                                        placeholder="Enter full name (e.g. Saroj Singh)"
-                                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                        value={payment.account_holder_name}
-                                                        onChange={(e) => {
-                                                            const fullName = e.target.value;
-                                                            const parts = fullName.trim().split(" ");
-
-                                                            setPayment({
-                                                                ...payment,
-                                                                account_holder_name: fullName,
-                                                                firstName: parts[0] || "",
-                                                                lastName: parts.slice(1).join(" "),
-                                                            });
-                                                        }}
-                                                    />
+                                                <div className="flex gap-6 mt-3">
+                                                    <p className="text-[16px] font-semibold">
+                                                        Payment Method:{" "}
+                                                        <span className="font-normal">
+                                                            {isFranchisee ? "GoCardless" : "Access Pay Suite"}
+                                                        </span>
+                                                    </p>
                                                 </div>
 
-                                                {/* Email */}
-                                                {/* <div>
+                                                {/* ================= BANK (GOCARDLESS) ================= */}
+                                                {isFranchisee && (
+                                                    <div className="mt-4 space-y-4">
+
+                                                        {/* Account Holder Name (AUTO SPLIT) */}
+                                                        <div>
+                                                            <label className="block text-[16px] font-semibold">Account Holder Name</label>
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Enter full name (e.g. Saroj Singh)"
+                                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                                                value={payment.account_holder_name}
+                                                                onChange={(e) => {
+                                                                    const fullName = e.target.value;
+                                                                    const parts = fullName.trim().split(" ");
+
+                                                                    setPayment({
+                                                                        ...payment,
+                                                                        account_holder_name: fullName,
+                                                                        firstName: parts[0] || "",
+                                                                        lastName: parts.slice(1).join(" "),
+                                                                    });
+                                                                }}
+                                                            />
+                                                        </div>
+
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            <div>
+                                                                <label className="block text-[16px] font-semibold">Account Number</label>
+                                                                <input
+                                                                    type="text"
+                                                                    inputMode="numeric"
+                                                                    placeholder="Enter account number"
+                                                                    className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                                                    value={payment.account_number}
+                                                                    onChange={(e) =>
+                                                                        setPayment({
+                                                                            ...payment,
+                                                                            account_number: e.target.value.replace(/\D/g, ""),
+                                                                        })
+                                                                    }
+                                                                />
+                                                            </div>
+
+                                                            <div>
+                                                                <label className="block text-[16px] font-semibold">Sort Code</label>
+                                                                <input
+                                                                    type="text"
+                                                                    inputMode="numeric"
+                                                                    placeholder="Enter Sort code"
+                                                                    className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                                                    value={payment.branch_code}
+                                                                    onChange={(e) =>
+                                                                        setPayment({
+                                                                            ...payment,
+                                                                            branch_code: e.target.value.replace(/\D/g, ""),
+                                                                        })
+                                                                    }
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* ================= CARD (ACCESS PAY SUITE) ================= */}
+                                                {!isFranchisee && (
+                                                    <div className="mt-5 space-y-4">
+
+                                                        {/* Account Holder Name (AUTO SPLIT) */}
+                                                        <div>
+                                                            <label className="block text-[16px] font-semibold">
+                                                                Account Holder Name
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                required
+                                                                placeholder="Enter full name (e.g. Saroj Singh)"
+                                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                                                value={payment.account_holder_name}
+                                                                onChange={(e) => {
+                                                                    const fullName = e.target.value;
+                                                                    const parts = fullName.trim().split(" ");
+
+                                                                    setPayment({
+                                                                        ...payment,
+                                                                        account_holder_name: fullName,
+                                                                        firstName: parts[0] || "",
+                                                                        lastName: parts.slice(1).join(" "),
+                                                                    });
+                                                                }}
+                                                            />
+                                                        </div>
+
+                                                        {/* Email */}
+                                                        {/* <div>
                                                     <label className="block text-[16px] font-semibold">Email</label>
                                                     <input
                                                         type="email"
@@ -2311,25 +2387,25 @@ const List = () => {
                                                     />
                                                 </div> */}
 
-                                                {/* Address Line 1 */}
-                                                <div>
-                                                    <label className="block text-[16px] font-semibold">
-                                                        Address Line 1
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        required
-                                                        placeholder="Street address"
-                                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                        value={payment.line1}
-                                                        onChange={(e) =>
-                                                            setPayment({ ...payment, line1: e.target.value })
-                                                        }
-                                                    />
-                                                </div>
+                                                        {/* Address Line 1 */}
+                                                        <div>
+                                                            <label className="block text-[16px] font-semibold">
+                                                                Address Line 1
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                required
+                                                                placeholder="Street address"
+                                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                                                value={payment.line1}
+                                                                onChange={(e) =>
+                                                                    setPayment({ ...payment, line1: e.target.value })
+                                                                }
+                                                            />
+                                                        </div>
 
-                                                {/* Address Line 2 */}
-                                                {/* <div>
+                                                        {/* Address Line 2 */}
+                                                        {/* <div>
                                                     <label className="block text-[16px] font-semibold">
                                                         Town
                                                     </label>
@@ -2344,131 +2420,133 @@ const List = () => {
                                                     />
                                                 </div> */}
 
-                                                {/* City & Postal Code */}
-                                                <div className="flex gap-4">
-                                                    <div className="w-full">
-                                                        <label className="block text-[16px] font-semibold">City</label>
+                                                        {/* City & Postal Code */}
+                                                        <div className="flex gap-4">
+                                                            <div className="w-full">
+                                                                <label className="block text-[16px] font-semibold">City</label>
+                                                                <input
+                                                                    type="text"
+                                                                    required
+                                                                    placeholder="City"
+                                                                    className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                                                    value={payment.city}
+                                                                    onChange={(e) =>
+                                                                        setPayment({ ...payment, city: e.target.value })
+                                                                    }
+                                                                />
+                                                            </div>
+
+                                                            <div className="w-full">
+                                                                <label className="block text-[16px] font-semibold">
+                                                                    Postal Code
+                                                                </label>
+                                                                <input
+                                                                    type="text"
+                                                                    required
+                                                                    placeholder="Postal code"
+                                                                    className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                                                    value={payment.postalCode}
+                                                                    onChange={(e) =>
+                                                                        setPayment({ ...payment, postalCode: e.target.value })
+                                                                    }
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Account Number */}
+                                                        <div>
+                                                            <label className="block text-[16px] font-semibold">
+                                                                Account Number
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                required
+                                                                inputMode="numeric"
+                                                                placeholder="Enter account number"
+                                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                                                value={payment.account_number}
+                                                                onChange={(e) =>
+                                                                    setPayment({
+                                                                        ...payment,
+                                                                        account_number: e.target.value.replace(/\D/g, ""),
+                                                                    })
+                                                                }
+                                                            />
+                                                        </div>
+
+                                                        {/* Branch Code */}
+                                                        <div>
+                                                            <label className="block text-[16px] font-semibold">
+                                                                Sort Code
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                required
+                                                                inputMode="numeric"
+                                                                placeholder="Enter Sort code"
+                                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                                                value={payment.branch_code}
+                                                                onChange={(e) =>
+                                                                    setPayment({
+                                                                        ...payment,
+                                                                        branch_code: e.target.value.replace(/\D/g, ""),
+                                                                    })
+                                                                }
+                                                            />
+                                                        </div>
+
+                                                    </div>
+                                                )}
+
+
+                                                {/* ================= AUTHORISE ================= */}
+                                                <div className="flex items-center space-x-2 pt-2">
+                                                    <label className="flex items-center space-x-2 cursor-pointer text-[16px] font-semibold">
                                                         <input
-                                                            type="text"
-                                                            required
-                                                            placeholder="City"
-                                                            className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                            value={payment.city}
+                                                            type="checkbox"
+                                                            checked={payment.authorise}
                                                             onChange={(e) =>
-                                                                setPayment({ ...payment, city: e.target.value })
+                                                                setPayment({ ...payment, authorise: e.target.checked })
                                                             }
                                                         />
-                                                    </div>
-
-                                                    <div className="w-full">
-                                                        <label className="block text-[16px] font-semibold">
-                                                            Postal Code
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            required
-                                                            placeholder="Postal code"
-                                                            className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                            value={payment.postalCode}
-                                                            onChange={(e) =>
-                                                                setPayment({ ...payment, postalCode: e.target.value })
-                                                            }
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                {/* Account Number */}
-                                                <div>
-                                                    <label className="block text-[16px] font-semibold">
-                                                        Account Number
+                                                        <span>I can authorise Direct Debits on this account myself</span>
                                                     </label>
-                                                    <input
-                                                        type="text"
-                                                        required
-                                                        inputMode="numeric"
-                                                        placeholder="Enter account number"
-                                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                        value={payment.account_number}
-                                                        onChange={(e) =>
-                                                            setPayment({
-                                                                ...payment,
-                                                                account_number: e.target.value.replace(/\D/g, ""),
-                                                            })
-                                                        }
-                                                    />
-                                                </div>
-
-                                                {/* Branch Code */}
-                                                <div>
-                                                    <label className="block text-[16px] font-semibold">
-                                                        Sort Code
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        required
-                                                        inputMode="numeric"
-                                                        placeholder="Enter Sort code"
-                                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                        value={payment.branch_code}
-                                                        onChange={(e) =>
-                                                            setPayment({
-                                                                ...payment,
-                                                                branch_code: e.target.value.replace(/\D/g, ""),
-                                                            })
-                                                        }
-                                                    />
                                                 </div>
 
                                             </div>
-                                        )}
 
-
-                                        {/* ================= AUTHORISE ================= */}
-                                        <div className="flex items-center space-x-2 pt-2">
-                                            <label className="flex items-center space-x-2 cursor-pointer text-[16px] font-semibold">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={payment.authorise}
-                                                    onChange={(e) =>
-                                                        setPayment({ ...payment, authorise: e.target.checked })
+                                            <div className="w-full mx-auto flex justify-center" >
+                                                <button
+                                                    type="button"
+                                                    disabled={
+                                                        isSubmitting ||
+                                                        !payment.authorise ||
+                                                        (isFranchisee ? isBankInvalid : isCardInvalid)
                                                     }
-                                                />
-                                                <span>I can authorise Direct Debits on this account myself</span>
-                                            </label>
-                                        </div>
-
-                                    </div>
-
-                                    <div className="w-full mx-auto flex justify-center" >
-                                        <button
-                                            type="button"
-                                            disabled={
-                                                isSubmitting ||
-                                                !payment.authorise ||
-                                                (isFranchisee ? isBankInvalid : isCardInvalid)
-                                            }
-                                            onClick={async () => {
-                                                setIsSubmitting(true); // start loading
-                                                try {
-                                                    setDirectDebitData([...directDebitData, payment]);
-                                                    setShowPopup(false);
-                                                    await handleSubmit(payment); // await if handleSubmit is async
-                                                } finally {
-                                                    setIsSubmitting(false); // stop loading after submit
-                                                }
-                                            }}
-                                            className={`w-full max-w-[90%] mx-auto my-3 text-white text-[16px] py-3 rounded-lg font-semibold
+                                                    onClick={async () => {
+                                                        setIsSubmitting(true); // start loading
+                                                        try {
+                                                            setDirectDebitData([...directDebitData, payment]);
+                                                            setShowPopup(false);
+                                                            await handleSubmit(payment); // await if handleSubmit is async
+                                                        } finally {
+                                                            setIsSubmitting(false); // stop loading after submit
+                                                        }
+                                                    }}
+                                                    className={`w-full max-w-[90%] mx-auto my-3 text-white text-[16px] py-3 rounded-lg font-semibold
 ${isSubmitting ||
-                                                    !payment.authorise ||
-                                                    (isFranchisee ? isBankInvalid : isCardInvalid)
-                                                    ? "bg-gray-400 cursor-not-allowed"
-                                                    : "bg-[#237FEA] cursor-pointer"
-                                                }`}
+                                                            !payment.authorise ||
+                                                            (isFranchisee ? isBankInvalid : isCardInvalid)
+                                                            ? "bg-gray-400 cursor-not-allowed"
+                                                            : "bg-[#237FEA] cursor-pointer"
+                                                        }`}
 
-                                        >
-                                            {isSubmitting ? "Submitting..." : "Set up Direct Debit"}
-                                        </button>
+                                                >
+                                                    {isSubmitting ? "Submitting..." : "Set up Direct Debit"}
+                                                </button>
 
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

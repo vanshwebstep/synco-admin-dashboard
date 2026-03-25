@@ -575,69 +575,57 @@ const StudentProfile = ({ profile }) => {
                         </div>
 
                         {/* Comment list */}
-                        {commentsList && commentsList.length > 0 ? (
-                            <div className="space-y-4">
-                                {currentComments.map((c, i) => (
-                                    <div key={i} className="bg-gray-50 rounded-xl p-4 text-sm">
-                                        <p className="text-gray-700 text-[16px] font-semibold mb-1">{c.comment}</p>
-                                        <div className="flex justify-between items-center">
-                                            <div className="flex items-center gap-3">
-                                                <img
-                                                    src={
-                                                        c?.bookedByAdmin?.profile
-                                                            ? `${c?.bookedByAdmin?.profile}`
-                                                            : '/members/dummyuser.png'
-                                                    }
-                                                    onError={(e) => {
-                                                        e.currentTarget.onerror = null; // prevent infinite loop
-                                                        e.currentTarget.src = '/members/dummyuser.png';
-                                                    }}
-                                                    alt={c?.bookedByAdmin?.firstName}
-                                                    className="w-10 h-10 rounded-full object-cover mt-1"
-                                                />
-                                                <div>
-                                                    <p className="font-semibold text-[#237FEA] text-[16px]">{c?.bookedByAdmin?.firstName} {c?.bookedByAdmin?.lastName}</p>
+                         {commentsList && commentsList.length > 0 ? (
+                                <div className="space-y-4">
+                                    {currentComments.map((c, i) => (
+                                        <div key={i} className="bg-gray-50 rounded-xl p-4 text-sm">
+
+                                            {/* LEFT: Comment Text */}
+                                            <p className="text-gray-700 text-[16px] font-semibold mb-3 text-left">
+                                                {c.comment}
+                                            </p>
+
+                                            {/* RIGHT: User Info */}
+                                            <div className="flex justify-end items-center gap-3">
+
+                                                {/* Time */}
+                                                <div className="flex flex-wrap justify-end flex-col">
+
+                                                    <span className="text-gray-400 text-right text-[14px] whitespace-nowrap">
+                                                        {formatTimeAgo(c.createdAt)}
+                                                    </span>
+
+                                                    {/* Name + Image */}
+                                                    <div className="flex items-center gap-3">
+                                                        <img
+                                                            src={
+                                                                c?.bookedByAdmin?.profile
+                                                                    ? `${c?.bookedByAdmin?.profile}`
+                                                                    : '/members/dummyuser.png'
+                                                            }
+                                                            onError={(e) => {
+                                                                e.currentTarget.onerror = null;
+                                                                e.currentTarget.src = '/members/dummyuser.png';
+                                                            }}
+                                                            alt={c?.bookedByAdmin?.firstName}
+                                                            className="w-10 h-10 rounded-full object-cover"
+                                                        />
+                                                        <div className="text-right">
+                                                            <p className="font-semibold text-[#237FEA] text-[15px]">
+                                                                {c?.bookedByAdmin?.firstName} {c?.bookedByAdmin?.lastName}
+                                                            </p>
+                                                        </div>
+
+
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <span className="text-gray-400 text-[16px] whitespace-nowrap mt-1">
-                                                {formatTimeAgo(c.createdAt)}
-                                            </span>
                                         </div>
-                                    </div>
-                                ))}
-
-                                {/* Pagination controls */}
-                                {totalPages > 1 && (
-                                    <div className="flex justify-center items-center gap-2 mt-4">
-                                        <button
-                                            className="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-100"
-                                            onClick={() => goToPage(currentPage - 1)}
-                                            disabled={currentPage === 1}
-                                        >
-                                            Prev
-                                        </button>
-                                        {Array.from({ length: totalPages }, (_, i) => (
-                                            <button
-                                                key={i}
-                                                className={`px-3 py-1 rounded-lg border ${currentPage === i + 1 ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-300 hover:bg-gray-100'}`}
-                                                onClick={() => goToPage(i + 1)}
-                                            >
-                                                {i + 1}
-                                            </button>
-                                        ))}
-                                        <button
-                                            className="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-100"
-                                            onClick={() => goToPage(currentPage + 1)}
-                                            disabled={currentPage === totalPages}
-                                        >
-                                            Next
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <p className="text-center">No Comments yet.</p>
-                        )}
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-center">No Comments yet.</p>
+                            )}
                     </div>
                 </div>
                 <div className="max-h-fit rounded-full md:w-4/12 text-base space-y-5">

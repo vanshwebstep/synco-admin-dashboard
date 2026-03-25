@@ -57,7 +57,7 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
     icon,    // header icon
     progress // e.g. "6/12 months"
   } = serviceHistory;
-  console.log('payments',payments)
+  console.log('comesFrom',comesFrom)
   const statusStyles = {
     attended: "bg-green-500 text-white",
     active: "bg-green-500 text-white",
@@ -304,7 +304,9 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
                     ]).map((btn, i) => (
                       <button
                         key={i}
-                        onClick={() => navigate(`/weekly-classes/all-members/see-details?id=${itemId}`)}
+                        onClick={() =>  navigate(`/weekly-classes/all-members/see-details?id=${itemId || serviceHistory.id || ""}`, {
+                                state: { itemId: serviceHistory.id, memberInfo: comesFrom },
+                            }) }
                         className="font-semibold whitespace-nowrap border border-[#BEBEBE] px-3 py-2 rounded-xl text-[15px] font-medium"
                       >
                         {btn}

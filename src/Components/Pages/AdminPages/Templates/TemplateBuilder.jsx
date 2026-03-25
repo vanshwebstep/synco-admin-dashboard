@@ -32,50 +32,63 @@ export default function TemplateBuilder({
   }, [selectedBlockId]);
 
   const { apiTemplates } = useCommunicationTemplate();
+const safeParseJSON = (data) => {
+  try {
+    // If already object → return directly
+    if (typeof data === "object") return data;
 
- useEffect(() => {
+    // First parse
+    let parsed = JSON.parse(data);
+
+    // Keep parsing until it's not string anymore (handles nested JSON)
+    while (typeof parsed === "string") {
+      parsed = JSON.parse(parsed);
+    }
+
+    return parsed;
+  } catch (err) {
+    console.warn("JSON parse failed, returning raw data:", err);
+    return null;
+  }
+};
+useEffect(() => {
   if (!apiTemplates?.content) return;
 
-  try {
-    let parsed = JSON.parse(apiTemplates.content);
+  const parsed = safeParseJSON(apiTemplates.content);
 
-    // 🔥 HANDLE DOUBLE ENCODED JSON
-    if (typeof parsed === "string") {
-      try {
-        parsed = JSON.parse(parsed);
-      } catch (e) {
-        console.warn("Second parse failed, using first parsed value");
-      }
-    }
-
-    // ✅ Set subject
-    setSubject(parsed?.subject || "");
-
-    // ✅ If backend only stored HTML
-    if (parsed?.htmlContent && !parsed?.blocks) {
-      setBlocks([
-        {
-          id: crypto.randomUUID(),
-          type: "customHTML",
-          content: parsed.htmlContent,
-          style: {
-            backgroundColor: "transparent",
-            padding: 10,
-          },
-        },
-      ]);
-    }
-
-    // ✅ If backend stores blocks
-    if (Array.isArray(parsed?.blocks) && parsed.blocks.length > 0) {
-      setBlocks(parsed.blocks);
-    }
-
-  } catch (error) {
-    console.error("Template parse error:", error);
+  if (!parsed) {
+    console.error("Invalid template format");
+    return;
   }
-}, [apiTemplates, setBlocks, setSubject]);
 
+  // ✅ Subject
+  setSubject(parsed?.subject || "");
+
+  // ✅ HTML fallback
+  if (parsed?.htmlContent && !parsed?.blocks) {
+    setBlocks([
+      {
+        id: crypto.randomUUID(),
+        type: "customHTML",
+        content: parsed.htmlContent,
+        style: {
+          backgroundColor: "transparent",
+          padding: 10,
+        },
+      },
+    ]);
+    return;
+  }
+
+  // ✅ Blocks
+  if (Array.isArray(parsed?.blocks) && parsed.blocks.length > 0) {
+    setBlocks(parsed.blocks);
+    return;
+  }
+
+  // ❗ Fallback (nothing valid)
+  setBlocks([]);
+}, [apiTemplates]);
 
 
 
