@@ -206,20 +206,25 @@ const convertHtmlToBlocks = (html) => {
             style: { fontSize: 16, ...nodeStyle }
           });
         }
-
+        if (type === "htmlBlock") {
+          return createBlock("htmlBlock", {
+            html: "<h2>Start editing HTML...</h2>",
+            style: {}
+          });
+        }
         // 2.1 Text Editor
-      if (type === "textEditor") {
-        const qlEditor = node.querySelector(".ql-editor");
-        const ol = node.querySelector("ol");
-        let listStyleType = nodeStyle.listStyleType || (ol ? ol.style.listStyleType : undefined);
-        
-        const content = qlEditor ? qlEditor.innerHTML : node.innerHTML;
+        if (type === "textEditor") {
+          const qlEditor = node.querySelector(".ql-editor");
+          const ol = node.querySelector("ol");
+          let listStyleType = nodeStyle.listStyleType || (ol ? ol.style.listStyleType : undefined);
 
-        return createBlock("textEditor", {
-          content: content,
-          style: { fontSize: 16, listStyleType, ...nodeStyle }
-        });
-      }
+          const content = qlEditor ? qlEditor.innerHTML : node.innerHTML;
+
+          return createBlock("textEditor", {
+            content: content,
+            style: { fontSize: 16, listStyleType, ...nodeStyle }
+          });
+        }
 
         // 3. Image
         if (type === "image") {
@@ -623,7 +628,7 @@ const convertHtmlToBlocks = (html) => {
         }
 
         // 8. Footer Block
-        if (type === "footerBlock") {
+        if (type === "html") {
           const footerData = {
             title: "",
             subtitle: "",
@@ -632,9 +637,9 @@ const convertHtmlToBlocks = (html) => {
             logoUrl: "",
             style: { ...nodeStyle, backgroundColor: nodeStyle.backgroundColor || "#062375", textColor: "#ffffff" }
           };
-
+          ole.log("FOOTER LINKS:", footerData.links);
           const img = node.querySelector("img");
-          if (img) footerData.logoUrl = img.getAttribute("src");
+          if (img) footerData.url = img.getAttribute("src");
 
           const title = node.querySelector("h3");
           if (title) footerData.title = title.innerText;
@@ -655,7 +660,7 @@ const convertHtmlToBlocks = (html) => {
             footerData.links.push({ platform, url: href });
           });
 
-          return createBlock("footerBlock", footerData);
+          return createBlock("html", footerData);
         }
 
         // Fallback for other known types if content is simple
@@ -894,7 +899,7 @@ const convertHtmlToBlocks = (html) => {
         }
 
         // 9. Footer Block
-        if (type === "footerBlock") {
+        if (type === "html") {
           const footerData = {
             shopText: "Shop Online",
             shopLink: "#",
@@ -903,7 +908,7 @@ const convertHtmlToBlocks = (html) => {
           };
 
           const img = node.querySelector("img");
-          if (img) footerData.logoUrl = img.getAttribute("src");
+          if (img) footerData.url = img.getAttribute("src");
 
           // Shop Link
           const shopLinkEl = node.querySelector("a");
@@ -1100,7 +1105,7 @@ const convertHtmlToBlocks = (html) => {
         if (href.includes("linkedin")) platform = "linkedin";
 
         if (footerData.links.length < 5) {
-          footerData.links.push({ platform, url: href });
+          footerData.links.push({ platform, logoUrl: href });
         }
       });
 
@@ -1783,6 +1788,8 @@ const STYLE_GROUPS = {
       { label: "Padding", key: "padding", type: "range", min: 0, max: 100, path, suffix: "px" },
       { label: "Margin Top", key: "marginTop", type: "number", path, suffix: "px" },
       { label: "Margin Bottom", key: "marginBottom", type: "number", path, suffix: "px" },
+      { label: "Margin Left", key: "marginLeft", type: "number", path, suffix: "px" },
+      { label: "Margin Right", key: "marginRight", type: "number", path, suffix: "px" },
     ]
   }),
   appearance: (path = "style", title = "Appearance") => ({
@@ -1903,8 +1910,17 @@ const getStyleConfig = (block) => {
     config.push({
       id: "footerSettings", title: "Footer Settings", icon: <FaCog />,
       fields: [
+        { label: "Footer Background", key: "backgroundColor", type: "color", path: "style" },
+        {
+          label: "Footer Background Image",
+          key: "backgroundImage",
+          type: "image",
+          path: "style",
+          allowUpload: true
+        },
+        { label: "Padding", key: "padding", type: "range", min: 0, max: 200, path: "style", suffix: "px" },
         { label: "Logo URL", key: "logoUrl", type: "image", path: true, allowUpload: true, allowVariables: true },
-        { label: "Logo Width", key: "logoWidth", type: "range", min: 50, max: 400, path: "style", suffix: "px" },
+        { label: "Logo Width", key: "logoWidth", type: "range", min: 10, max: 400, path: "style", suffix: "px" },
         { label: "Shop Text", key: "shopText", type: "text", path: true },
         { label: "Shop URL", key: "shopLink", type: "text", path: true },
       ]
@@ -2242,219 +2258,425 @@ export const AdvancedStyleControls = ({ block, updateStyle: rawUpdateStyle }) =>
 const FooterBlockRenderer = ({ block, update, readOnly, isSelected, onSelect }) => {
   const style = block.style || {};
 
+  const bgUrl = style.backgroundImage instanceof File
+    ? URL.createObjectURL(style.backgroundImage)
+    : style.backgroundImage;
+
+  const getBgImage = (bg) => {
+    if (!bg) return undefined;
+    if (typeof bg === "string" && bg.startsWith("url(")) return bg;
+    return `url(${bg})`;
+  };
+
   const containerStyle = {
     ...getCommonStyles(block),
     backgroundColor: style.backgroundColor || "#062375",
+    backgroundImage: getBgImage(bgUrl),
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
     color: "#fff",
     position: "relative",
     overflow: "hidden",
-    fontFamily: style.fontFamily || "'Outfit', sans-serif"
+    fontFamily: style.fontFamily || "'Outfit', sans-serif",
   };
 
-  if (style.padding === undefined) {
-    containerStyle.padding = "0";
-  }
+  const innerWrapper = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "16px",
+    flexWrap: "nowrap",
+    padding: `${style.padding || 120}px`,
+    position: "relative",
+    zIndex: 10
+  };
 
   const bottomBarStyle = {
-    background: block.bottomBarStyle?.backgroundColor || "#041b5c",
+    backgroundColor: style.backgroundColor || "#062375",
+    backgroundImage: "none",
     padding: "10px",
     textAlign: "center",
-    fontSize: block.bottomBarStyle?.fontSize ? `${block.bottomBarStyle.fontSize}px` : "12px",
+    fontSize: block.bottomBarStyle?.fontSize
+      ? `${block.bottomBarStyle.fontSize}px`
+      : "12px",
     lineHeight: "1.6",
     color: "rgba(255,255,255,0.7)",
-    borderTop: block.bottomBarStyle?.borderTop || `1px solid ${block.bottomBarStyle?.borderColor || "rgba(255,255,255,0.1)"}`,
-    position: 'relative',
+    borderTop:
+      block.bottomBarStyle?.borderTop ||
+      `1px solid ${block.bottomBarStyle?.borderColor || "rgba(255,255,255,0.1)"}`,
+    position: "relative",
     zIndex: 20
   };
 
   return (
-    <div
-      style={containerStyle}
-      className={`relative group ${isSelected ? "ring-2 ring-blue-500" : ""} block-component block-${block.type} block-${block.id}`}
-      onClick={(e) => {
-        e.stopPropagation();
-        if (onSelect) onSelect();
-      }}
-    >
-      <div className="relative z-10 flex items-center justify-between gap-4 flex-nowrap">
-        {/* 1. Logo */}
-        <div className="flex-shrink-0">
-          <img
-            src={block.style?.logoUrl || block.logoUrl || "/DashboardIcons/sss-logo.png"}
-            style={{ width: `${style.logoWidth || 120}px` }}
-            alt="Logo"
-          />
-        </div>
+    <div>
+      <div
+        style={{
+          ...containerStyle,
+          border: isSelected ? "2px solid #3b82f6" : "none",
+          marginBottom: 0
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (onSelect) onSelect();
+        }}
+      >
+        <div style={innerWrapper}>
 
-        {/* 2. Text Info */}
-        <div className="flex-grow w-[200px]">
-          {readOnly ? (
-            <h2 style={{
-              fontSize: block.titleStyle?.fontSize ? `${block.titleStyle.fontSize}px` : "32px",
-              marginBottom: "4px",
-              fontWeight: block.titleStyle?.fontWeight || "700",
-              fontFamily: block.titleStyle?.fontFamily || "Georgia, serif",
-              color: block.titleStyle?.textColor || "#fff",
-              textAlign: block.titleStyle?.textAlign || "left"
-            }}>
-              {block.title || "Let’s be friends"}
-            </h2>
-          ) : (
-            <input
-              className="bg-transparent border-none outline-none text-2xl font-bold w-full mb-0 placeholder:text-white/50 text-white"
-              style={{
-                fontFamily: block.titleStyle?.fontFamily || "Georgia, serif",
-                fontSize: block.titleStyle?.fontSize ? `${block.titleStyle.fontSize}px` : "32px",
-                fontWeight: block.titleStyle?.fontWeight || "700",
-                color: block.titleStyle?.textColor || "#fff",
-                textAlign: block.titleStyle?.textAlign || "left"
-              }}
-              value={block.title}
-              onChange={(e) => update("title", e.target.value)}
-              placeholder="Footer Title"
+          {/* Logo */}
+          <div style={{ flexShrink: 0, minWidth: "60px" }}>
+            <img
+              src={block.style?.logoUrl || block.logoUrl || "/DashboardIcons/sss-logo.png"}
+              style={{ width: `${style.logoWidth || 120}px` }}
+              alt="Logo"
             />
-          )}
+          </div>
 
-          {readOnly ? (
-            <p style={{
-              opacity: block.subtitleStyle?.opacity || 0.9,
-              fontSize: block.subtitleStyle?.fontSize ? `${block?.subtitleStyle.fontSize}px` : "14px",
-              fontWeight: block.subtitleStyle?.fontWeight || "500",
-              lineBreak: "anywhere",
-              color: block.subtitleStyle?.textColor || "#fff",
-              fontFamily: block.subtitleStyle?.fontFamily || "inherit",
-              textAlign: block.subtitleStyle?.textAlign || "left"
-            }}>
-              {block?.subtitle || "If we are not playing football you can find us socialising on..."}
-            </p>
-          ) : (
-            <textarea
-              className="bg-transparent border-none outline-none text-sm w-full opacity-80 resize-none placeholder:text-white/50 text-white"
-              style={{
-                fontSize: block.subtitleStyle?.fontSize ? `${block?.subtitleStyle.fontSize}px` : "14px",
-                color: block.subtitleStyle?.textColor || "#fff",
-                fontFamily: block.subtitleStyle?.fontFamily || "inherit",
-                textAlign: block.subtitleStyle?.textAlign || "left",
-                fontWeight: block.subtitleStyle?.fontWeight || "500",
-              }}
-              value={block?.subtitle}
-              onChange={(e) => update("subtitle", e.target.value)}
-              placeholder="Footer Subtitle"
-            />
-          )}
-        </div>
+          {/* Text */}
+          <div style={{ flexGrow: 1, width: "200px" }}>
+            {readOnly ? (
+              <h2
+                style={{
+                  fontSize: block.titleStyle?.fontSize
+                    ? `${block.titleStyle.fontSize}px`
+                    : "32px",
+                  marginBottom: "4px",
+                  fontWeight: block.titleStyle?.fontWeight || "700",
+                  fontFamily: block.titleStyle?.fontFamily || "Georgia, serif",
+                  color: block.titleStyle?.textColor || "#fff",
+                  textAlign: block.titleStyle?.textAlign || "left"
+                }}
+              >
+                {block.title || "Let’s be friends"}
+              </h2>
+            ) : (
+              <input
+                value={block.title}
+                onChange={(e) => update("title", e.target.value)}
+                placeholder="Footer Title"
+                style={{
+                  width: "100%",
+                  background: "transparent",
+                  border: "none",
+                  outline: "none",
+                  fontSize: block.titleStyle?.fontSize
+                    ? `${block.titleStyle.fontSize}px`
+                    : "32px",
+                  fontWeight: block.titleStyle?.fontWeight || "700",
+                  fontFamily: block.titleStyle?.fontFamily || "Georgia, serif",
+                  color: block.titleStyle?.textColor || "#fff",
+                  textAlign: block.titleStyle?.textAlign || "left"
+                }}
+              />
+            )}
 
-        {/* 3. Social Icons */}
-        <div className="flex items-center gap-3 flex-shrink-0">
-          {(block.links || [
-            { platform: 'facebook', url: '#' },
-            { platform: 'instagram', url: '#' },
-            { platform: 'youtube', url: '#' },
-            { platform: 'twitter', url: '#' }
-          ]).map((social, i) => {
-            const platform = social.platform || 'facebook';
-            const Icon = platform === 'facebook' ? FaFacebookF :
-              platform === 'instagram' ? FaInstagram :
-                platform === 'youtube' ? FaYoutube :
-                  platform === 'linkedin' ? FaLinkedinIn :
-                    platform === 'twitter' ? FaTwitter : FaShareAlt;
+            {readOnly ? (
+              <p
+                style={{
+                  opacity: block.subtitleStyle?.opacity || 0.9,
+                  fontSize: block.subtitleStyle?.fontSize
+                    ? `${block.subtitleStyle.fontSize}px`
+                    : "14px",
+                  fontWeight: block.subtitleStyle?.fontWeight || "500",
+                  color: block.subtitleStyle?.textColor || "#fff",
+                  fontFamily: block.subtitleStyle?.fontFamily || "inherit",
+                  textAlign: block.subtitleStyle?.textAlign || "left"
+                }}
+              >
+                {block.subtitle}
+              </p>
+            ) : (
+              <textarea
+                value={block.subtitle}
+                onChange={(e) => update("subtitle", e.target.value)}
+                placeholder="Footer Subtitle"
+                style={{
+                  width: "100%",
+                  background: "transparent",
+                  border: "none",
+                  outline: "none",
+                  fontSize: block.subtitleStyle?.fontSize
+                    ? `${block.subtitleStyle.fontSize}px`
+                    : "14px",
+                  fontWeight: block.subtitleStyle?.fontWeight || "500",
+                  color: block.subtitleStyle?.textColor || "#fff",
+                  fontFamily: block.subtitleStyle?.fontFamily || "inherit",
+                  textAlign: block.subtitleStyle?.textAlign || "left"
+                }}
+              />
+            )}
+          </div>
 
-            return (
-              <div key={i} className="relative group/social">
-                <a
-                  href={social.url || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-white text-[#062375] w-7 h-7 rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
-                  style={{ fontSize: "18px" }}
+          {/* Social Icons */}
+          {/* Social Icons */}
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+            {(block.links || []).map((social, i) => {
+              const platform = social.platform || "facebook";
+
+              const Icon =
+                platform === "facebook" ? FaFacebookF :
+                  platform === "instagram" ? FaInstagram :
+                    platform === "youtube" ? FaYoutube :
+                      platform === "linkedin" ? FaLinkedinIn :
+                        platform === "twitter" ? FaTwitter :
+                          FaShareAlt;
+
+              return (
+                <div
+                  key={i}
+                  style={{ position: "relative" }}
+                  onMouseEnter={(e) => {
+                    const popup = e.currentTarget.querySelector(".social-popup");
+                    if (popup) popup.style.display = "flex";
+                  }}
+                  onMouseLeave={(e) => {
+                    const popup = e.currentTarget.querySelector(".social-popup");
+                    if (popup) popup.style.display = "none";
+                  }}
                 >
-                  {Icon && <Icon size={12} />}
-                </a>
-                {!readOnly && (
-                  <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-50 hidden group-hover/social:flex flex-col gap-1 bg-white p-2 border rounded shadow-2xl z-50 w-32 scale-75 origin-bottom">
-                    <select
-                      className="text-[10px] border p-1 rounded text-gray-700"
-                      value={social.platform}
-                      onChange={(e) => {
-                        const newLinks = [...(block.links || [])];
-                        newLinks[i] = { ...newLinks[i], platform: e.target.value };
-                        update("links", newLinks);
-                      }}
-                    >
-                      <option value="facebook">Facebook</option>
-                      <option value="instagram">Instagram</option>
-                      <option value="youtube">YouTube</option>
-                      <option value="linkedin">LinkedIn</option>
-                      <option value="twitter">Twitter</option>
-                    </select>
-                    <input
-                      className="text-[10px] border p-1 rounded text-gray-700 font-normal outline-none"
-                      placeholder="URL"
-                      value={social.url}
-                      onChange={(e) => {
-                        const newLinks = [...(block.links || [])];
-                        newLinks[i] = { ...newLinks[i], url: e.target.value };
-                        update("links", newLinks);
-                      }}
-                    />
-                    <button
-                      onClick={() => {
-                        const newLinks = (block.links || []).filter((_, idx) => idx !== i);
-                        update("links", newLinks);
-                      }}
-                      className="text-[10px] bg-red-500 text-white p-1 rounded mt-1"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                  {/* Icon */}
+                  <a
+                    href={social.url || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      background: "#fff",
+                      color: "#062375",
+                      width: "28px",          // w-7
+                      height: "28px",
+                      borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      textDecoration: "none",
+                      fontSize: "18px",
+                      boxShadow: "0 8px 20px rgba(0,0,0,0.2)", // shadow-lg
+                      transition: "transform 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "scale(1.1)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "scale(1)";
+                    }}
+                  >
+                    <Icon size={12} />
+                  </a>
 
-          {!readOnly && (
-            <button
-              onClick={() => {
-                const newLinks = [...(block.links || []), { platform: 'facebook', url: '#' }];
-                update("links", newLinks);
+                  {/* POPUP */}
+                  {!readOnly && (
+                    <div
+                      className="social-popup"
+                      style={{
+                        display: "none",
+                        flexDirection: "column",
+                        gap: "4px",
+                        position: "absolute",
+                        top: "-48px", // -top-12
+                        left: "50%",
+                        transform: "translateX(-50%) scale(0.75)",
+                        transformOrigin: "bottom",
+                        background: "#fff",
+                        padding: "8px",
+                        borderRadius: "6px",
+                        border: "1px solid #e5e7eb",
+                        boxShadow: "0 20px 30px rgba(0,0,0,0.25)", // shadow-2xl
+                        width: "128px", // w-32
+                        zIndex: 50,
+                      }}
+                    >
+                      {/* Platform */}
+                      <select
+                        value={social.platform}
+                        onChange={(e) => {
+                          const newLinks = [...(block.links || [])];
+                          newLinks[i] = { ...newLinks[i], platform: e.target.value };
+                          update("links", newLinks);
+                        }}
+                        style={{
+                          fontSize: "10px",
+                          padding: "4px",
+                          borderRadius: "4px",
+                          border: "1px solid #d1d5db",
+                          color: "#374151"
+                        }}
+                      >
+                        <option value="facebook">Facebook</option>
+                        <option value="instagram">Instagram</option>
+                        <option value="youtube">YouTube</option>
+                        <option value="linkedin">LinkedIn</option>
+                        <option value="twitter">Twitter</option>
+                      </select>
+
+                      {/* URL */}
+                      <input
+                        value={social.url}
+                        placeholder="URL"
+                        onChange={(e) => {
+                          const newLinks = [...(block.links || [])];
+                          newLinks[i] = { ...newLinks[i], url: e.target.value };
+                          update("links", newLinks);
+                        }}
+                        style={{
+                          fontSize: "10px",
+                          padding: "4px",
+                          borderRadius: "4px",
+                          border: "1px solid #d1d5db",
+                          color: "#374151",
+                          outline: "none",
+                          fontWeight: "normal"
+                        }}
+                      />
+
+                      {/* Remove */}
+                      <button
+                        onClick={() => {
+                          const newLinks = (block.links || []).filter((_, idx) => idx !== i);
+                          update("links", newLinks);
+                        }}
+                        style={{
+                          fontSize: "10px",
+                          background: "#ef4444",
+                          color: "#fff",
+                          padding: "4px",
+                          border: "none",
+                          borderRadius: "4px",
+                          marginTop: "4px",
+                          cursor: "pointer"
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* ADD BUTTON */}
+            {!readOnly && (
+              <button
+                onClick={() => {
+                  const newLinks = [
+                    ...(block.links || []),
+                    { platform: "facebook", url: "#" }
+                  ];
+                  update("links", newLinks);
+                }}
+                style={{
+                  width: "32px", // w-8
+                  height: "32px",
+                  borderRadius: "50%",
+                  border: "1px dashed rgba(255,255,255,0.4)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#fff",
+                  background: "transparent",
+                  cursor: "pointer",
+                  transition: "background 0.2s"
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.2)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                }}
+              >
+                <FaPlus size={12} />
+              </button>
+            )}
+          </div>
+
+          {/* Button */}
+          <div style={{ flexShrink: 0, maxWidth: "100px" }}>
+            <a
+              href={block.style?.shopLink || block.shopLink || "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                background: "#fff",
+                color: "#062375",
+                padding: "8px 10px",
+                borderRadius: "30px",
+                fontWeight: "bold",
+                fontSize: "10px",
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+                textDecoration: "none",
+                whiteSpace: "nowrap"
               }}
-              className="w-8 h-8 rounded-full border border-dashed border-white/40 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
             >
-              <FaPlus size={12} />
-            </button>
-          )}
-        </div>
+              <FaShoppingCart size={16} />
+              {block.style?.shopText || block.shopText || "Shop Online"}
+            </a>
+          </div>
 
-        {/* 4. Shop Button */}
-        <div className="flex-shrink-0">
-          <a
-            href={block.style?.shopLink || block.shopLink || "#"}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-white text-[#062375] px-5 py-3 rounded-full font-bold text-sm flex items-center gap-2 shadow-xl hover:bg-gray-100 transition whitespace-nowrap"
-          >
-            <FaShoppingCart size={16} /> {block.style?.shopText || block.shopText || "Shop Online"}
-          </a>
         </div>
       </div>
 
       {/* Bottom Bar */}
       <div style={bottomBarStyle}>
         {readOnly ? (
-          block.copyright || "© Samba Soccer Schools Global Ltd, 2022. All rights reserved. Samba Soccer® is a registered trademark of Samba Soccer Schools Global Ltd. Registration Number: 8623348 | Head Office: 65-69 Shelton Street, Covent Garden, London WC2H 9HE"
+          block.copyright
         ) : (
           <textarea
-            className="bg-transparent outline-none text-[10px] w-full text-center placeholder:text-white/50 min-h-[40px] resize-none"
             value={block.copyright}
             onChange={(e) => update("copyright", e.target.value)}
-            placeholder="Copyright & Company Info"
+            style={{
+              width: "100%",
+              background: "transparent",
+              border: "none",
+              outline: "none",
+              textAlign: "center",
+              color: "#fff"
+            }}
           />
         )}
       </div>
     </div>
   );
 };
+const HtmlBlockRenderer = ({ block, update, readOnly, isSelected, onSelect }) => {
+  const style = block.style || {};
 
+  const containerStyle = {
+    ...getCommonStyles(block),
+    padding: "10px",
+    background: style.backgroundColor || "#fff"
+  };
+
+  return (
+    <div
+      style={containerStyle}
+      className={`relative group ${isSelected ? "ring-2 ring-blue-500" : ""}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect && onSelect();
+      }}
+    >
+      {/* EDIT MODE */}
+      {!readOnly && (
+        <textarea
+          className="w-full min-h-[120px] border p-2 rounded mb-3 font-mono text-sm"
+          placeholder="Paste your HTML here..."
+          value={block.html || ""}
+          onChange={(e) => update("html", e.target.value)}
+        />
+      )}
+
+      {/* LIVE PREVIEW 🔥 */}
+      <div
+        className="prose max-w-none"
+        dangerouslySetInnerHTML={{
+          __html: block.html || "<p>HTML preview will appear here</p>"
+        }}
+      />
+    </div>
+  );
+};
 
 const InfoBoxRenderer = ({ block, update, readOnly }) => {
   const [showSettings, setShowSettings] = useState(false);
@@ -3189,8 +3411,6 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
   );
 };
 
-
-
 const FooterRenderer = ({ block, update, readOnly }) => {
   const containerStyle = {
     backgroundColor: block.style?.backgroundColor || "#062375",
@@ -3667,7 +3887,17 @@ export default function BlockRenderer({ block, blocks, setBlocks, readOnly = fal
       );
     }
 
-
+    if (block?.type === "htmlBlock") {
+      return (
+        <HtmlBlockRenderer
+          block={block}
+          update={update}
+          readOnly={readOnly}
+          isSelected={isSelected}
+          onSelect={onSelect}
+        />
+      );
+    }
 
 
 
@@ -3779,8 +4009,8 @@ export default function BlockRenderer({ block, blocks, setBlocks, readOnly = fal
                 )}
                 {child.type === "logo" && (
                   <div style={{ textAlign: child.style?.textAlign }}>
-                    {child.url ? (
-                      <img src={child.url} style={readOnly ? { margin: '0 auto', maxHeight: '64px', objectFit: 'contain', display: 'block' } : {}} className={!readOnly ? "mx-auto max-h-16 object-contain" : ""} />
+                    {child.logoUrl ? (
+                      <img src={child.logoUrl} style={readOnly ? { margin: '0 auto', maxHeight: '64px', objectFit: 'contain', display: 'block' } : {}} className={!readOnly ? "mx-auto max-h-16 object-contain" : ""} />
                     ) : (
                       !readOnly && <div className="text-[10px] text-gray-400 border border-dashed border-gray-300 rounded p-2">Logo Placeholder</div>
                     )}
@@ -3792,7 +4022,7 @@ export default function BlockRenderer({ block, blocks, setBlocks, readOnly = fal
                           className="hidden"
                           onChange={(e) => {
                             const file = e.target.files?.[0];
-                            if (file) updateSectionChild(child.id, "url", URL.createObjectURL(file));
+                            if (file) updateSectionChild(child.id, "logoUrl", URL.createObjectURL(file));
                           }}
                         />
                         <label htmlFor={`logo-upload-${child.id}`} className="text-[10px] text-blue-500 cursor-pointer hover:underline mt-1 block">Upload Logo</label>
@@ -3996,7 +4226,22 @@ export default function BlockRenderer({ block, blocks, setBlocks, readOnly = fal
         />
       );
     }
-
+    if (block.type === "htmlBlock") {
+      config.push({
+        id: "htmlSettings",
+        title: "Custom HTML",
+        icon: <FaCode />,
+        fields: [
+          {
+            label: "HTML Code",
+            key: "html",
+            type: "textarea",
+            path: true,
+            placeholder: "<h1>Hello World</h1>"
+          }
+        ]
+      });
+    }
     // INFO BOX
     if (block?.type === "infoBox") {
       return (
@@ -4032,7 +4277,7 @@ export default function BlockRenderer({ block, blocks, setBlocks, readOnly = fal
         </div>
       );
     }
-console.log('block', block);
+    console.log('block', block);
 
     // IMAGE (Original implementation with style support)
     if (block?.type === "image") {
@@ -4040,7 +4285,7 @@ console.log('block', block);
         width: block.style?.width ? '100%' : 'auto',
         maxWidth: block.style?.maxWidth || '100%',
         height: block.style?.height || 'auto',
-        borderRadius: block.style?.borderRadius || `${block.style.borderRadius}px` ,
+        borderRadius: block.style?.borderRadius || `${block.style.borderRadius}px`,
         objectFit: block.style?.objectFit || 'contain',
         display: 'block',
         margin: block.style?.margin || '0 auto',

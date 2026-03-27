@@ -326,7 +326,7 @@ const List = () => {
     const [selectedDate, setSelectedDate] = useState(null);
     const [membershipPlan, setMembershipPlan] = useState(null);
     const [discountCode, setDiscountCode] = useState("");
-    const [appliedDiscount, setAppliedDiscount] = useState(null);
+    const [appliedDiscount, setAppliedDiscount] = useState('');
     const [isApplied, setIsApplied] = useState(false);
     const today = new Date();
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -388,6 +388,14 @@ const List = () => {
         );
     // console.log('isCardInvalid', isCardInvalid)
     // console.log('isBankInvalid', isBankInvalid)
+    const formatDate = (dateStr) => {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
     const formatLocalDate = (date) => {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, "0"); // months are 0-indexed
@@ -737,6 +745,7 @@ const List = () => {
             starterPack: singleClassSchedulesOnly?.venue?.starterPack
                 ? membershipPlan?.starterPackPrice || 0
                 : 0,
+            discountId: appliedDiscount?.data?.discountId || null,
             emergency,
             paymentPlanId: membershipPlan?.value ?? null,
 
@@ -1167,9 +1176,11 @@ const List = () => {
             />
         );
     };
-
+    console.log('appliedDiscount', appliedDiscount)
     if (loading) return <Loader />;
-
+    const finalAmount =
+        appliedDiscount?.data?.finalPrice ??
+        singleClassSchedulesOnly?.starterPack?.[0]?.price;
     return (
         <div className="pt-1 bg-gray-50 min-h-screen">
             <div className={`flex pe-4 justify-between items-center mb-4 ${openForm ? 'md:w-3/4' : 'w-full'}`}>
@@ -1368,11 +1379,7 @@ const List = () => {
                                     <input
                                         type="text"
                                         placeholder="Starter Pack"
-                                        value={
-                                            appliedDiscount?.data?.finalPrice || singleClassSchedulesOnly?.starterPack?.[0]?.price != null
-                                                ? `£${appliedDiscount?.data?.finalPrice || singleClassSchedulesOnly?.starterPack?.[0]?.price}`
-                                                : ""
-                                        }
+                                        value={finalAmount !== null && finalAmount !== undefined ? `£${finalAmount}` : ""}
                                         readOnly
                                         className="w-full border border-gray-300 rounded-xl px-3 text-[16px] py-3 focus:outline-none"
                                     />
@@ -1463,7 +1470,7 @@ const List = () => {
                             </div>
 
                         </div>
-                       
+
 
                     </div>
 
@@ -1649,7 +1656,7 @@ const List = () => {
                                 {singleClassSchedulesOnly?.venue?.starterPack && (
                                     <div className="flex justify-between text-[#333]">
                                         <span>Starter Pack</span>
-                                        <span>£{appliedDiscount?.data?.finalPrice || singleClassSchedulesOnly?.starterPack?.[0]?.price || 0}</span>
+                                        <span>£{finalAmount}</span>
                                     </div>
                                 )}
                                 {pricingBreakdown.numberOfLessonsProRated !== 0 && (
@@ -2327,11 +2334,9 @@ const List = () => {
                                             </div>
 
                                             {/* Dates */}
-                                            <div className="text-[16px] text-gray-700 font-semibold mb-4 space-y-1">
-                                                <p>Start Date: {selectedDate}</p>
-                                                {/* <p>First monthly payment: {pricingBreakdown?.firstPaymentDate}</p> */}
-                                            </div>
-
+                 <div className="text-[16px] text-gray-700 font-semibold mb-4 space-y-1">
+  <p>Start Date: {formatDate(selectedDate)}</p>
+</div>
                                             <hr className="border-gray-300 mb-4" />
 
                                             {/* Joining Fee */}
@@ -2343,39 +2348,39 @@ const List = () => {
                                             )}
 
                                             {/* Starter Pack */}
-             {singleClassSchedulesOnly?.venue?.starterPack && (
-    <div className="flex justify-between items-center mb-4">
+                                            {singleClassSchedulesOnly?.venue?.starterPack && (
+                                                <div className="flex justify-between items-center mb-4">
 
-        <span className="text-gray-800 font-semibold text-[18px]">
-            Starter Pack
-        </span>
+                                                    <span className="text-gray-800 font-semibold text-[18px]">
+                                                        Starter Pack
+                                                    </span>
 
-        {isApplied && appliedDiscount?.data ? (
-            <div className="flex flex-col items-end leading-tight">
+                                                    {isApplied && appliedDiscount?.data ? (
+                                                        <div className="flex flex-col items-end leading-tight">
 
-                {/* Old Price */}
-                <span className="text-gray-400 line-through text-sm">
-                    £{singleClassSchedulesOnly?.starterPack?.[0]?.price}
-                </span>
+                                                            {/* Old Price */}
+                                                            <span className="text-gray-400 line-through text-sm">
+                                                                £{singleClassSchedulesOnly?.starterPack?.[0]?.price}
+                                                            </span>
 
-                {/* New Price */}
-                <span className="text-green-600 font-bold text-[20px]">
-                    £{appliedDiscount.data.finalPrice}
-                </span>
+                                                            {/* New Price */}
+                                                            <span className="text-green-600 font-bold text-[20px]">
+                                                                £{appliedDiscount.data.finalPrice}
+                                                            </span>
 
-                {/* Discount */}
-                <span className="text-red-500 text-xs font-medium">
-                    -£{appliedDiscount.data.discountAmount} OFF
-                </span>
+                                                            {/* Discount */}
+                                                            <span className="text-red-500 text-xs font-medium">
+                                                                -£{appliedDiscount.data.discountAmount} OFF
+                                                            </span>
 
-            </div>
-        ) : (
-            <span className="text-[18px] font-semibold text-gray-900">
-                £{singleClassSchedulesOnly?.starterPack?.[0]?.price || 0}
-            </span>
-        )}
-    </div>
-)}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-[18px] font-semibold text-gray-900">
+                                                            £{singleClassSchedulesOnly?.starterPack?.[0]?.price || 0}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )}
                                             {/* Pro-rata Section */}
                                             {pricingBreakdown.numberOfLessonsProRated !== 0 && (
                                                 <div className="mb-2">

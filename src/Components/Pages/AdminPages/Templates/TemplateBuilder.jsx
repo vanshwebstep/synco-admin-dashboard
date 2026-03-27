@@ -8,6 +8,7 @@ import {
   FaFont, FaHeading, FaImage, FaRegImage, FaMousePointer, FaColumns,
   FaList, FaShareAlt, FaCompass, FaMinus, FaChevronCircleDown,
   FaIdCard, FaLayerGroup, FaMagic, FaStar, FaInfoCircle,
+  FaHtml5,
 } from "react-icons/fa";
 
 import BlockRenderer, { AdvancedStyleControls } from "./BlockRenderer";
@@ -146,6 +147,7 @@ useEffect(() => {
   const sidebarBlocks = [
     { id: "text", label: "Text field", icon: <FaFont /> },
     { id: "textEditor", label: "Text Editor", icon: <FaFont /> },
+    { id: "htmlBlock", label: "HTML Block", icon: <FaHtml5 /> },
     { id: "heading", label: "Heading", icon: <FaHeading /> },
     { id: "image", label: "Image", icon: <FaRegImage /> },
     { id: "btn", label: "Button", icon: <FaMousePointer /> },
@@ -201,7 +203,7 @@ useEffect(() => {
 
     // Type-specific adjustments
     if (type === "heading") {
-      newBlock.style.fontSize = 24;
+      newBlock.style.fontSize = 18;
       newBlock.style.fontWeight = "bold";
       newBlock.placeholder = "Enter Heading";
     } else if (type === "textEditor") {

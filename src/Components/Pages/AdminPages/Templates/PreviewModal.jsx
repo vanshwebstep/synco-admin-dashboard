@@ -6,7 +6,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";  // ✅ to read
 export default function PreviewModal({ mode_of_communication, title, category, tags, sender, message, blocks, onClose, subject, editMode, templateId, initialGlobalStyle }) {
   const { createCommunicationTemplate, updateCommunicationTemplate } = useCommunicationTemplate();
   const navigate = useNavigate();
-
+  const [buttonLoading, setButtonLoading] = useState(false)
   const [previewData, setPreviewData] = useState({
     subject: subject || "",
     blocks: blocks.map(b => ({ ...b })) // clone to avoid mutating props
@@ -209,6 +209,7 @@ export default function PreviewModal({ mode_of_communication, title, category, t
 
 
   const handleUpdatePreview = async () => {
+    setButtonLoading(true);
     try {
       const formData = new FormData();
 
@@ -334,6 +335,9 @@ export default function PreviewModal({ mode_of_communication, title, category, t
     } catch (err) {
       console.error("Update Preview Error:", err);
     }
+    finally {
+      setButtonLoading(false);
+    }
   };
 
 
@@ -381,10 +385,18 @@ export default function PreviewModal({ mode_of_communication, title, category, t
         </div>
 
         <button
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition"
+          disabled={buttonLoading}
+          className={`px-6 py-2 rounded-lg font-medium transition 
+    ${buttonLoading
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700 text-white"}`}
           onClick={editMode ? handleUpdatePreview : handleSavePreview}
         >
-          {editMode ? "Update Template" : "Save Template"}
+          {buttonLoading
+            ? "Processing..."
+            : editMode
+              ? "Update Template"
+              : "Save Template"}
         </button>
       </div>
 
@@ -397,7 +409,7 @@ export default function PreviewModal({ mode_of_communication, title, category, t
           margin: "0 auto",
           backgroundImage: globalStyle.backgroundImage ? `url(${globalStyle.backgroundImage})` : "none",
           backgroundSize: "cover",
-          backgroundColor:"#fff",
+          backgroundColor: "#fff",
           backgroundPosition: "center"
         }}
         ref={previewRef}

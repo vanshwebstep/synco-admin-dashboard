@@ -534,8 +534,10 @@ const Coach = () => {
                             <Filter size={16} className='cursor-pointer' onClick={() => setShowFilter(!showFilter)} />
                         </div>
                         <button className="bg-white border border-[#E2E1E5] rounded-full flex justify-center items-center h-10 w-10"><TiUserAdd className="text-xl" /></button>
-                        <button onClick={() => setIsOpen(true)}
-                            className="flex items-center gap-2 bg-[#237FEA] text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+  <button
+  onClick={() => setIsOpen(true)}
+  className="relative z-[9999] flex items-center gap-2 bg-[#237FEA] text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+>
                             <Plus size={16} />
                             Add new lead
                         </button>

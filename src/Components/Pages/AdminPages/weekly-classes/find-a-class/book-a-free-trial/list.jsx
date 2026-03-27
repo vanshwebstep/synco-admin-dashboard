@@ -748,7 +748,7 @@ const List = () => {
             emergency,
         };
          const payloadwaitinglist = {
-            bookingId: TrialData.bookingId,
+            bookingId: TrialData?.bookingId || null,
             keyInformation: selectedKeyInfo,
             venueId: singleClassSchedulesOnly?.venue?.id,
             trialDate: selectedDate,

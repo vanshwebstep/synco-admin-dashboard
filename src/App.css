@@ -896,3 +896,9 @@ iframe {
 .manrope {
   font-family: "Manrope", sans-serif;
 }
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

@@ -123,7 +123,50 @@ export default function SettingList() {
             }
         });
     };
+function cleanHtml(html) {
+  if (!html) return html;
 
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+
+  doc.querySelectorAll("*").forEach((el) => {
+    const style = el.getAttribute("style");
+    if (!style) return;
+
+    let fixed = style;
+
+    // ✅ Fix broken background-image
+    fixed = fixed.replace(/background-image:\s*url\((.*?)\)/gi, (_, urlPart) => {
+      let cleanUrl = urlPart;
+
+      // remove html entities
+      cleanUrl = cleanUrl.replace(/&quot;/g, "");
+
+      // remove garbage chars
+      cleanUrl = cleanUrl.replace(/["'=]/g, "");
+
+      // remove spaces
+      cleanUrl = cleanUrl.replace(/\s+/g, "");
+
+      // fix double https
+      cleanUrl = cleanUrl.replace(/(https?:\/\/)+/g, "https://");
+
+      // ensure valid url
+      if (!/^https?:\/\//i.test(cleanUrl)) {
+        cleanUrl = "https://" + cleanUrl.replace(/^\/+/, "");
+      }
+
+      return `background-image: url("${cleanUrl}")`;
+    });
+
+    // ❗ remove broken attributes inside style
+    fixed = fixed.replace(/\s*[a-z-]+=""/gi, "");
+
+    el.setAttribute("style", fixed);
+  });
+
+  return doc.body.innerHTML;
+}
     if (loading) {
         return <Loader />
     }
@@ -251,10 +294,12 @@ export default function SettingList() {
                                     </div>
                                 </div>
 
-                                <div
-                                    className="text-gray-800 prose prose-blue max-w-[600px] m-auto"
-                                    dangerouslySetInnerHTML={{ __html: selectedTemplate?.content?.htmlContent }}
-                                />
+                              <div
+  className="text-gray-800 prose prose-blue max-w-[600px] m-auto"
+  dangerouslySetInnerHTML={{
+    __html: cleanHtml(selectedTemplate?.content?.htmlContent)
+  }}
+/>
                                 {/* ✅ ONLY BLOCKS IN LOOP */}
 
                             </div>
