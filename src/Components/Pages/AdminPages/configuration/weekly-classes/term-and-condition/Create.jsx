@@ -450,74 +450,74 @@ const Create = () => {
     };
 
     // Handle exclusion dates
-  const handleExclusionChange = (termId, idx, dateStr) => {
-    setTerms(prev =>
-        prev.map(t => {
-            if (t.id !== termId) return t;
+    const handleExclusionChange = (termId, idx, dateStr) => {
+        setTerms(prev =>
+            prev.map(t => {
+                if (t.id !== termId) return t;
 
-            const oldDate = t.exclusions[idx];
+                const oldDate = t.exclusions[idx];
 
-            const updatedExclusions = [...t.exclusions];
-            updatedExclusions[idx] = dateStr;
+                const updatedExclusions = [...t.exclusions];
+                updatedExclusions[idx] = dateStr;
 
-            const dayMap = {
-                sunday: 0,
-                monday: 1,
-                tuesday: 2,
-                wednesday: 3,
-                thursday: 4,
-                friday: 5,
-                saturday: 6,
-            };
+                const dayMap = {
+                    sunday: 0,
+                    monday: 1,
+                    tuesday: 2,
+                    wednesday: 3,
+                    thursday: 4,
+                    friday: 5,
+                    saturday: 6,
+                };
 
-            const targetDay = dayMap[t.day?.toLowerCase()];
-            if (targetDay === undefined) return t;
+                const targetDay = dayMap[t.day?.toLowerCase()];
+                if (targetDay === undefined) return t;
 
-            let updatedSessions = [...(t.sessionsMap || [])];
+                let updatedSessions = [...(t.sessionsMap || [])];
 
-            // ✅ STEP 1: Restore OLD date as session (if valid)
-            if (oldDate) {
-                const old = new Date(oldDate + "T00:00:00");
-                const start = new Date(t.startDate + "T00:00:00");
-                const end = new Date(t.endDate + "T00:00:00");
+                // ✅ STEP 1: Restore OLD date as session (if valid)
+                if (oldDate) {
+                    const old = new Date(oldDate + "T00:00:00");
+                    const start = new Date(t.startDate + "T00:00:00");
+                    const end = new Date(t.endDate + "T00:00:00");
 
-                const isValidOld =
-                    old >= start &&
-                    old <= end &&
-                    old.getDay() === targetDay;
+                    const isValidOld =
+                        old >= start &&
+                        old <= end &&
+                        old.getDay() === targetDay;
 
-                if (
-                    isValidOld &&
-                    !updatedSessions.some(s => s.sessionDate === oldDate)
-                ) {
-                    updatedSessions.push({
-                        sessionDate: oldDate,
-                        sessionPlanId: null,
-                        sessionPlan: null,
-                    });
+                    if (
+                        isValidOld &&
+                        !updatedSessions.some(s => s.sessionDate === oldDate)
+                    ) {
+                        updatedSessions.push({
+                            sessionDate: oldDate,
+                            sessionPlanId: null,
+                            sessionPlan: null,
+                        });
+                    }
                 }
-            }
 
-            // ✅ STEP 2: Remove NEW exclusion date from sessions
-            updatedSessions = updatedSessions.filter(
-                s => s.sessionDate !== dateStr
-            );
+                // ✅ STEP 2: Remove NEW exclusion date from sessions
+                updatedSessions = updatedSessions.filter(
+                    s => s.sessionDate !== dateStr
+                );
 
-            // ✅ SORT
-            updatedSessions.sort(
-                (a, b) =>
-                    new Date(a.sessionDate) - new Date(b.sessionDate)
-            );
+                // ✅ SORT
+                updatedSessions.sort(
+                    (a, b) =>
+                        new Date(a.sessionDate) - new Date(b.sessionDate)
+                );
 
-            return {
-                ...t,
-                exclusions: updatedExclusions,
-                sessionsMap: updatedSessions,
-                isDirty: true,
-            };
-        })
-    );
-};
+                return {
+                    ...t,
+                    exclusions: updatedExclusions,
+                    sessionsMap: updatedSessions,
+                    isDirty: true,
+                };
+            })
+        );
+    };
 
 
     const addExclusionDate = (termId) => {
@@ -528,87 +528,87 @@ const Create = () => {
         );
     };
 
- const removeExclusionDate = (termId, idx) => {
-    setTerms(prev => {
-        const updatedTerms = prev.map(t => {
-            if (t.id !== termId) return t;
+    const removeExclusionDate = (termId, idx) => {
+        setTerms(prev => {
+            const updatedTerms = prev.map(t => {
+                if (t.id !== termId) return t;
 
-            const removedDate = t.exclusions[idx];
+                const removedDate = t.exclusions[idx];
 
-            const updatedExclusions = t.exclusions.filter(
-                (_, i) => i !== idx
-            );
+                const updatedExclusions = t.exclusions.filter(
+                    (_, i) => i !== idx
+                );
 
-            const dayMap = {
-                sunday: 0,
-                monday: 1,
-                tuesday: 2,
-                wednesday: 3,
-                thursday: 4,
-                friday: 5,
-                saturday: 6,
-            };
+                const dayMap = {
+                    sunday: 0,
+                    monday: 1,
+                    tuesday: 2,
+                    wednesday: 3,
+                    thursday: 4,
+                    friday: 5,
+                    saturday: 6,
+                };
 
-            const targetDay = dayMap[t.day?.toLowerCase()];
-            if (targetDay === undefined) return t;
+                const targetDay = dayMap[t.day?.toLowerCase()];
+                if (targetDay === undefined) return t;
 
-            // ✅ Safe date parsing
-            const removed = removedDate ? new Date(removedDate + "T00:00:00") : null;
-            const start = t.startDate ? new Date(t.startDate + "T00:00:00") : null;
-            const end = t.endDate ? new Date(t.endDate + "T00:00:00") : null;
+                // ✅ Safe date parsing
+                const removed = removedDate ? new Date(removedDate + "T00:00:00") : null;
+                const start = t.startDate ? new Date(t.startDate + "T00:00:00") : null;
+                const end = t.endDate ? new Date(t.endDate + "T00:00:00") : null;
 
-            const isValidSessionDate =
-                removed &&
-                start &&
-                end &&
-                removed >= start &&
-                removed <= end &&
-                removed.getDay() === targetDay;
+                const isValidSessionDate =
+                    removed &&
+                    start &&
+                    end &&
+                    removed >= start &&
+                    removed <= end &&
+                    removed.getDay() === targetDay;
 
-            // ✅ Preserve existing mappings
-            const existingMap = new Map(
-                (t.sessionsMap || []).map(s => [s.sessionDate, s])
-            );
+                // ✅ Preserve existing mappings
+                const existingMap = new Map(
+                    (t.sessionsMap || []).map(s => [s.sessionDate, s])
+                );
 
-            let updatedSessions = [...(t.sessionsMap || [])];
-            if (
-                isValidSessionDate &&
-                !updatedSessions.some(s => s.sessionDate === removedDate)
-            ) {
-                if (existingMap.has(removedDate)) {
-                    updatedSessions.push(existingMap.get(removedDate));
-                } else {
-                    updatedSessions.push({
-                        sessionDate: removedDate,
-                        sessionPlanId: null,
-                        sessionPlan: null,
-                    });
+                let updatedSessions = [...(t.sessionsMap || [])];
+                if (
+                    isValidSessionDate &&
+                    !updatedSessions.some(s => s.sessionDate === removedDate)
+                ) {
+                    if (existingMap.has(removedDate)) {
+                        updatedSessions.push(existingMap.get(removedDate));
+                    } else {
+                        updatedSessions.push({
+                            sessionDate: removedDate,
+                            sessionPlanId: null,
+                            sessionPlan: null,
+                        });
+                    }
+
+                    // ✅ Sort sessions properly
+                    updatedSessions.sort(
+                        (a, b) =>
+                            new Date(a.sessionDate) - new Date(b.sessionDate)
+                    );
                 }
 
-                // ✅ Sort sessions properly
-                updatedSessions.sort(
-                    (a, b) =>
-                        new Date(a.sessionDate) - new Date(b.sessionDate)
-                );
+                return {
+                    ...t,
+                    exclusions: updatedExclusions,
+                    sessionsMap: updatedSessions,
+                    isDirty: true // 🔥 VERY IMPORTANT
+                };
+            });
+
+            // 🔥 IMPORTANT: Sync mapping UI with updated term
+            const activeTerm = updatedTerms.find(t => t.id === termId);
+            if (activeTerm?.isOpen) {
+                setSessionMappings(activeTerm.sessionsMap || []);
             }
 
-            return {
-                ...t,
-                exclusions: updatedExclusions,
-                sessionsMap: updatedSessions,
-                isDirty: true // 🔥 VERY IMPORTANT
-            };
+            return updatedTerms;
         });
-
-        // 🔥 IMPORTANT: Sync mapping UI with updated term
-        const activeTerm = updatedTerms.find(t => t.id === termId);
-        if (activeTerm?.isOpen) {
-            setSessionMappings(activeTerm.sessionsMap || []);
-        }
-
-        return updatedTerms;
-    });
-};
+    };
 
 
     const filterSessionDay = (date, term) => {
@@ -784,6 +784,7 @@ const Create = () => {
 
         if (!term.name || !term.startDate || !term.endDate) {
             showError('Missing Information', 'Please fill all required fields for the term');
+            setIsLoading(false)
             return;
         }
 
@@ -793,9 +794,10 @@ const Create = () => {
             sessionMappings.some(mapping => !mapping.sessionPlanId)
         ) {
             showError('Session Mapping Required', 'Please map all sessions before saving the term');
+            setIsLoading(false)
             return;
         }
-        setIsLoading(true);
+   
 
         const payload = {
             termName: term.name,
@@ -869,7 +871,7 @@ const Create = () => {
             showError('Save Failed', error?.message || 'Failed to save term.');
             setIsLoading(false);
         } finally {
-            if (!isBulk) setIsLoading(false);
+           setIsLoading(false);
         }
     };
 
@@ -917,7 +919,7 @@ const Create = () => {
 
         setIsLoading(true);
         console.log('terms', terms)
-        console.log('savedTermIds', savedTermIds)       
+        console.log('savedTermIds', savedTermIds)
         try {
             // ✅ Ab logic change
             const termsToSave = terms.filter(
@@ -927,7 +929,7 @@ const Create = () => {
             if (!termsToSave.length) {
                 showSuccess("All Terms Saved", "Your term group has been saved successfully");
                 navigate('/configuration/weekly-classes/term-dates/list');
-                 setIsLoading(false);
+                setIsLoading(false);
             }
             // console.log('term', term)    
 
