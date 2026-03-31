@@ -1805,32 +1805,32 @@ const STYLE_GROUPS = {
     ]
   }),
   // Specialized Groups
-  image: (path = "style") => ({
-    id: `image-${path || 'root'}`, title: "Image Style", icon: <FaImage />,
-    fields: [
-      { label: "Fit", key: "objectFit", type: "select", path, options: [{ label: "Cover", value: "cover" }, { label: "Contain", value: "contain" }, { label: "Fill", value: "fill" }] },
-      { label: "Width", key: "width", type: "text", path, placeholder: "100% or 200px" },
-      { label: "Height", key: "height", type: "text", path, placeholder: "128px or auto" },
-      { label: "Radius", key: "borderRadius", type: "range", min: 0, max: 50, path, suffix: "px" },
-      { label: "Alignment", key: "margin", type: "align-margin", path },
-    ]
-  }),
-  grid: (path = "style") => ({
-    id: `grid-${path || 'root'}`, title: "Grid Settings", icon: <FaLayerGroup />,
-    fields: [
-      { label: "Columns", key: "columns", type: "select", path, options: [{ label: "Auto", value: "auto" }, { label: "1", value: "1" }, { label: "2", value: "2" }, { label: "3", value: "3" }, { label: "4", value: "4" }] },
-      { label: "Gap", key: "gap", type: "range", min: 0, max: 100, path, suffix: "px" },
-      { label: "Align Items", key: "alignItems", type: "select", path, options: [{ label: "Stretch", value: "stretch" }, { label: "Center", value: "center" }, { label: "Start", value: "flex-start" }, { label: "End", value: "flex-end" }] },
-      { label: "Justify Content", key: "justifyContent", type: "select", path, options: [{ label: "Start", value: "start" }, { label: "Center", value: "center" }, { label: "End", value: "end" }, { label: "Space Between", value: "space-between" }] },
-    ]
-  }),
-  link: (path = "style") => ({
-    id: `link-${path || 'root'}`, title: "Link / Action", icon: <FaMousePointer />,
-    fields: [
-      { label: "Block Link", key: "link", type: "text", path, placeholder: "https://example.com" },
-      { label: "Target", key: "linkTarget", type: "select", path, options: [{ label: "Same Tab", value: "_self" }, { label: "New Tab", value: "_blank" }] },
-    ]
-  })
+  // image: (path = "style") => ({
+  //   id: `image-${path || 'root'}`, title: "Image Style", icon: <FaImage />,
+  //   fields: [
+  //     { label: "Fit", key: "objectFit", type: "select", path, options: [{ label: "Cover", value: "cover" }, { label: "Contain", value: "contain" }, { label: "Fill", value: "fill" }] },
+  //     { label: "Width", key: "width", type: "text", path, placeholder: "100% or 200px" },
+  //     { label: "Height", key: "height", type: "text", path, placeholder: "128px or auto" },
+  //     { label: "Radius", key: "borderRadius", type: "range", min: 0, max: 50, path, suffix: "px" },
+  //     { label: "Alignment", key: "margin", type: "align-margin", path },
+  //   ]
+  // }),
+  // grid: (path = "style") => ({
+  //   id: `grid-${path || 'root'}`, title: "Grid Settings", icon: <FaLayerGroup />,
+  //   fields: [
+  //     { label: "Columns", key: "columns", type: "select", path, options: [{ label: "Auto", value: "auto" }, { label: "1", value: "1" }, { label: "2", value: "2" }, { label: "3", value: "3" }, { label: "4", value: "4" }] },
+  //     { label: "Gap", key: "gap", type: "range", min: 0, max: 100, path, suffix: "px" },
+  //     { label: "Align Items", key: "alignItems", type: "select", path, options: [{ label: "Stretch", value: "stretch" }, { label: "Center", value: "center" }, { label: "Start", value: "flex-start" }, { label: "End", value: "flex-end" }] },
+  //     { label: "Justify Content", key: "justifyContent", type: "select", path, options: [{ label: "Start", value: "start" }, { label: "Center", value: "center" }, { label: "End", value: "end" }, { label: "Space Between", value: "space-between" }] },
+  //   ]
+  // }),
+  // link: (path = "style") => ({
+  //   id: `link-${path || 'root'}`, title: "Link / Action", icon: <FaMousePointer />,
+  //   fields: [
+  //     // { label: "Block Link", key: "link", type: "text", path, placeholder: "https://example.com" },
+  //     // { label: "Target", key: "linkTarget", type: "select", path, options: [{ label: "Same Tab", value: "_self" }, { label: "New Tab", value: "_blank" }] },
+  //   ]
+  // })
 };
 
 const getStyleConfig = (block) => {
@@ -1903,38 +1903,58 @@ const getStyleConfig = (block) => {
   }
 
   if (block.type === "footerBlock") {
-    config.push(STYLE_GROUPS.typography("titleStyle", "Footer Title"));
-    config.push(STYLE_GROUPS.typography("subtitleStyle", "Footer Subtitle"));
+    // ONLY keep title typography (optional, tu hata bhi sakta hai)
+    // config.push(STYLE_GROUPS.typography("titleStyle", "Footer Title"));
 
-    // Custom Footer Settings Group
-    config.push({
-      id: "footerSettings", title: "Footer Settings", icon: <FaCog />,
-      fields: [
-        { label: "Footer Background", key: "backgroundColor", type: "color", path: "style" },
-        {
-          label: "Footer Background Image",
-          key: "backgroundImage",
-          type: "image",
-          path: "style",
-          allowUpload: true
-        },
-        { label: "Padding", key: "padding", type: "range", min: 0, max: 200, path: "style", suffix: "px" },
-        { label: "Logo URL", key: "logoUrl", type: "image", path: true, allowUpload: true, allowVariables: true },
-        { label: "Logo Width", key: "logoWidth", type: "range", min: 10, max: 400, path: "style", suffix: "px" },
-        { label: "Shop Text", key: "shopText", type: "text", path: true },
-        { label: "Shop URL", key: "shopLink", type: "text", path: true },
-      ]
-    });
+    // ❌ subtitle hata diya (kyuki static hai email me)
+    // config.push(STYLE_GROUPS.typography("subtitleStyle", "Footer Subtitle"));
 
-    config.push({
-      id: "bottomBarStyle", title: "Bottom Bar", icon: <FaBorderAll />,
-      fields: [
-        { label: "Background", key: "backgroundColor", type: "color", path: "bottomBarStyle" },
-        { label: "Text Size", key: "fontSize", type: "range", min: 8, max: 24, path: "bottomBarStyle", suffix: "px" },
-        { label: "Border Top", key: "borderTop", type: "text", path: "bottomBarStyle", placeholder: "1px solid rgba..." },
-        { label: "Border Color", key: "borderColor", type: "color", path: "bottomBarStyle" }
-      ]
-    });
+    // 🔥 MINIMAL FOOTER SETTINGS
+    // config.push({
+    //   id: "footerSettings",
+    //   title: "Footer Settings",
+    //   icon: <FaCog />,
+    //   fields: [
+    //     // OPTIONAL (agar background change karna hai future me)
+    //     // {
+    //     //   label: "Footer Background Color",
+    //     //   key: "backgroundColor",
+    //     //   type: "color",
+    //     //   path: "style"
+    //     // },
+    //     // {
+    //     //   label: "Footer Background Image",
+    //     //   key: "backgroundImage",
+    //     //   type: "image",
+    //     //   path: "style",
+    //     //   allowUpload: true
+    //     // },
+
+    //     // ✅ ONLY REQUIRED FIELD
+    //     {
+    //       label: "Shop URL",
+    //       key: "shopLink",
+    //       type: "text",
+    //       path: true,
+    //       placeholder: "https://example.com"
+    //     }
+    //   ]
+    // });
+
+    // config.push({
+    //   id: "footerContent",
+    //   title: "Footer Content",
+    //   icon: <FaAlignLeft />,
+    //   fields: [
+    //     {
+    //       label: "Copyright Text",
+    //       key: "copyright",
+    //       type: "textarea",
+    //       path: true,
+    //       placeholder: "© Your Company, 2026. All rights reserved."
+    //     }
+    //   ]
+    // });
   }
 
   // Info Box specific to add Top Border
@@ -1957,7 +1977,7 @@ const getStyleConfig = (block) => {
   }
 
   // Always add Link section to everyone
-  config.push(STYLE_GROUPS.link("style"));
+  // config.push(STYLE_GROUPS.link("style"));
 
   return config;
 };
@@ -2254,391 +2274,52 @@ export const AdvancedStyleControls = ({ block, updateStyle: rawUpdateStyle }) =>
   );
 };
 
+const FooterBlockRenderer = ({ block = {} }) => {
+  const links = block.links || [];
 
-const FooterBlockRenderer = ({ block, update, readOnly, isSelected, onSelect }) => {
-  const style = block.style || {};
-
-  const bgUrl = style.backgroundImage instanceof File
-    ? URL.createObjectURL(style.backgroundImage)
-    : style.backgroundImage;
-
-  const getBgImage = (bg) => {
-    if (!bg) return undefined;
-    if (typeof bg === "string" && bg.startsWith("url(")) return bg;
-    return `url(${bg})`;
-  };
-
-  const containerStyle = {
-    ...getCommonStyles(block),
-    backgroundColor: style.backgroundColor || "#062375",
-    backgroundImage: getBgImage(bgUrl),
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
-    color: "#fff",
-    position: "relative",
-    overflow: "hidden",
-    fontFamily: style.fontFamily || "'Outfit', sans-serif",
-  };
-
-  const innerWrapper = {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "16px",
-    flexWrap: "nowrap",
-    padding: `${style.padding || 120}px`,
-    position: "relative",
-    zIndex: 10
-  };
-
-  const bottomBarStyle = {
-    backgroundColor: style.backgroundColor || "#062375",
-    backgroundImage: "none",
-    padding: "10px",
-    textAlign: "center",
-    fontSize: block.bottomBarStyle?.fontSize
-      ? `${block.bottomBarStyle.fontSize}px`
-      : "12px",
-    lineHeight: "1.6",
-    color: "rgba(255,255,255,0.7)",
-    borderTop:
-      block.bottomBarStyle?.borderTop ||
-      `1px solid ${block.bottomBarStyle?.borderColor || "rgba(255,255,255,0.1)"}`,
-    position: "relative",
-    zIndex: 20
+  const iconMap = {
+    facebook: "https://uploads.grabbite.com/emailIcons/facebook.png",
+    instagram: "https://uploads.grabbite.com/emailIcons/instagram.png",
+    youtube: "https://uploads.grabbite.com/emailIcons/youtube.png",
+    linkedin: "https://uploads.grabbite.com/emailIcons/linkedin.png",
+    twitter: "https://uploads.grabbite.com/emailIcons/twitter.png",
   };
 
   return (
     <div>
-      <div
-        style={{
-          ...containerStyle,
-          border: isSelected ? "2px solid #3b82f6" : "none",
-          marginBottom: 0
-        }}
-        onClick={(e) => {
-          e.stopPropagation();
-          if (onSelect) onSelect();
-        }}
-      >
-        <div style={innerWrapper}>
-
-          {/* Logo */}
-          <div style={{ flexShrink: 0, minWidth: "60px" }}>
-            <img
-              src={block.style?.logoUrl || block.logoUrl || "/DashboardIcons/sss-logo.png"}
-              style={{ width: `${style.logoWidth || 120}px` }}
-              alt="Logo"
-            />
+      <div>
+        <section style={{ backgroundImage: "url('https://uploads.grabbite.com/uploads/temp/admin/3/templates/1774530952878_618053932.png')", padding: "30px 10px", backgroundPosition: "center", backgroundSize: "cover", backgroundRepeat: "no-repeat", }}>
+          <table role="presentation" width="100%" cellSpacing="0" cellPadding="0" style={{ maxWidth: "520px", margin: "0 auto", backgroundColor: "transparent", }}>
+            <tr> {/* Logo */} <td style={{ width: "12%", padding: "0px", textAlign: "left" }}>
+              <img src="https://uploads.grabbite.com/uploads/temp/admin/3/templates/1774530953394_122047572.png" alt="" style={{ maxWidth: "32px", width: "100%" }} />
+            </td> {/* Text */} <td style={{ width: "40.33%", padding: "0px 7px", textAlign: "left", color: "#fff", }}>
+                <p style={{ margin: "0px", lineHeight: "11px", fontSize: "18px", }}> Let’s be friends </p>
+                <p style={{ margin: "0px", fontSize: "10px", lineHeight: "11px", }}> If we are not playing football you can find us socialising on… </p>
+              </td> {/* Social Icons */} 
+              <td style={{ width: "30.33%", padding: "0px", textAlign: "left" }}>
+                <table role="presentation">
+                  <tr> {[{ href: "https://www.facebook.com/sambasoccerschools", src: "https://uploads.grabbite.com/emailIcons/facebook.png", }, { href: "https://www.instagram.com/sambasoccer_uk/", src: "https://uploads.grabbite.com/emailIcons/instagram.png", }, { href: "https://www.youtube.com/channel/UCtt-dIsSs2zi_IIUm0-BmUQ", src: "https://uploads.grabbite.com/emailIcons/youtube.png", }, { href: "https://www.linkedin.com/uas/login?session_redirect=%2Fcompany%2F3529892", src: "https://uploads.grabbite.com/emailIcons/linkedin.png", }, { href: "https://x.com/Samba_Soccer?mx=2", src: "https://uploads.grabbite.com/emailIcons/twitter.png", },].map((icon, i) => (<td key={i} style={{ paddingRight: "3px" }}>
+                    <a href={icon.href}>
+                      <img src={icon.src} alt="" style={{ width: "30px" }} />
+                    </a>
+                  </td>))} </tr>
+                </table>
+              </td> {/* Button */} <td style={{ width: "25.666%", textAlign: "center" }}>
+                <a href="https://shop.sambasoccerschools.com/">
+                  <img src="https://uploads.grabbite.com/emailIcons/shopnow.png" alt="" style={{ width: "120px" }} />
+                </a>
+              </td>
+            </tr>
+          </table>
+        </section> {/* Footer */} <footer style={{ padding: "15px 10px", background: "#042c89", borderTop: "1px solid #fff", }}>
+          <div style={{ maxWidth: "520px", padding: "0px 15px", margin: "0 auto", }}>
+            <p style={{ fontWeight: 400, fontSize: "8px", fontFamily: "Arial, sans-serif", textAlign: "center", margin: 0, lineHeight: "12px", color: "#fff", }}> © Samba Soccer Schools Global Ltd, 2025. All rights reserved. Samba Soccer® is a registered trademark of Samba Soccer Schools Global Ltd | Registration Number: 8623348 | Head Office: 65-69 Shelton Street, Covent Garden, London WC2H 9HE </p>
           </div>
-
-          {/* Text */}
-          <div style={{ flexGrow: 1, width: "200px" }}>
-            {readOnly ? (
-              <h2
-                style={{
-                  fontSize: block.titleStyle?.fontSize
-                    ? `${block.titleStyle.fontSize}px`
-                    : "32px",
-                  marginBottom: "4px",
-                  fontWeight: block.titleStyle?.fontWeight || "700",
-                  fontFamily: block.titleStyle?.fontFamily || "Georgia, serif",
-                  color: block.titleStyle?.textColor || "#fff",
-                  textAlign: block.titleStyle?.textAlign || "left"
-                }}
-              >
-                {block.title || "Let’s be friends"}
-              </h2>
-            ) : (
-              <input
-                value={block.title}
-                onChange={(e) => update("title", e.target.value)}
-                placeholder="Footer Title"
-                style={{
-                  width: "100%",
-                  background: "transparent",
-                  border: "none",
-                  outline: "none",
-                  fontSize: block.titleStyle?.fontSize
-                    ? `${block.titleStyle.fontSize}px`
-                    : "32px",
-                  fontWeight: block.titleStyle?.fontWeight || "700",
-                  fontFamily: block.titleStyle?.fontFamily || "Georgia, serif",
-                  color: block.titleStyle?.textColor || "#fff",
-                  textAlign: block.titleStyle?.textAlign || "left"
-                }}
-              />
-            )}
-
-            {readOnly ? (
-              <p
-                style={{
-                  opacity: block.subtitleStyle?.opacity || 0.9,
-                  fontSize: block.subtitleStyle?.fontSize
-                    ? `${block.subtitleStyle.fontSize}px`
-                    : "14px",
-                  fontWeight: block.subtitleStyle?.fontWeight || "500",
-                  color: block.subtitleStyle?.textColor || "#fff",
-                  fontFamily: block.subtitleStyle?.fontFamily || "inherit",
-                  textAlign: block.subtitleStyle?.textAlign || "left"
-                }}
-              >
-                {block.subtitle}
-              </p>
-            ) : (
-              <textarea
-                value={block.subtitle}
-                onChange={(e) => update("subtitle", e.target.value)}
-                placeholder="Footer Subtitle"
-                style={{
-                  width: "100%",
-                  background: "transparent",
-                  border: "none",
-                  outline: "none",
-                  fontSize: block.subtitleStyle?.fontSize
-                    ? `${block.subtitleStyle.fontSize}px`
-                    : "14px",
-                  fontWeight: block.subtitleStyle?.fontWeight || "500",
-                  color: block.subtitleStyle?.textColor || "#fff",
-                  fontFamily: block.subtitleStyle?.fontFamily || "inherit",
-                  textAlign: block.subtitleStyle?.textAlign || "left"
-                }}
-              />
-            )}
-          </div>
-
-          {/* Social Icons */}
-          {/* Social Icons */}
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
-            {(block.links || []).map((social, i) => {
-              const platform = social.platform || "facebook";
-
-              const Icon =
-                platform === "facebook" ? FaFacebookF :
-                  platform === "instagram" ? FaInstagram :
-                    platform === "youtube" ? FaYoutube :
-                      platform === "linkedin" ? FaLinkedinIn :
-                        platform === "twitter" ? FaTwitter :
-                          FaShareAlt;
-
-              return (
-                <div
-                  key={i}
-                  style={{ position: "relative" }}
-                  onMouseEnter={(e) => {
-                    const popup = e.currentTarget.querySelector(".social-popup");
-                    if (popup) popup.style.display = "flex";
-                  }}
-                  onMouseLeave={(e) => {
-                    const popup = e.currentTarget.querySelector(".social-popup");
-                    if (popup) popup.style.display = "none";
-                  }}
-                >
-                  {/* Icon */}
-                  <a
-                    href={social.url || "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      background: "#fff",
-                      color: "#062375",
-                      width: "28px",          // w-7
-                      height: "28px",
-                      borderRadius: "50%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      textDecoration: "none",
-                      fontSize: "18px",
-                      boxShadow: "0 8px 20px rgba(0,0,0,0.2)", // shadow-lg
-                      transition: "transform 0.2s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "scale(1.1)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "scale(1)";
-                    }}
-                  >
-                    <Icon size={12} />
-                  </a>
-
-                  {/* POPUP */}
-                  {!readOnly && (
-                    <div
-                      className="social-popup"
-                      style={{
-                        display: "none",
-                        flexDirection: "column",
-                        gap: "4px",
-                        position: "absolute",
-                        top: "-48px", // -top-12
-                        left: "50%",
-                        transform: "translateX(-50%) scale(0.75)",
-                        transformOrigin: "bottom",
-                        background: "#fff",
-                        padding: "8px",
-                        borderRadius: "6px",
-                        border: "1px solid #e5e7eb",
-                        boxShadow: "0 20px 30px rgba(0,0,0,0.25)", // shadow-2xl
-                        width: "128px", // w-32
-                        zIndex: 50,
-                      }}
-                    >
-                      {/* Platform */}
-                      <select
-                        value={social.platform}
-                        onChange={(e) => {
-                          const newLinks = [...(block.links || [])];
-                          newLinks[i] = { ...newLinks[i], platform: e.target.value };
-                          update("links", newLinks);
-                        }}
-                        style={{
-                          fontSize: "10px",
-                          padding: "4px",
-                          borderRadius: "4px",
-                          border: "1px solid #d1d5db",
-                          color: "#374151"
-                        }}
-                      >
-                        <option value="facebook">Facebook</option>
-                        <option value="instagram">Instagram</option>
-                        <option value="youtube">YouTube</option>
-                        <option value="linkedin">LinkedIn</option>
-                        <option value="twitter">Twitter</option>
-                      </select>
-
-                      {/* URL */}
-                      <input
-                        value={social.url}
-                        placeholder="URL"
-                        onChange={(e) => {
-                          const newLinks = [...(block.links || [])];
-                          newLinks[i] = { ...newLinks[i], url: e.target.value };
-                          update("links", newLinks);
-                        }}
-                        style={{
-                          fontSize: "10px",
-                          padding: "4px",
-                          borderRadius: "4px",
-                          border: "1px solid #d1d5db",
-                          color: "#374151",
-                          outline: "none",
-                          fontWeight: "normal"
-                        }}
-                      />
-
-                      {/* Remove */}
-                      <button
-                        onClick={() => {
-                          const newLinks = (block.links || []).filter((_, idx) => idx !== i);
-                          update("links", newLinks);
-                        }}
-                        style={{
-                          fontSize: "10px",
-                          background: "#ef4444",
-                          color: "#fff",
-                          padding: "4px",
-                          border: "none",
-                          borderRadius: "4px",
-                          marginTop: "4px",
-                          cursor: "pointer"
-                        }}
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {/* ADD BUTTON */}
-            {!readOnly && (
-              <button
-                onClick={() => {
-                  const newLinks = [
-                    ...(block.links || []),
-                    { platform: "facebook", url: "#" }
-                  ];
-                  update("links", newLinks);
-                }}
-                style={{
-                  width: "32px", // w-8
-                  height: "32px",
-                  borderRadius: "50%",
-                  border: "1px dashed rgba(255,255,255,0.4)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#fff",
-                  background: "transparent",
-                  cursor: "pointer",
-                  transition: "background 0.2s"
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(255,255,255,0.2)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                }}
-              >
-                <FaPlus size={12} />
-              </button>
-            )}
-          </div>
-
-          {/* Button */}
-          <div style={{ flexShrink: 0, maxWidth: "100px" }}>
-            <a
-              href={block.style?.shopLink || block.shopLink || "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                background: "#fff",
-                color: "#062375",
-                padding: "8px 10px",
-                borderRadius: "30px",
-                fontWeight: "bold",
-                fontSize: "10px",
-                display: "flex",
-                alignItems: "center",
-                gap: "5px",
-                textDecoration: "none",
-                whiteSpace: "nowrap"
-              }}
-            >
-              <FaShoppingCart size={16} />
-              {block.style?.shopText || block.shopText || "Shop Online"}
-            </a>
-          </div>
-
-        </div>
-      </div>
-
-      {/* Bottom Bar */}
-      <div style={bottomBarStyle}>
-        {readOnly ? (
-          block.copyright
-        ) : (
-          <textarea
-            value={block.copyright}
-            onChange={(e) => update("copyright", e.target.value)}
-            style={{
-              width: "100%",
-              background: "transparent",
-              border: "none",
-              outline: "none",
-              textAlign: "center",
-              color: "#fff"
-            }}
-          />
-        )}
-      </div>
+        </footer>      </div>
     </div>
   );
 };
+
 const HtmlBlockRenderer = ({ block, update, readOnly, isSelected, onSelect }) => {
   const style = block.style || {};
 
