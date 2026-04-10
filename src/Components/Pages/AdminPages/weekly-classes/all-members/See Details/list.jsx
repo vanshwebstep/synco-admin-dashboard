@@ -12,6 +12,8 @@ const tabs = [
 // import ParentProfile from "../ParentProfile";
 import { useBookFreeTrial } from '../../../contexts/BookAFreeTrialContext';
 import HistoryOfPayments from "./HistoryOfPayments";
+import Attendance from "./Attendance";
+import General from "./General";
 
 const SeeDetails = () => {
     const { serviceHistoryMembership, serviceHistory } = useBookFreeTrial()
@@ -120,6 +122,12 @@ const SeeDetails = () => {
       )} */}
             {activeTab === "History of Payments" && (
                 <HistoryOfPayments stateData={serviceHistory} />
+            )}
+            {activeTab === "Attendance" && (
+                <Attendance stateData={serviceHistory} />
+            )}
+            {activeTab === "General" && (
+                <General stateData={serviceHistory} />
             )}
         </>
     )
