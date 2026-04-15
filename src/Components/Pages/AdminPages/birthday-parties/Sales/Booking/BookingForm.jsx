@@ -30,6 +30,7 @@ import { useNotification } from '../../../contexts/NotificationContext';
 import { usePayments } from '../../../contexts/PaymentPlanContext';
 import { useVenue } from '../../../contexts/VenueContext';
 import { showError, showWarning } from '../../../../../../utils/swalHelper';
+import Comments from '../../../Common/Comments';
 
 const BirthdayBookingForm = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -338,14 +339,14 @@ const BirthdayBookingForm = () => {
       try {
         await fetchGeneralInfo();
         await fetchKeyInfo();
-        await fetchComments();
+        // await fetchComments();
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
 
     fetchData();
-  }, [fetchGeneralInfo, fetchKeyInfo, fetchComments]);
+  }, [fetchGeneralInfo, fetchKeyInfo]);
 
 
   const [activePopup, setActivePopup] = useState(null);
@@ -1361,7 +1362,7 @@ const BirthdayBookingForm = () => {
                   value={numberOfStudents}
                   onChange={(e) => {
                     const val = Number(e.target.value);
-                    if ([1, 2, 3].includes(val) || e.target.value === "") {
+                    if ([1, 2, 3, 4].includes(val) || e.target.value === "") {
                       setNumberOfStudents(e.target.value);
                     }
                     // Do nothing if invalid
@@ -1925,95 +1926,16 @@ const BirthdayBookingForm = () => {
               </AnimatePresence>
             </motion.div>
 
-            <div className="bg-white my-10 rounded-3xl p-6 space-y-4">
-              <h2 className="text-[24px] font-semibold">Comment</h2>
-
-              {/* Input section */}
-              <div className="flex items-center gap-2">
-                <img
-                  src={adminInfo?.profile ? `${adminInfo.profile}` : '/members/dummyuser.png'}
-                  alt="User"
-                  className="w-14 h-14 rounded-full object-cover"
-                />
-                <input
-                  type="text"
-                  name='comment'
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="Add a comment"
-                  className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-[16px] font-semibold outline-none"
-                />
-                <button
-                  disabled={loadingComment}
-                  className="bg-[#237FEA] p-3 rounded-xl text-white hover:bg-blue-600"
-                  onClick={handleSubmitComment}
-                >
-                  {loadingComment ? (
-                    <Loader2 className="animate-spin w-5 h-5 text-white" />
-                  ) : (
-                    <img src="/images/icons/sent.png" alt="" />
-                  )}
-                </button>
-              </div>
-
-              {/* Comment list */}
-           {commentsList && commentsList.length > 0 ? (
-                            <div className="space-y-4">
-                                {currentComments.map((c, i) => (
-                                    <div key={i} className="bg-gray-50 rounded-xl p-4 text-sm">
-
-                                        <div className="flex justify-end items-center gap-3">
-
-                                            {/* Time */}
-                                            <div className="flex flex-wrap justify-end flex-col">
-                                                <div className="flex items-center gap-3 mb-4">
-                                                    <img
-                                                        src={
-                                                            c?.bookedByAdmin?.profile
-                                                                ? `${c?.bookedByAdmin?.profile}`
-                                                                : '/members/dummyuser.png'
-                                                        }
-                                                        onError={(e) => {
-                                                            e.currentTarget.onerror = null;
-                                                            e.currentTarget.src = '/members/dummyuser.png';
-                                                        }}
-                                                        alt={c?.bookedByAdmin?.firstName}
-                                                        className="w-10 h-10 rounded-full object-cover"
-                                                    />
-                                                    <div className="text-right">
-                                                        <p className="font-semibold text-[#237FEA] text-[15px]">
-                                                            {c?.bookedByAdmin?.firstName} {c?.bookedByAdmin?.lastName}
-                                                        </p>
-                                                    </div>
-
-
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <p className="text-gray-700 text-[16px] font-semibold mb-3 text-left">
-                                            {c.comment}
-                                        </p>
-
-                                        {/* RIGHT: User Info */}
-                                        <div className="flex justify-end items-center gap-3">
-
-                                            {/* Time */}
-                                            <div className="flex flex-wrap justify-end flex-col">
-
-                                                <span className="text-gray-400 text-right text-[14px] whitespace-nowrap">
-                                                    {formatTimeAgo(c.createdAt)}
-                                                </span>
-
-
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-center">No Comments yet.</p>
-                        )}
-            </div>
+            <Comments
+              adminInfo={adminInfo}
+              comment={comment}
+              setComment={setComment}
+              handleSubmitComment={handleSubmitComment}
+              loadingComment={loadingComment}
+              commentsList={commentsList}
+              currentComments={currentComments}
+              formatTimeAgo={formatTimeAgo}
+            />
 
             <div className="flex justify-end gap-4">
               <button
@@ -2054,7 +1976,7 @@ const BirthdayBookingForm = () => {
 
             {showPopup && (
               <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
-                <div className="bg-white rounded-2xl max-w-[541px] min-w-[541px] max-h-[90%] overflow-y-scroll space-y-6 relative scrollbar-hide">
+                <div className="bg-[white] rounded-2xl max-w-[541px] min-w-[541px] max-h-[90%] overflow-y-scroll space-y-6 relative scrollbar-hide">
                   <button
                     className="absolute top-3 p-6 left-4 text-xl font-bold"
                     onClick={() => setShowPopup(false)}

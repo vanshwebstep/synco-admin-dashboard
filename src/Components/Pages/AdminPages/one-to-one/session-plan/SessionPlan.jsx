@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback,useMemo } from "react";
 
 import { Eye, User, Edit2, Trash2, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -7,7 +7,9 @@ import { showError, showSuccess, showConfirm, showLoading } from "../../../../..
 import { Loader2 } from "lucide-react";
 
 import { usePermission } from "../../Common/permission";
+import { useGlobalSearch } from "../../contexts/GlobalSearchContext";
 const SessionPlan = () => {
+  const { searchQuery } = useGlobalSearch();
 
     const [sessionGroup, setSessionGroup] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -176,7 +178,23 @@ const SessionPlan = () => {
             setLoadingPinId(null);
         }
     };
+const filteredSessionGroup = useMemo(() => {
+    if (!searchQuery) return sessionGroup || [];
 
+    const query = searchQuery.toLowerCase();
+
+    return sessionGroup.filter((group) => {
+        // group name match
+        const groupMatch = group.groupName?.toLowerCase().includes(query);
+
+        // levels match (beginner, intermediate etc.)
+        const levelMatch = Object.keys(group.levels || {}).some((levelKey) => {
+            return levelKey.toLowerCase().includes(query);
+        });
+
+        return groupMatch || levelMatch;
+    });
+}, [sessionGroup, searchQuery]);
 
     useEffect(() => {
         fetchSessionGroup();
@@ -216,7 +234,7 @@ const SessionPlan = () => {
             <div className="p-6 bg-white min-h-[600px] rounded-3xl">
                 <div className="grid md:grid-cols-4 gap-6">
                     {/* Left Section */}
-                    {sessionGroup
+                    {filteredSessionGroup
                         // filter only groups that have at least one level key
                         .filter(group => group.levels && Object.keys(group.levels).length > 0)
                         // now safely map through them

@@ -20,8 +20,10 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Select from "react-select";
 import { showConfirm, showWarning } from "../../../../../utils/swalHelper";
+import { useGlobalSearch } from "../../contexts/GlobalSearchContext";
 const FranchiseLeads = () => {
     const [showFilter, setShowFilter] = useState(false);
+    const { searchQuery } = useGlobalSearch();
 
     const [loading, setLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
@@ -402,16 +404,65 @@ const FranchiseLeads = () => {
     };
 
 
-    const totalItems = filteredRecruitment.length;
-    const totalPages = Math.ceil(totalItems / rowsPerPage);
-
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    const endIndex = startIndex + rowsPerPage;
-
-    const currentData = useMemo(
-        () => filteredRecruitment.slice(startIndex, endIndex),
-        [filteredRecruitment, startIndex, endIndex]
-    );
+  
+      const filterBySearchQuery = (data) => {
+          if (!searchQuery.trim()) return data;
+  
+          const q = searchQuery.toLowerCase();
+  
+          return data.filter((coach) => {
+              const values = [
+                  coach?.firstName,
+                  coach?.lastName,
+                  coach?.age,
+                  coach?.postcode,
+                  coach?.phoneNumber,
+                  coach?.email,
+                  coach?.managementExperience,
+                  coach?.level,
+                  coach?.dbs,
+                  coach?.status,
+              ];
+  
+              return values.some((val) =>
+                  String(val || "").toLowerCase().includes(q)
+              );
+          });
+      };
+  
+  
+      const totalItems = filteredRecruitment.length;
+      const totalPages = Math.ceil(totalItems / rowsPerPage);
+  
+      const startIndex = (currentPage - 1) * rowsPerPage;
+      const endIndex = startIndex + rowsPerPage;
+  
+      const currentData = useMemo(
+          () => filteredRecruitment.slice(startIndex, endIndex),
+          [filteredRecruitment, startIndex, endIndex]
+      );
+      useEffect(() => {
+          setCurrentPage(1);
+      }, [searchQuery]);
+       const filterByName = (data) => {
+        if (!studentName.trim()) return data;
+        setCurrentPage(1);
+        const q = studentName.trim().toLowerCase();
+        return data.filter(c =>
+            `${c.firstName ?? ""} ${c.lastName ?? ""}`.toLowerCase().includes(q)
+        );
+    };
+      useEffect(() => {
+          if (!Array.isArray(recruitment)) return;
+  
+          let data = [...recruitment];
+  
+          data = filterByName(data);
+          data = filterBySearchQuery(data); // ✅ ADD THIS
+  
+          setFilteredRecruitment(data);
+      }, [recruitment, studentName, searchQuery]);
+  
     const exportToExcel = () => {
         if (!currentData || currentData.length === 0) return;
 

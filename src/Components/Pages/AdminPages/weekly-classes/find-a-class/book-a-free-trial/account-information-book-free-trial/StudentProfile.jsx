@@ -16,10 +16,13 @@ import { showSuccess, showError, showConfirm, showWarning } from '../../../../..
 import { useNavigate } from 'react-router-dom';
 import { FaEdit, FaSave } from "react-icons/fa";
 import { useNotification } from '../../../../contexts/NotificationContext';
+import Comments from '../../../../Common/Comments';
+import { useEmail } from '../../../../contexts/messages/SendEmailContext';
 
 const StudentProfile = ({ StudentProfile }) => {
     const { serviceHistoryFetchById } = useBookFreeTrial();
     const [textloading, setTextLoading] = useState(null);
+    const { openEmailPopup } = useEmail();
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const [selectedDate, setSelectedDate] = useState(null);
     const navigate = useNavigate();
@@ -159,9 +162,38 @@ const StudentProfile = ({ StudentProfile }) => {
         classSchedule,
         paymentPlans,
     } = StudentProfile;
+    const parseDate = (dob) => {
+        if (!dob) return "";
 
-    const [students, setStudents] = useState(StudentProfile?.students || []);
+        // Agar timestamp ya ISO string hai
+        if (dob.includes("T")) {
+            dob = dob.split("T")[0]; // "2018-05-06"
+        }
 
+        // Ab format hoga YYYY-MM-DD
+        const [year, month, day] = dob.split("-");
+
+        if (!year || !month || !day) return "";
+
+        return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
+    };
+    const formatDateObject = (date) => {
+        if (!date) return "";
+
+        const d = new Date(date);
+
+        const day = String(d.getDate()).padStart(2, "0");
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const year = d.getFullYear();
+
+        return `${day}/${month}/${year}`;
+    };
+    const [students, setStudents] = useState(
+        (StudentProfile?.students || []).map((s) => ({
+            ...s,
+            dateOfBirth: formatDateObject(s.dateOfBirth),
+        }))
+    );
 
     const [cancelWaitingList, setCancelWaitingList] = useState({
         bookingId: id,
@@ -273,18 +305,55 @@ const StudentProfile = ({ StudentProfile }) => {
     }
 
 
-    const handleDOBChange = (index, date) => {
-        const today = new Date();
-        let ageNow = today.getFullYear() - date.getFullYear();
-        const m = today.getMonth() - date.getMonth();
+    const handleDOBChange = (index, value) => {
+        // Remove non-numeric characters
+        let cleaned = value.replace(/[^\d]/g, "");
 
-        if (m < 0 || (m === 0 && today.getDate() < date.getDate())) {
-            ageNow--;
+        // Format to DD/MM/YYYY
+        if (cleaned.length > 2 && cleaned.length <= 4) {
+            cleaned = `${cleaned.slice(0, 2)}/${cleaned.slice(2)}`;
+        } else if (cleaned.length > 4) {
+            cleaned = `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}/${cleaned.slice(4, 8)}`;
         }
 
         const updatedStudents = [...students];
-        updatedStudents[index].dateOfBirth = date;
-        updatedStudents[index].age = ageNow;
+        updatedStudents[index].dateOfBirth = cleaned;
+
+        // Calculate age only if full date entered
+        if (cleaned.length === 10) {
+            const [day, month, year] = cleaned.split("/").map(Number);
+
+            const date = new Date(year, month - 1, day);
+
+            // Validate proper date
+            const isValid =
+                date &&
+                date.getDate() === day &&
+                date.getMonth() === month - 1 &&
+                date.getFullYear() === year;
+
+            if (isValid) {
+                const today = new Date();
+                let ageNow = today.getFullYear() - year;
+                const m = today.getMonth() - (month - 1);
+
+                if (m < 0 || (m === 0 && today.getDate() < day)) {
+                    ageNow--;
+                }
+
+                // Apply your 3–100 age rule
+                if (ageNow >= 3 && ageNow <= 100) {
+                    updatedStudents[index].age = ageNow;
+                } else {
+                    updatedStudents[index].age = "";
+                }
+            } else {
+                updatedStudents[index].age = "";
+            }
+        } else {
+            updatedStudents[index].age = "";
+        }
+
         setStudents(updatedStudents);
     };
 
@@ -323,6 +392,31 @@ const StudentProfile = ({ StudentProfile }) => {
     useEffect(() => {
         fetchComments();
     }, [])
+    const formatDOBForAPI = (dob) => {
+        if (!dob) return "";
+
+        // Case 1: Date object
+        if (dob instanceof Date) {
+            const year = dob.getFullYear();
+            const month = String(dob.getMonth() + 1).padStart(2, "0");
+            const day = String(dob.getDate()).padStart(2, "0");
+            return `${year}-${month}-${day}`;
+        }
+
+        // Case 2: ISO string (2018-05-06T00:00:00.000Z)
+        if (dob.includes("T")) {
+            return dob.split("T")[0];
+        }
+
+        // Case 3: DD/MM/YYYY (user input)
+        if (dob.includes("/")) {
+            const [day, month, year] = dob.split("/");
+            return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+        }
+
+        // Case 4: already YYYY-MM-DD
+        return dob;
+    };
     const toggleEditStudent = (index) => {
         if (editingIndex === index) {
             // ✅ Save Mode
@@ -332,7 +426,7 @@ const StudentProfile = ({ StudentProfile }) => {
                 id: student.id ?? sIndex + 1,
                 studentFirstName: student.studentFirstName,
                 studentLastName: student.studentLastName,
-                dateOfBirth: student.dateOfBirth,
+                dateOfBirth: formatDOBForAPI(student.dateOfBirth),
                 age: student.age,
                 gender: student.gender,
                 medicalInformation: student.medicalInformation,
@@ -434,20 +528,17 @@ const StudentProfile = ({ StudentProfile }) => {
                                 {/* Row 2: DOB / Age */}
                                 <div className="flex gap-4">
                                     <div className="w-1/2">
-                                        <label className="block text-[16px] font-semibold">Date of Birth</label>
-                                        <DatePicker
-                                            withPortal
-                                            selected={student.dateOfBirth}
-                                            onChange={(date) => handleDOBChange(index, date)}
+                                        <label className="block text-[16px] font-semibold">
+                                            Date of birth
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            value={student?.dateOfBirth}
+                                            onChange={(e) => handleDOBChange(index, e.target.value)}
+                                            placeholder="DD/MM/YYYY (e.g., 15/10/2026)"
                                             className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                            showYearDropdown
-                                            scrollableYearDropdown
-                                            yearDropdownItemNumber={100}
-                                            dateFormat="dd/MM/yyyy"
-                                            maxDate={new Date(new Date().setFullYear(new Date().getFullYear() - 3))} // Minimum age: 3 years
-                                            minDate={new Date(new Date().setFullYear(new Date().getFullYear() - 100))} // Maximum age: 100 years
-                                            placeholderText="Select date of birth"
-                                            isClearable
+                                            maxLength={10}
                                         />
                                     </div>
                                     <div className="w-1/2">
@@ -522,95 +613,16 @@ const StudentProfile = ({ StudentProfile }) => {
                     </div>
 
 
-                    <div className="bg-white my-10 rounded-3xl p-6 space-y-4">
-                        <h2 className="text-[24px] font-semibold">Comment</h2>
-
-                        {/* Input section */}
-                        <div className="flex items-center gap-2">
-                            <img
-                                src={adminInfo?.profile ? `${adminInfo.profile}` : '/members/dummyuser.png'}
-                                alt="User"
-                                className="w-14 h-14 rounded-full object-cover"
-                            />
-                            <input
-                                type="text"
-                                name='comment'
-                                value={comment}
-                                onChange={(e) => setComment(e.target.value)}
-                                placeholder="Add a comment"
-                                className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-[16px] font-semibold outline-none md:w-full w-5/12"
-                            />
-                            <button
-                                disabled={loadingComment}
-                                className="bg-[#237FEA] p-3 rounded-xl text-white hover:bg-blue-600"
-                                onClick={handleSubmitComment}
-                            >
-                                {loadingComment ? (
-                                    <Loader2 className="animate-spin w-5 h-5 text-white" />
-                                ) : (
-                                    <img src="/images/icons/sent.png" alt="" />
-                                )}
-                            </button>
-                        </div>
-
-                        {/* Comment list */}
-                          {commentsList && commentsList.length > 0 ? (
-                            <div className="space-y-4">
-                                {currentComments.map((c, i) => (
-                                    <div key={i} className="bg-gray-50 rounded-xl p-4 text-sm">
-
-                                        <div className="flex justify-end items-center gap-3">
-
-                                            {/* Time */}
-                                            <div className="flex flex-wrap justify-end flex-col">
-                                                <div className="flex items-center gap-3 mb-4">
-                                                    <img
-                                                        src={
-                                                            c?.bookedByAdmin?.profile
-                                                                ? `${c?.bookedByAdmin?.profile}`
-                                                                : '/members/dummyuser.png'
-                                                        }
-                                                        onError={(e) => {
-                                                            e.currentTarget.onerror = null;
-                                                            e.currentTarget.src = '/members/dummyuser.png';
-                                                        }}
-                                                        alt={c?.bookedByAdmin?.firstName}
-                                                        className="w-10 h-10 rounded-full object-cover"
-                                                    />
-                                                    <div className="text-right">
-                                                        <p className="font-semibold text-[#237FEA] text-[15px]">
-                                                            {c?.bookedByAdmin?.firstName} {c?.bookedByAdmin?.lastName}
-                                                        </p>
-                                                    </div>
-
-
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <p className="text-gray-700 text-[16px] font-semibold mb-3 text-left">
-                                            {c.comment}
-                                        </p>
-
-                                        {/* RIGHT: User Info */}
-                                        <div className="flex justify-end items-center gap-3">
-
-                                            {/* Time */}
-                                            <div className="flex flex-wrap justify-end flex-col">
-
-                                                <span className="text-gray-400 text-right text-[14px] whitespace-nowrap">
-                                                    {formatTimeAgo(c.createdAt)}
-                                                </span>
-
-
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-center">No Comments yet.</p>
-                        )}
-                    </div>
+                    <Comments
+                        adminInfo={adminInfo}
+                        comment={comment}
+                        setComment={setComment}
+                        handleSubmitComment={handleSubmitComment}
+                        loadingComment={loadingComment}
+                        commentsList={commentsList}
+                        currentComments={currentComments}
+                        formatTimeAgo={formatTimeAgo}
+                    />
                 </div>
                 <div className="max-h-fit rounded-full md:w-4/12 text-base space-y-5">
                     {/* Card Wrapper */}
@@ -757,8 +769,11 @@ const StudentProfile = ({ StudentProfile }) => {
                                 {/* Top Row: Email + Text */}
                                 <div className="flex gap-7">
 
-                                    <button onClick={() => sendCancelFreeTrialmail([id])} className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-[#717073] font-medium">
-                                        <img src="/images/icons/mail.png" alt="" /> Send Email
+                                    <button className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-[#717073] font-medium" onClick={() => {
+                                        const parentEmails = parents.map(p => p.parentEmail).filter(Boolean);
+                                        openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
+                                    }}>
+                                        Send Email
                                     </button>
 
                                     <button disabled={textloading} onClick={() => sendText([id])} className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
@@ -813,21 +828,21 @@ const StudentProfile = ({ StudentProfile }) => {
 
                                 {status === 'attended' && (
                                     <>
-                                    <div className="flex gap-7">
-                                        <button onClick={() => setNoMembershipSelect(true)} className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium">
-                                            No Membership
-                                        </button>
+                                        <div className="flex gap-7">
+                                            <button onClick={() => setNoMembershipSelect(true)} className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium">
+                                                No Membership
+                                            </button>
 
-                                        <button onClick={handleBookMembership} className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium">
-                                            Book a Membership
+                                            <button onClick={handleBookMembership} className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium">
+                                                Book a Membership
+                                            </button>
+                                        </div>
+                                        <button
+                                            onClick={() => setshowCancelTrial(true)}
+                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                        >
+                                            Cancel Trial
                                         </button>
-                                    </div>
-                                     <button
-                                        onClick={() => setshowCancelTrial(true)}
-                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
-                                    >
-                                        Cancel Trial
-                                    </button>
                                     </>
                                 )}
 

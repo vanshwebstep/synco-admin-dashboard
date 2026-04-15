@@ -6,11 +6,12 @@ import { useMembers } from "../Pages/AdminPages/contexts/MemberContext";
 import { usePermission } from '../Pages/AdminPages/Common/permission';
 import { useAccountsInfo } from '../Pages/AdminPages/contexts/AccountsInfoContext';
 import { showConfirm } from '../../utils/swalHelper';
+import { useGlobalSearch } from '../Pages/AdminPages/contexts/GlobalSearchContext';
 
 const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpen }) => {
   const isFetchingRef = useRef(false);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
+  const { searchQuery, setSearchQuery } = useGlobalSearch();
   const [showNotificationPopup, setShowNotificationPopup] = useState(null);
   const { notification, customnotificationAll, setNotification, stopFetching, fetchNotification, adminInfo, setAdminInfo } = useNotification();
   const currentDate = new Date();
@@ -330,6 +331,8 @@ const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpe
           <div className="relative w-full sm:w-[280px] lg:w-[200px] xl:w-[250px] 2xl:w-[400px]">
             <input
               type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full px-4 py-3 pl-10 border border-[#E2E1E5] rounded-lg bg-white text-[16px] focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Search"
             />

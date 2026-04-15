@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback,useMemo } from "react";
 import { FiSearch } from "react-icons/fi";
 import Select from "react-select";
 import { FiUsers } from "react-icons/fi";
@@ -26,11 +26,13 @@ import { useNavigate } from "react-router-dom";
 import Loader from "../../../contexts/Loader";
 import { useAccountsInfo } from "../../../contexts/AccountsInfoContext";
 import { showError,showSuccess, showWarning } from "../../../../../../utils/swalHelper";
+import { useGlobalSearch } from "../../../contexts/GlobalSearchContext";
 const SalesDashboard = () => {
     const navigate = useNavigate();
     const [noLoaderShow, setNoLoaderShow] = useState(false);
     const [showFilter, setShowFilter] = useState(false);
     const [textloading, setTextLoading] = useState(null);
+  const { searchQuery } = useGlobalSearch();
 
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const token = localStorage.getItem("adminToken");
@@ -398,7 +400,27 @@ const SalesDashboard = () => {
             fetchLeads(value);
         }, 400);
     };
+const searchedData = useMemo(() => {
+  if (!searchQuery) return leadsData || [];
 
+  const query = searchQuery.toLowerCase();
+
+  return (leadsData || []).filter((lead) => {
+    const values = [
+      lead?.parentName,
+      lead?.childName,
+      lead?.age,
+      lead?.packageInterest,
+      lead?.source,
+      lead?.status,
+      lead?.partyDate,
+    ];
+
+    return values.some((val) =>
+      String(val || "").toLowerCase().includes(query)
+    );
+  });
+}, [leadsData, searchQuery]);
     const [selectedUserIds, setSelectedUserIds] = useState([]);
     const [currentDate, setCurrentDate] = useState(new Date());
 
@@ -747,14 +769,15 @@ const SalesDashboard = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
-    const totalItems = leadsData.length;
-    const totalPages = Math.ceil(totalItems / rowsPerPage);
+const totalItems = searchedData.length;
+const totalPages = Math.ceil(totalItems / rowsPerPage);
 
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    const paginatedData = leadsData.slice(
-        startIndex,
-        startIndex + rowsPerPage
-    );
+const startIndex = (currentPage - 1) * rowsPerPage;
+
+const paginatedData = searchedData.slice(
+  startIndex,
+  startIndex + rowsPerPage
+);
 
 
     useEffect(() => {

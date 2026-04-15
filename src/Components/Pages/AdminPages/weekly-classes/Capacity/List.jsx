@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState,useMemo } from 'react';
 import { FiSearch } from "react-icons/fi";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Select, { components } from "react-select";
@@ -8,6 +8,7 @@ import { useBookFreeTrial } from '../../contexts/BookAFreeTrialContext';
 import { useNavigate } from "react-router-dom";
 import Loader from '../../contexts/Loader';
 import { showError } from '../../../../../utils/swalHelper';
+import { useGlobalSearch } from '../../contexts/GlobalSearchContext';
 const CheckboxOption = (props) => {
     return (
         <components.Option {...props}>
@@ -26,7 +27,7 @@ const CheckboxOption = (props) => {
 const Capacity = () => {
     const navigate = useNavigate();
     const popupRef = useRef(null);
-
+    const { searchQuery } = useGlobalSearch();
     const booked = 1654
     const total = 2040
     const percentage = Math.round((booked / total) * 100);
@@ -46,7 +47,29 @@ const Capacity = () => {
     const { totalCapacity, totalBooked, occupancyRate } = overview;
 
     console.log('capacityData', capacityData)
+    const filteredVenues = useMemo(() => {
+        if (!searchQuery) return capacityData?.venues || [];
 
+        const query = searchQuery.toLowerCase();
+
+        return (capacityData?.venues || []).filter((venue) => {
+            // 🔹 Venue level match
+            const venueMatch =
+                venue?.name?.toLowerCase().includes(query) ||
+                venue?.address?.toLowerCase().includes(query);
+
+            // 🔹 Class level match
+            const classMatch = venue?.classes?.some((cls) => {
+                return (
+                    cls?.day?.toLowerCase().includes(query) ||
+                    cls?.startTime?.toLowerCase().includes(query) ||
+                    cls?.endTime?.toLowerCase().includes(query)
+                );
+            });
+
+            return venueMatch || classMatch;
+        });
+    }, [capacityData, searchQuery]);
 
 
     const data = [
@@ -408,9 +431,9 @@ const Capacity = () => {
                 {searchLoading ? (
                     <div className="text-center py-6 text-gray-500">Loading venues...</div>
                 ) :
-                    capacityData && capacityData.venues ? (
-                        capacityData.venues.length > 0 ? (
-                            capacityData.venues.map((venue) => {
+                    filteredVenues && filteredVenues ? (
+                        filteredVenues.length > 0 ? (
+                            filteredVenues.map((venue) => {
                                 const totalCapacity = venue.classes.reduce((sum, cls) => sum + cls.stats.totalCapacity, 0);
                                 const totalBooked = venue.classes.reduce((sum, cls) => sum + cls.stats.totalBooked, 0);
                                 const freeTrials = venue.classes.reduce((sum, cls) => sum + cls.stats.freeTrials, 0);

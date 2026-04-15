@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Check, X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { FiSearch } from "react-icons/fi";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, px } from "framer-motion";
 import { showWarning, showConfirm, showError } from "../../../../../../utils/swalHelper";
 import { format } from "date-fns";
 import { evaluate } from "mathjs";
@@ -22,13 +22,15 @@ import "react-datepicker/dist/react-datepicker.css";
 import "react-phone-input-2/lib/style.css";
 import { useMembers } from "../../../contexts/MemberContext";
 import { useNotification } from "../../../contexts/NotificationContext";
+import Comments from "../../../Common/Comments";
 
 const List = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { createBookMembership, createBookMembershipByfreeTrial, createBookMembershipByWaitingList, isBooked, setIsBooked } = useBookFreeTrial()
     const [expression, setExpression] = useState('');
-    const [numberOfStudents, setNumberOfStudents] = useState('1');
+    const [studentRemoved, setStudentRemoved] = useState(false);
+    const [numberOfStudents, setNumberOfStudents] = useState(1);
     const { keyInfoData, fetchKeyInfo } = useMembers();
     const token = localStorage.getItem("adminToken");
     const [isDiscountLoading, setIsDiscountLoading] = useState(false);
@@ -140,7 +142,7 @@ const List = () => {
             year: "numeric",
         });
     };
-    // console.log('TrialData', TrialData)
+    console.log('TrialData', TrialData)
     // console.log('classId', classId)
     const { fetchFindClassID, singleClassSchedulesOnly, loading } = useClassSchedule() || {};
 
@@ -176,8 +178,11 @@ const List = () => {
             parentLastName: '',
             parentEmail: '',
             parentPhoneNumber: '',
+            interestReason: '',
+            interestReasonOther: '',
             relationToChild: '',
-            howDidYouHear: ''
+            howDidYouHear: '',
+            isCustomReason: false
 
         }
     ]);
@@ -220,12 +225,34 @@ const List = () => {
     }));
     const handleNumberChange = (e) => {
         const val = e.target.value === "" ? "" : Number(e.target.value);
-        if (val === "" || [1, 2, 3].includes(val)) {
+
+        if (val === "" || [1, 2, 3, 4].includes(val)) {
             setNumberOfStudents(val);
 
-            // If currently selected plan doesn't match new number, reset it
+            setStudents((prevStudents) => {
+                if (val === "") return [];
+
+                if (val > prevStudents.length) {
+                    const newStudents = Array.from(
+                        { length: val - prevStudents.length },
+                        () => ({
+                            studentFirstName: "",
+                            studentLastName: "",
+                            gender: "",
+                            age: "",
+                            dateOfBirth: "",
+                            medicalInformation: "",
+                            selectedClassId: "",
+                            selectedClassData: null,
+                        })
+                    );
+                    return [...prevStudents, ...newStudents];
+                }
+
+                return prevStudents.slice(0, val);
+            });
+
             if (membershipPlan && membershipPlan.all?.students !== val) {
-                // optional: find matching plan instead of null
                 const matchedPlan = paymentPlanOptions.find(
                     (p) => p.all?.students === val
                 );
@@ -237,8 +264,32 @@ const List = () => {
 
     const handlePlanChange = (plan) => {
         setMembershipPlan(plan);
+
         if (plan) {
-            setNumberOfStudents(plan.all?.students); // Update numberOfStudents to match plan
+            const val = Number(plan.all?.students);
+            setNumberOfStudents(val);
+
+            // 👉 ALSO UPDATE STUDENTS ARRAY
+            setStudents((prevStudents) => {
+                if (val > prevStudents.length) {
+                    const newStudents = Array.from(
+                        { length: val - prevStudents.length },
+                        () => ({
+                            studentFirstName: "",
+                            studentLastName: "",
+                            gender: "",
+                            age: "",
+                            dateOfBirth: "",
+                            medicalInformation: "",
+                            selectedClassId: "",
+                            selectedClassData: null,
+                        })
+                    );
+                    return [...prevStudents, ...newStudents];
+                }
+
+                return prevStudents.slice(0, val);
+            });
         }
     };
     useEffect(() => {
@@ -282,12 +333,22 @@ const List = () => {
             }
             // console.log('stp3')
             if (Array.isArray(TrialData.parents) && TrialData.parents.length > 0) {
-                setParents(
-                    TrialData.parents.map((p, idx) => ({
+                const mappedParents = TrialData.parents.map((p, idx) => {
+                    const isPredefined = interestReasonOptions.some(
+                        (opt) => opt.value === p.interestReason
+                    );
+
+                    return {
                         id: idx + 1,
                         ...p,
-                    }))
-                );
+                        isCustomReason: !isPredefined,
+                        interestReason: isPredefined
+                            ? p.interestReason
+                            : p.interestReason || p.interestReason || "",
+                    };
+                });
+
+                setParents(mappedParents);
             }
             if (Array.isArray(TrialData.emergency) && TrialData.emergency.length > 0) {
                 setEmergency({
@@ -389,13 +450,13 @@ const List = () => {
     // console.log('isCardInvalid', isCardInvalid)
     // console.log('isBankInvalid', isBankInvalid)
     const formatDate = (dateStr) => {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-};
+        const date = new Date(dateStr);
+        return date.toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+        });
+    };
     const formatLocalDate = (date) => {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, "0"); // months are 0-indexed
@@ -525,21 +586,53 @@ const List = () => {
     const [sameAsAbove, setSameAsAbove] = useState(false);
 
     // 🔁 Calculate Age Automatically
-    const handleDOBChange = (index, date) => {
-        const today = new Date();
-        let ageNow = today.getFullYear() - date.getFullYear();
-        const m = today.getMonth() - date.getMonth();
+    const handleDOBChange = (index, value) => {
+        // Allow only numbers
+        let cleaned = value.replace(/[^\d]/g, "");
 
-        if (m < 0 || (m === 0 && today.getDate() < date.getDate())) {
-            ageNow--;
+        // Auto format → DD/MM/YYYY
+        if (cleaned.length > 2 && cleaned.length <= 4) {
+            cleaned = `${cleaned.slice(0, 2)}/${cleaned.slice(2)}`;
+        } else if (cleaned.length > 4) {
+            cleaned = `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}/${cleaned.slice(4, 8)}`;
         }
 
         const updatedStudents = [...students];
-        updatedStudents[index].dateOfBirth = date;
-        updatedStudents[index].age = ageNow;
+        updatedStudents[index].dateOfBirth = cleaned;
+
+        // Calculate age when full date entered
+        if (cleaned.length === 10) {
+            const [day, month, year] = cleaned.split("/").map(Number);
+
+            const date = new Date(year, month - 1, day);
+
+            const isValid =
+                date &&
+                date.getDate() === day &&
+                date.getMonth() === month - 1 &&
+                date.getFullYear() === year;
+
+            if (isValid) {
+                const today = new Date();
+                let ageNow = today.getFullYear() - year;
+                const m = today.getMonth() - (month - 1);
+
+                if (m < 0 || (m === 0 && today.getDate() < day)) {
+                    ageNow--;
+                }
+
+                // Apply same limits (3–100)
+                updatedStudents[index].age =
+                    ageNow >= 3 && ageNow <= 100 ? ageNow : "";
+            } else {
+                updatedStudents[index].age = "";
+            }
+        } else {
+            updatedStudents[index].age = "";
+        }
+
         setStudents(updatedStudents);
     };
-
 
 
     // 🔁 Sync Emergency Contact
@@ -567,7 +660,10 @@ const List = () => {
                 parentEmail: '',
                 parentPhoneNumber: '',
                 relationToChild: '',
-                howDidYouHear: ''
+                interestReason: '',
+                interestReasonOther: '',
+                howDidYouHear: '',
+                isCustomReason: false
             },
         ]);
     };
@@ -610,6 +706,8 @@ const List = () => {
                 parentLastName: primaryParent.parentLastName,
                 parentPhoneNumber: primaryParent.parentPhoneNumber,
                 relationToChild: primaryParent.relationToChild?.label || "",
+                interestReason: primaryParent.interestReason || '',
+                interestReasonOther: primaryParent.interestReasonOther || '',
                 sameAsAbove: true
             };
         }
@@ -725,7 +823,16 @@ const List = () => {
                         proRataAmount: pricingBreakdown.costOfProRatedLessons,
                     }
                 : null;
+        const validStudentIds = students
+            .map((s) => s.id)
+            .filter(Boolean);
 
+        const cleanedParents = parents.map((p) => ({
+            ...p,
+            studentIds: (p.studentIds || []).filter(id =>
+                validStudentIds.includes(id)
+            )
+        }));
         const payload = {
             venueId: singleClassSchedulesOnly?.venue?.id,
             startDate: selectedDate,
@@ -741,12 +848,17 @@ const List = () => {
                         : s.selectedClassData?.id,
             })),
 
-            parents: parents.map(({ id, ...rest }) => rest),
+            parents: parents.map(({ id, ...rest }) =>
+                studentRemoved ? rest : { id, ...rest }  // ✅
+            ),
             starterPack: singleClassSchedulesOnly?.venue?.starterPack
                 ? membershipPlan?.starterPackPrice || 0
                 : 0,
             discountId: appliedDiscount?.data?.discountId || null,
-            emergency,
+            emergency: (() => {
+                const { id, ...rest } = emergency || {};
+                return studentRemoved ? rest : { id, ...rest };  // ✅
+            })(),
             paymentPlanId: membershipPlan?.value ?? null,
 
             ...(paymentData && { payment: paymentData }),
@@ -773,6 +885,7 @@ const List = () => {
             console.error("Booking submitted. Confirmation may be delayed due to network issues. Check your email shortly", error);
         } finally {
             setIsSubmitting(false);
+            setStudentRemoved(false);
         }
 
         // console.log("Final Payload:", JSON.stringify(payload, null, 2));
@@ -880,7 +993,16 @@ const List = () => {
         { value: "Father", label: "Father" },
         { value: "Guardian", label: "Guardian" },
     ];
+    const interestReasonOptions = [
+        { value: "To build my child's confidence", label: "To build my child's confidence" },
+        { value: "To improve their technical football skills", label: "To improve their technical football skills" },
+        { value: "Because my child loves football", label: "Because my child loves football" },
+        { value: "To help my child make friends and build social skills", label: "To help my child make friends and build social skills" },
+        { value: "To keep my child active and healthy", label: "To keep my child active and healthy" },
+        { value: "High-quality coaching in a fun, positive environment", label: "High-quality coaching in a fun, positive environment" },
+        { value: "Other", label: "Other" },
 
+    ];
     const hearOptions = [
         { value: "Google", label: "Google" },
         { value: "Facebook", label: "Facebook" },
@@ -1035,12 +1157,21 @@ const List = () => {
         }
     }, [numberOfStudents, membershipPlan, selectedDate]);
     useEffect(() => {
-        // Run only once, and only if there are session dates
         if (hasInitialized.current || !sessionDatesSet || sessionDatesSet.size === 0) return;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
         const allDates = Array.from(sessionDatesSet)
             .map(dateStr => new Date(dateStr))
+            .filter(d => {
+                const date = new Date(d);
+                date.setHours(0, 0, 0, 0);
+                return date >= today; // ✅ Sirf future dates
+            })
             .sort((a, b) => a - b);
+
+        if (allDates.length === 0) return;
 
         const earliestDate = allDates[0];
 
@@ -1052,75 +1183,107 @@ const List = () => {
             )
         );
 
-        hasInitialized.current = true; // ✅ mark as done
+        hasInitialized.current = true;
     }, [sessionDatesSet]);
     console.log('membershipPlan', membershipPlan);
-    const calculateAmount = (startDate) => {
-        if (!membershipPlan || !startDate) return;
+ const calculateAmount = (startDate) => {
+    console.log("🚀 ===== CALCULATION START =====");
 
-        const pricePerLesson = membershipPlan?.all?.priceLesson || 0;
+    if (!membershipPlan || !startDate) {
+        console.log("❌ Missing membershipPlan or startDate");
+        return;
+    }
 
-        const starterPack = singleClassSchedulesOnly?.venue?.starterPack
-            ? membershipPlan?.starterPackPrice || 0
-            : 0;
+    const pricePerLesson = membershipPlan?.all?.priceLesson || 0;
+    console.log("💰 Price Per Lesson:", pricePerLesson);
 
-        const durationMonths = membershipPlan?.all?.duration || 1;
+    const starterPack = singleClassSchedulesOnly?.venue?.starterPack
+        ? membershipPlan?.starterPackPrice || 0
+        : 0;
+    console.log("🎁 Starter Pack:", starterPack);
 
-        const monthlyPrice =
-            membershipPlan?.all?.price / durationMonths || 0;
+    const durationMonths = membershipPlan?.all?.duration || 1;
+    console.log("📆 Duration (months):", durationMonths);
 
-        const selected = new Date(startDate);
-        selected.setHours(0, 0, 0, 0);
+    const monthlyPrice =
+        membershipPlan?.all?.price / durationMonths || 0;
+    console.log("📅 Monthly Price:", monthlyPrice);
+    console.log("📅 Monthly PricemembershipPlan?.all?.price:", membershipPlan?.all?.price);
 
-        const selectedMonth = selected.getMonth();
-        const selectedYear = selected.getFullYear();
+    const selected = new Date(startDate);
+    selected.setHours(0, 0, 0, 0);
+    console.log("📍 Selected Start Date:", selected);
 
-        const allSessions = Array.from(sessionDatesSet)
-            .map((d) => {
-                const date = new Date(d);
-                date.setHours(0, 0, 0, 0);
-                return date;
-            })
-            .sort((a, b) => a - b);
+    const selectedMonth = selected.getMonth();
+    const selectedYear = selected.getFullYear();
 
-        const monthSessions = allSessions.filter(
-            (d) =>
-                d.getMonth() === selectedMonth &&
-                d.getFullYear() === selectedYear
-        );
+    const allSessions = Array.from(sessionDatesSet)
+        .map((d) => {
+            const date = new Date(d);
+            date.setHours(0, 0, 0, 0);
+            return date;
+        })
+        .sort((a, b) => a - b);
 
-        const remainingSessions = monthSessions.filter((d) => d >= selected);
+    console.log("📚 All Sessions:", allSessions);
 
-        let remainingLessons = remainingSessions.length;
-        let proRatedCost = remainingLessons * pricePerLesson;
+    const monthSessions = allSessions.filter(
+        (d) =>
+            d.getMonth() === selectedMonth &&
+            d.getFullYear() === selectedYear
+    );
 
-        const firstSessionOfMonth = monthSessions[0];
+    console.log("📅 Sessions in Selected Month:", monthSessions);
 
-        if (selected.getTime() === firstSessionOfMonth?.getTime()) {
-            remainingLessons = 0;
-            proRatedCost = 0;
-        }
+    const remainingSessions = monthSessions.filter((d) => d >= selected);
+    console.log("⏳ Remaining Sessions:", remainingSessions);
 
-        // ✅ NEW CONDITION
-        const totalToday =
-            proRatedCost === 0
-                ? monthlyPrice + starterPack
-                : proRatedCost + starterPack;
+    let remainingLessons = remainingSessions.length;
+    console.log("🔢 Remaining Lessons Count:", remainingLessons);
 
-        setRemainingLessons(remainingLessons);
-        setCalculatedAmount(totalToday);
+    let proRatedCost = remainingLessons * pricePerLesson;
+    console.log("💸 Pro Rated Cost:", proRatedCost);
 
-        setPricingBreakdown({
-            pricePerClassPerChild: pricePerLesson,
-            numberOfLessonsProRated: remainingLessons,
-            costOfProRatedLessons: proRatedCost,
-            starterPack: starterPack,
-            totalAmountToday: totalToday,
-            nextMonthPayment: monthlyPrice,
-        });
+    const firstSessionOfMonth = monthSessions[0];
+    console.log("🥇 First Session of Month:", firstSessionOfMonth);
 
-        return totalToday;
-    };
+    if (selected.getTime() === firstSessionOfMonth?.getTime()) {
+        console.log("⚠️ Selected date is first session → No prorated cost");
+        remainingLessons = 0;
+        proRatedCost = 0;
+    }
+
+    const totalToday =
+        proRatedCost === 0
+            ? monthlyPrice + starterPack
+            : proRatedCost + starterPack;
+
+    console.log("🧮 Total Today (Before Fix):", totalToday);
+
+    const formattedTotal = Number(totalToday.toFixed(2));
+    const formattedProRated = Number(proRatedCost.toFixed(2));
+    const formattedMonthly = Number(monthlyPrice.toFixed(2));
+
+    console.log("✅ Formatted Total:", formattedTotal);
+    console.log("✅ Formatted ProRated:", formattedProRated);
+    console.log("✅ Formatted Monthly:", formattedMonthly);
+
+    console.log("🏁 ===== CALCULATION END =====");
+
+    setRemainingLessons(remainingLessons);
+    setCalculatedAmount(formattedTotal);
+
+    setPricingBreakdown({
+        pricePerClassPerChild: pricePerLesson,
+        numberOfLessonsProRated: remainingLessons,
+        costOfProRatedLessons: formattedProRated,
+        starterPack: starterPack,
+        totalAmountToday: formattedTotal,
+        nextMonthPayment: formattedMonthly,
+    });
+
+    return formattedTotal;
+};
 
     console.log('pricingBreakdown', pricingBreakdown);
     console.log("All Available Dates:", Array.from(sessionDatesSet));
@@ -1168,6 +1331,17 @@ const List = () => {
             setIsDiscountLoading(false);
         }
     };
+    const handleRemoveStudent = (indexToRemove) => {
+        setStudents((prevStudents) => {
+            const updatedStudents = prevStudents.filter((_, i) => i !== indexToRemove);
+
+            // ✅ IMPORTANT: sync input field
+            setNumberOfStudents(updatedStudents.length);
+
+            return updatedStudents;
+        });
+        setStudentRemoved(true);
+    };
     const renderContent = (content) => {
         return (
             <div
@@ -1181,6 +1355,7 @@ const List = () => {
     const finalAmount =
         appliedDiscount?.data?.finalPrice ??
         singleClassSchedulesOnly?.starterPack?.[0]?.price;
+
     return (
         <div className="pt-1 bg-gray-50 min-h-screen">
             <div className={`flex pe-4 justify-between items-center mb-4 ${openForm ? 'md:w-3/4' : 'w-full'}`}>
@@ -1212,7 +1387,7 @@ const List = () => {
                     <img
                         ref={img1Ref}
                         src="/members/booktrial1.png"
-                        className={` rounded-full  hover:bg-[#0DD180] transition cursor-pointer ${activePopup === 1 ? 'bg-[#0DD180]' : 'bg-gray-700'} `}
+                        className={` rounded-full  hover:bg-[#0DD180] transition cursor-pointer ${activePopup === 1 ? 'bg-[#0DD180]' : 'bg-[#34353B]'} `}
                         onClick={() => togglePopup(1)}
                     />
                     {activePopup === 1 && (
@@ -1235,7 +1410,7 @@ const List = () => {
                         ref={img2Ref}
                         onClick={() => togglePopup(2)}
                         src="/members/booktrial2.png"
-                        className={` rounded-full  hover:bg-[#0DD180] transition cursor-pointer ${activePopup === 2 ? 'bg-[#0DD180]' : 'bg-gray-700'} `}
+                        className={` rounded-full  hover:bg-[#0DD180] transition cursor-pointer ${activePopup === 2 ? 'bg-[#0DD180]' : 'bg-[#34353B]'} `}
                         alt=""
                     />
                     {activePopup === 2 && (
@@ -1304,12 +1479,12 @@ const List = () => {
                         src="/members/booktrial3.png"
                         alt=""
                         onClick={() => togglePopup(3)}
-                        className={`rounded-full hover:bg-[#0DD180] transition cursor-pointer ${activePopup === 3 ? 'bg-[#0DD180]' : 'bg-gray-700'}`}
+                        className={`rounded-full hover:bg-[#0DD180] transition cursor-pointer ${activePopup === 3 ? 'bg-[#0DD180]' : 'bg-[#34353B]'}`}
                     />
                     {activePopup === 3 && (
                         <div
                             ref={popup3Ref}
-                            className="absolute top-full z-50 mt-2 right-0 w-[300px] p-4 bg-white rounded-2xl shadow-lg text-sm text-gray-700"
+                            className="absolute top-full z-50 mt-2 right-0 w-[300px] p-4 bg-white rounded-2xl shadow-lg text-sm text-[#34353B]"
                         >
                             <div className="font-semibold mb-2 text-[18px]">Phone Script</div>
                             <textarea
@@ -1347,8 +1522,10 @@ const List = () => {
 
                                 <input
                                     type="number"
-                                    value={numberOfStudents}
+                                    value={numberOfStudents || ""}
                                     onChange={handleNumberChange}
+                                    min={1}
+                                    max={4}
                                     placeholder="Choose number of students"
                                     className="w-full border border-gray-300 rounded-xl px-3 text-[16px] py-3 focus:outline-none"
                                 />
@@ -1374,7 +1551,7 @@ const List = () => {
                         </div>
                         {singleClassSchedulesOnly?.venue?.starterPack && (
                             <div className="mb-5">
-                                <label className="text-base font-semibold">Starter Pack</label>
+                                <label className="text-base font-semibold poppins">Starter Pack</label>
                                 <div className="relative mt-2">
                                     <input
                                         type="text"
@@ -1690,8 +1867,16 @@ const List = () => {
                                     initial={{ opacity: 0, y: 30 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.4, delay: index * 0.1 }}
-                                    className="bg-white p-6 rounded-3xl shadow-sm space-y-6"
+                                    className="bg-white p-6 rounded-3xl shadow-sm space-y-6 relative"
                                 >
+                                    {students.length > 1 && (
+                                        <button
+                                            onClick={() => handleRemoveStudent(index)}
+                                            className="absolute top-4 right-4 text-red-500 hover:text-red-700 text-xl"
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
                                     <h2 className="text-[20px] font-semibold">
                                         Student {index > 0 ? `${index + 1} ` : ''}Information
                                     </h2>
@@ -1728,26 +1913,22 @@ const List = () => {
                                             <label className="block text-[16px] font-semibold">
                                                 Date of Birth
                                             </label>
-                                            <DatePicker
-                                                withPortal
-                                                selected={student.dateOfBirth}
-                                                onChange={(date) => handleDOBChange(index, date)}
-                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                showYearDropdown
-                                                scrollableYearDropdown
-                                                yearDropdownItemNumber={100}
-                                                dateFormat="dd/MM/yyyy"
-                                                maxDate={new Date(new Date().setFullYear(new Date().getFullYear() - 3))} // Minimum age: 3 years
-                                                minDate={new Date(new Date().setFullYear(new Date().getFullYear() - 100))} // Max age: 100 years
-                                                placeholderText="Select date of birth"
 
+                                            <input
+                                                type="text"
+                                                value={student.dateOfBirth || ""}
+                                                onChange={(e) => handleDOBChange(index, e.target.value)}
+                                                placeholder="DD/MM/YYYY (e.g. 15/10/2026)"
+                                                maxLength={10}
+                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                             />
                                         </div>
+
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Age</label>
                                             <input
                                                 type="text"
-                                                value={student.age}
+                                                value={student.age || ""}
                                                 readOnly
                                                 className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                                 placeholder="Automatic entry"
@@ -1791,7 +1972,6 @@ const List = () => {
 
                                     {/* Row 4 */}
                                     <div className="flex gap-4">
-
                                         {/* CLASS */}
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Class</label>
@@ -1972,6 +2152,76 @@ const List = () => {
                                     </div>
 
                                     {/* Row 3 */}
+                                    <div className="flex flex-col gap-4">
+                                        {/* Interest Reason */}
+                                        <div className="w-full">
+                                            <label className="block text-[16px] font-semibold">
+                                                What’s the main reason you’re interested in Samba Soccer Schools?
+                                            </label>
+
+                                            {parent.isCustomReason ? (
+                                                <div className="relative">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Please specify"
+                                                        value={parent.interestReason || ""}
+                                                        onChange={(e) =>
+                                                            handleParentChange(index, "interestReason", e.target.value)
+                                                        }
+                                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 pr-28 text-base"
+                                                    />
+
+                                                    {/* Back Button */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            handleParentChange(index, "interestReason", "");
+                                                            handleParentChange(index, "isCustomReason", false);
+                                                        }}
+                                                        className="absolute right-3 top-3/5 -translate-y-1/2 text-sm text-blue-600 font-medium"
+                                                    >
+                                                        Select
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <Select
+                                                    options={interestReasonOptions}
+                                                    placeholder="Select a reason"
+                                                    className="mt-2"
+                                                    classNamePrefix="react-select"
+                                                    value={interestReasonOptions.find(
+                                                        (o) => o.value === parent.interestReason
+                                                    )}
+                                                    onChange={(selected) => {
+                                                        if (selected.value === "Other") {
+                                                            handleParentChange(index, "interestReason", "");
+                                                            handleParentChange(index, "isCustomReason", true);
+                                                        } else {
+                                                            handleParentChange(index, "interestReason", selected.value);
+                                                            handleParentChange(index, "isCustomReason", false);
+                                                        }
+                                                    }}
+                                                />
+                                            )}
+                                        </div>
+
+                                        {/* Tell Us Bit More */}
+                                        <div className="w-full">
+                                            <label className="block text-[16px] font-semibold">
+                                                Tell us a bit more (optional)
+                                            </label>
+
+                                            <input
+                                                type="text"
+                                                placeholder="Anything else you'd like to share?"
+                                                value={parent.interestReasonOther || ""}
+                                                onChange={(e) =>
+                                                    handleParentChange(index, "interestReasonOther", e.target.value)
+                                                }
+                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                            />
+                                        </div>
+                                    </div>
                                     <div className="flex gap-4">
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Relation to child</label>
@@ -2017,7 +2267,7 @@ const List = () => {
                                         }))
                                     }
                                 />
-                                <label className="text-base font-semibold text-gray-700">
+                                <label className="text-base font-semibold text-[#34353B]">
                                     Fill same as above
                                 </label>
                             </div>
@@ -2167,95 +2417,16 @@ const List = () => {
                         </motion.div>
 
 
-                        <div className="bg-white my-10 rounded-3xl p-6 space-y-4">
-                            <h2 className="text-[24px] font-semibold">Comment</h2>
-
-                            {/* Input section */}
-                            <div className="flex items-center gap-2">
-                                <img
-                                    src={adminInfo?.profile ? `${adminInfo.profile}` : '/members/dummyuser.png'}
-                                    alt="User"
-                                    className="w-14 h-14 rounded-full object-cover"
-                                />
-                                <input
-                                    type="text"
-                                    name='comment'
-                                    value={comment}
-                                    onChange={(e) => setComment(e.target.value)}
-                                    placeholder="Add a comment"
-                                    className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-[16px] font-semibold outline-none"
-                                />
-                                <button
-                                    disabled={loadingComment}
-                                    className="bg-[#237FEA] p-3 rounded-xl text-white hover:bg-blue-600"
-                                    onClick={handleSubmitComment}
-                                >
-                                    {loadingComment ? (
-                                        <Loader2 className="animate-spin w-5 h-5 text-white" />
-                                    ) : (
-                                        <img src="/images/icons/sent.png" alt="" />
-                                    )}
-                                </button>
-                            </div>
-
-                            {/* Comment list */}
-                            {commentsList && commentsList.length > 0 ? (
-                                <div className="space-y-4">
-                                    {currentComments.map((c, i) => (
-                                        <div key={i} className="bg-gray-50 rounded-xl p-4 text-sm">
-
-                                            <div className="flex justify-end items-center gap-3">
-
-                                                {/* Time */}
-                                                <div className="flex flex-wrap justify-end flex-col">
-                                                    <div className="flex items-center gap-3 mb-4">
-                                                        <img
-                                                            src={
-                                                                c?.bookedByAdmin?.profile
-                                                                    ? `${c?.bookedByAdmin?.profile}`
-                                                                    : '/members/dummyuser.png'
-                                                            }
-                                                            onError={(e) => {
-                                                                e.currentTarget.onerror = null;
-                                                                e.currentTarget.src = '/members/dummyuser.png';
-                                                            }}
-                                                            alt={c?.bookedByAdmin?.firstName}
-                                                            className="w-10 h-10 rounded-full object-cover"
-                                                        />
-                                                        <div className="text-right">
-                                                            <p className="font-semibold text-[#237FEA] text-[15px]">
-                                                                {c?.bookedByAdmin?.firstName} {c?.bookedByAdmin?.lastName}
-                                                            </p>
-                                                        </div>
-
-
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <p className="text-gray-700 text-[16px] font-semibold mb-3 text-left">
-                                                {c.comment}
-                                            </p>
-
-                                            {/* RIGHT: User Info */}
-                                            <div className="flex justify-end items-center gap-3">
-
-                                                {/* Time */}
-                                                <div className="flex flex-wrap justify-end flex-col">
-
-                                                    <span className="text-gray-400 text-right text-[14px] whitespace-nowrap">
-                                                        {formatTimeAgo(c.createdAt)}
-                                                    </span>
-
-
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-center">No Comments yet.</p>
-                            )}
-                        </div>
+                        <Comments
+                            adminInfo={adminInfo}
+                            comment={comment}
+                            setComment={setComment}
+                            handleSubmitComment={handleSubmitComment}
+                            loadingComment={loadingComment}
+                            commentsList={commentsList}
+                            currentComments={currentComments}
+                            formatTimeAgo={formatTimeAgo}
+                        />
 
                         <div className="flex justify-end gap-4">
                             <button
@@ -2301,439 +2472,358 @@ const List = () => {
 
                         {showPopup && (
                             <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
-                                <div className="bg-white rounded-2xl max-w-[70%] min-w-[70%] max-h-[90%] overflow-y-scroll space-y-6 relative scrollbar-hide">
-                                    <button
-                                        className="absolute top-3 p-6 left-4 text-xl font-bold"
-                                        onClick={() => setShowPopup(false)}
-                                    >
-                                        <img src="/images/icons/cross.png" alt="Close" />
-                                    </button>
-
-                                    <div className="text-center">
-                                        <h2 className="font-semibold  text-[24px] mb-2 py-6  border-b border-gray-400 ">Direct Debit Details</h2>
-
-                                    </div>
-                                    <div className="flex gap justify-center items-start px-6">
-
-                                        <div className="bg-[#F5F7FB] rounded-2xl p-6 mt-4 w-full max-w-md w-[50%]">
-
-                                            {/* Title */}
-                                            <h3 className="text-[#042C89] poppins font-bold text-[21px] mb-4">
+                                <div className="flex gap-6 px-6 py-12 max-h-[90%] w-8/12 overflow-hidden bg-[#FDFDFF] ">
+                                    {/* LEFT SUMMARY (MATCHED) */}
+                                    <div className="bg-[#F1F4FC] poppins  rounded-xl w-[365px] text-sm text-gray-800">
+                                        <div className="flex justify-center poppins  rounded-t-2xl  p-4 bg-[#003288] "> <img className="w-[40px]" src="/images/sss-logo.png" alt="" /></div>
+                                        <div className="p-6">
+                                            <p className="text-[#042C89] poppins font-bold mb-4"
+                                                style={{ fontSize: "20px" }}>
                                                 Summary
-                                            </h3>
+                                            </p>
 
-                                            {/* Plan */}
-                                            <div className="mb-3">
-                                                <p className=" text-[#042C89] poppins font-semibold text-[18px]">
-                                                    {membershipPlan?.all?.duration} {membershipPlan?.all?.interval} Plan
+                                            <div className="mb-4 grid poppins gap-3">
+                                                <p>
+                                                    <span className="font-semibold  poppins text-[#042C89]"
+                                                        style={{ fontSize: "16px" }}>
+                                                        {membershipPlan?.all?.duration} {membershipPlan?.all?.interval} Plan
+                                                    </span>
+                                                    <span className="float-right text-right  poppins font-semibold"
+                                                        style={{ fontSize: "18px" }}>
+                                                        £{pricingBreakdown?.nextMonthPayment}
+                                                        <br />
+                                                        <span className=" text-[#34353B]  float-right poppins" style={{ fontSize: "12px" }}>per month</span>
+                                                    </span>
                                                 </p>
-                                                <div className="flex justify-between font-semibold text-[16px] text-gray-700 mt-1 relative">
-                                                    <span>{membershipPlan?.all?.students} Student{membershipPlan?.all?.students === 1 ? '' : 's'} </span>
-                                                    <span className="text-[18px] block absolute right-0 top-[-10px]">£{pricingBreakdown?.nextMonthPayment} <span className="text-[11px] block">per month</span></span>
-                                                </div>
-                                            </div>
 
-                                            {/* Dates */}
-                 <div className="text-[16px] text-gray-700 font-semibold mb-4 space-y-1">
-  <p>Start Date: {formatDate(selectedDate)}</p>
-</div>
-                                            <hr className="border-gray-300 mb-4" />
-
-                                            {/* Joining Fee */}
-                                            {membershipPlan?.all?.joiningFee && (
-                                                <div className="flex justify-between text-[14px] mb-3">
-                                                    <span className="text-[#2B3A67] font-semibold">Joining Fee</span>
-                                                    <span>£{membershipPlan?.all?.joiningFee}</span>
-                                                </div>
-                                            )}
-
-                                            {/* Starter Pack */}
-                                            {singleClassSchedulesOnly?.venue?.starterPack && (
-                                                <div className="flex justify-between items-center mb-4">
-
-                                                    <span className="text-gray-800 font-semibold text-[18px]">
-                                                        Starter Pack
+                                                <p className="mt-[-20px]">
+                                                    <span className=" font-medium poppins text-[#34353B]"
+                                                        style={{ fontSize: "14px" }}>
+                                                        {membershipPlan?.all?.students} Student{membershipPlan?.all?.students === 1 ? "" : "s"}
                                                     </span>
 
-                                                    {isApplied && appliedDiscount?.data ? (
-                                                        <div className="flex flex-col items-end leading-tight">
+                                                </p>
 
-                                                            {/* Old Price */}
-                                                            <span className="text-gray-400 line-through text-sm">
-                                                                £{singleClassSchedulesOnly?.starterPack?.[0]?.price}
-                                                            </span>
-
-                                                            {/* New Price */}
-                                                            <span className="text-green-600 font-bold text-[20px]">
-                                                                £{appliedDiscount.data.finalPrice}
-                                                            </span>
-
-                                                            {/* Discount */}
-                                                            <span className="text-red-500 text-xs font-medium">
-                                                                -£{appliedDiscount.data.discountAmount} OFF
-                                                            </span>
-
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-[18px] font-semibold text-gray-900">
-                                                            £{singleClassSchedulesOnly?.starterPack?.[0]?.price || 0}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            )}
-                                            {/* Pro-rata Section */}
-                                            {pricingBreakdown.numberOfLessonsProRated !== 0 && (
-                                                <div className="mb-2">
-                                                    <p className=" text-[#042C89] poppins font-semibold text-[18px] mb-2">
-                                                        Pro-rata lessons
-                                                    </p>
-
-                                                    <div className="flex justify-between font-semibold text-[16px] text-gray-700">
-                                                        <span>Number of lessons</span>
-                                                        <span>{pricingBreakdown.numberOfLessonsProRated}</span>
-                                                    </div>
-
-                                                    <div className="flex justify-between font-semibold text-[16px] text-gray-700 mt-1">
-                                                        <span>Fee</span>
-                                                        <span>£{pricingBreakdown.costOfProRatedLessons}</span>
-                                                    </div>
-                                                </div>
-                                            )}
-                                            <hr className="border-gray-300 my-4" />
-
-                                            {/* Total */}
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-gray-700 font-semibold text-[18px]">
-                                                    Total to pay now
-                                                </span>
-                                                <span className="text-[#042C89] font-bold text-[18px]">
-                                                    £{calculatedAmount}
-                                                </span>
+                                                <p>
+                                                    <span className=" font-medium poppins text-[#34353B]"
+                                                        style={{ fontSize: "14px" }}>Start Date:</span> {formatDate(selectedDate)}
+                                                </p>
                                             </div>
-                                        </div>
 
-                                        <div className="w-[50%]">
-                                            {/* <div className="text-left directDebitBg p-6 mb-4 m-6 rounded-2xl ">
-                                        <p className="font-bold text-white text-[24px]">
-                                            £{pricingBreakdown.costOfProRatedLessons === 0
-                                                ? pricingBreakdown?.nextMonthPayment
-                                                : pricingBreakdown.costOfProRatedLessons}
-
-                                            <sup className="text-[12px] ml-1">
-                                                ({pricingBreakdown.costOfProRatedLessons === 0 ? "Membership Price" : "Price per lesson"})
-                                            </sup>
+                                            <hr className="my-4 border-gray-300 poppins" />
 
                                             {singleClassSchedulesOnly?.venue?.starterPack && (
-                                                <>
-                                                    {" + "}
-                                                    £{singleClassSchedulesOnly?.starterPack?.[0]?.price}
-                                                    <sup className="text-[12px] ml-1">(Starter Pack)</sup>
-                                                </>
-                                            )}
+                                                <div className="mb-4">
+                                                    <p>
+                                                        <span className="font-semibold  poppinstext-[#042C89]"
+                                                            style={{ fontSize: "16px" }}>
+                                                            Samba Soccer School
+                                                        </span>
 
-                                            {" = "}
-                                            £{calculatedAmount}
-                                        </p>
-                                    </div> */}
-                                            {/* {singleClassSchedulesOnly?.venue?.starterPack && (
-                                        <p className="text-[18px] py-3 px-6 font-semibold ">
-                                            Starter Pack:<b> {singleClassSchedulesOnly?.starterPack?.[0]?.price}</b>
-                                        </p>
-                                    )} */}
-                                            <div className="space-y-2 px-6 pb-6">
 
-                                                {/* ================= Personal Details ================= */}
-                                                <h3 className="font-semibold text-[20px]">Personal Details</h3>
-
-                                                <div>
-                                                    <label className="block text-[16px] font-semibold">Email address</label>
-                                                    <input
-                                                        type="email"
-                                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                        value={payment.email}
-                                                        onChange={(e) => setPayment({ ...payment, email: e.target.value })}
-                                                    />
-                                                </div>
-
-                                                {/* ================= Payment Type ================= */}
-                                                <h3 className="font-semibold text-[20px] pt-2">Bank Details</h3>
-
-                                                <div className="flex gap-6 mt-3">
-                                                    <p className="text-[16px] font-semibold">
-                                                        Payment Method:{" "}
-                                                        <span className="font-normal">
-                                                            {isFranchisee ? "GoCardless" : "Access Pay Suite"}
+                                                    </p>
+                                                    <p>
+                                                        <span className="poppins " style={{ fontSize: "14px" }}> Starter Pack</span>
+                                                        <span className="poppins float-right">
+                                                            {isApplied && appliedDiscount?.data
+                                                                ? `£${appliedDiscount.data.finalPrice}`
+                                                                : `£${singleClassSchedulesOnly?.starterPack?.[0]?.price || 0}`}
                                                         </span>
                                                     </p>
                                                 </div>
+                                            )}
 
-                                                {/* ================= BANK (GOCARDLESS) ================= */}
-                                                {isFranchisee && (
-                                                    <div className="mt-4 space-y-4">
+                                            <hr className="my-4 border-gray-300" />
 
-                                                        {/* Account Holder Name (AUTO SPLIT) */}
-                                                        <div>
-                                                            <label className="block text-[16px] font-semibold">Account Holder Name</label>
-                                                            <input
-                                                                type="text"
-                                                                placeholder="Enter full name (e.g. Saroj Singh)"
-                                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                                value={payment.account_holder_name}
-                                                                onChange={(e) => {
-                                                                    const fullName = e.target.value;
-                                                                    const parts = fullName.trim().split(" ");
+                                            {pricingBreakdown.numberOfLessonsProRated !== 0 && (
+                                                <div className="mb-4 grid gap-2">
+                                                    <p className="poppins">
+                                                        <span className="poppins font-semibold text-[#042C89] "
+                                                            style={{ fontSize: "16px" }}>
+                                                            Pro-rata lessons
+                                                        </span>
+                                                    </p>
 
-                                                                    setPayment({
-                                                                        ...payment,
-                                                                        account_holder_name: fullName,
-                                                                        firstName: parts[0] || "",
-                                                                        lastName: parts.slice(1).join(" "),
-                                                                    });
-                                                                }}
-                                                            />
-                                                        </div>
+                                                    <p className="poppins">
+                                                        Number of lessons
+                                                        <span className="poppins float-right">
+                                                            {pricingBreakdown.numberOfLessonsProRated}
+                                                        </span>
+                                                    </p>
 
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                            <div>
-                                                                <label className="block text-[16px] font-semibold">Account Number</label>
-                                                                <input
-                                                                    type="text"
-                                                                    inputMode="numeric"
-                                                                    placeholder="Enter account number"
-                                                                    className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                                    value={payment.account_number}
-                                                                    onChange={(e) =>
-                                                                        setPayment({
-                                                                            ...payment,
-                                                                            account_number: e.target.value.replace(/\D/g, ""),
-                                                                        })
-                                                                    }
-                                                                />
-                                                            </div>
+                                                    <p className="poppins">
+                                                        Fee
+                                                        <span className="poppins float-right">
+                                                            £{pricingBreakdown.costOfProRatedLessons}
+                                                        </span>
+                                                    </p>
+                                                </div>
+                                            )}
 
-                                                            <div>
-                                                                <label className="block text-[16px] font-semibold">Sort Code</label>
-                                                                <input
-                                                                    type="text"
-                                                                    inputMode="numeric"
-                                                                    placeholder="Enter Sort code"
-                                                                    className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                                    value={payment.branch_code}
-                                                                    onChange={(e) =>
-                                                                        setPayment({
-                                                                            ...payment,
-                                                                            branch_code: e.target.value.replace(/\D/g, ""),
-                                                                        })
-                                                                    }
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
+                                            <hr className="my-4 border-gray-300" />
 
-                                                {/* ================= CARD (ACCESS PAY SUITE) ================= */}
-                                                {!isFranchisee && (
-                                                    <div className="mt-5 space-y-4">
+                                            <p className="font-bold text-[#042C89] poppins"
+                                                style={{ fontSize: "16px" }}>
+                                                Total to pay now
+                                                <span className="float-right poppins  font-bold"
+                                                    style={{ fontSize: "22px" }}>
+                                                    £{calculatedAmount}
+                                                </span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {/* RIGHT FORM (MATCHED DESIGN) */}
+                                    <div className="flex-1 flex flex-col overflow-y-auto scrollbar-hide">
+                                        <div className="flex justify-between items-center mb-3">
+                                            <h2 className="text-2xl font-semibold poppins">Set up your direct debit</h2>
+                                            <img src="/images/Directdebitlogo.png" alt="Direct Debit" className="h-10" />
+                                        </div>
 
-                                                        {/* Account Holder Name (AUTO SPLIT) */}
-                                                        <div>
-                                                            <label className="block text-[16px] font-semibold">
-                                                                Account Holder Name
-                                                            </label>
-                                                            <input
-                                                                type="text"
-                                                                required
-                                                                placeholder="Enter full name (e.g. Saroj Singh)"
-                                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                                value={payment.account_holder_name}
-                                                                onChange={(e) => {
-                                                                    const fullName = e.target.value;
-                                                                    const parts = fullName.trim().split(" ");
+                                        <p className="text-[#797A88] text-[14px] mb-6 poppins">
+                                            Your regular Direct Debit payments will be collected <br />
+                                            from this account starting from the 1st of next month.
+                                        </p>
 
-                                                                    setPayment({
-                                                                        ...payment,
-                                                                        account_holder_name: fullName,
-                                                                        firstName: parts[0] || "",
-                                                                        lastName: parts.slice(1).join(" "),
-                                                                    });
-                                                                }}
-                                                            />
-                                                        </div>
+                                        {/* ================= Personal Details ================= */}
+                                        <label className="block mb-4">
+                                            <span className="block text-gray-700 text-[14px] mb-1 poppins">Email address</span>
+                                            <input
+                                                type="email"
+                                                value={payment.email}
+                                                onChange={(e) => setPayment({ ...payment, email: e.target.value })}
+                                                className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
+                                            />
+                                        </label>
 
-                                                        {/* Email */}
-                                                        {/* <div>
-                                                    <label className="block text-[16px] font-semibold">Email</label>
-                                                    <input
-                                                        type="email"
-                                                        required
-                                                        placeholder="Enter email"
-                                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                        value={payment.email}
-                                                        onChange={(e) =>
-                                                            setPayment({ ...payment, email: e.target.value })
-                                                        }
-                                                    />
-                                                </div> */}
+                                        {/* ================= Payment Method ================= */}
+                                        <p className="text-[14px] font-medium text-[#34353B] mb-3">
+                                            Payment Method:{" "}
+                                            <span className="font-semibold poppins">
+                                                {isFranchisee ? "GoCardless" : "Access Pay Suite"}
+                                            </span>
+                                        </p>
 
-                                                        {/* Address Line 1 */}
-                                                        <div>
-                                                            <label className="block text-[16px] font-semibold">
-                                                                Address Line 1
-                                                            </label>
-                                                            <input
-                                                                type="text"
-                                                                required
-                                                                placeholder="Street address"
-                                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                                value={payment.line1}
-                                                                onChange={(e) =>
-                                                                    setPayment({ ...payment, line1: e.target.value })
-                                                                }
-                                                            />
-                                                        </div>
+                                        {/* ================= BANK (GOCARDLESS) ================= */}
+                                        {isFranchisee && (
+                                            <div className="space-y-4">
 
-                                                        {/* Address Line 2 */}
-                                                        {/* <div>
-                                                    <label className="block text-[16px] font-semibold">
-                                                        Town
-                                                    </label>
+                                                <label className="block">
+                                                    <span className="block poppins text-gray-700 text-[14px] mb-1">
+                                                        Account Holder Name
+                                                    </span>
                                                     <input
                                                         type="text"
-                                                        placeholder="Town"
-                                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                        value={payment.town}
-                                                        onChange={(e) =>
-                                                            setPayment({ ...payment, town: e.target.value })
-                                                        }
+                                                        value={payment.account_holder_name}
+                                                        onChange={(e) => {
+                                                            const fullName = e.target.value;
+                                                            const parts = fullName.trim().split(" ");
+                                                            setPayment({
+                                                                ...payment,
+                                                                account_holder_name: fullName,
+                                                                firstName: parts[0] || "",
+                                                                lastName: parts.slice(1).join(" "),
+                                                            });
+                                                        }}
+                                                        className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
                                                     />
-                                                </div> */}
+                                                </label>
 
-                                                        {/* City & Postal Code */}
-                                                        <div className="flex gap-4">
-                                                            <div className="w-full">
-                                                                <label className="block text-[16px] font-semibold">City</label>
-                                                                <input
-                                                                    type="text"
-                                                                    required
-                                                                    placeholder="City"
-                                                                    className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                                    value={payment.city}
-                                                                    onChange={(e) =>
-                                                                        setPayment({ ...payment, city: e.target.value })
-                                                                    }
-                                                                />
-                                                            </div>
-
-                                                            <div className="w-full">
-                                                                <label className="block text-[16px] font-semibold">
-                                                                    Postal Code
-                                                                </label>
-                                                                <input
-                                                                    type="text"
-                                                                    required
-                                                                    placeholder="Postal code"
-                                                                    className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                                    value={payment.postalCode}
-                                                                    onChange={(e) =>
-                                                                        setPayment({ ...payment, postalCode: e.target.value })
-                                                                    }
-                                                                />
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Account Number */}
-                                                        <div>
-                                                            <label className="block text-[16px] font-semibold">
-                                                                Account Number
-                                                            </label>
-                                                            <input
-                                                                type="text"
-                                                                required
-                                                                inputMode="numeric"
-                                                                placeholder="Enter account number"
-                                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                                value={payment.account_number}
-                                                                onChange={(e) =>
-                                                                    setPayment({
-                                                                        ...payment,
-                                                                        account_number: e.target.value.replace(/\D/g, ""),
-                                                                    })
-                                                                }
-                                                            />
-                                                        </div>
-
-                                                        {/* Branch Code */}
-                                                        <div>
-                                                            <label className="block text-[16px] font-semibold">
-                                                                Sort Code
-                                                            </label>
-                                                            <input
-                                                                type="text"
-                                                                required
-                                                                inputMode="numeric"
-                                                                placeholder="Enter Sort code"
-                                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                                value={payment.branch_code}
-                                                                onChange={(e) =>
-                                                                    setPayment({
-                                                                        ...payment,
-                                                                        branch_code: e.target.value.replace(/\D/g, ""),
-                                                                    })
-                                                                }
-                                                            />
-                                                        </div>
-
-                                                    </div>
-                                                )}
-
-
-                                                {/* ================= AUTHORISE ================= */}
-                                                <div className="flex items-center space-x-2 pt-2">
-                                                    <label className="flex items-center space-x-2 cursor-pointer text-[16px] font-semibold">
+                                                <div className="md:flex gap-4">
+                                                    <label className="flex-1">
+                                                        <span className="block poppins text-gray-700 text-[14px] mb-1">
+                                                            Sort Code
+                                                        </span>
                                                         <input
-                                                            type="checkbox"
-                                                            checked={payment.authorise}
+                                                            type="text"
+                                                            value={payment.branch_code}
                                                             onChange={(e) =>
-                                                                setPayment({ ...payment, authorise: e.target.checked })
+                                                                setPayment({
+                                                                    ...payment,
+                                                                    branch_code: e.target.value.replace(/\D/g, ""),
+                                                                })
                                                             }
+                                                            className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
                                                         />
-                                                        <span>I can authorise Direct Debits on this account myself</span>
+                                                    </label>
+
+                                                    <label className="flex-1">
+                                                        <span className="block poppins text-gray-700 text-[14px] mb-1">
+                                                            Account Number
+                                                        </span>
+                                                        <input
+                                                            type="text"
+                                                            value={payment.account_number}
+                                                            onChange={(e) =>
+                                                                setPayment({
+                                                                    ...payment,
+                                                                    account_number: e.target.value.replace(/\D/g, ""),
+                                                                })
+                                                            }
+                                                            className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
+                                                        />
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* ================= CARD (ACCESS PAY SUITE) ================= */}
+                                        {!isFranchisee && (
+                                            <div className="space-y-4 mt-4">
+
+                                                <label className="block">
+                                                    <span className="block poppins text-gray-700 text-[14px] mb-1">
+                                                        Account Holder Name
+                                                    </span>
+                                                    <input
+                                                        type="text"
+                                                        value={payment.account_holder_name}
+                                                        onChange={(e) => {
+                                                            const fullName = e.target.value;
+                                                            const parts = fullName.trim().split(" ");
+                                                            setPayment({
+                                                                ...payment,
+                                                                account_holder_name: fullName,
+                                                                firstName: parts[0] || "",
+                                                                lastName: parts.slice(1).join(" "),
+                                                            });
+                                                        }}
+                                                        className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
+                                                    />
+                                                </label>
+
+                                                {/* Address Line 1 */}
+                                                <label className="block">
+                                                    <span className="block poppins text-gray-700 text-[14px] mb-1">
+                                                        Address Line 1
+                                                    </span>
+                                                    <input
+                                                        type="text"
+                                                        value={payment.line1}
+                                                        onChange={(e) =>
+                                                            setPayment({ ...payment, line1: e.target.value })
+                                                        }
+                                                        className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
+                                                    />
+                                                </label>
+
+                                                {/* City + Postal */}
+                                                <div className="md:flex gap-4">
+                                                    <label className="flex-1">
+                                                        <span className="block poppins text-gray-700 text-[14px] mb-1">
+                                                            City
+                                                        </span>
+                                                        <input
+                                                            type="text"
+                                                            value={payment.city}
+                                                            onChange={(e) =>
+                                                                setPayment({ ...payment, city: e.target.value })
+                                                            }
+                                                            className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
+                                                        />
+                                                    </label>
+
+                                                    <label className="flex-1">
+                                                        <span className="block poppins text-gray-700 text-[14px] mb-1">
+                                                            Postal Code
+                                                        </span>
+                                                        <input
+                                                            type="text"
+                                                            value={payment.postalCode}
+                                                            onChange={(e) =>
+                                                                setPayment({ ...payment, postalCode: e.target.value })
+                                                            }
+                                                            className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
+                                                        />
                                                     </label>
                                                 </div>
 
-                                            </div>
-
-                                            <div className="w-full mx-auto flex justify-center" >
-                                                <button
-                                                    type="button"
-                                                    disabled={
-                                                        isSubmitting ||
-                                                        !payment.authorise ||
-                                                        (isFranchisee ? isBankInvalid : isCardInvalid)
-                                                    }
-                                                    onClick={async () => {
-                                                        setIsSubmitting(true); // start loading
-                                                        try {
-                                                            setDirectDebitData([...directDebitData, payment]);
-                                                            setShowPopup(false);
-                                                            await handleSubmit(payment); // await if handleSubmit is async
-                                                        } finally {
-                                                            setIsSubmitting(false); // stop loading after submit
+                                                {/* Account Number */}
+                                                <label className="block">
+                                                    <span className="block poppins text-gray-700 text-[14px] mb-1">
+                                                        Account Number
+                                                    </span>
+                                                    <input
+                                                        type="text"
+                                                        value={payment.account_number}
+                                                        onChange={(e) =>
+                                                            setPayment({
+                                                                ...payment,
+                                                                account_number: e.target.value.replace(/\D/g, ""),
+                                                            })
                                                         }
-                                                    }}
-                                                    className={`w-full max-w-[90%] mx-auto my-3 text-white text-[16px] py-3 rounded-lg font-semibold
-${isSubmitting ||
-                                                            !payment.authorise ||
-                                                            (isFranchisee ? isBankInvalid : isCardInvalid)
-                                                            ? "bg-gray-400 cursor-not-allowed"
-                                                            : "bg-[#237FEA] cursor-pointer"
-                                                        }`}
+                                                        className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
+                                                    />
+                                                </label>
 
-                                                >
-                                                    {isSubmitting ? "Submitting..." : "Set up Direct Debit"}
-                                                </button>
-
+                                                {/* Sort Code */}
+                                                <label className="block">
+                                                    <span className="block poppins text-gray-700 text-[14px] mb-1">
+                                                        Sort Code
+                                                    </span>
+                                                    <input
+                                                        type="text"
+                                                        value={payment.branch_code}
+                                                        onChange={(e) =>
+                                                            setPayment({
+                                                                ...payment,
+                                                                branch_code: e.target.value.replace(/\D/g, ""),
+                                                            })
+                                                        }
+                                                        className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
+                                                    />
+                                                </label>
                                             </div>
+                                        )}
+
+                                        {/* ================= AUTHORISE ================= */}
+                                        <label className="flex items-center gap-2 mt-4 mb-6 text-sm text-gray-700">
+                                            <input
+                                                type="checkbox"
+                                                checked={payment.authorise}
+                                                onChange={(e) =>
+                                                    setPayment({ ...payment, authorise: e.target.checked })
+                                                }
+                                            />
+                                            <span className="underline poppins">
+                                                I can authorise Direct Debits on this account myself
+                                            </span>
+                                        </label>
+
+                                        {/* BUTTON */}
+                                        <div className="flex justify-end">
+                                            <button
+                                                onClick={() => setShowPopup(false)}
+
+                                                type="button"
+                                                className="flex items-center justify-center cursor-pointer gap-1 border-2 border-[#717073] mr-6 text-[#717073] px-12 text-[18px]  py-2 rounded-lg font-semibold bg-none"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                disabled={
+                                                    isSubmitting ||
+                                                    !payment.authorise ||
+                                                    (isFranchisee ? isBankInvalid : isCardInvalid)
+                                                }
+                                                onClick={async () => {
+                                                    setIsSubmitting(true);
+                                                    try {
+                                                        setDirectDebitData([...directDebitData, payment]);
+                                                        setShowPopup(false);
+                                                        await handleSubmit(payment);
+                                                    } finally {
+                                                        setIsSubmitting(false);
+                                                    }
+                                                }}
+                                                className={`bg-[#042C89] text-white rounded-[6px] px-6 py-2 font-semibold ${isSubmitting ||
+                                                    !payment.authorise ||
+                                                    (isFranchisee ? isBankInvalid : isCardInvalid)
+                                                    ? "opacity-50 cursor-not-allowed"
+                                                    : "hover:bg-blue-800"
+                                                    }`}
+                                            >
+                                                {isSubmitting ? "Submitting..." : "Set up Direct Debit"}
+                                            </button>
                                         </div>
                                     </div>
                                 </div>

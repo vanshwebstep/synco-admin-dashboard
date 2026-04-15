@@ -20,8 +20,11 @@ import "react-datepicker/dist/react-datepicker.css";
 import Select from "react-select";
 import { showError, showWarning, showConfirm } from "../../../../../utils/swalHelper";
 import PhoneInput from "react-phone-input-2";
+import { useGlobalSearch } from "../../contexts/GlobalSearchContext";
 const VenueManager = () => {
     const [currentPage, setCurrentPage] = useState(1);
+        const { searchQuery } = useGlobalSearch();
+    
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [loading, setLoading] = useState(false);
     const dbsOptions = [
@@ -479,17 +482,57 @@ const VenueManager = () => {
 
 
 
-    const totalItems = filteredRecruitment.length;
-    const totalPages = Math.ceil(totalItems / rowsPerPage);
-
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    const endIndex = startIndex + rowsPerPage;
-
-    const currentData = useMemo(
-        () => filteredRecruitment.slice(startIndex, endIndex),
-        [filteredRecruitment, startIndex, endIndex]
-    );
-
+    const filterBySearchQuery = (data) => {
+           if (!searchQuery.trim()) return data;
+   
+           const q = searchQuery.toLowerCase();
+   
+           return data.filter((coach) => {
+               const values = [
+                   coach?.firstName,
+                   coach?.lastName,
+                   coach?.age,
+                   coach?.postcode,
+                   coach?.phoneNumber,
+                   coach?.email,
+                   coach?.managementExperience,
+                   coach?.level,
+                   coach?.dbs,
+                   coach?.status,
+               ];
+   
+               return values.some((val) =>
+                   String(val || "").toLowerCase().includes(q)
+               );
+           });
+       };
+   
+   
+       const totalItems = filteredRecruitment.length;
+       const totalPages = Math.ceil(totalItems / rowsPerPage);
+   
+       const startIndex = (currentPage - 1) * rowsPerPage;
+       const endIndex = startIndex + rowsPerPage;
+   
+       const currentData = useMemo(
+           () => filteredRecruitment.slice(startIndex, endIndex),
+           [filteredRecruitment, startIndex, endIndex]
+       );
+       useEffect(() => {
+           setCurrentPage(1);
+       }, [searchQuery]);
+       useEffect(() => {
+           if (!Array.isArray(venueRecruitment)) return;
+   
+           let data = [...venueRecruitment];
+   
+           data = filterByName(data);
+           data = filterByVenue(data);
+           data = filterBySearchQuery(data); // ✅ ADD THIS
+   
+           setFilteredRecruitment(data);
+       }, [venueRecruitment, studentName, selectedVenue, searchQuery]);
+   
 
 
 

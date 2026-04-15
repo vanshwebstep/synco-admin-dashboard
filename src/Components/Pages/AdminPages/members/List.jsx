@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState , useMemo} from 'react';
 import Create from './Create';
 import { useNavigate } from 'react-router-dom';
 import { Check } from "lucide-react";
@@ -6,10 +6,12 @@ import { useMembers } from '../contexts/MemberContext';
 import Loader from '../contexts/Loader';
 import { formatDistanceToNow } from 'date-fns';
 import { usePermission } from "../Common/permission";
+import { useGlobalSearch } from '../contexts/GlobalSearchContext';
 
 const List = () => {
       const { checkPermission } = usePermission();
   
+    const { searchQuery } = useGlobalSearch();
 
   const { members, fetchMembers, loading } = useMembers();
   const [selectedUserIds, setSelectedUserIds] = useState([]);
@@ -34,6 +36,31 @@ const List = () => {
 
   const navigate = useNavigate();
   const [openForm, setOpenForm] = useState(false);
+  const filteredMembers = useMemo(() => {
+  if (!searchQuery) return members || [];
+
+  const q = searchQuery.toLowerCase();
+
+  return (members || []).filter((user) => {
+    const values = [
+      user?.firstName,
+      user?.lastName,
+      user?.role?.role,
+      user?.phoneNumber,
+      user?.email,
+      user?.position,
+    ];
+
+    const fullName = `${user?.firstName || ""} ${user?.lastName || ""}`.toLowerCase();
+
+    return (
+      fullName.includes(q) ||
+      values.some((val) =>
+        String(val || "").toLowerCase().includes(q)
+      )
+    );
+  });
+}, [members, searchQuery]);
   useEffect(() => {
     fetchMembers();
   }, [fetchMembers]);
@@ -72,7 +99,7 @@ const List = () => {
 
           <div className={`transition-all duration-300 ${openForm ? 'md:w-3/4' : 'w-full'}`}>
 
-            {members.length > 0 ? (
+            {filteredMembers.length > 0 ? (
               <div className="overflow-auto rounded-2xl bg-white shadow-sm">
                 <table className="min-w-full text-sm">
                   <thead className="bg-[#F5F5F5] text-left border border-[#EFEEF2]">
@@ -97,7 +124,7 @@ const List = () => {
                   </thead>
 
                   <tbody>
-                    {members.map((user, idx) => {
+                    {filteredMembers.map((user, idx) => {
                       const isChecked = selectedUserIds.includes(user.id);
                       return (
                         <tr key={idx} className="border-t font-semibold text-[#282829] border-[#EFEEF2] hover:bg-gray-50">

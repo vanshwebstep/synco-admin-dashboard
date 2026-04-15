@@ -123,7 +123,7 @@ const MembersDashboard = () => {
             iconStyle: "text-[#E769BD] bg-[#FEF6FB]",
             title: "Monthly Revenue",
             value: `£${summary?.monthlyRevenue?.current}`,
-            diff: `+${summary?.monthlyRevenue?.average}%`,
+            diff: `+${summary?.monthlyRevenue?.average}`,
             sub: "vs. prev period",
             subvalue: `£${summary?.monthlyRevenue?.previous}`,
         },

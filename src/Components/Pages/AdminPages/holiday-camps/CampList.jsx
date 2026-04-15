@@ -18,6 +18,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { usePermission } from '../Common/permission';
 import { useHolidayFindClass } from '../contexts/HolidayFindClassContext';
+import { useGlobalSearch } from '../contexts/GlobalSearchContext';
 const customIcon = new L.Icon({
   iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
   iconSize: [25, 41],
@@ -28,6 +29,8 @@ const CampList = () => {
   const { fetchFindClasses, findClasses, loading } = useHolidayFindClass();
   const [openMapId, setOpenMapId] = useState(null);
   const navigate = useNavigate();
+    const { searchQuery } = useGlobalSearch();
+  
   const [isOpen, setIsOpen] = useState(true);
   useEffect(() => {
     fetchFindClasses()
@@ -245,8 +248,29 @@ const goToNextMonth = () => {
     }
   };
 
-  const filteredClasses = Array.isArray(findClasses)
-    ? findClasses.filter((venue) => {
+ const filteredClasses = Array.isArray(findClasses)
+  ? findClasses.filter((venue) => {
+      const query = searchQuery?.toLowerCase() || "";
+
+      // 🔍 GLOBAL SEARCH (NEW)
+      const globalMatch =
+        !query ||
+        [
+          venue?.venueName,
+          venue?.address,
+          venue?.postal_code,
+        ].some((val) =>
+          String(val || "").toLowerCase().includes(query)
+        ) ||
+        Object.values(venue?.classes || {})
+          .flat()
+          .some((cls) =>
+            Object.values(cls).some((val) =>
+              String(val || "").toLowerCase().includes(query)
+            )
+          );
+
+      // Existing filters 👇
       const nameMatch =
         !searchVenue ||
         venue.venueName?.toLowerCase().includes(searchVenue.toLowerCase());
@@ -262,23 +286,23 @@ const goToNextMonth = () => {
         selectedVenues.includes("All venues") ||
         selectedVenues.includes(venue.venueName);
 
-      // Normalize class list into an array regardless of whether venue.classes is {} or { Saturday: [...], ... }
       const classList =
         venue.classes && typeof venue.classes === "object"
           ? Object.values(venue.classes).flat()
           : [];
 
-      // Case-insensitive day match
       const dayMatch =
         selectedDays.length === 0 ||
-        venue.holidayCamps?.some((camp) => selectedDays.includes(camp.id));
-
+        venue.holidayCamps?.some((camp) =>
+          selectedDays.includes(camp.id)
+        );
 
       const availableMatch =
         !showAvailableOnly ||
         classList.some((cls) => cls.capacity > 0);
 
       return (
+        globalMatch && // ✅ ADD THIS
         nameMatch &&
         postcodeMatch &&
         venueMatch &&
@@ -286,7 +310,7 @@ const goToNextMonth = () => {
         availableMatch
       );
     })
-    : [];
+  : [];
 
 
 

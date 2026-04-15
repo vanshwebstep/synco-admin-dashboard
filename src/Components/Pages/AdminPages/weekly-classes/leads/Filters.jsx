@@ -279,7 +279,7 @@ const Filters = () => {
     };
 
     return (
-        <div className="md:w-[27%]  fullwidth20 flex-shrink-0 gap-5 md:ps-3">
+        <div className="md:w-[27%] flex-shrink-0 gap-5 md:ps-3">
             {/* Search */}
             <div className="mb-4 bg-white rounded-2xl p-4">
                 <h3 className="font-semibold text-black text-[24px] mb-2">

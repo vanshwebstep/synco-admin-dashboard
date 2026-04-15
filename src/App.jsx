@@ -173,6 +173,8 @@ import CourseUpdate from './Components/Pages/AdminPages/coach-pro/Course/CourceU
 import CourseStudentUpdate from './Components/Pages/AdminPages/configuration/coach-pro/studentsCources/CourseStudentUpdate.jsx';
 import { StarterPackProvider } from './Components/Pages/AdminPages/contexts/StarterPackContext.jsx';
 import { CoachProProvider } from './Components/Pages/AdminPages/contexts/CoachProContext.jsx';
+import { GlobalSearchProvider } from './Components/Pages/AdminPages/contexts/GlobalSearchContext.jsx';
+import { EmailProvider } from './Components/Pages/AdminPages/contexts/messages/SendEmailContext.jsx';
 
 const commonRole = ['Admin', 'user', 'Member', 'Agent', 'Super Admin'];
 
@@ -232,21 +234,25 @@ const AppRoutes = () => {
       {/* Role-based routes */}
       <Route path="/" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <Dashboard />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <Dashboard />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
 
       <Route path="/dashboard" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <Dashboard />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <Dashboard />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
 
@@ -423,206 +429,251 @@ const AppRoutes = () => {
 
       <Route path="/weekly-classes/members-info" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <MainTable />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <MainTable />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
       <Route path="/weekly-classes/account-information" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <Account />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <Account />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
       <Route path="/one-to-one/reports" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <Reports />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <Reports />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
       <Route path="/one-to-one" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <Leads />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <Leads />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
       <Route path="/one-to-one/session-plan" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <SessionPlan />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <SessionPlan />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
       <Route path="/one-to-one/session-plan-create" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <Create />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <Create />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
       <Route path="/one-to-one/session-plan-update" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <OnetoOneUpdate />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <OnetoOneUpdate />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
       <Route path="/one-to-one/session-plan-preview" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <SessionPreview />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <SessionPreview />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
 
       <Route path="/one-to-one/leads/booking-form" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <BookingForm />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <BookingForm />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
       <Route path="/one-to-one/sales/account-information" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <AccountMain />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <AccountMain />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
       <Route path="/one-to-one/sales/account-information/see-details" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <SeeDetailsAccount />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <SeeDetailsAccount />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
       <Route path="/weekly-classes/central-leads" element={
         <LeadsContextProvider>
 
           <ProtectedRoute>
-            <AdminLayout>
-              <RoleBasedRoute>
-                <Lead />
-              </RoleBasedRoute>
-            </AdminLayout>
+            <GlobalSearchProvider>
+              <AdminLayout>
+                <RoleBasedRoute>
+                  <Lead />
+                </RoleBasedRoute>
+              </AdminLayout>
+            </GlobalSearchProvider>
           </ProtectedRoute>
 
         </LeadsContextProvider>
       } />
       <Route path="/weekly-classes/central-leads/create" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <CreateLead />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <CreateLead />
+              </RoleBasedRoute>
+            </AdminLayout>
+
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
       <Route path="/reports" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <AccountInfo />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <AccountInfo />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
 
       <Route path="/reports/members" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <MembersDashboard />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <MembersDashboard />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
       <Route path="/reports/trials" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <TrialsDashboard />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <TrialsDashboard />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
       <Route path="/reports/sales" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <SaleDashboard />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <SaleDashboard />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
       <Route path="/reports/class-capacity" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <CapacityDashboard />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <CapacityDashboard />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
       <Route path="/reports/attendance" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <AttendanceDashboard />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <AttendanceDashboard />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
       <Route path="/reports/cancellations" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <CancellationDashboard />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <CancellationDashboard />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
       <Route path="/weekly-classes/central-leads/accont-info" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <AccountInfo />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <AccountInfo />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
       <Route path="/reports/weekly-classes" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <WeeklyDashboard />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <WeeklyDashboard />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
 
@@ -630,210 +681,277 @@ const AppRoutes = () => {
       {/* birthday  */}
       <Route path="/birthday-party/session-plan" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <BirthdaySessionPlan />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <BirthdaySessionPlan />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
+
       } />
       <Route path="/birthday-party/session-plan-preview" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <BirthdaySessionPreview />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <BirthdaySessionPreview />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/birthday-party/session-plan-create" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <BirthdayCreate />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <BirthdayCreate />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/birthday-party/session-plan-update" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <BirthdayUpdate />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <BirthdayUpdate />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/birthday-party/leads" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <BirthdayLeads />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <BirthdayLeads />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/birthday-party/leads/booking-form" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <BirthdayBookingForm />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <BirthdayBookingForm />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/birthday-party/reports" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <BirthdayReports />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <BirthdayReports />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/birthday-party/sales/account-information" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <AccountMainBirthDay />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <AccountMainBirthDay />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/birthday-party/sales/account-information/see-details" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <SeeDetailsAccountBirthday />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <SeeDetailsAccountBirthday />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/holiday-camp" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <StudentCamp />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <StudentCamp />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/holiday-camp/members/list" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <StudentCamp />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <StudentCamp />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/holiday-camp/find-a-camp" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <CampList />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <CampList />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/holiday-camp/find-a-camp/book-camp" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <BookACamp />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <BookACamp />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/holiday-camp/waiting-list" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <WaitingLists />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <WaitingLists />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/holiday-camp/members/account-information" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <AccountMainHoliday />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <AccountMainHoliday />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/holiday-camp/waiting-list/account-information" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <WaitingListTab />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <WaitingListTab />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/holiday-camp/members/account-information/see-details" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <SeeDetailsAccountHoliday />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <SeeDetailsAccountHoliday />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/holiday-camp/reports" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <HolidayReports />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <HolidayReports />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
 
       <Route path="/configuration/holiday-camp/session-plan/list" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <HolidaySessionPlan />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <HolidaySessionPlan />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/configuration/holiday-camp/session-plan/create" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <HolidaySessionCreate />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <HolidaySessionCreate />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/configuration/holiday-camp/session-plan/preview" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <HolidaySessionPreview />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <HolidaySessionPreview />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/configuration/holiday-camp/terms/list" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <HolidayTermList />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <HolidayTermList />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/configuration/holiday-camp/terms/create" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <HolidayTermsCreate />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <HolidayTermsCreate />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
       <Route path="/configuration/holiday-camp/discount/list"
@@ -876,233 +994,299 @@ const AppRoutes = () => {
       />
       <Route path="/recruitment/lead" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <Recruitment />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <Recruitment />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/recruitment/lead/coach/profile" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <CandidateDetails />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <CandidateDetails />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/recruitment/lead/venue-manager/profile" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <CandidateVenueDetails />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <CandidateVenueDetails />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/recruitment/reports" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <ReportsMain />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <ReportsMain />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/recruitment/franchise-lead" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <FranchiseLeads />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <FranchiseLeads />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/administration/to-do-list" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <TodoList />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <TodoList />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/administration/file-manager" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <FileManager />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <FileManager />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/recruitment/franchise-lead/see-details" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <FranchiseCandidateDetails />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <FranchiseCandidateDetails />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
 
       <Route path="/templates/create" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <Createtemplate />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <Createtemplate />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
 
       <Route path="/templates/list" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <CommunicationsList />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <CommunicationsList />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/templates/settingList" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <SettingList />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <SettingList />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
-      <Route path="*" element={<Navigate to="/" />} />
+
       <Route path="/holiday-camp/find-a-camp/add-to-waiting-list" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <HolidayAddtoWaitingList />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <HolidayAddtoWaitingList />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
-      <Route path="*" element={<Navigate to="/" />} />
+
       <Route path="/configuration/coach-pro/music" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <Music />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <Music />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/configuration/coach-pro/profile" element={
         <ProtectedRoute>
-          <AdminLayout>
-            {/* <RoleBasedRoute> */}
-            <CoachProfile />
-            {/* </RoleBasedRoute> */}
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <CoachProfile />
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/configuration/coach-pro/courses" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <CourseList />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <CourseList />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/configuration/coach-pro/course/create" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <CourseCreate />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <CourseCreate />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/configuration/coach-pro/profile/report" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <AttendanceReport />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <AttendanceReport />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/configuration/coach-pro/contracts" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <ContractList />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <ContractList />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/configuration/coach-pro/contracts/update" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <PdfEditor />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <PdfEditor />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
 
       <Route path="/configuration/coach-pro/issue-list" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <IssueList />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <IssueList />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/configuration/coach-pro/referrals" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <ReferralsList />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <ReferralsList />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
 
       <Route path="/configuration/coach-pro/student" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <StudentCource />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <StudentCource />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/configuration/coach-pro/student/create" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <StudentCourceAdd />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <StudentCourceAdd />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/configuration/coach-pro/course/update" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <CourseUpdate />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <CourseUpdate />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
+
       <Route path="/configuration/coach-pro/student/update" element={
         <ProtectedRoute>
-          <AdminLayout>
-            <RoleBasedRoute>
-              <CourseStudentUpdate />
-            </RoleBasedRoute>
-          </AdminLayout>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <CourseStudentUpdate />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
         </ProtectedRoute>
       } />
 
@@ -1143,7 +1327,9 @@ function App() {
                                                   <RecruitmentProvider>
                                                     <CoachProProvider>
                                                       <StarterPackProvider>
-                                                        <AppRoutes />
+                                                        <EmailProvider>
+                                                          <AppRoutes />
+                                                        </EmailProvider>
                                                       </StarterPackProvider>
                                                     </CoachProProvider>
                                                   </RecruitmentProvider>

@@ -1,6 +1,7 @@
 // src/components/DynamicTable.jsx
 import React, { useState, useMemo, useEffect } from "react";
 import { Check } from "lucide-react";
+import { useGlobalSearch } from "../contexts/GlobalSearchContext";
 
 const DynamicTable = ({
   columns,
@@ -13,7 +14,7 @@ const DynamicTable = ({
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-
+  const { searchQuery } = useGlobalSearch();
   /* =============================
      Selection
   ============================== */
@@ -76,21 +77,46 @@ const DynamicTable = ({
     ["request to cancel", "full cancel", "all cancel"].includes(from);
 
   const finalData = useGrouped ? groupedData : flattenedData;
+  const searchableKeys = ["name", "email", "phone"]; // customize
 
+  const searchedData = useMemo(() => {
+    if (!searchQuery) return finalData;
+
+    const query = searchQuery.toLowerCase();
+
+    return finalData.filter((row) => {
+      const values = [
+        ...Object.values(row || {}),
+        ...Object.values(row?.student || {}),
+        ...(row?.parents?.length
+          ? Object.values(row.parents[0])
+          : []),
+      ];
+
+      const fullName =
+        `${row?.student?.studentFirstName || ""} ${row?.student?.studentLastName || ""}`.toLowerCase();
+
+      return (
+        fullName.includes(query) ||
+        values.some((val) =>
+          String(val || "")
+            .toLowerCase()
+            .includes(query)
+        )
+      );
+    });
+  }, [finalData, searchQuery]);
   /* =============================
      Pagination
   ============================== */
-  const totalItems = finalData.length;
+  const totalItems = searchedData.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / rowsPerPage));
   const validCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
   const startIndex = (validCurrentPage - 1) * rowsPerPage;
 
   const paginatedData = useMemo(() => {
-    return finalData.slice(
-      startIndex,
-      startIndex + rowsPerPage
-    );
-  }, [finalData, startIndex, rowsPerPage]);
+    return searchedData.slice(startIndex, startIndex + rowsPerPage);
+  }, [searchedData, startIndex, rowsPerPage]);
 
   // Keep page in range
   useEffect(() => {
@@ -176,8 +202,8 @@ const DynamicTable = ({
                                   toggleSelect(uniqueId);
                                 }}
                                 className={`w-5 h-5 flex items-center justify-center rounded-md border-2 ${isSelected
-                                    ? "bg-blue-500 border-blue-500 text-white"
-                                    : "border-gray-300 text-transparent"
+                                  ? "bg-blue-500 border-blue-500 text-white"
+                                  : "border-gray-300 text-transparent"
                                   }`}
                               >
                                 {isSelected && <Check size={14} />}

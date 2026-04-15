@@ -11,6 +11,7 @@ import { showError, showSuccess, showWarning } from '../../../../../../utils/swa
 import { usePayments } from '../../../contexts/PaymentPlanContext';
 import PlanTabs from "../../../weekly-classes/find-a-class/PlanTabs";
 import { usePermission } from "../../../Common/permission";
+import { max } from "date-fns";
 
 const AddPaymentPlanGroup = () => {
     const [isSavePlan, setIsSavePlan] = useState(false);
@@ -112,6 +113,7 @@ const AddPaymentPlanGroup = () => {
     const navigate = useNavigate();
 
     const handleAddPlan = () => {
+        setIsViewMode(false);
         setOpenForm(true);
     };
     const handleTogglePlan = (plan) => {
@@ -171,12 +173,21 @@ const AddPaymentPlanGroup = () => {
     };
     const priceFields = ["price", "priceLesson"];
 
- const handleSavePlan = async () => {
-    if (isViewMode) return;
+    const handleSavePlan = async () => {
+    console.log('--- handleSavePlan START ---');
+
+    console.log('isViewMode:', isViewMode);
+    if (isViewMode) {
+        console.log('❌ Exiting because view mode is ON');
+        return;
+    }
 
     const { title, price, priceLesson, interval, duration, students } = formData;
 
+    console.log('Form Data:', formData);
+
     if (!title || !price || !interval || !priceLesson || !duration || !students) {
+        console.log('❌ Missing required fields');
         showWarning(
             "Missing Fields",
             "Please fill in all required fields: Title, Price, Interval, Duration, and Number of Students."
@@ -195,30 +206,60 @@ const AddPaymentPlanGroup = () => {
         HolidayCampPackage: formData.HolidayCampPackage
     };
 
+    console.log('New Plan Payload:', newPlan);
+
     setIsSavePlan(true);
+    console.log('Saving started...');
 
     try {
-    if (editIndex !== null && selectedPlans[editIndex]) {
-    const updatedPlans = [...selectedPlans];
-    const currentPlan = updatedPlans[editIndex];
+        console.log('editIndex:', editIndex);
+        console.log('selectedPlans:', selectedPlans);
 
-    const res = await updatePackage(currentPlan.id, newPlan);
+        if (editIndex !== null && selectedPlans[editIndex]) {
+            console.log('✏️ Updating existing plan...');
 
-    // ❗ Handle failure
-    if (!res?.status) {
-        showError("Update Failed", res?.message || "Something went wrong");
-        return;
-    }
+            const updatedPlans = [...selectedPlans];
+            const currentPlan = updatedPlans[editIndex];
 
-    // ✅ Use API response data (IMPORTANT)
-    updatedPlans[editIndex] = res.data;
+            console.log('Current Plan:', currentPlan);
 
-    setSelectedPlans(updatedPlans);
+            const res = await updatePackage(currentPlan.id, newPlan);
 
-    showSuccess("Updated", res.message || "Plan updated successfully!");
-}
+            console.log('API Response:', res);
+
+            // ❗ Handle failure
+            if (!res?.status) {
+                console.log('❌ API returned failure:', res?.message);
+                showError("Update Failed", res?.message || "Something went wrong");
+                return;
+            }
+
+            console.log('✅ API success, updating state...');
+
+            // ✅ Use API response data
+            updatedPlans[editIndex] = res.data;
+
+            console.log('Updated Plans Array:', updatedPlans);
+
+            setSelectedPlans(updatedPlans);
+
+            showSuccess("Updated", res.message || "Plan updated successfully!");
+        } else  {
+                // ✅ FIX 2: actually create new plan instead of just logging
+                const res = await createPackage(newPlan);
+
+                if (!res?.status) {
+                    showError("Create Failed", res?.message || "Something went wrong");
+                    return;
+                }
+
+                setSelectedPlans(prev => [...prev, res.data]);
+                showSuccess("Created", res.message || "Plan created successfully!");
+            }
 
         // 👉 Reset form only on success
+        console.log('🔄 Resetting form...');
+
         setFormData({
             title: '',
             price: '',
@@ -233,11 +274,15 @@ const AddPaymentPlanGroup = () => {
         setTerms('');
         setOpenForm(false);
 
+        console.log('✅ Form reset complete');
+
     } catch (err) {
-        console.error('Error saving plan:', err);
+        console.error('❌ Error saving plan:', err);
         showError("Save Failed", "There was an error saving the plan. Please try again.");
     } finally {
+        console.log('⏹ Saving finished');
         setIsSavePlan(false);
+        console.log('--- handleSavePlan END ---');
     }
 };
 
@@ -335,126 +380,127 @@ const AddPaymentPlanGroup = () => {
             HolidayCampPackage: ''
         });
     };
- const ViewPlanCard = ({ data }) => {
-    const getDurationLabel = () => {
-        if (!data.duration || !data.interval) return "N/A";
+    const ViewPlanCard = ({ data }) => {
+        const getDurationLabel = () => {
+            if (!data.duration || !data.interval) return "N/A";
 
-        const unit =
-            data.interval === "Month"
-                ? "month"
-                : data.interval === "Year"
-                ? "year"
-                : "quarter";
+            const unit =
+                data.interval === "Month"
+                    ? "month"
+                    : data.interval === "Year"
+                        ? "year"
+                        : "quarter";
 
-        return `${data.duration} ${unit}${data.duration > 1 ? "s" : ""}`;
-    };
+            return `${data.duration} ${unit}${data.duration > 1 ? "s" : ""}`;
+        };
 
-    return (
-        <div className="w-full bg-white rounded-2xl p-5">
-
-            {/* Title */}
-            <h2 className="text-lg font-bold text-[#282829] mb-6">
-                {data.title || "Membership Plan"}
-            </h2>
-
-            <div className="grid grid-cols-2 gap-6">
+        return (
+            <div className="w-full bg-white rounded-2xl p-5">
 
                 {/* Title */}
-                <div className="col-span-2">
-                    <label className="block text-[18px] font-semibold mb-2">Title</label>
-                    <input
-                        type="text"
-                        disabled
-                        value={data.title || ""}
-                        className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg text-[#282829] font-semibold"
-                    />
-                </div>
+                <h2 className="text-lg font-bold text-[#282829] mb-6">
+                    {data.title || "Membership Plan"}
+                </h2>
 
-                {/* Price */}
-                <div>
-                    <label className="block text-[18px] font-semibold mb-2">Price (₹)</label>
-                    <input
-                        type="text"
-                        disabled
-                        value={data.price || ""}
-                        className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg font-semibold"
-                    />
-                </div>
+                <div className="grid grid-cols-2 gap-6">
 
-                {/* Price per lesson */}
-                <div>
-                    <label className="block text-[18px] font-semibold mb-2">Price per lesson (₹)</label>
-                    <input
-                        type="text"
-                        disabled
-                        value={data.priceLesson || ""}
-                        className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg font-semibold"
-                    />
-                </div>
+                    {/* Title */}
+                    <div className="col-span-2">
+                        <label className="block text-[18px] font-semibold mb-2">Title</label>
+                        <input
+                            type="text"
+                            disabled
+                            value={data.title || ""}
+                            className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg text-[#282829] font-semibold"
+                        />
+                    </div>
 
-                {/* Interval */}
-                <div>
-                    <label className="block text-[18px] font-semibold mb-2">Interval</label>
-                    <input
-                        type="text"
-                        disabled
-                        value={data.interval || ""}
-                        className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg font-semibold"
-                    />
-                </div>
+                    {/* Price */}
+                    <div>
+                        <label className="block text-[18px] font-semibold mb-2">Price (₹)</label>
+                        <input
+                            type="text"
+                            disabled
+                            value={data.price || ""}
+                            className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg font-semibold"
+                        />
+                    </div>
 
-                {/* Duration */}
-                <div>
-                    <label className="block text-[18px] font-semibold mb-2">Duration</label>
-                    <input
-                        type="text"
-                        disabled
-                        value={getDurationLabel()}
-                        className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg font-semibold"
-                    />
-                </div>
+                    {/* Price per lesson */}
+                    <div>
+                        <label className="block text-[18px] font-semibold mb-2">Price per lesson (₹)</label>
+                        <input
+                            type="text"
+                            disabled
+                            value={data.priceLesson || ""}
+                            className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg font-semibold"
+                        />
+                    </div>
 
-                {/* Students */}
-                <div className="col-span-2">
-                    <label className="block text-[18px] font-semibold mb-2">Number of Students</label>
-                    <input
-                        type="text"
-                        disabled
-                        value={data.students || ""}
-                        className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg font-semibold"
-                    />
-                </div>
+                    {/* Interval */}
+                    <div>
+                        <label className="block text-[18px] font-semibold mb-2">Interval</label>
+                        <input
+                            type="text"
+                            disabled
+                            value={data.interval || ""}
+                            className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg font-semibold"
+                        />
+                    </div>
 
-                {/* Holiday Package */}
-                <div className="col-span-2">
-                    <label className="block text-[18px] font-semibold mb-2">
-                        Membership Package Details
-                    </label>
-                    <div
-                        className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg text-[#282829] text-[16px]"
-                        dangerouslySetInnerHTML={{
-                            __html: data.HolidayCampPackage || "<p>N/A</p>",
-                        }}
-                    />
-                </div>
+                    {/* Duration */}
+                    <div>
+                        <label className="block text-[18px] font-semibold mb-2">Duration</label>
+                        <input
+                            type="text"
+                            disabled
+                            value={getDurationLabel()}
+                            className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg font-semibold"
+                        />
+                    </div>
 
-                {/* Terms */}
-                <div className="col-span-2">
-                    <label className="block text-[18px] font-semibold mb-2">
-                        Terms & Conditions
-                    </label>
-                    <div
-                        className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg text-[#282829] text-[16px]"
-                        dangerouslySetInnerHTML={{
-                            __html: data.termsAndCondition || "<p>N/A</p>",
-                        }}
-                    />
-                </div>
+                    {/* Students */}
+                    <div className="col-span-2">
+                        <label className="block text-[18px] font-semibold mb-2">Number of Students</label>
+                        <input
+                            type="number"
+                            disabled
+                            max={4}
+                            value={data.students || ""}
+                            className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg font-semibold"
+                        />
+                    </div>
 
+                    {/* Holiday Package */}
+                    <div className="col-span-2">
+                        <label className="block text-[18px] font-semibold mb-2">
+                            Membership Package Details
+                        </label>
+                        <div
+                            className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg text-[#282829] text-[16px]"
+                            dangerouslySetInnerHTML={{
+                                __html: data.HolidayCampPackage || "<p>N/A</p>",
+                            }}
+                        />
+                    </div>
+
+                    {/* Terms */}
+                    <div className="col-span-2">
+                        <label className="block text-[18px] font-semibold mb-2">
+                            Terms & Conditions
+                        </label>
+                        <div
+                            className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg text-[#282829] text-[16px]"
+                            dangerouslySetInnerHTML={{
+                                __html: data.termsAndCondition || "<p>N/A</p>",
+                            }}
+                        />
+                    </div>
+
+                </div>
             </div>
-        </div>
-    );
-};
+        );
+    };
     return (
         <div className=" md:p-6 bg-gray-50 min-h-screen">
 
@@ -777,7 +823,7 @@ const AddPaymentPlanGroup = () => {
                                                     options: ["Month", "Quarter", "Year"]
                                                 },
                                                 { label: "Duration", name: "duration", type: "number" },
-                                                { label: "Number of Students", name: "students", type: "number" },
+                                                { label: "Number of Students", name: "students", type: "number" , max : 4 },
                                             ].map((field) => {
                                                 // Duration options for dropdown
                                                 let durationOptions = [];
@@ -857,6 +903,7 @@ const AddPaymentPlanGroup = () => {
                                                         ) : field.type === "number" ? (
                                                             <input
                                                                 type="text"
+                                                            
                                                                 disabled={isViewMode}
                                                                 value={formData[field.name]}
                                                                 onChange={(e) => {

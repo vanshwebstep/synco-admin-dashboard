@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback ,useMemo} from 'react';
 import { Pencil, Trash2, Eye, Copy, } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSessionPlan } from '../../../contexts/SessionPlanContext';
@@ -18,6 +18,7 @@ import {
 } from "@dnd-kit/sortable";
 
 import { CSS } from "@dnd-kit/utilities";
+import { useGlobalSearch } from '../../../contexts/GlobalSearchContext';
 const SortableItem = ({ week, children, disabled }) => {
   const {
     attributes,
@@ -41,6 +42,7 @@ const SortableItem = ({ week, children, disabled }) => {
 const List = () => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const token = localStorage.getItem("adminToken");
+    const { searchQuery } = useGlobalSearch();
 
   const navigate = useNavigate();
   const { fetchSessionGroup, sessionGroup, deleteSessionGroup, deleteSessionlevel, duplicateSession, updateDiscount, loading, setLoading } = useSessionPlan();
@@ -72,9 +74,7 @@ const List = () => {
   }, [fetchSessionGroup]);
   // with empty conditon 
 
-  useEffect(() => {
-    setTempList(weekList); // initialize tempList with server list
-  }, [weekList]);
+
   useEffect(() => {
     if (sessionGroup?.length > 0) {
       const transformedWeeks = sessionGroup
@@ -300,13 +300,6 @@ useEffect(() => {
     // Add group logic here
   };
 
-  if (loading) {
-    return (
-      <>
-        <Loader />
-      </>
-    )
-  }
   const handleReorder = async (newList) => {
     if (!token) return;
 
@@ -344,12 +337,44 @@ useEffect(() => {
 
   setTempList(updatedList);
 };
+const filteredWeeks = useMemo(() => {
+  if (!searchQuery) return tempList;
+
+  const query = searchQuery.toLowerCase();
+
+  return tempList.filter((week) => {
+    // week level search
+    const weekMatch =
+      week.title?.toLowerCase().includes(query);
+
+    // group level search
+    const groupMatch = week.groups?.some((g) =>
+      [
+        g.name,
+        g.age,
+        g.player
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(query)
+    );
+
+    return weekMatch || groupMatch;
+  });
+}, [tempList, searchQuery]);
   const { checkPermission } = usePermission();
 
   const canCreate = checkPermission({ module: 'session-plan-group', action: 'create' });
   const canEdit = checkPermission({ module: 'session-plan-group', action: 'update' });
   const canDelete = checkPermission({ module: 'session-plan-group', action: 'delete' });
 
+  if (loading) {
+    return (
+      <>
+        <Loader />
+      </>
+    )
+  }
   console.log(weekList)
   return (
     <div className="pt-1 bg-gray-50 min-h-screen">
@@ -399,11 +424,11 @@ useEffect(() => {
       <div className="p-6 bg-white min-h-[600px] rounded-3xl">
         <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext
-            items={tempList.map((w) => w.id)}
+            items={filteredWeeks.map((w) => w.id)}
             strategy={rectSortingStrategy}
           >
             <div className="grid md:grid-cols-4 gap-6">
-              {tempList.map((week, index) => (
+              {filteredWeeks.map((week, index) => (
                 <SortableItem
                   key={week.id}
                   week={week}

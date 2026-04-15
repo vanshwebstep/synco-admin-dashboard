@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback , useMemo} from "react";
 import { FiSearch } from "react-icons/fi";
 import Select from "react-select";
 import { FiUsers } from "react-icons/fi";
@@ -15,7 +15,7 @@ import {
     Download,
     ChevronLeft,
     ChevronRight,
-    Check,Loader2,
+    Check, Loader2,
     CirclePoundSterling, X, CircleDollarSign
 } from "lucide-react";
 import { TiUserAdd } from "react-icons/ti";
@@ -27,10 +27,12 @@ import { useNavigate } from "react-router-dom";
 import Loader from "../../../contexts/Loader";
 import { useAccountsInfo } from "../../../contexts/AccountsInfoContext";
 import { showError, showSuccess, showWarning } from "../../../../../../utils/swalHelper";
+import { useGlobalSearch } from "../../../contexts/GlobalSearchContext";
 const SalesDashboard = () => {
     const navigate = useNavigate();
-      const [textloading, setTextLoading] = useState(null);
-    
+    const [textloading, setTextLoading] = useState(null);
+  const { searchQuery } = useGlobalSearch();
+
     const [noLoaderShow, setNoLoaderShow] = useState(false);
     const [showFilter, setShowFilter] = useState(false)
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -75,12 +77,36 @@ const SalesDashboard = () => {
     const itemsPerPage = 10; // you can change this
     const startIndex = (currentPage - 1) * rowsPerPage;
 
+    const searchedData = useMemo(() => {
+        if (!searchQuery) return leadsData || [];
 
-    const paginatedData = leadsData.slice(
+        const query = searchQuery.toLowerCase();
+
+        return leadsData.filter((lead) => {
+            const values = [
+                lead?.parentName,
+                lead?.childName,
+                lead?.email,
+                lead?.phone,
+                lead?.postCode,
+                lead?.age,
+                lead?.status,
+                lead?.source,
+                lead?.packageInterest,
+                lead?.availability,
+            ];
+
+            return values.some((val) =>
+                String(val || "").toLowerCase().includes(query)
+            );
+        });
+    }, [leadsData, searchQuery]);
+
+    const paginatedData = searchedData.slice(
         startIndex,
         startIndex + rowsPerPage
     );
-    const totalItems = leadsData.length;
+    const totalItems = searchedData.length;
 
     const totalPages = Math.ceil(totalItems / rowsPerPage);
 
@@ -208,46 +234,46 @@ const SalesDashboard = () => {
         []
     );
 
-  const sendText = async (bookingIds) => {
-    console.log('bookingIds', bookingIds)
-    setTextLoading(true);
+    const sendText = async (bookingIds) => {
+        console.log('bookingIds', bookingIds)
+        setTextLoading(true);
 
-    const headers = {
-      "Content-Type": "application/json",
+        const headers = {
+            "Content-Type": "application/json",
+        };
+        // console.log('bookingIds', bookingIds)
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/one-to-one/booking/send-text`, {
+                method: "POST",
+                headers,
+                body: JSON.stringify({
+                    bookingId: bookingIds, // make sure bookingIds is an array like [96, 97]
+                }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || "Failed to send text");
+            }
+
+            await showSuccess("Success!", result.message || "Text has been sent successfully.");
+
+            return result;
+
+        } catch (error) {
+            console.error("Error sending Text:", error);
+            await showError("Error", error.message || "Something went wrong while sending text.");
+            throw error;
+        } finally {
+            setTextLoading(false);
+            setSelectedUserIds([])
+            await fetchLeads();
+        }
     };
-    // console.log('bookingIds', bookingIds)
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/one-to-one/booking/send-text`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          bookingId: bookingIds, // make sure bookingIds is an array like [96, 97]
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to send text");
-      }
-
-      await showSuccess("Success!", result.message || "Text has been sent successfully.");
-
-      return result;
-
-    } catch (error) {
-      console.error("Error sending Text:", error);
-      await showError("Error", error.message || "Something went wrong while sending text.");
-      throw error;
-    } finally {
-      setTextLoading(false);
-      setSelectedUserIds([])
-      await fetchLeads();
-    }
-  };
 
 
 

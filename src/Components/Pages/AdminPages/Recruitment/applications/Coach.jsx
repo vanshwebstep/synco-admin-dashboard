@@ -19,12 +19,14 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Select from "react-select";
 import { showError, showWarning, showConfirm } from "../../../../../utils/swalHelper";
+import { useGlobalSearch } from "../../contexts/GlobalSearchContext";
 const Coach = () => {
     const [selectedVenue, setSelectedVenue] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [loading, setLoading] = useState(false);
     const [showFilter, setShowFilter] = useState(false);
+    const { searchQuery } = useGlobalSearch();
 
     const { recruitment, fetchRecruitment, fetchVenueNames, venues, statsRecruitment, createCoachRecruitment, sendCoachMail } = useRecruitmentTemplate() || {};
 
@@ -480,7 +482,30 @@ const Coach = () => {
     const inputClass =
         " px-4 py-3 border border-[#E2E1E5] rounded-xl focus:outline-none ";
 
+    const filterBySearchQuery = (data) => {
+        if (!searchQuery.trim()) return data;
 
+        const q = searchQuery.toLowerCase();
+
+        return data.filter((coach) => {
+            const values = [
+                coach?.firstName,
+                coach?.lastName,
+                coach?.age,
+                coach?.postcode,
+                coach?.phoneNumber,
+                coach?.email,
+                coach?.managementExperience,
+                coach?.level,
+                coach?.dbs,
+                coach?.status,
+            ];
+
+            return values.some((val) =>
+                String(val || "").toLowerCase().includes(q)
+            );
+        });
+    };
 
 
     const totalItems = filteredRecruitment.length;
@@ -493,7 +518,20 @@ const Coach = () => {
         () => filteredRecruitment.slice(startIndex, endIndex),
         [filteredRecruitment, startIndex, endIndex]
     );
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery]);
+    useEffect(() => {
+        if (!Array.isArray(recruitment)) return;
 
+        let data = [...recruitment];
+
+        data = filterByName(data);
+        data = filterByVenue(data);
+        data = filterBySearchQuery(data); // ✅ ADD THIS
+
+        setFilteredRecruitment(data);
+    }, [recruitment, studentName, selectedVenue, searchQuery]);
 
     console.log('venues', venues)
     if (loading) return <Loader />;
@@ -534,10 +572,10 @@ const Coach = () => {
                             <Filter size={16} className='cursor-pointer' onClick={() => setShowFilter(!showFilter)} />
                         </div>
                         <button className="bg-white border border-[#E2E1E5] rounded-full flex justify-center items-center h-10 w-10"><TiUserAdd className="text-xl" /></button>
-  <button
-  onClick={() => setIsOpen(true)}
-  className="relative z-[9999] flex items-center gap-2 bg-[#237FEA] text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition"
->
+                        <button
+                            onClick={() => setIsOpen(true)}
+                            className="relative z-[9999] flex items-center gap-2 bg-[#237FEA] text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+                        >
                             <Plus size={16} />
                             Add new lead
                         </button>

@@ -22,8 +22,10 @@ const customIcon = new L.Icon({
   iconAnchor: [12, 41],
 });
 import { showWarning } from '../../../../../utils/swalHelper';
-
+import { useGlobalSearch } from '../../contexts/GlobalSearchContext';
 const List = () => {
+    const { searchQuery } = useGlobalSearch();
+
   const { fetchFindClasses, findClasses, loading } = useFindClass();
   const [openMapId, setOpenMapId] = useState(null);
   const navigate = useNavigate();
@@ -205,8 +207,18 @@ const List = () => {
 
 
 
-  const filteredClasses = Array.isArray(findClasses)
-    ? findClasses.filter((venue) => {
+ const filteredClasses = Array.isArray(findClasses)
+  ? findClasses.filter((venue) => {
+      const query = searchQuery?.toLowerCase() || "";
+
+      // 🔥 GLOBAL SEARCH (new)
+      const globalMatch =
+        !query ||
+        venue?.venueName?.toLowerCase().includes(query) ||
+        venue?.address?.toLowerCase().includes(query) ||
+        (venue?.postal_code || "").toLowerCase().includes(query);
+
+      // EXISTING FILTERS
       const nameMatch =
         !searchVenue ||
         venue.venueName?.toLowerCase().includes(searchVenue.toLowerCase());
@@ -222,18 +234,15 @@ const List = () => {
         selectedVenues.includes("All venues") ||
         selectedVenues.includes(venue.venueName);
 
-      // Normalize class list into an array regardless of whether venue.classes is {} or { Saturday: [...], ... }
       const classList =
         venue.classes && typeof venue.classes === "object"
           ? Object.values(venue.classes).flat()
           : [];
 
-      // Case-insensitive day match
       const dayMatch =
         selectedDays.length === 0 ||
         selectedDays.some((selectedDay) => {
           const lowerDay = selectedDay.toLowerCase();
-          // Find a matching key ignoring case
           const matchedKey = Object.keys(venue.classes || {}).find(
             (key) => key.toLowerCase() === lowerDay
           );
@@ -245,6 +254,7 @@ const List = () => {
         classList.some((cls) => cls.capacity > 0);
 
       return (
+        globalMatch &&   // ✅ ADD THIS
         nameMatch &&
         postcodeMatch &&
         venueMatch &&
@@ -252,7 +262,7 @@ const List = () => {
         availableMatch
       );
     })
-    : [];
+  : [];
 
 
 

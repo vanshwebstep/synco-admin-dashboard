@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect,useMemo } from "react";
 import { GiMagnet } from "react-icons/gi";
 import {
     ChevronDown,
@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import Loader from "../contexts/Loader";
 import React from "react";
 import * as XLSX from "xlsx";
+import { useGlobalSearch } from "../contexts/GlobalSearchContext";
 
 
 
@@ -20,6 +21,7 @@ const StudentCamp = () => {
     const [expandedRow, setExpandedRow] = useState(null);
     const [activeTab, setActiveTab] = useState("camp");
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const { searchQuery } = useGlobalSearch();
 
     const [holidayCampsData, setHolidayCampsData] = useState([]);
     const [summary, setSummary] = useState({});
@@ -94,33 +96,56 @@ const StudentCamp = () => {
     );
 
     // FILTER LOGIC
-    const filteredData = filteredStudents.filter((camp) => {
-        const student = camp?.students?.[0];
+  const filteredData = filteredStudents.filter((camp) => {
+  const term = searchTerm.trim().toLowerCase();
+  const query = searchQuery.trim().toLowerCase();
 
-        // ---------- SEARCH ----------
-        const name = `${student?.studentFirstName || ""} ${student?.studentLastName || ""}`.toLowerCase();
-        const age = String(student?.age || "").toLowerCase();
-        const medical = (student?.medicalInformation || "").toLowerCase();
-        const search = searchTerm.toLowerCase();
+  // ---------- SEARCH TERM (Student Focused) ----------
+  const matchesSearchTerm =
+    !term ||
+    camp?.students?.some((student) => {
+      const fullName = `${student?.studentFirstName || ""} ${student?.studentLastName || ""}`.toLowerCase();
+      const age = String(student?.age || "").toLowerCase();
+      const medical = (student?.medicalInformation || "").toLowerCase();
 
-        const matchesSearch =
-            !searchTerm ||
-            name.includes(search) ||
-            age.includes(search) ||
-            medical.includes(search);
-
-        // ---------- CATEGORY ----------
-        const matchesCategory =
-            !selectedCategory ||
-            camp?.holidayCamp?.id === selectedCategory.value;
-
-        // ---------- DATE ----------
-        const matchesDate =
-            !selectedDate ||
-            camp?.holidayCamp?.holidayCampDates?.[0]?.id === selectedDate.value;
-
-        return matchesSearch && matchesCategory && matchesDate;
+      return (
+        fullName.includes(term) ||
+        age.includes(term) ||
+        medical.includes(term)
+      );
     });
+
+  // ---------- GLOBAL SEARCH QUERY ----------
+  const matchesSearchQuery =
+    !query ||
+    // search in students also
+    camp?.students?.some((student) =>
+      Object.values(student || {}).some((val) =>
+        String(val || "").toLowerCase().includes(query)
+      )
+    ) ||
+    // search in camp level fields
+    Object.values(camp || {}).some((val) =>
+      String(val || "").toLowerCase().includes(query)
+    );
+
+  // ---------- CATEGORY ----------
+  const matchesCategory =
+    !selectedCategory ||
+    camp?.holidayCamp?.id === selectedCategory.value;
+
+  // ---------- DATE ----------
+  const matchesDate =
+    !selectedDate ||
+    camp?.holidayCamp?.holidayCampDates?.[0]?.id === selectedDate.value;
+
+  return (
+    matchesSearchTerm &&   // ✅ both must pass
+    matchesSearchQuery &&  // ✅ both must pass
+    matchesCategory &&
+    matchesDate
+  );
+});
 
 
 

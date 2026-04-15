@@ -337,7 +337,7 @@ const trialLists = () => {
         {
             title: "Monthly revenue",
             value: `£${statsMembership?.totalRevenue?.value} `,
-            change: `${(statsMembership?.totalRevenue?.change)}%`,
+            change: `${(statsMembership?.totalRevenue?.change)}`,
 
             icon: "/members/allmemberMonthlyRevenue.png",
             color: "text-green-500",
@@ -348,7 +348,7 @@ const trialLists = () => {
 
             value: `£${statsMembership?.avgMonthlyFee?.value} `,
             icon: "/members/allmemberMonthlyFee.png",
-            change: `${(statsMembership?.avgMonthlyFee?.change)}%`,
+            change: `${(statsMembership?.avgMonthlyFee?.change)}`,
             color: "text-green-500",
             bg: "bg-[#FEF6FB]"
         },

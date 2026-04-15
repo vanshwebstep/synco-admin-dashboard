@@ -71,7 +71,7 @@ const SaleDashboard = () => {
             iconStyle: "text-[#E769BD] bg-[#FEF6FB]",
             title: "Monthly Revenue",
             value: `${overall?.monthlyRevenue?.current}`,
-            diff: `${overall?.monthlyRevenue?.average}%`,
+            diff: `${overall?.monthlyRevenue?.average}`,
             sub: "vs. prev period",
             subvalue: `${overall?.monthlyRevenue?.previous}`,
         },

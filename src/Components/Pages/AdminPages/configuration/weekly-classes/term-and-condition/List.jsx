@@ -1,10 +1,11 @@
 // List.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState ,useMemo} from 'react';
 import Loader from '../../../contexts/Loader';
 import TermCard from './TermCard';
 import { useNavigate } from 'react-router-dom';
 import { useTermContext } from '../../../contexts/TermDatesSessionContext';
 import { usePermission } from '../../../Common/permission';
+import { useGlobalSearch } from '../../../contexts/GlobalSearchContext';
 
 const formatDate = (iso) => {
   const d = new Date(iso);
@@ -25,6 +26,8 @@ const formatShortDate = (iso) => {
 
 const List = () => {
   const navigate = useNavigate();
+    const { searchQuery } = useGlobalSearch();
+
   const { fetchTermGroup, fetchTerm, termGroup, termData, loading } = useTermContext();
   const [sessionDataList, setSessionDataList] = useState([]);
   const [classList, setClassList] = useState([]);
@@ -148,8 +151,49 @@ const List = () => {
     setClassList(allClasses);
   }, [termGroup, termData]);
 
+const filteredData = useMemo(() => {
+  if (!searchQuery) {
+    return classList.map((item, i) => ({
+      item,
+      sessionData: sessionDataList[i],
+    }));
+  }
 
+  const query = searchQuery.toLowerCase();
 
+  return classList
+    .map((item, i) => ({
+      item,
+      sessionData: sessionDataList[i],
+    }))
+    .filter(({ item, sessionData }) => {
+      const values = [
+        item.name,
+        item.autumn,
+        item.spring,
+        item.summer,
+        item.facility,
+      ];
+
+      const sessionMatch = sessionData?.some((session) =>
+        [
+          session.term,
+          session.date,
+          session.exclusion,
+          ...(session.sessions || []).map((s) => s.groupName),
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(query)
+      );
+
+      return (
+        values.some((val) =>
+          String(val || "").toLowerCase().includes(query)
+        ) || sessionMatch
+      );
+    });
+}, [classList, sessionDataList, searchQuery]);
   const { checkPermission } = usePermission();
   const canCreate =
     checkPermission({ module: 'term-group', action: 'create' }) &&
@@ -235,15 +279,15 @@ const List = () => {
 
       {/* Term Cards */}
       <div className="transition-all duration-300 h-full w-full">
-        {classList.length > 0 ? (
+        {filteredData.length > 0 ? (
           <div className="rounded-[30px] shadow bg-white p-[10px] flex flex-col gap-6">
-            {classList.map((item, index) => (
-              <TermCard
-                key={index}
-                item={item}
-                sessionData={sessionDataList[index]}
-              />
-            ))}
+            {filteredData.map(({ item, sessionData }, index) => (
+  <TermCard
+    key={index}
+    item={item}
+    sessionData={sessionData} // ✅ correct
+  />
+))}
           </div>
         ) : (
           <div className="flex items-center justify-center h-40 text-[#717073] font-medium">

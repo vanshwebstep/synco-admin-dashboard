@@ -1,13 +1,14 @@
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import Loader from '../../contexts/Loader';
+import { useGlobalSearch } from '../../contexts/GlobalSearchContext';
 
 const MainTable = () => {
     const navigate = useNavigate();
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const tabs = ["membership", "birthdayParty", "oneToOne", "trials", "holidayCamps"];
-
+    const { searchQuery } = useGlobalSearch();
     const [members, setMembers] = useState({
         birthdayParty: [],
         membership: [],
@@ -64,14 +65,52 @@ const MainTable = () => {
                 : [...prev, userId]
         );
     };
-    const activeMembers = members?.[activeTab] ?? [];
-    const isAllSelected =
-        activeMembers.length > 0 &&
-        selectedUserIds.length === activeMembers.length;
+ const activeMembers = members?.[activeTab] ?? [];
+
+     const filteredMembers = useMemo(() => {
+    if (!searchQuery) return activeMembers;
+
+    const query = searchQuery.toLowerCase();
+
+    return activeMembers.filter((main) => {
+        const user = main?.booking || main;
+
+        const fullName = `${user?.firstName || ""} ${user?.lastName || ""}`.toLowerCase();
+
+        const parentName = user?.parents?.[0]
+            ? `${user.parents[0].parentFirstName || ""} ${user.parents[0].parentLastName || ""}`.toLowerCase()
+            : "";
+
+        const studentName = user?.students?.[0]
+            ? `${user.students[0].studentFirstName || ""} ${user.students[0].studentLastName || ""}`.toLowerCase()
+            : "";
+
+        const values = [
+            fullName,
+            parentName,
+            studentName,
+            user?.email,
+            user?.phone,
+            user?.venue,
+            user?.membershipPlan,
+            user?.status,
+            user?.bookedBy,
+            user?.createdAt,
+        ];
+
+        return values.some((val) =>
+            String(val || "").toLowerCase().includes(query)
+        );
+    });
+}, [activeMembers, searchQuery]);
+   
+ const isAllSelected =
+  filteredMembers.length > 0 &&
+  selectedUserIds.length === filteredMembers.length;
 
     const toggleSelectAll = () => {
         if (isAllSelected) setSelectedUserIds([]);
-        else setSelectedUserIds(activeMembers.map((user) => user.id));
+       else setSelectedUserIds(filteredMembers.map((user) => user.id));
     };
 
 
@@ -101,19 +140,20 @@ const MainTable = () => {
         const formatted = String(val).replace(/_/g, ' ').trim();
         return formatted;
     };
-
-    if (loading) return <Loader />;
+  
+   
 
     // Pagination logic
-    const totalPages = Math.ceil(activeMembers.length / itemsPerPage);
+    const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
+
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
 
-    const currentMembers = activeMembers.slice(
+
+    const currentMembers = filteredMembers.slice(
         indexOfFirstItem,
         indexOfLastItem
     );
-
     console.log('activeMembers', activeMembers);
     console.log('currentMembers', currentMembers);
 
@@ -121,7 +161,10 @@ const MainTable = () => {
         if (page < 1 || page > totalPages) return;
         setCurrentPage(page);
     };
-
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, activeTab]);
+     if (loading) return <Loader />;
     return (
         <>
             <div className="flex justify-start mb-6 space-x-3 w-fit bg-[#F9F9FB] p-3 rounded-xl">

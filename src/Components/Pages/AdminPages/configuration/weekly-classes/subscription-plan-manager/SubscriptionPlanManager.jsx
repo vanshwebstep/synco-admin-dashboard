@@ -5,13 +5,14 @@ import { usePayments } from '../../../contexts/PaymentPlanContext';
 import { showConfirm, showError } from '../../../../../../utils/swalHelper';
 import Loader from '../../../contexts/Loader';
 import { usePermission } from '../../../Common/permission';
+import { useGlobalSearch } from '../../../contexts/GlobalSearchContext';
 const SubscriptionPlanManagerList = () => {
   const { fetchGroups, groups, deleteGroup, fetchGroupById, selectedGroup, loading, setLoading } = usePayments();
   const navigate = useNavigate();
   const [openForm, setOpenForm] = useState(false);
   const [checkedIds, setCheckedIds] = useState([]);
   const [previewShowModal, setPreviewShowModal] = useState(false);
-
+const { searchQuery } = useGlobalSearch();
 
   useEffect(() => {
     const getPackages = async () => {
@@ -25,6 +26,22 @@ const SubscriptionPlanManagerList = () => {
     };
     getPackages();
   }, [fetchGroups]);
+  const filteredGroups = React.useMemo(() => {
+  if (!searchQuery) return groups;
+
+  const query = searchQuery.toLowerCase();
+
+  return groups.filter((group) => {
+    return [
+      group.name,
+      group.createdAt,
+      group.paymentPlans?.length?.toString()
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(query);
+  });
+}, [groups, searchQuery]);
   const [activeTab, setActiveTab] = useState({});
   const [studentKeys, setStudentKeys] = useState([]);
   const [groupByStudents, setGroupByStudents] = useState([]);
@@ -236,7 +253,7 @@ const SubscriptionPlanManagerList = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {groups.length === 0 ? (
+                    {filteredGroups .length === 0 ? (
                       <tr>
                         <td
                           colSpan={4}
@@ -246,7 +263,7 @@ const SubscriptionPlanManagerList = () => {
                         </td>
                       </tr>
                     ) : (
-                      groups.map((user, idx) => (
+                      filteredGroups .map((user, idx) => (
                         <tr
                           key={idx}
                           className="border-t font-semibold text-[#282829] border-gray-200 hover:bg-gray-50"
@@ -334,7 +351,7 @@ const SubscriptionPlanManagerList = () => {
 
                 {/* Mobile Version */}
                 <div className="md:hidden space-y-4">
-                  {groups.map((user, idx) => (
+                  {filteredGroups .map((user, idx) => (
                     <div key={idx} className="border rounded-lg p-4 shadow-sm bg-white">
                       <div className="flex justify-between items-center mb-2">
                         <div className="font-semibold text-[#282829]">{user.name}</div>

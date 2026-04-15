@@ -158,7 +158,7 @@ export default function Reports() {
 
   const topAgents =
     charts?.currentYear?.topAgents?.map((a) => ({
-      name: `${a.creator.firstName} ${a.creator.lastName}`,
+      name: `${a.creator?.firstName} ${a.creator?.lastName}`,
       value: a.leadCount,
       avatar: a.creator.profile,
     })) || [];

@@ -12,7 +12,16 @@ import { useNavigate } from "react-router-dom";
 const Lead = () => {
     const leadsData = useLeads();
     const [showFilter, setShowFilter] = useState(false);
-    const { activeTab, setActiveTab, setSearchTerm, tabs, fetchData, setSelectedVenue, loading, setCurrentPage } = leadsData;
+    const {
+        activeTab,
+        setActiveTab,
+        setSearchTerm,
+        tabs,
+        fetchData,
+        setSelectedVenue,
+        loading,
+        setCurrentPage
+    } = useLeads() || {};
     const navigate = useNavigate();
     useEffect(() => {
         fetchData();
@@ -23,7 +32,7 @@ const Lead = () => {
         <div className="min-h-screen overflow-hidden bg-gray-50 py-6 flex flex-col lg:flex-row ">
 
 
-            <div className={`fullwidth80 gap-6 md:pe-3 mb-4 md:mb-0 ${showFilter ? "md:w-[73%]" : "w-full"}`}>
+            <div className={` gap-6 md:pe-3 mb-4 md:mb-0 ${showFilter ? "md:w-[73%]" : "w-full"}`}>
                 <Cards />
                 <div className="flex justify-between items-center mt-5">
 

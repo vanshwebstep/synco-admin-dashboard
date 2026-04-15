@@ -50,23 +50,33 @@ export const PaymentPlanContextProvider = ({ children }) => {
   }, [token]);
 
   // Create package
-  const createPackage = useCallback(async (data) => {
-    if (!token) return;
-    try {
-      await fetch(`${API_BASE_URL}/api/admin/payment-plan`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
-      await fetchPackages();
-    } catch (err) {
-      console.error("Failed to create package:", err);
-    }
-  }, [token, fetchPackages]);
+const createPackage = useCallback(async (data) => {
+  if (!token) return { status: false, message: "No token" };
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/payment-plan`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
 
+    const result = await response.json();
+
+    if (!response.ok || !result?.status) {
+      return result; // return failure so component can show error
+    }
+
+    // Refresh list in background — component handles its own state update
+    fetchPackages();
+
+    return result; // ✅ component receives { status, data, message }
+  } catch (err) {
+    console.error("Failed to create package:", err);
+    return { status: false, message: "Network error" };
+  }
+}, [token, fetchPackages]);
   // Update package
 const updatePackage = useCallback(async (id, data) => {
   if (!token) return { status: false, message: "No token" };

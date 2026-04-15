@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef,useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   MapPin,
@@ -15,6 +15,7 @@ import { MapContainer, TileLayer, Marker, Popup, ZoomControl } from 'react-leafl
 
 
 import ResizeMap from "../../Common/ResizeMap";
+import { useGlobalSearch } from "../../contexts/GlobalSearchContext";
 
 const Facebook = () => {
 
@@ -23,6 +24,7 @@ const Facebook = () => {
   const PRef = useRef(null);
   const [calendarData, setCalendarData] = useState([]);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const { searchQuery } = useGlobalSearch();
 
   const { loading, fetchData, data, selectedUserIds, setSelectedUserIds, setSelectedBookingIds, selectedBookingIds, setCurrentPage, currentPage } = useLeads();
   const [expandedRow, setExpandedRow] = useState(null);
@@ -359,22 +361,52 @@ const Facebook = () => {
       window.scrollTo({ top: 0, behavior: 'auto' });
     }, 50);
   };
+  const searchedData = useMemo(() => {
+    if (!searchQuery) return data || [];
 
-  const totalItems = data.length;
+    const query = searchQuery.toLowerCase();
+
+    return data.filter((lead) => {
+      const values = [
+        lead?.firstName,
+        lead?.lastName,
+        lead?.email,
+        lead?.phone,
+        lead?.postcode,
+        lead?.childAge,
+        lead?.status,
+        lead?.assignedAgent?.firstName,
+        lead?.assignedAgent?.lastName,
+      ];
+
+      const fullName = `${lead?.firstName || ""} ${lead?.lastName || ""}`.toLowerCase();
+
+      return (
+        fullName.includes(query) ||
+        values.some((val) =>
+          String(val || "")
+            .toLowerCase()
+            .includes(query)
+        )
+      );
+    });
+  }, [data, searchQuery]);
+  const totalItems = searchedData.length;
   const totalPages = Math.ceil(totalItems / rowsPerPage);
 
   const startIndex = (currentPage - 1) * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
 
   // ✅ data used for rendering table rows
-  const paginatedData = data.slice(startIndex, endIndex);
-  React.useEffect(() => {
-    setCurrentPage(1);
-  }, [rowsPerPage]);
+
+  const paginatedData = searchedData.slice(startIndex, endIndex);
+React.useEffect(() => {
+  setCurrentPage(1);
+}, [rowsPerPage, searchQuery]);
 
   console.log('selectedUserIds', selectedUserIds)
   if (loading) return <Loader />;
-  if (data.length == 0) return <p className="text-center">No Data Found</p>;
+  if (searchedData.length == 0) return <p className="text-center">No Data Found</p>;
   return (
     <>
       <div className="overflow-auto rounded-2xl bg-white shadow-sm">
@@ -419,7 +451,7 @@ const Facebook = () => {
 
                       </div>
                     </td>
-                    <td className="py-3 px-4">{lead?.firstName + ' ' + lead?.lastName || '-'}</td>
+                    <td className="py-3 px-4">{`${lead?.firstName || ""} ${lead?.lastName || ""}`.trim() || "-"}</td>
                     <td className="py-3 px-4">{lead.email || '-'}</td>
                     <td className="py-3 px-4">{lead.phone || '-'}</td>
                     <td className="py-3 px-4">{lead.postcode || '-'}</td>

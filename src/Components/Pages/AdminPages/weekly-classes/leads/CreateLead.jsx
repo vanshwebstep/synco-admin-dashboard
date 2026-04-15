@@ -292,7 +292,7 @@ const CreateLead = () => {
             </div>
 
             <div className="bg-white my-10 rounded-3xl p-6 space-y-4">
-                <h2 className="text-[24px] font-semibold">Comment</h2>
+                
 
                 <div className="flex items-center gap-2">
                     <img

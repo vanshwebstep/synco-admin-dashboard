@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 import { useDiscounts } from '../../../contexts/DiscountContext';
 import Loader from '../../../contexts/Loader';
 import { usePermission } from '../../../Common/permission';
+import { useGlobalSearch } from '../../../contexts/GlobalSearchContext';
 
 
 
@@ -12,6 +13,7 @@ import { usePermission } from '../../../Common/permission';
 
 const HolidayDiscountList = () => {
   const { fetchDiscounts, discounts, loading } = useDiscounts();
+  const { searchQuery } = useGlobalSearch();
   useEffect(() => {
     const getPackages = async () => {
       try {
@@ -29,6 +31,27 @@ const HolidayDiscountList = () => {
   const [openForm, setOpenForm] = useState(false);
   const [checked, setChecked] = useState(false);
   console.log('discounts', discounts)
+  const filteredDiscounts = React.useMemo(() => {
+    if (!Array.isArray(discounts)) return [];
+
+    if (!searchQuery) return discounts;
+
+    const query = searchQuery.toLowerCase();
+
+    return discounts.filter((item) => {
+      const combinedText = [
+        item.code,
+        item.type,
+        item.status,
+        item.value,
+        item.usageCount
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return combinedText.includes(query);
+    });
+  }, [discounts, searchQuery]);
   if (loading) {
     return (
       <>
@@ -69,48 +92,57 @@ const HolidayDiscountList = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {discounts.map((user, idx) => (
-                    <tr
-                      key={idx}
-                      className="border-t font-semibold text-[#282829] border-gray-200 hover:bg-gray-50"
-                    >
-                      <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() =>
-                              setCheckedRows(prev => ({
-                                ...prev,
-                                [user.id]: !prev[user.id], // or user.code
-                              }))
-                            }
-                            className="w-5 h-5 me-2 flex items-center justify-center rounded-md border-2 border-gray-500"
-                          >
-                            {checkedRows[user.id] && (
-                              <Check size={16} strokeWidth={3} className="text-gray-500" />
-                            )}
-                          </button>
-
-                          <div>
-                            <span>{user.code}</span>
-                            <br />
-                            <span className="text-[12px] text-gray-400">
-                              {`${user.value} %off in holiday Camps`}
-                            </span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="p-4">{user.type}</td>
-                      <td className="p-4">{'Amount off products'}</td>
-                      <td className="p-4 text-center">{user.usageCount || 0}</td>
-                      <td className="p-4">
-                        <div className="flex gap-2 capitalize items-center justify-center">
-                          <button className={` ${user.status == 'active' ? 'text-green-400 bg-green-100 ' : 'text-orange-400 bg-orange-100'}  px-7 rounded-lg py-1 text-[14px]`}>
-                            {user.status || 'Paused'}
-                          </button>
-                        </div>
+                  {filteredDiscounts.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-6 text-center text-gray-500">
+                        No discounts found
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    
+                      filteredDiscounts.map((user, idx) => (
+                        <tr
+                          key={idx}
+                          className="border-t font-semibold text-[#282829] border-gray-200 hover:bg-gray-50"
+                        >
+                          <td className="p-4">
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={() =>
+                                  setCheckedRows(prev => ({
+                                    ...prev,
+                                    [user.id]: !prev[user.id], // or user.code
+                                  }))
+                                }
+                                className="w-5 h-5 me-2 flex items-center justify-center rounded-md border-2 border-gray-500"
+                              >
+                                {checkedRows[user.id] && (
+                                  <Check size={16} strokeWidth={3} className="text-gray-500" />
+                                )}
+                              </button>
+
+                              <div>
+                                <span>{user.code}</span>
+                                <br />
+                                <span className="text-[12px] text-gray-400">
+                                  {`${user.value} %off in holiday Camps`}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-4">{user.type}</td>
+                          <td className="p-4">{'Amount off products'}</td>
+                          <td className="p-4 text-center">{user.usageCount || 0}</td>
+                          <td className="p-4">
+                            <div className="flex gap-2 capitalize items-center justify-center">
+                              <button className={` ${user.status == 'active' ? 'text-green-400 bg-green-100 ' : 'text-orange-400 bg-orange-100'}  px-7 rounded-lg py-1 text-[14px]`}>
+                                {user.status || 'Paused'}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                  )}
                 </tbody>
               </table>
             </div>

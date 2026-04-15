@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback ,useMemo} from "react";
 import { FiSearch } from "react-icons/fi";
 import Select from "react-select";
 import DatePicker from "react-datepicker";
@@ -23,6 +23,7 @@ import { useNavigate } from "react-router-dom";
 import Loader from "../../../contexts/Loader";
 import { useAccountsInfo } from "../../../contexts/AccountsInfoContext";
 import { showError, showSuccess, showWarning } from "../../../../../../utils/swalHelper";
+import { useGlobalSearch } from "../../../contexts/GlobalSearchContext";
 const BirthdayLeadsDashboard = () => {
   const navigate = useNavigate();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -32,6 +33,7 @@ const BirthdayLeadsDashboard = () => {
   console.log('noLoaderShow', noLoaderShow);
   const [showFilter, setShowFilter] = useState(false);
   const [textloading, setTextLoading] = useState(null);
+  const { searchQuery } = useGlobalSearch();
 
   const modalRef = useRef(null);
   const [loading, setLoading] = useState(false);
@@ -382,26 +384,37 @@ const BirthdayLeadsDashboard = () => {
   };
 
 
-  const handleSearch = (e) => {
-    const value = e.target.value;
-    setSearchTerm(value);
+const handleSearch = (e) => {
+  const value = e.target.value;
+  setSearchTerm(value);
+  setCurrentPage(1);
 
-    if (value.length === 0) {
-      setNoLoaderShow(true);
-      // Optionally re-fetch default data when cleared
-      fetchLeads("");
-      setCurrentPage(1);
-      return;
-    }
-    setNoLoaderShow(false);
-    setCurrentPage(1);
+  clearTimeout(window.searchTimeout);
+  window.searchTimeout = setTimeout(() => {
+    fetchLeads(value); // API call
+  }, 400);
+};
+const searchedData = useMemo(() => {
+  if (!searchQuery) return leadsData || [];
 
-    // ✅ Optional debounce for better performance
-    clearTimeout(window.searchTimeout);
-    window.searchTimeout = setTimeout(() => {
-      fetchLeads(value);
-    }, 400);
-  };
+  const query = searchQuery.toLowerCase();
+
+  return (leadsData || []).filter((lead) => {
+    const values = [
+      lead?.parentName,
+      lead?.childName,
+      lead?.age,
+      lead?.packageInterest,
+      lead?.source,
+      lead?.status,
+      lead?.partyDate,
+    ];
+
+    return values.some((val) =>
+      String(val || "").toLowerCase().includes(query)
+    );
+  });
+}, [leadsData, searchQuery]);
 
   const [selectedUserIds, setSelectedUserIds] = useState([]);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -635,19 +648,19 @@ const BirthdayLeadsDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  const totalItems = leadsData.length;
-  const totalPages = Math.ceil(totalItems / rowsPerPage);
+const totalItems = searchedData.length;
+const totalPages = Math.ceil(totalItems / rowsPerPage);
 
-  const startIndex = (currentPage - 1) * rowsPerPage;
-  const paginatedData = leadsData.slice(
-    startIndex,
-    startIndex + rowsPerPage
-  );
+const startIndex = (currentPage - 1) * rowsPerPage;
 
+const paginatedData = searchedData.slice(
+  startIndex,
+  startIndex + rowsPerPage
+);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [rowsPerPage]);
+useEffect(() => {
+  setCurrentPage(1);
+}, [searchQuery, searchTerm]);
   // Prepare calendar cells
   const daysArray = [];
   for (let i = 0; i < firstDay; i++) daysArray.push(null);

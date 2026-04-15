@@ -1,17 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check } from "lucide-react";
 import Loader from '../../../contexts/Loader';
 import { usePermission } from '../../../Common/permission';
 import { useHolidayPayments } from '../../../contexts/HolidayPaymentContext';
 import { showConfirm, showError } from '../../../../../../utils/swalHelper';
+import { useGlobalSearch } from '../../../contexts/GlobalSearchContext';
 const HolidaySubscriptionPlanManager = () => {
   const { fetchGroups, groups, deleteGroup, fetchGroupById, selectedGroup, loading } = useHolidayPayments();
   const navigate = useNavigate();
   const [openForm, setOpenForm] = useState(false);
   const [checkedIds, setCheckedIds] = useState([]);
   const [previewShowModal, setPreviewShowModal] = useState(false);
-
+const { searchQuery } = useGlobalSearch();
 
   useEffect(() => {
     const getPackages = async () => {
@@ -63,13 +64,28 @@ const HolidaySubscriptionPlanManager = () => {
       }
     });
   }
-  if (loading) {
-    return (
-      <>
-        <Loader />
-      </>
-    )
-  }
+ 
+  const filteredGroups = React.useMemo(() => {
+  if (!searchQuery) return groups;
+
+  const query = searchQuery.toLowerCase();
+
+  return groups.filter((group) => {
+    const plansText = group.holidayPaymentPlans
+      ?.map(p => `${p.title} ${p.price} ${p.interval}`)
+      .join(" ") || "";
+
+    const combinedText = [
+      group.name,
+      group.createdAt,
+      plansText
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    return combinedText.includes(query);
+  });
+}, [groups, searchQuery]);
   function unescapeHTML(escapedStr) {
     const doc = new DOMParser().parseFromString(escapedStr, "text/html");
     return doc.documentElement.textContent;
@@ -93,6 +109,13 @@ const HolidaySubscriptionPlanManager = () => {
   const canCreate = checkPermission({ module: 'payment-group', action: 'create' });
   const canEdit = checkPermission({ module: 'payment-group', action: 'update' });
   const canDelete = checkPermission({ module: 'payment-group', action: 'delete' });
+   if (loading) {
+    return (
+      <>
+        <Loader />
+      </>
+    )
+  }
   return (
     <div className={`p-4 md:p-6 ${previewShowModal ? 'max-w-[1045px]' : 'max-w-full'} bg-gray-50 `}>
 
@@ -222,7 +245,7 @@ const HolidaySubscriptionPlanManager = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {groups.length === 0 ? (
+                    {filteredGroups.length === 0 ? (
                       <tr>
                         <td
                           colSpan={4}
@@ -232,7 +255,7 @@ const HolidaySubscriptionPlanManager = () => {
                         </td>
                       </tr>
                     ) : (
-                      groups.map((user, idx) => (
+                      filteredGroups.map((user, idx) => (
                         <tr
                           key={idx}
                           className="border-t font-semibold text-[#282829] border-gray-200 hover:bg-gray-50"

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback ,useMemo} from "react";
 
 import { Eye, User, Edit2, Trash2, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -9,7 +9,9 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
 import { usePermission } from "../../Common/permission";
 import { showError, showConfirm, showLoading, showSuccess } from "../../../../../utils/swalHelper";
+import { useGlobalSearch } from "../../contexts/GlobalSearchContext";
 const BirthdaySessionPlan = () => {
+  const { searchQuery } = useGlobalSearch();
 
     const [sessionGroup, setSessionGroup] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -208,7 +210,23 @@ const BirthdaySessionPlan = () => {
         updatedList.splice(result.destination.index, 0, movedItem);
         setTempList(updatedList);
     };
+const filteredSessionGroup = useMemo(() => {
+    if (!searchQuery) return tempList || [];
 
+    const query = searchQuery.toLowerCase();
+
+    return tempList.filter((group) => {
+        // group name match
+        const groupMatch = group.groupName?.toLowerCase().includes(query);
+
+        // levels match (beginner, intermediate etc.)
+        const levelMatch = Object.keys(group.levels || {}).some((levelKey) => {
+            return levelKey.toLowerCase().includes(query);
+        });
+
+        return groupMatch || levelMatch;
+    });
+}, [tempList, searchQuery]);
 
     useEffect(() => {
         setTempList(weekList); // initialize tempList with server list
@@ -276,7 +294,7 @@ const BirthdaySessionPlan = () => {
                                 ref={provided.innerRef}
                                 {...provided.droppableProps}
                             >
-                                {tempList.map((group, index) => {
+                                {filteredSessionGroup.map((group, index) => {
                                     return (
                                         <Draggable
                                             key={group.id}

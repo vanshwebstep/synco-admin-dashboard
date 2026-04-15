@@ -902,3 +902,6 @@ iframe {
     print-color-adjust: exact !important;
   }
 }
+.mainShadow {
+box-shadow: rgba(99, 99, 99, 0.2) 0px 1px 4px 0px !important;
+}

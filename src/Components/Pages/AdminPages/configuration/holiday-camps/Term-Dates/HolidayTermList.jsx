@@ -1,15 +1,15 @@
 // List.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState , useMemo } from 'react';
 import Loader from '../../../contexts/Loader';
 import { useNavigate } from 'react-router-dom';
 import { usePermission } from '../../../Common/permission';
 import { useHolidayTerm } from '../../../contexts/HolidayTermsContext';
 import { showError, showSuccess, showConfirm } from "../../../../../../utils/swalHelper";
-
+import { useGlobalSearch } from '../../../contexts/GlobalSearchContext';
 const HolidayTermList = () => {
   const navigate = useNavigate();
   const { fetchHolidayCampDate, termData, loading, deleteCampDate } = useHolidayTerm();
-
+  const { searchQuery } = useGlobalSearch();
   useEffect(() => {
     fetchHolidayCampDate();
   }, [fetchHolidayCampDate]);
@@ -66,10 +66,31 @@ const HolidayTermList = () => {
     checkPermission({ module: 'term-group', action: 'create' }) &&
     checkPermission({ module: 'term', action: 'create' }) &&
     checkPermission({ module: 'session-plan-group', action: 'view-listing' });
+const filteredTermData = React.useMemo(() => {
+  if (!searchQuery) return termData;
+
+  const query = searchQuery.toLowerCase();
+
+  return termData.filter((item) => {
+    const combinedText = [
+      item?.holidayCamp?.name,
+      item.startDate,
+      item.endDate,
+      item.totalDays,
+      ...(item.sessionsMap || []).map(
+        (s) => `${s?.sessionPlan?.groupName} ${s?.sessionDate}`
+      ),
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    return combinedText.includes(query);
+  });
+}, [termData, searchQuery]);
 
   if (loading) return <Loader />;
 
-  if (!termData.length && !termData.length) {
+  if (!filteredTermData.length && !filteredTermData.length) {
     return (
       <>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 w-full">
@@ -95,7 +116,7 @@ const HolidayTermList = () => {
     );
   }
 
-  if (!loading && !termData.length) {
+  if (!loading && !filteredTermData.length) {
     return (
       <>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 w-full">
@@ -143,7 +164,7 @@ const HolidayTermList = () => {
 
       {/* Term Cards */}
       <div className="transition-all duration-300 h-full w-full">
-        {termData.map((item, indx) => (
+        {filteredTermData.map((item, indx) => (
           <div key={item.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow hover:shadow-md transition mb-4">
 
             <div className="flex flex-col md:flex-row justify-between p-4 gap-4 text-sm">

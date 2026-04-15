@@ -30,6 +30,7 @@ import { useBookFreeTrial } from '../../../contexts/BookAFreeTrialContext';
 import { useMembers } from '../../../contexts/MemberContext';
 import { useNotification } from '../../../contexts/NotificationContext';
 import Loader from '../../../contexts/Loader';
+import Comments from '../../../Common/Comments';
 
 const List = () => {
     useEffect(() => {
@@ -56,7 +57,7 @@ const List = () => {
     console.log('comesFrom', comesFrom)
     // console.log('classId', classId)
     const { fetchFindClassID, singleClassSchedulesOnly, loading } = useClassSchedule() || {};
-    const { createBookFreeTrials, isBooked, setIsBooked, fetchMembershipByParent, parentData,createBookFreeTrialsByWaitingList, } = useBookFreeTrial()
+    const { createBookFreeTrials, isBooked, setIsBooked, fetchMembershipByParent, parentData, createBookFreeTrialsByWaitingList, } = useBookFreeTrial()
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { keyInfoData, fetchKeyInfo } = useMembers();
     const { adminInfo, setAdminInfo } = useNotification();
@@ -106,7 +107,7 @@ const List = () => {
         setCurrentPage(page);
     };
     const [congestionNote, setCongestionNote] = useState(null);
-    const [numberOfStudents, setNumberOfStudents] = useState('1')
+    const [numberOfStudents, setNumberOfStudents] = useState(1)
     const [selectedDate, setSelectedDate] = useState(null);
 
     const formatTimeAgo = (timestamp) => {
@@ -142,6 +143,26 @@ const List = () => {
         { value: "Father", label: "Father" },
         { value: "Guardian", label: "Guardian" },
     ];
+    const interestReasonOptions = [
+        { value: "To build my child's confidence", label: "To build my child's confidence" },
+        { value: "To improve their technical football skills", label: "To improve their technical football skills" },
+        { value: "Because my child loves football", label: "Because my child loves football" },
+        { value: "To help my child make friends and build social skills", label: "To help my child make friends and build social skills" },
+        { value: "To keep my child active and healthy", label: "To keep my child active and healthy" },
+        { value: "High-quality coaching in a fun, positive environment", label: "High-quality coaching in a fun, positive environment" },
+        { value: "Other", label: "Other" },
+
+    ];
+const handleRemoveStudent = (indexToRemove) => {
+        setStudents((prevStudents) => {
+            const updatedStudents = prevStudents.filter((_, i) => i !== indexToRemove);
+
+            // ✅ IMPORTANT: sync input field
+            setNumberOfStudents(updatedStudents.length);
+
+            return updatedStudents;
+        });
+    };
     const ClassOptions = [
         { value: "4–7 years", label: "4–7 years" },
         { value: "7–10 years", label: "7-10 years" },
@@ -193,7 +214,7 @@ const List = () => {
     const trialKeyInfo = Array.isArray(keyInfoData)
         ? keyInfoData.find(item => item.serviceType === 'trial')?.keyInformationRaw
         : keyInfoData?.keyInformationRaw;
-    
+
     const renderContent = (content) => {
         return (
             <div
@@ -440,18 +461,55 @@ const List = () => {
     const [sameAsAbove, setSameAsAbove] = useState(false);
 
     // 🔁 Calculate Age Automatically
-    const handleDOBChange = (index, date) => {
-        const today = new Date();
-        let ageNow = today.getFullYear() - date.getFullYear();
-        const m = today.getMonth() - date.getMonth();
+    const handleDOBChange = (index, value) => {
+        // Remove non-numeric characters
+        let cleaned = value.replace(/[^\d]/g, "");
 
-        if (m < 0 || (m === 0 && today.getDate() < date.getDate())) {
-            ageNow--;
+        // Format to DD/MM/YYYY
+        if (cleaned.length > 2 && cleaned.length <= 4) {
+            cleaned = `${cleaned.slice(0, 2)}/${cleaned.slice(2)}`;
+        } else if (cleaned.length > 4) {
+            cleaned = `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}/${cleaned.slice(4, 8)}`;
         }
 
         const updatedStudents = [...students];
-        updatedStudents[index].dateOfBirth = date;
-        updatedStudents[index].age = ageNow;
+        updatedStudents[index].dateOfBirth = cleaned;
+
+        // Calculate age only if full date entered
+        if (cleaned.length === 10) {
+            const [day, month, year] = cleaned.split("/").map(Number);
+
+            const date = new Date(year, month - 1, day);
+
+            // Validate proper date
+            const isValid =
+                date &&
+                date.getDate() === day &&
+                date.getMonth() === month - 1 &&
+                date.getFullYear() === year;
+
+            if (isValid) {
+                const today = new Date();
+                let ageNow = today.getFullYear() - year;
+                const m = today.getMonth() - (month - 1);
+
+                if (m < 0 || (m === 0 && today.getDate() < day)) {
+                    ageNow--;
+                }
+
+                // Apply your 3–100 age rule
+                if (ageNow >= 3 && ageNow <= 100) {
+                    updatedStudents[index].age = ageNow;
+                } else {
+                    updatedStudents[index].age = "";
+                }
+            } else {
+                updatedStudents[index].age = "";
+            }
+        } else {
+            updatedStudents[index].age = "";
+        }
+
         setStudents(updatedStudents);
     };
 
@@ -537,6 +595,8 @@ const List = () => {
             parentEmail: '',
             parentPhoneNumber: '',
             relationToChild: '',
+            interestReason: '',
+            interestReasonOther: '',
             howDidYouHear: ''
 
         }
@@ -551,6 +611,8 @@ const List = () => {
                 parentEmail: '',
                 parentPhoneNumber: '',
                 relationToChild: '',
+                interestReason: '',
+                interestReasonOther: '',
                 howDidYouHear: ''
             },
         ]);
@@ -666,6 +728,8 @@ const List = () => {
                 parentLastName: primaryParent.parentLastName,
                 parentPhoneNumber: primaryParent.parentPhoneNumber,
                 relationToChild: primaryParent.relationToChild?.label || "",
+                interestReason: primaryParent.interestReason || "",
+                interestReasonOther: primaryParent.interestReasonOther || "",
                 sameAsAbove: true
             };
         }
@@ -699,13 +763,29 @@ const List = () => {
 
     const toDateOnly = (date) => {
         if (!date) return null;
+
+        // If already in YYYY-MM-DD (backend case)
+        if (typeof date === "string" && date.includes("-")) {
+            return date;
+        }
+
+        // Handle DD/MM/YYYY
+        if (typeof date === "string" && date.includes("/")) {
+            const [day, month, year] = date.split("/");
+
+            if (!day || !month || !year) return null;
+
+            return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+        }
+
+        // Fallback (Date object case)
         const d = new Date(date);
+        if (isNaN(d)) return null;
 
         const year = d.getFullYear();
         const month = String(d.getMonth() + 1).padStart(2, "0");
         const day = String(d.getDate()).padStart(2, "0");
 
-        // PURE DATE, NO TIMEZONE CONVERSION POSSIBLE
         return `${year}-${month}-${day}`;
     };
     const handleSubmit = async () => {
@@ -747,7 +827,7 @@ const List = () => {
             parents: parents.map(({ id, ...rest }) => rest),
             emergency,
         };
-         const payloadwaitinglist = {
+        const payloadwaitinglist = {
             bookingId: TrialData?.bookingId || null,
             keyInformation: selectedKeyInfo,
             venueId: singleClassSchedulesOnly?.venue?.id,
@@ -798,7 +878,7 @@ const List = () => {
         }
     };
 
-   useEffect(() => {
+    useEffect(() => {
         if (!finalClassId) {
             navigate("/weekly-classes/find-a-class", { replace: true });
         }
@@ -810,7 +890,7 @@ const List = () => {
 
                 await fetchFindClassID(finalClassId);
                 await fetchKeyInfo();
-                await fetchComments();
+                // await fetchComments();
 
                 // 👇 Call membership API
                 if (existingparentid) {
@@ -936,12 +1016,21 @@ const List = () => {
     const sessionDatesSet = new Set(sessionDates);
     console.log('sessionDatesSet', sessionDatesSet);
     useEffect(() => {
-        // Run only once, and only if there are session dates
         if (hasInitialized.current || !sessionDatesSet || sessionDatesSet.size === 0) return;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
         const allDates = Array.from(sessionDatesSet)
             .map(dateStr => new Date(dateStr))
+            .filter(d => {
+                const date = new Date(d);
+                date.setHours(0, 0, 0, 0);
+                return date >= today; // ✅ Sirf future dates
+            })
             .sort((a, b) => a - b);
+
+        if (allDates.length === 0) return; // koi future date nahi
 
         const earliestDate = allDates[0];
 
@@ -953,7 +1042,7 @@ const List = () => {
             )
         );
 
-        hasInitialized.current = true; // ✅ mark as done
+        hasInitialized.current = true;
     }, [sessionDatesSet]);
 
     const handleSubmitClick = (e) => {
@@ -974,6 +1063,8 @@ const List = () => {
                     parentEmail: parentData.parentEmail || "",
                     parentPhoneNumber: parentData.parentPhoneNumber || "",
                     relationToChild: "",
+                    interestReason: parentData.interestReason || "",
+                    interestReasonOther: parentData.interestReasonOther || "",
                     howDidYouHear: "",
                 },
             ]);
@@ -1155,7 +1246,7 @@ const List = () => {
                                     value={numberOfStudents}
                                     onChange={(e) => {
                                         const val = Number(e.target.value);
-                                        if ([1, 2, 3].includes(val) || e.target.value === "") {
+                                        if ([1, 2, 3, 4].includes(val) || e.target.value === "") {
                                             setNumberOfStudents(e.target.value);
                                         }
                                         // Do nothing if invalid
@@ -1264,8 +1355,16 @@ const List = () => {
                                     initial={{ opacity: 0, y: 30 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.4, delay: index * 0.1 }}
-                                    className="bg-white mb-10 p-6 rounded-3xl shadow-sm space-y-6"
+                                    className="bg-white mb-10 p-6 rounded-3xl shadow-sm space-y-6 relative"
                                 >
+                                     {students.length > 1 && (
+                                        <button
+                                            onClick={() => handleRemoveStudent(index)}
+                                            className="absolute top-4 right-4 text-red-500 hover:text-red-700 text-xl"
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
                                     <h2 className="text-[20px] font-semibold">
                                         Student {index > 0 ? `${index + 1} ` : ''}Information
                                     </h2>
@@ -1302,26 +1401,22 @@ const List = () => {
                                             <label className="block text-[16px] font-semibold">
                                                 Date of birth
                                             </label>
-                                            <DatePicker
-                                                withPortal
-                                                selected={student.dateOfBirth}
-                                                onChange={(date) => handleDOBChange(index, date)}
+
+                                            <input
+                                                type="text"
+                                                value={student.dateOfBirth || ""}
+                                                onChange={(e) => handleDOBChange(index, e.target.value)}
+                                                placeholder="DD/MM/YYYY (e.g., 15/10/2026)"
                                                 className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                showYearDropdown
-                                                scrollableYearDropdown
-                                                yearDropdownItemNumber={100}
-                                                dateFormat="dd/MM/yyyy"
-                                                maxDate={new Date(new Date().setFullYear(new Date().getFullYear() - 3))} // Minimum age: 3 years
-                                                minDate={new Date(new Date().setFullYear(new Date().getFullYear() - 100))} // Maximum age: 100 years
-                                                placeholderText="Select date of birth"
-                                                isClearable
+                                                maxLength={10}
                                             />
                                         </div>
+
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Age</label>
                                             <input
                                                 type="text"
-                                                value={student.age}
+                                                value={student.age || ""}
                                                 readOnly
                                                 className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                                 placeholder="Automatic entry"
@@ -1545,6 +1640,76 @@ const List = () => {
                                     </div>
 
                                     {/* Row 3 */}
+                                    <div className="flex flex-col gap-4">
+                                        {/* Interest Reason */}
+                                        <div className="w-full">
+                                            <label className="block text-[16px] font-semibold">
+                                                What’s the main reason you’re interested in Samba Soccer Schools?
+                                            </label>
+
+                                            {parent.isCustomReason ? (
+                                                <div className="relative">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Please specify"
+                                                        value={parent.interestReason || ""}
+                                                        onChange={(e) =>
+                                                            handleParentChange(index, "interestReason", e.target.value)
+                                                        }
+                                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 pr-28 text-base"
+                                                    />
+
+                                                    {/* Back Button */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            handleParentChange(index, "interestReason", "");
+                                                            handleParentChange(index, "isCustomReason", false);
+                                                        }}
+                                                        className="absolute right-3 top-3/5 -translate-y-1/2 text-sm text-blue-600 font-medium"
+                                                    >
+                                                        Select
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <Select
+                                                    options={interestReasonOptions}
+                                                    placeholder="Select a reason"
+                                                    className="mt-2"
+                                                    classNamePrefix="react-select"
+                                                    value={interestReasonOptions.find(
+                                                        (o) => o.value === parent.interestReason
+                                                    )}
+                                                    onChange={(selected) => {
+                                                        if (selected.value === "Other") {
+                                                            handleParentChange(index, "interestReason", "");
+                                                            handleParentChange(index, "isCustomReason", true);
+                                                        } else {
+                                                            handleParentChange(index, "interestReason", selected.value);
+                                                            handleParentChange(index, "isCustomReason", false);
+                                                        }
+                                                    }}
+                                                />
+                                            )}
+                                        </div>
+
+                                        {/* Tell Us Bit More */}
+                                        <div className="w-full">
+                                            <label className="block text-[16px] font-semibold">
+                                                Tell us a bit more (optional)
+                                            </label>
+
+                                            <input
+                                                type="text"
+                                                placeholder="Anything else you'd like to share?"
+                                                value={parent.interestReasonOther || ""}
+                                                onChange={(e) =>
+                                                    handleParentChange(index, "interestReasonOther", e.target.value)
+                                                }
+                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                            />
+                                        </div>
+                                    </div>
                                     <div className="flex gap-4">
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Relation to child</label>
@@ -1744,95 +1909,16 @@ const List = () => {
                         </motion.div>
 
 
-                        <div className="bg-white my-10 rounded-3xl p-6 space-y-4">
-                            <h2 className="text-[24px] font-semibold">Comment</h2>
-
-                            {/* Input section */}
-                            <div className="flex items-center gap-2">
-                                <img
-                                    src={adminInfo?.profile ? `${adminInfo.profile}` : '/members/dummyuser.png'}
-                                    alt="User"
-                                    className="w-14 h-14 rounded-full object-cover"
-                                />
-                                <input
-                                    type="text"
-                                    name='comment'
-                                    value={comment}
-                                    onChange={(e) => setComment(e.target.value)}
-                                    placeholder="Add a comment"
-                                    className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-[16px] font-semibold outline-none md:w-full w-5/12"
-                                />
-                                <button
-                                    disabled={loadingComment}
-                                    className="bg-[#237FEA] p-3 rounded-xl text-white hover:bg-blue-600"
-                                    onClick={handleSubmitComment}
-                                >
-                                    {loadingComment ? (
-                                        <Loader2 className="animate-spin w-5 h-5 text-white" />
-                                    ) : (
-                                        <img src="/images/icons/sent.png" alt="" />
-                                    )}
-                                </button>
-                            </div>
-
-                            {/* Comment list */}
-                           {commentsList && commentsList.length > 0 ? (
-                            <div className="space-y-4">
-                                {currentComments.map((c, i) => (
-                                    <div key={i} className="bg-gray-50 rounded-xl p-4 text-sm">
-
-                                        <div className="flex justify-end items-center gap-3">
-
-                                            {/* Time */}
-                                            <div className="flex flex-wrap justify-end flex-col">
-                                                <div className="flex items-center gap-3 mb-4">
-                                                    <img
-                                                        src={
-                                                            c?.bookedByAdmin?.profile
-                                                                ? `${c?.bookedByAdmin?.profile}`
-                                                                : '/members/dummyuser.png'
-                                                        }
-                                                        onError={(e) => {
-                                                            e.currentTarget.onerror = null;
-                                                            e.currentTarget.src = '/members/dummyuser.png';
-                                                        }}
-                                                        alt={c?.bookedByAdmin?.firstName}
-                                                        className="w-10 h-10 rounded-full object-cover"
-                                                    />
-                                                    <div className="text-right">
-                                                        <p className="font-semibold text-[#237FEA] text-[15px]">
-                                                            {c?.bookedByAdmin?.firstName} {c?.bookedByAdmin?.lastName}
-                                                        </p>
-                                                    </div>
-
-
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <p className="text-gray-700 text-[16px] font-semibold mb-3 text-left">
-                                            {c.comment}
-                                        </p>
-
-                                        {/* RIGHT: User Info */}
-                                        <div className="flex justify-end items-center gap-3">
-
-                                            {/* Time */}
-                                            <div className="flex flex-wrap justify-end flex-col">
-
-                                                <span className="text-gray-400 text-right text-[14px] whitespace-nowrap">
-                                                    {formatTimeAgo(c.createdAt)}
-                                                </span>
-
-
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-center">No Comments yet.</p>
-                        )}
-                        </div>
+                        <Comments
+                            adminInfo={adminInfo}
+                            comment={comment}
+                            setComment={setComment}
+                            handleSubmitComment={handleSubmitComment}
+                            loadingComment={loadingComment}
+                            commentsList={commentsList}
+                            currentComments={currentComments}
+                            formatTimeAgo={formatTimeAgo}
+                        />
                         <div className="flex justify-end  pb-10 gap-4">
                             <button
                                 onClick={handleCancel}

@@ -2000,7 +2000,7 @@ export const BookFreeTrialProvider = ({ children }) => {
         throw new Error(result.message || "Failed to create Membership");
       }
 
-      await showSuccess("Success!", result.message || "Membership has been created successfully.");
+      await showSuccess("Success!", result.message || "Customer successfully added to the waiting list. Confirmation email has been sent");
       setIsBooked(true);
       setTimeout(() => {
         navigate(`/weekly-classes/find-a-class/add-to-waiting-list/list`)

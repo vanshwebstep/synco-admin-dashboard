@@ -30,6 +30,7 @@ import { useBookFreeTrial } from '../../../contexts/BookAFreeTrialContext';
 import { useMembers } from '../../../contexts/MemberContext';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { useTermContext } from '../../../contexts/TermDatesSessionContext';
+import Comments from '../../../Common/Comments';
 const AddtoWaitingList = () => {
   const [loadingComment, setLoadingComment] = useState(false);
   const [expression, setExpression] = useState('');
@@ -81,8 +82,8 @@ const AddtoWaitingList = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedPlans, setSelectedPlans] = useState([]);
   const [congestionNote, setCongestionNote] = useState(null);
-  const [numberOfStudents, setNumberOfStudents] = useState('1')
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [numberOfStudents, setNumberOfStudents] = useState(1)
+  // const [selectedDate, setSelectedDate] = useState(null);
   const { adminInfo, setAdminInfo } = useNotification();
 
   console.log('selectedPlans', selectedPlans)
@@ -109,6 +110,16 @@ const AddtoWaitingList = () => {
     { value: "Father", label: "Father" },
     { value: "Guardian", label: "Guardian" },
   ];
+  const interestReasonOptions = [
+        { value: "To build my child's confidence", label: "To build my child's confidence" },
+        { value: "To improve their technical football skills", label: "To improve their technical football skills" },
+        { value: "Because my child loves football", label: "Because my child loves football" },
+        { value: "To help my child make friends and build social skills", label: "To help my child make friends and build social skills" },
+        { value: "To keep my child active and healthy", label: "To keep my child active and healthy" },
+        { value: "High-quality coaching in a fun, positive environment", label: "High-quality coaching in a fun, positive environment" },
+        { value: "Other", label: "Other" },
+
+    ];
   const ClassOptions = [
     { value: "4–7 years", label: "4–7 years" },
     { value: "7–10 years", label: "7-10 years" },
@@ -329,17 +340,6 @@ const AddtoWaitingList = () => {
   };
 
 
-  const handleDateClick = (date) => {
-    const formattedDate = formatLocalDate(date); // safe from timezone issues
-
-    if (selectedDate === formattedDate) {
-      setSelectedDate(null);
-    } else {
-      setSelectedDate(formattedDate);
-    }
-  };
-
-
 
   const modalRef = useRef(null);
   const PRef = useRef(null);
@@ -401,20 +401,54 @@ const AddtoWaitingList = () => {
   const [sameAsAbove, setSameAsAbove] = useState(false);
 
   // 🔁 Calculate Age Automatically
-  const handleDOBChange = (index, date) => {
-    const today = new Date();
-    let ageNow = today.getFullYear() - date.getFullYear();
-    const m = today.getMonth() - date.getMonth();
+  const handleDOBChange = (index, value) => {
+    // Allow only numbers
+    let cleaned = value.replace(/[^\d]/g, "");
 
-    if (m < 0 || (m === 0 && today.getDate() < date.getDate())) {
-      ageNow--;
+    // Auto format → DD/MM/YYYY
+    if (cleaned.length > 2 && cleaned.length <= 4) {
+      cleaned = `${cleaned.slice(0, 2)}/${cleaned.slice(2)}`;
+    } else if (cleaned.length > 4) {
+      cleaned = `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}/${cleaned.slice(4, 8)}`;
     }
 
     const updatedStudents = [...students];
-    updatedStudents[index].dateOfBirth = date;
-    updatedStudents[index].age = ageNow;
+    updatedStudents[index].dateOfBirth = cleaned;
+
+    // Calculate age when full date entered
+    if (cleaned.length === 10) {
+      const [day, month, year] = cleaned.split("/").map(Number);
+
+      const date = new Date(year, month - 1, day);
+
+      const isValid =
+        date &&
+        date.getDate() === day &&
+        date.getMonth() === month - 1 &&
+        date.getFullYear() === year;
+
+      if (isValid) {
+        const today = new Date();
+        let ageNow = today.getFullYear() - year;
+        const m = today.getMonth() - (month - 1);
+
+        if (m < 0 || (m === 0 && today.getDate() < day)) {
+          ageNow--;
+        }
+
+        // Apply same limits (3–100)
+        updatedStudents[index].age =
+          ageNow >= 3 && ageNow <= 100 ? ageNow : "";
+      } else {
+        updatedStudents[index].age = "";
+      }
+    } else {
+      updatedStudents[index].age = "";
+    }
+
     setStudents(updatedStudents);
   };
+
 
 
   // 🔁 Sync Emergency Contact
@@ -436,7 +470,16 @@ const AddtoWaitingList = () => {
     updatedStudents[index][field] = value;
     setStudents(updatedStudents);
   };
+  const handleRemoveStudent = (indexToRemove) => {
+    setStudents((prevStudents) => {
+      const updatedStudents = prevStudents.filter((_, i) => i !== indexToRemove);
 
+      // ✅ IMPORTANT: sync input field
+      setNumberOfStudents(updatedStudents.length);
+
+      return updatedStudents;
+    });
+  };
   useEffect(() => {
     setStudents((prevStudents) => {
       const n = Number(numberOfStudents) || 0; // safety for null/undefined
@@ -475,6 +518,8 @@ const AddtoWaitingList = () => {
       parentEmail: '',
       parentPhoneNumber: '',
       relationToChild: '',
+      interestReason: '',
+      interestReasonOther: '',
       howDidYouHear: ''
 
     }
@@ -489,6 +534,8 @@ const AddtoWaitingList = () => {
         parentEmail: '',
         parentPhoneNumber: '',
         relationToChild: '',
+        interestReason: '',
+        interestReasonOther: '',
         howDidYouHear: ''
       },
     ]);
@@ -602,6 +649,8 @@ const AddtoWaitingList = () => {
         parentLastName: primaryParent.parentLastName,
         parentPhoneNumber: primaryParent.parentPhoneNumber,
         relationToChild: primaryParent.relationToChild?.label || "",
+        interestReason: primaryParent.interestReason,
+        interestReasonOther: primaryParent.interestReasonOther,
         sameAsAbove: true
       };
     }
@@ -666,10 +715,7 @@ const AddtoWaitingList = () => {
   }));
 
   const handleSubmit = async () => {
-    if (!selectedDate) {
-      showWarning("Trial Date Required", "Please select a trial date before submitting.");
-      return;
-    }
+
     setIsSubmitting(true); // Start loading
 
     const payload = {
@@ -677,7 +723,7 @@ const AddtoWaitingList = () => {
       keyInformation: selectedKeyInfo,
       venueId: singleClassSchedulesOnly?.venue?.id,
 
-      startDate: selectedDate,
+
       totalStudents: students.length,
       students: students.map((s, index) => ({
         ...s,
@@ -1064,7 +1110,7 @@ const AddtoWaitingList = () => {
                   value={numberOfStudents}
                   onChange={(e) => {
                     const val = Number(e.target.value);
-                    if ([1, 2, 3].includes(val) || e.target.value === "") {
+                    if ([1, 2, 3, 4].includes(val) || e.target.value === "") {
                       setNumberOfStudents(e.target.value);
                     }
                     // Do nothing if invalid
@@ -1077,92 +1123,7 @@ const AddtoWaitingList = () => {
             </div>
           </div>
 
-          <div className="space-y-3 bg-white p-6 rounded-3xl shadow-sm ">
-            <div className="">
-              <h2 className="text-[24px] font-semibold">Select Trial Date </h2>
 
-              <div className="rounded p-4 mt-6 text-center text-base w-full max-w-md mx-auto">
-                {/* Header */}
-                <div className="flex justify-center gap-5 items-center mb-3">
-                  <button
-                    onClick={goToPreviousMonth}
-                    className="w-8 h-8 rounded-full bg-white text-black hover:bg-black hover:text-white border border-black flex items-center justify-center"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <p className="font-semibold text-[20px]">
-                    {currentDate.toLocaleString("default", { month: "long" })} {year}
-                  </p>
-                  <button
-                    onClick={goToNextMonth}
-                    className="w-8 h-8 rounded-full bg-white text-black hover:bg-black hover:text-white border border-black flex items-center justify-center"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                </div>
-
-                {/* Day Labels */}
-                <div className="grid grid-cols-7 text-xs gap-1 text-[18px] text-gray-500 mb-1">
-                  {["M", "T", "W", "T", "F", "S", "S"].map((day) => (
-                    <div key={day} className="font-medium text-center">
-                      {day}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Calendar Weeks */}
-                <div className="flex flex-col gap-1">
-                  {Array.from({ length: Math.ceil(calendarDays.length / 7) }).map((_, weekIndex) => {
-                    const week = calendarDays.slice(weekIndex * 7, weekIndex * 7 + 7);
-
-                    return (
-                      <div
-                        key={weekIndex}
-                        className="grid grid-cols-7 text-[18px] gap-1 py-1 rounded"
-                      >
-                        {week.map((date, i) => {
-                          if (!date) {
-                            return <div key={i} />;
-                          }
-
-
-                          const formattedDate = formatLocalDate(date);
-                          const isAvailable = sessionDatesSet.has(formattedDate); // check if this date is valid session
-                          console.log('isAvailable', isAvailable)
-                          const isSelected = isSameDate(date, selectedDate);
-                          const today = new Date();
-                          today.setHours(0, 0, 0, 0);
-
-                          const current = new Date(date);
-                          current.setHours(0, 0, 0, 0);
-                          const isPastAvailable = isAvailable && current < today;
-
-                          return (
-                            <div
-                              key={i}
-                              onClick={() => isAvailable && handleDateClick(date)}
-                              className={`w-8 h-8 flex text-[18px] items-center justify-center mx-auto text-base rounded-full
-    ${isPastAvailable
-                                  ? "bg-red-200 text-red-700 cursor-not-allowed"
-                                  : isAvailable
-                                    ? "cursor-pointer bg-sky-200"
-                                    : "cursor-not-allowed opacity-40 bg-white"
-                                }
-    ${isSelected ? "selectedDate text-white font-bold" : ""}
-  `}
-                            >
-                              {date.getDate()}
-                            </div>
-
-                          );
-                        })}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
 
         </div>
 
@@ -1176,8 +1137,16 @@ const AddtoWaitingList = () => {
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: index * 0.1 }}
-                  className="bg-white mb-10 p-6 rounded-3xl shadow-sm space-y-6"
+                  className="bg-white mb-10 p-6 rounded-3xl shadow-sm space-y-6 relative"
                 >
+                  {students.length > 1 && (
+                    <button
+                      onClick={() => handleRemoveStudent(index)}
+                      className="absolute top-4 right-4 text-red-500 hover:text-red-700 text-xl"
+                    >
+                      ✕
+                    </button>
+                  )}
                   <h2 className="text-[20px] font-semibold">
                     Student {index + 1} Information
                   </h2>
@@ -1214,18 +1183,13 @@ const AddtoWaitingList = () => {
                       <label className="block text-[16px] font-semibold">
                         Date of Birth
                       </label>
-                      <DatePicker
-                        selected={student.dateOfBirth}
-                        onChange={(date) => handleDOBChange(index, date)}
+                      <input
+                        type="text"
+                        value={student.dateOfBirth || ""}
+                        onChange={(e) => handleDOBChange(index, e.target.value)}
+                        placeholder="DD/MM/YYYY (e.g. 15/10/2026)"
+                        maxLength={10}
                         className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                        showYearDropdown
-                        scrollableYearDropdown
-                        yearDropdownItemNumber={100}
-                        dateFormat="dd/MM/yyyy"
-                        maxDate={new Date(new Date().setFullYear(new Date().getFullYear() - 3))} // Minimum age: 3 years
-                        minDate={new Date(new Date().setFullYear(new Date().getFullYear() - 100))} // Max age: 100 years
-                        placeholderText="Select date of birth"
-                        withPortal
                       />
                     </div>
                     <div className="w-1/2">
@@ -1452,6 +1416,76 @@ const AddtoWaitingList = () => {
                   </div>
 
                   {/* Row 3 */}
+                  <div className="flex flex-col gap-4">
+                    {/* Interest Reason */}
+                    <div className="w-full">
+                      <label className="block text-[16px] font-semibold">
+                        What’s the main reason you’re interested in Samba Soccer Schools?
+                      </label>
+
+                      {parent.isCustomReason ? (
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder="Please specify"
+                            value={parent.interestReason || ""}
+                            onChange={(e) =>
+                              handleParentChange(index, "interestReason", e.target.value)
+                            }
+                            className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 pr-28 text-base"
+                          />
+
+                          {/* Back Button */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleParentChange(index, "interestReason", "");
+                              handleParentChange(index, "isCustomReason", false);
+                            }}
+                            className="absolute right-3 top-3/5 -translate-y-1/2 text-sm text-blue-600 font-medium"
+                          >
+                            Select
+                          </button>
+                        </div>
+                      ) : (
+                        <Select
+                          options={interestReasonOptions}
+                          placeholder="Select a reason"
+                          className="mt-2"
+                          classNamePrefix="react-select"
+                          value={interestReasonOptions.find(
+                            (o) => o.value === parent.interestReason
+                          )}
+                          onChange={(selected) => {
+                            if (selected.value === "Other") {
+                              handleParentChange(index, "interestReason", "");
+                              handleParentChange(index, "isCustomReason", true);
+                            } else {
+                              handleParentChange(index, "interestReason", selected.value);
+                              handleParentChange(index, "isCustomReason", false);
+                            }
+                          }}
+                        />
+                      )}
+                    </div>
+
+                    {/* Tell Us Bit More */}
+                    <div className="w-full">
+                      <label className="block text-[16px] font-semibold">
+                        Tell us a bit more (optional)
+                      </label>
+
+                      <input
+                        type="text"
+                        placeholder="Anything else you'd like to share?"
+                        value={parent.interestReasonOther || ""}
+                        onChange={(e) =>
+                          handleParentChange(index, "interestReasonOther", e.target.value)
+                        }
+                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                      />
+                    </div>
+                  </div>
                   <div className="flex gap-4">
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">Relation to child</label>
@@ -1596,16 +1630,16 @@ const AddtoWaitingList = () => {
 
               <div className="flex space-x-6 ">
                 {['Low', 'Medium', 'High'].map((level) => (
-                  <label key={level} className="  inline-flex items-center font-semibold cursor-pointer">
+                  <label key={level} className="  inline-flex items-center font-normal cursor-pointer">
                     <input
                       type="radio"
                       name="levelOfInterest"
                       value={level}
                       checked={selectedLevelOfInterest === level}
                       onChange={() => setSelectedLevelOfInterest(level)}
-                      className="  form-radio text-indigo-600  focus:ring-indigo-500"
+                      className="  form-radio text-indigo-600 focus:ring-indigo-500"
                     />
-                    <span className="ml-2  text-gray-800">{level}</span>
+                    <span className="ml-2  text-lg  text-gray-800">{level}</span>
                   </label>
                 ))}
               </div>
@@ -1694,95 +1728,16 @@ const AddtoWaitingList = () => {
               </button>
 
             </div>
-            <div className="bg-white my-10 rounded-3xl p-6 space-y-4">
-              <h2 className="text-[24px] font-semibold">Comment</h2>
-
-              {/* Input section */}
-              <div className="flex items-center gap-2">
-                <img
-                  src={adminInfo?.profile ? `${adminInfo.profile}` : '/members/dummyuser.png'}
-                  alt="User"
-                  className="w-14 h-14 rounded-full object-cover"
-                />
-                <input
-                  type="text"
-                  name='comment'
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="Add a comment"
-                  className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-[16px] font-semibold outline-none md:w-full w-5/12"
-                />
-                <button
-                  disabled={loadingComment}
-                  className="bg-[#237FEA] p-3 rounded-xl text-white hover:bg-blue-600"
-                  onClick={handleSubmitComment}
-                >
-                  {loadingComment ? (
-                    <Loader2 className="animate-spin w-5 h-5 text-white" />
-                  ) : (
-                    <img src="/images/icons/sent.png" alt="" />
-                  )}
-                </button>
-              </div>
-
-              {/* Comment list */}
-             {commentsList && commentsList.length > 0 ? (
-                            <div className="space-y-4">
-                                {currentComments.map((c, i) => (
-                                    <div key={i} className="bg-gray-50 rounded-xl p-4 text-sm">
-
-                                        <div className="flex justify-end items-center gap-3">
-
-                                            {/* Time */}
-                                            <div className="flex flex-wrap justify-end flex-col">
-                                                <div className="flex items-center gap-3 mb-4">
-                                                    <img
-                                                        src={
-                                                            c?.bookedByAdmin?.profile
-                                                                ? `${c?.bookedByAdmin?.profile}`
-                                                                : '/members/dummyuser.png'
-                                                        }
-                                                        onError={(e) => {
-                                                            e.currentTarget.onerror = null;
-                                                            e.currentTarget.src = '/members/dummyuser.png';
-                                                        }}
-                                                        alt={c?.bookedByAdmin?.firstName}
-                                                        className="w-10 h-10 rounded-full object-cover"
-                                                    />
-                                                    <div className="text-right">
-                                                        <p className="font-semibold text-[#237FEA] text-[15px]">
-                                                            {c?.bookedByAdmin?.firstName} {c?.bookedByAdmin?.lastName}
-                                                        </p>
-                                                    </div>
-
-
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <p className="text-gray-700 text-[16px] font-semibold mb-3 text-left">
-                                            {c.comment}
-                                        </p>
-
-                                        {/* RIGHT: User Info */}
-                                        <div className="flex justify-end items-center gap-3">
-
-                                            {/* Time */}
-                                            <div className="flex flex-wrap justify-end flex-col">
-
-                                                <span className="text-gray-400 text-right text-[14px] whitespace-nowrap">
-                                                    {formatTimeAgo(c.createdAt)}
-                                                </span>
-
-
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-center">No Comments yet.</p>
-                        )}
-            </div>
+            <Comments
+              adminInfo={adminInfo}
+              comment={comment}
+              setComment={setComment}
+              handleSubmitComment={handleSubmitComment}
+              loadingComment={loadingComment}
+              commentsList={commentsList}
+              currentComments={currentComments}
+              formatTimeAgo={formatTimeAgo}
+            />
 
           </div>
         </div>

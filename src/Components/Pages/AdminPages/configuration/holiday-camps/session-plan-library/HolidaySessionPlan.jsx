@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback ,useMemo} from 'react';
 import { Pencil, Trash2, Eye, Copy, } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { showError, showSuccess, showWarning, showConfirm, showLoading } from "../../../../../../utils/swalHelper";
@@ -6,10 +6,12 @@ import Loader from '../../../contexts/Loader';
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { usePermission } from '../../../Common/permission';
 import { useHolidaySessionPlan } from '../../../contexts/HolidaySessionPlanContext';
+import { useGlobalSearch } from '../../../contexts/GlobalSearchContext';
 
 const HolidaySessionPlan = () => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const token = localStorage.getItem("adminToken");
+  const { searchQuery } = useGlobalSearch();
 
   const navigate = useNavigate();
   const { fetchSessionGroup, sessionGroup, deleteSessionGroup, deleteSessionlevel, duplicateSession, updateDiscount, loading, setLoading } = useHolidaySessionPlan();
@@ -206,13 +208,7 @@ const HolidaySessionPlan = () => {
   };
 
 
-  if (loading) {
-    return (
-      <>
-        <Loader />
-      </>
-    )
-  }
+
   const handleReorder = async (newList) => {
     if (!token) return;
 
@@ -240,12 +236,37 @@ const HolidaySessionPlan = () => {
 
     setTempList(newList); // just update local reorder, not server
   };
+  const filteredSessionGroup = useMemo(() => {
+      if (!searchQuery) return tempList || [];
+  
+      const query = searchQuery.toLowerCase();
+  
+      return tempList.filter((group) => {
+          // group name match
+          console.log('group',group)
+          const groupMatch = group.title?.toLowerCase().includes(query);
+  
+          // levels match (beginner, intermediate etc.)
+          const levelMatch = Object.keys(group.levels || {}).some((levelKey) => {
+              return levelKey.toLowerCase().includes(query);
+          });
+  
+          return groupMatch || levelMatch;
+      });
+  }, [tempList, searchQuery]);
+  
   const { checkPermission } = usePermission();
 
   const canCreate = checkPermission({ module: 'session-plan-group', action: 'create' });
   const canEdit = checkPermission({ module: 'session-plan-group', action: 'update' });
   const canDelete = checkPermission({ module: 'session-plan-group', action: 'delete' });
-
+  if (loading) {
+    return (
+      <>
+        <Loader />
+      </>
+    )
+  }
   return (
     <div className="pt-1 bg-gray-50 min-h-screen">
 
@@ -300,7 +321,7 @@ const HolidaySessionPlan = () => {
               {...provided.droppableProps}
               ref={provided.innerRef}
             >
-              {tempList.map((week, index) => (
+              {filteredSessionGroup.map((week, index) => (
                 <Draggable
                   key={week.id}
                   draggableId={String(week.id)}

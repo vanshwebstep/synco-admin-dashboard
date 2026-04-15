@@ -363,7 +363,7 @@ const trialLists = () => {
             title: "Total Students",
             value: statsMembership?.totalStudents?.totalStudents || "0",
             icon: "/members/allmemberTotalRevenue.png",
-            change: `(${statsMembership?.totalStudents?.percentage}%)`,
+            change: `(${statsMembership?.totalStudents?.percentage})`,
             color: "text-green-500",
             bg: "bg-[#F3FAF5]"
         },
@@ -371,7 +371,7 @@ const trialLists = () => {
             title: "Monthly revenue",
             value: `£${Number(statsMembership?.totalRevenue?.totalRevenue)}`,
             icon: "/members/allmemberMonthlyRevenue.png",
-            change: `(${statsMembership?.totalRevenue?.percentage}%)`,
+            change: `(${statsMembership?.totalRevenue?.percentage})`,
 
             color: "text-green-500",
             bg: "bg-[#F3FAFD]"
@@ -380,7 +380,7 @@ const trialLists = () => {
             title: "AV. Monthly Fee",
             value: `£${Number(statsMembership?.avgMonthlyFee?.avgMonthlyFee)}`,
             icon: "/members/allmemberMonthlyFee.png",
-            change: `(${statsMembership?.avgMonthlyFee?.percentage}%)`,
+            change: `(${statsMembership?.avgMonthlyFee?.percentage})`,
             color: "text-green-500",
             bg: "bg-[#FEF6FB]"
         },
@@ -388,7 +388,7 @@ const trialLists = () => {
             title: "AV. Life Cycle",
             value: (statsMembership?.avgLifeCycle?.avgLifeCycle) || "0.00",
             icon: "/members/allmemberLifeCycle.png",
-            change: `(${statsMembership?.avgLifeCycle?.percentage}%)`,
+            change: `(${statsMembership?.avgLifeCycle?.percentage})`,
             color: "text-red-500",
             bg: "bg-[#F0F9F9]"
         }

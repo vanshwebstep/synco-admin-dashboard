@@ -7,6 +7,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { usePermission } from "../Pages/AdminPages/Common/permission";
 import { X } from 'lucide-react'; // Add this to your imports
 import { useAccountsInfo } from '../Pages/AdminPages/contexts/AccountsInfoContext';
+import { useGlobalSearch } from '../Pages/AdminPages/contexts/GlobalSearchContext';
 
 function normalizePath(path) {
   if (!path) return "";
@@ -55,6 +56,7 @@ function findActiveItemAndParents(items, currentPath, parents = []) {
 
 const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
   const [openDropdowns, setOpenDropdowns] = useState({});
+  const { searchQuery , setSearchQuery } = useGlobalSearch();
   const [hoveredItem, setHoveredItem] = useState(null);
   const location = useLocation();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -674,14 +676,19 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
           const content = (
             <motion.div
               initial={false}
-              onClick={() => {
-                if (hasSubItems || hasInnerSubItems) {
-                  toggleDropdown(itemTitle);
-                } else {
-                  setActiveTab(item.link); // make clicked link active
-                  if (window.innerWidth < 1024) setIsMobileMenuOpen(false);
-                }
-              }}
+             onClick={() => {
+  // ✅ Reset only if search has value
+  if (searchQuery) {
+    setSearchQuery("");
+  }
+
+  if (hasSubItems || hasInnerSubItems) {
+    toggleDropdown(itemTitle);
+  } else {
+    setActiveTab(item.link);
+    if (window.innerWidth < 1024) setIsMobileMenuOpen(false);
+  }
+}}
               onMouseEnter={() => setHoveredItem(itemTitle)}
               onMouseLeave={() => setHoveredItem(null)}
               className={`flex items-center subitems justify-between font-semibold cursor-pointer 
@@ -756,7 +763,16 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
               className="mb-1.5 sm:mb-2 text-sm sm:text-base lg:text-lg "
               onClick={removeLocalstorage}
             >
-              {item.link ? <Link to={item.link}>{content}</Link> : content}
+            {item.link ? (
+  <Link
+    to={item.link}
+    onClick={() => {
+      if (searchQuery) setSearchQuery("");
+    }}
+  >
+    {content}
+  </Link>
+) : content}
 
               {/* Handle subItems */}
               <AnimatePresence initial={false}>
