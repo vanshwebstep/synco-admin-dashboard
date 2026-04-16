@@ -616,9 +616,9 @@ const BookACamp = () => {
         }
     };
 
-    useEffect(() => {
-        fetchComments();
-    }, [fetchComments]);
+    // useEffect(() => {
+    //     fetchComments();
+    // }, [fetchComments]);
 
     const addParent = () => {
         setFormData((prev) => ({

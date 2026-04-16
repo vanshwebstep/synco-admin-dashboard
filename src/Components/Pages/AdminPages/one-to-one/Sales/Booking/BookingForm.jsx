@@ -317,7 +317,7 @@ const List = () => {
       try {
         await fetchGeneralInfo();
         await fetchKeyInfo();
-        await fetchComments();
+        // await fetchComments();
       } catch (error) {
         console.error("Error fetching data:", error);
       }

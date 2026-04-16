@@ -237,9 +237,9 @@ const ParentProfile = ({ ParentProfile }) => {
         }
     }, []);
 
-    useEffect(() => {
-        fetchComments();
-    }, [])
+      // useEffect(() => {
+    //     fetchComments();
+    // }, [])
     const handleSubmitComment = async (e) => {
 
         e.preventDefault();

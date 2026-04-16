@@ -282,9 +282,9 @@ const General = () => {
             setLoading(false);
         }
     }
-    useEffect(() => {
-        fetchComments();
-    }, []);
+    // useEffect(() => {
+    //     fetchComments();
+    // }, []);
     const hearOptions = [
         { value: "Google", label: "Google" },
         { value: "Facebook", label: "Facebook" },

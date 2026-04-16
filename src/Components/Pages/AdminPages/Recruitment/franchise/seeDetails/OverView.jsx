@@ -386,7 +386,7 @@ const OverView = ({ steps, setSteps }) => {
   useEffect(() => {
     const init = async () => {
       setLoading(true);
-      await fetchComments();
+      // await fetchComments();
       await fetchFranchiseRecruitmentById(id);
       await fetchVenueNames();
       setLoading(false);

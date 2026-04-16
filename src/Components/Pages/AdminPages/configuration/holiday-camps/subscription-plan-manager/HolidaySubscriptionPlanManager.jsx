@@ -177,7 +177,7 @@ const { searchQuery } = useGlobalSearch();
                         {plan.title}
                       </h3>
                       <p className="text-[24px] sm:text-[32px] font-semibold mb-4">
-                        £{plan?.price?.toFixed(2)}/<span className="text-sm text-[#717073]">{plan.interval?.toLowerCase()}</span>
+                        £{plan?.price}/<span className="text-sm text-[#717073]">{plan.interval?.toLowerCase()}</span>
                       </p>
                       <hr className="mb-4 text-[#E2E1E5]" />
                       <ul className="space-y-2 text-[14px] text-[16px] font-semibold pb-10">

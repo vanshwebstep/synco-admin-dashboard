@@ -41,7 +41,7 @@ const trialLists = () => {
     const [agentsData, setAgentsData] = useState([]);
     const [selectedAdminId, setSelectedAdminId] = useState(null);
 
-    const   handleClick = () => {
+    const handleClick = () => {
         if (selectedStudents.length === 0) {
             showWarning("Warning", 'Please select at least 1 student');
             return;
@@ -67,9 +67,9 @@ const trialLists = () => {
         }
         fetchAllAgents();
     };
-const isWebsiteSourceSelected = (bookFreeTrials || [])
-  .filter(trial => selectedStudents?.includes(trial?.id))
-  .every(s => s?.source?.trim()?.toLowerCase() === "website");
+    const isWebsiteSourceSelected = (bookFreeTrials || [])
+        .filter(trial => selectedStudents?.includes(trial?.id))
+        .every(s => s?.source?.trim()?.toLowerCase() === "website");
     const fetchAllAgents = useCallback(async () => {
         const token = localStorage.getItem("adminToken");
         if (!token) return;
@@ -200,7 +200,7 @@ const isWebsiteSourceSelected = (bookFreeTrials || [])
                     'Date of Trial': new Date(item.trialDate).toLocaleDateString(),
                     Source: item.parents?.[0]?.howDidYouHear || "-",
                     Attempts: item.attempt || 0,
-                    Status: item.status,
+                    Status: student.studentStatus,
                 });
             });
         });
@@ -541,39 +541,37 @@ const isWebsiteSourceSelected = (bookFreeTrials || [])
             },
         },
         {
-         header: "Source",
-render: (item) => {
-    const source = item?.source?.trim();
+            header: "Source",
+            render: (item) => {
+                const source = item?.source?.trim();
 
-    const adminName = item?.bookedByAdmin?.firstName
-        ? `${item.bookedByAdmin.firstName}${
-            item.bookedByAdmin.lastName && item.bookedByAdmin.lastName !== "null"
-                ? ` ${item.bookedByAdmin.lastName}`
-                : ""
-        }`
-        : "";
+                const adminName = item?.bookedByAdmin?.firstName
+                    ? `${item.bookedByAdmin.firstName}${item.bookedByAdmin.lastName && item.bookedByAdmin.lastName !== "null"
+                        ? ` ${item.bookedByAdmin.lastName}`
+                        : ""
+                    }`
+                    : "";
 
-    const agentName = item?.assignedAgent?.firstName
-        ? `${item.assignedAgent.firstName}${
-            item.assignedAgent.lastName ? ` ${item.assignedAgent.lastName}` : ""
-        }`
-        : "";
+                const agentName = item?.assignedAgent?.firstName
+                    ? `${item.assignedAgent.firstName}${item.assignedAgent.lastName ? ` ${item.assignedAgent.lastName}` : ""
+                    }`
+                    : "";
 
-    // agar source website hai aur status assigned hai to agent ka naam
-    if (source === "website" && item?.status === "assigned" && agentName) {
-        return `${source} (${agentName})`;
-    }
+                // agar source website hai aur status assigned hai to agent ka naam
+                if (source === "website" && item?.status === "assigned" && agentName) {
+                    return `${source} (${agentName})`;
+                }
 
-    if (source && adminName) {
-        return `${source} (${adminName})`;
-    }
+                if (source && adminName) {
+                    return `${source} (${adminName})`;
+                }
 
-    if (source) {
-        return source;
-    }
+                if (source) {
+                    return source;
+                }
 
-    return adminName || "-";
-},
+                return adminName || "-";
+            },
         },
         {
             header: "Attempts",
@@ -585,21 +583,22 @@ render: (item) => {
         },
         {
             header: "Status",
-            render: (item) => (
+
+            render: (item, student) => (
                 <div
-                    className={`flex text-center justify-center rounded-lg p-1 px-2 saa gap-2 ${item.status.toLowerCase() === "attended"
+                    className={`flex text-center justify-center rounded-lg p-1 px-2 saa gap-2 ${student?.studentStatus?.toLowerCase() === "attended"
                         ? "bg-green-100 text-green-600"
-                        : item.status.toLowerCase() === "pending"
+                        : student?.studentStatus?.toLowerCase() === "pending"
                             ? "bg-yellow-100 text-yellow-600"
-                            : item.status.toLowerCase() === "active"
+                            : student?.studentStatus?.toLowerCase() === "active"
                                 ? "bg-green-100 text-green-600"
-                                : item.status.toLowerCase() === "rebooked"
+                                : student?.studentStatus?.toLowerCase() === "rebooked"
                                     ? "bg-blue-100 text-blue-600"
                                     : "bg-red-100 text-red-500"
                         } capitalize`}
 
                 >
-                    {formatStatus(item.status)}
+                    {formatStatus(student.studentStatus)}
                 </div>
             ),
         },
@@ -616,16 +615,15 @@ render: (item) => {
                     <div className="flex justify-end items-center gap-2">
                         <div className="bg-white min-w-[38px] min-h-[38px]   border border-gray-300 p-2 rounded-full flex items-center justify-center"> <Filter size={16} className='cursor-pointer' onClick={() => setShowFilter(!showFilter)} />
                         </div>
-                       <div className="bg-white min-w-[38px] min-h-[38px] border border-gray-300 p-2 rounded-full flex items-center justify-center">
-  <img
-    onClick={isWebsiteSourceSelected ? handleClick : undefined}
-    src="/DashboardIcons/user-add-02.png"
-    alt=""
-    className={`${
-      isWebsiteSourceSelected ? "cursor-pointer" : "opacity-40 cursor-not-allowed"
-    }`}
-  />
-</div>
+                        <div className="bg-white min-w-[38px] min-h-[38px] border border-gray-300 p-2 rounded-full flex items-center justify-center">
+                            <img
+                                onClick={isWebsiteSourceSelected ? handleClick : undefined}
+                                src="/DashboardIcons/user-add-02.png"
+                                alt=""
+                                className={`${isWebsiteSourceSelected ? "cursor-pointer" : "opacity-40 cursor-not-allowed"
+                                    }`}
+                            />
+                        </div>
                     </div>
 
                     <DynamicTable

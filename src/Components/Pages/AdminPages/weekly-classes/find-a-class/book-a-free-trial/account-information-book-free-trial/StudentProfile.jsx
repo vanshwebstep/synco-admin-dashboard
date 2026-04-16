@@ -389,9 +389,9 @@ const StudentProfile = ({ StudentProfile }) => {
 
 
 
-    useEffect(() => {
-        fetchComments();
-    }, [])
+      // useEffect(() => {
+    //     fetchComments();
+    // }, [])
     const formatDOBForAPI = (dob) => {
         if (!dob) return "";
 

@@ -24,7 +24,7 @@ const ParentProfile = ({ profile }) => {
     const navigate = useNavigate();
     const { serviceHistoryMembership } = useBookFreeTrial();
     const { openEmailPopup } = useEmail();
-
+    const [selectedStudents, setSelectedStudents] = useState([]);
     const [textloading, setTextLoading] = useState(null);
 
 
@@ -121,9 +121,9 @@ const ParentProfile = ({ profile }) => {
         }
     }, []);
 
-    useEffect(() => {
-        fetchComments();
-    }, [])
+      // useEffect(() => {
+    //     fetchComments();
+    // }, [])
     const handleSubmitComment = async (e) => {
 
         e.preventDefault();
@@ -444,7 +444,17 @@ const ParentProfile = ({ profile }) => {
             setEditingIndex(index);
         }
     };
+    const handleStudentSelect = (student) => {
+        setSelectedStudents((prev) => {
+            const exists = prev.find((s) => s.id === student.id);
 
+            if (exists) {
+                return prev.filter((s) => s.id !== student.id);
+            } else {
+                return [...prev, student];
+            }
+        });
+    };
     // ✅ Emergency edit/save toggle
     const toggleEditEmergency = (index) => {
         if (editingEmergency === index) {
@@ -1454,6 +1464,44 @@ const ParentProfile = ({ profile }) => {
                                 )}
                                 <div>
                                     <label className="block text-[16px] font-semibold">
+                                        Select Students to Cancel
+                                    </label>
+
+                                    <div className="mt-3 space-y-2">
+                                        {studentsList.map((student) => {
+                                            const isCancelled = student.studentStatus === "cancelled";
+
+                                            return (
+                                                <label
+                                                    key={student.id}
+                                                    className={`flex items-center space-x-3 ${isCancelled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        disabled={isCancelled}
+                                                        checked={selectedStudents.some((s) => s.id === student.id)}
+                                                        onChange={() =>
+                                                            !isCancelled &&
+                                                            handleStudentSelect({
+                                                                id: student.id,
+                                                                studentFirstName: student.studentFirstName,
+                                                                studentLastName: student.studentLastName,
+                                                            })
+                                                        }
+                                                        className="w-4 h-4"
+                                                    />
+
+                                                    <span className="text-[15px]">
+                                                        {student.studentFirstName} {student.studentLastName}
+                                                        {isCancelled && " (Already Cancelled)"}
+                                                    </span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-[16px] font-semibold">
                                         Reason for Cancellation
                                     </label>
                                     <Select
@@ -1511,6 +1559,11 @@ const ParentProfile = ({ profile }) => {
                                     <button
                                         onClick={() => {
                                             // Validation: cancellation type
+                                            // Validation: at least 1 student selected
+                                            if (selectedStudents.length === 0) {
+                                                showWarning("Validation Error", "Please select at least one student.");
+                                                return;
+                                            }
                                             if (!cancelData.cancellationType) {
                                                 showWarning("Validation Error", "Please select a cancellation type.");
 
@@ -1535,7 +1588,7 @@ const ParentProfile = ({ profile }) => {
 
                                             setshowCancelTrial(false)
                                             // 🔥 Then call API (don’t wait for response)
-                                            cancelMembershipSubmit(cancelData, "allMembers");
+                                            cancelMembershipSubmit(cancelData, "allMembers", selectedStudents);
                                         }}
                                         className="w-1/2 bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
                                     >

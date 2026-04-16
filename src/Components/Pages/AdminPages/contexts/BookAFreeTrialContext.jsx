@@ -1210,54 +1210,62 @@ export const BookFreeTrialProvider = ({ children }) => {
       setLoading(false);
     }
   };
-  const cancelMembershipSubmit = async (bookingIds, comesfrom) => {
-    setLoading(true);
+const cancelMembershipSubmit = async (bookingIds, comesfrom, selectedStudents) => {
+  setLoading(true);
 
-    const headers = {
-      "Content-Type": "application/json",
-    };
-    // console.log('bookingIds', bookingIds)
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-      const payload = {
-            ...bookingIds,
-            cancelReason:
-                bookingIds.cancelReason === "other"
-                    ? bookingIds.otherReason
-                    : bookingIds.cancelReason,
-        };
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/cancel-membership/`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(payload, // make sure bookingIds is an array like [96, 97]
-        ),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to create Membership");
-      }
-
-      await showSuccess("Success!", result.message || "Trialsssssss has been created successfully.");
-      if (comesfrom === "allMembers") {
-        navigate(`/weekly-classes/all-members/list`);
-      } else {
-        navigate(`/weekly-classes/all-members/membership-sales`);
-      }
-
-      return result;
-
-    } catch (error) {
-      console.error("Error creating class schedule:", error);
-      await showError("Error", error.message || "Something went wrong while creating class schedule.");
-      throw error;
-    } finally {
-      setLoading(false);
-    }
+  const headers = {
+    "Content-Type": "application/json",
   };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  // ✅ Base payload
+  let payload = {
+    ...bookingIds,
+    cancelReason:
+      bookingIds.cancelReason === "other"
+        ? bookingIds.otherReason
+        : bookingIds.cancelReason,
+  };
+
+  // ✅ Add studentIds ONLY if selectedStudents exist
+  if (selectedStudents && selectedStudents.length > 0) {
+    payload.studentIds = selectedStudents.map((s) => s.id);
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/cancel-membership/`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || "Failed to cancel Membership");
+    }
+
+    await showSuccess("Success!", result.message || "Membership cancelled successfully.");
+
+    if (comesfrom === "allMembers") {
+      navigate(`/weekly-classes/all-members/list`);
+    } else {
+      navigate(`/weekly-classes/all-members/membership-sales`);
+    }
+
+    return result;
+
+  } catch (error) {
+    console.error("Error cancelling membership:", error);
+    await showError("Error", error.message || "Something went wrong.");
+    throw error;
+  } finally {
+    setLoading(false);
+  }
+};
   const cancelHolidaySubmit = async (bookingIds, comesfrom) => {
     setLoading(true);
 

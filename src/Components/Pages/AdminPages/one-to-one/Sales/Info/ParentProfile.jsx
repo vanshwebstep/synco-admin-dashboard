@@ -342,9 +342,9 @@ const ParentProfile = () => {
     handleUpdate("emergency", emergency)
   }
 
-  useEffect(() => {
-    fetchComments();
-  }, [fetchComments])
+    // useEffect(() => {
+  //   fetchComments();
+  // }, [fetchComments])
 
   console.log('formData', formData.length)
 

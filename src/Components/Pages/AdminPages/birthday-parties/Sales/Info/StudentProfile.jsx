@@ -121,9 +121,9 @@ const StudentProfile = () => {
 
 
 
-  useEffect(() => {
-    fetchComments();
-  }, [])
+  // useEffect(() => {
+  //   fetchComments();
+  // }, [])
 
   const handleSubmitComment = async (e) => {
     const token = localStorage.getItem("adminToken");

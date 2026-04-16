@@ -40,6 +40,7 @@ const sortedPlans = [...groupByStudents[activeTab]].sort((a, b) => {
   // 2️⃣ If same interval → sort by duration (1, 3, 6, 12 etc.)
   return a.duration - b.duration;
 });
+console.log('sortedPlans',sortedPlans)
   return (
     <div className="w-full">
       <div className="flex justify-center my-6">
@@ -70,7 +71,7 @@ const sortedPlans = [...groupByStudents[activeTab]].sort((a, b) => {
               {plan.title}
             </h3>
             <p className="text-[24px] sm:text-[32px] font-semibold mb-4">
-              £{plan?.price?.toFixed(2)}/
+              £{plan?.price}/
               <span className="text-sm">{plan.interval?.toLowerCase()}</span>
             </p>
             <hr className="mb-4 text-[#E2E1E5]" />

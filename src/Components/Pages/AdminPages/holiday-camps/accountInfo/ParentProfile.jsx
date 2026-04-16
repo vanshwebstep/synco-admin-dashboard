@@ -326,9 +326,9 @@ const ParentProfile = () => {
     handleUpdateHoliday("emergencyContacts", emergency)
   }
 
-  useEffect(() => {
-    fetchComments();
-  }, [fetchComments])
+  // useEffect(() => {
+  //   fetchComments();
+  // }, [fetchComments])
 
   return (
     <>

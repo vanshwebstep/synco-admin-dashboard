@@ -115,7 +115,7 @@ export default function StudentCourse() {
 
     try {
       const res = await fetch(
-        `${API_BASE_URL}/api/admin/student-course/delete//${id}`,
+        `${API_BASE_URL}/api/admin/student-course/delete/${id}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },

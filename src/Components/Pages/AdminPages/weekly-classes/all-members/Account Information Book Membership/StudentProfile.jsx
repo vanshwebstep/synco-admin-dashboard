@@ -18,9 +18,12 @@ import { showSuccess, showError, showConfirm, showWarning } from '../../../../..
 import { useNavigate } from 'react-router-dom';
 import Comments from '../../../Common/Comments';
 import { useEmail } from '../../../contexts/messages/SendEmailContext';
+import { useCancelMembership } from '../../../contexts/messages/CancelMembershipContext';
 
 const StudentProfile = ({ profile }) => {
     const navigate = useNavigate();
+    const { openCancelPopup } = useCancelMembership();
+
     const { serviceHistoryMembership } = useBookFreeTrial();
     const [textloading, setTextLoading] = useState(null);
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -127,9 +130,9 @@ const StudentProfile = ({ profile }) => {
         }
     }, []);
 
-    useEffect(() => {
-        fetchComments();
-    }, [])
+      // useEffect(() => {
+    //     fetchComments();
+    // }, [])
     const handleSubmitComment = async (e) => {
 
         e.preventDefault();
@@ -523,6 +526,16 @@ const StudentProfile = ({ profile }) => {
         }
     };
 
+    const getStatusColor = (status) => {
+        switch (status) {
+            case "active": return "text-[#43BE4F]";
+            case "frozen": return "text-[#509EF9]";
+            case "cancelled": return "text-[#FC5D5D]";
+            case "waiting list": return "text-[#A4A5A6]";
+            default: return "text-[#A4A5A6]";
+        }
+    };
+
     const monthOptions = [
         { value: 1, label: "1 Month" },
         { value: 2, label: "2 Months" },
@@ -575,7 +588,9 @@ const StudentProfile = ({ profile }) => {
                             >
                                 {/* Top Header */}
                                 <div className="flex justify-between items-start">
-                                    <h2 className="text-[20px] font-semibold">Student Information</h2>
+                                    <h2 className="text-[20px] font-semibold">Student Information <span className={`capitalize ${getStatusColor(student.studentStatus)}`}>
+                                        ( {student.studentStatus} )
+                                    </span></h2>
                                     <button
                                         onClick={() => toggleEditStudent(index)}
                                         className="text-gray-600 hover:text-blue-600"
@@ -898,7 +913,13 @@ const StudentProfile = ({ profile }) => {
                                 )}
                                 {(status == 'active' || status == 'frozen' || status === "request_to_cancel") && canCancelTrial && (
                                     <button
-                                        onClick={() => setshowCancelTrial(true)}
+                                        onClick={() =>
+                                            openCancelPopup(bookingId, profile?.students, {
+                                                showError,
+                                                showWarning,
+                                                onSubmit: cancelMembershipSubmit,
+                                            })
+                                        }
                                         className={`w-full border text-[18px] rounded-xl py-3 font-medium transition-shadow duration-300
     ${showCancelTrial
                                                 ? "bg-[#FF6C6C] text-white shadow-md border-transparent"
@@ -907,6 +928,8 @@ const StudentProfile = ({ profile }) => {
                                     >
                                         Cancel Membership
                                     </button>
+
+
 
                                 )}
 

@@ -322,9 +322,9 @@ const ParentProfile = () => {
     handleUpdateBirthday("emergency", emergency)
   }
 
-  useEffect(() => {
-    fetchComments();
-  }, [fetchComments])
+  // useEffect(() => {
+  //   fetchComments();
+  // }, [fetchComments])
 
   return (
     <>

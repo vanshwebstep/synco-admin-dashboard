@@ -1,18 +1,20 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { FiSearch } from "react-icons/fi";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Trash, Trash2 } from "lucide-react";
 import Select from "react-select";
 import { Check, Filter } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 // import { useBookFreeTrial } from '../../../contexts/BookAFreeTrialContext';
 import Loader from '../../contexts/Loader';
-import { showError, showSuccess, showWarning } from '../../../../../utils/swalHelper';
+import { showConfirm, showError, showSuccess, showWarning } from '../../../../../utils/swalHelper';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import StatsGrid from '../../Common/StatsGrid';
 import DynamicTable from '../../Common/DynamicTable';
 import { useBookFreeTrial } from '../../contexts/BookAFreeTrialContext';
 import debounce from "lodash.debounce";
+import toast from 'react-hot-toast';
+import axios from 'axios';
 
 const trialLists = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -477,6 +479,7 @@ const trialLists = () => {
     };
 
 
+
     useEffect(() => {
         if (isFilterApplied) {
             setIsFilterApplied(false)
@@ -495,9 +498,44 @@ const trialLists = () => {
         setSearchTerm(value);
         handleSearch(value);
     };
+const handleDelete = useCallback(async () => {
+    if (!token) return;
 
-    if (loading) return <Loader />;
-    console.log('bookMembership', bookMembership)
+    if (!selectedStudents?.length) {
+        showWarning("Please select at least 1 student");
+        return;
+    }
+
+    const result = await showConfirm(
+        "Are you sure?",
+        "These members will be permanently deleted.",
+        "warning"
+    );
+
+    if (!result.isConfirmed) return;
+
+    try {
+        await axios.delete(
+            `${API_BASE_URL}/api/admin/delete`, // ✅ match your working fetch URL
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                data: {
+                    bookingIds: selectedStudents, // ✅ body goes inside `data`
+                },
+            }
+        );
+
+        showSuccess("Deleted!", "Members removed successfully.");
+        fetchBookMemberships();
+
+    } catch (err) {
+        console.error(err);
+        toast.error(err?.response?.data?.message || "Failed to delete members");
+    }
+}, [token, selectedStudents, fetchBookMemberships]);
 
     const membershipColumns = [
         { header: "Name", key: "name", selectable: true }, // <-- checkbox + student name
@@ -566,9 +604,9 @@ const trialLists = () => {
             },
 
         },
-        { header: "Status", render: (item) => getStatusBadge(item.status) },
+        { header: "Status", render: (item, student) => getStatusBadge(student.studentStatus) },
     ];
-
+    if (loading) return <Loader />;
     return (
         <div className="pt-1 bg-gray-50 min-h-screen">
 
@@ -578,6 +616,9 @@ const trialLists = () => {
                     <StatsGrid stats={stats} variant="B" />
 
                     <div className="flex justify-end gap-2">
+                        <div className="bg-white min-w-[40px] min-h-[38px]   border border-gray-300 p-2 rounded-full flex items-center justify-center">
+                            <Trash2 size={18} className='cursor-pointer' onClick={handleDelete} />
+                        </div>
                         <div className="bg-white min-w-[38px] min-h-[38px]   border border-gray-300 p-2 rounded-full flex items-center justify-center">
                             <Filter size={16} className='cursor-pointer' onClick={() => setShowFilter(!showFilter)} />
                         </div>

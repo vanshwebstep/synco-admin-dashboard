@@ -164,9 +164,9 @@ const CreateLead = () => {
     };
 
 
-    useEffect(() => {
-        fetchComments();
-    }, [fetchComments]);
+    // useEffect(() => {
+    //     fetchComments();
+    // }, [fetchComments]);
 
     return (
         <>

@@ -202,9 +202,9 @@ const StudentProfile = ({ StudentProfile }) => {
         }
     }, []);
 
-    useEffect(() => {
-        fetchComments();
-    }, [])
+      // useEffect(() => {
+    //     fetchComments();
+    // }, [])
     const handleSubmitComment = async (e) => {
 
         e.preventDefault();

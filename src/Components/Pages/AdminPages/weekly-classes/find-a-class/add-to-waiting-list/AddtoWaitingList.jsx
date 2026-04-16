@@ -70,7 +70,7 @@ const AddtoWaitingList = () => {
       if (classId) {
         setIsBooked(false);
         await fetchFindClassID(classId);
-        await fetchComments();
+        // await fetchComments();
       }
     };
     fetchData();

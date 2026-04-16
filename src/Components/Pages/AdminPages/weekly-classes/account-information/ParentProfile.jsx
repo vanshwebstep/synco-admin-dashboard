@@ -338,9 +338,9 @@ const ParentProfile = () => {
     handleUpdateAcountInfo("emergency", emergency)
   }
 
-  useEffect(() => {
-    fetchComments();
-  }, [fetchComments])
+    // useEffect(() => {
+  //   fetchComments();
+  // }, [fetchComments])
 
   return (
     <>

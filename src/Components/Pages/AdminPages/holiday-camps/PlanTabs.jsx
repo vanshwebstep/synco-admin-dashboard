@@ -62,7 +62,7 @@ const PlanTabs = ({ selectedPlans = [] }) => {
               {plan.title}
             </h3>
             <p className="text-[24px] sm:text-[32px] font-semibold mb-4">
-              £{plan?.price?.toFixed(2)}/
+              £{plan?.price}/
               <span className="text-sm">{plan.interval?.toLowerCase()}</span>
             </p>
             <hr className="mb-4 text-[#E2E1E5]" />

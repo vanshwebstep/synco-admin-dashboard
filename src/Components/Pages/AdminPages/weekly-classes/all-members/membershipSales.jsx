@@ -551,7 +551,7 @@ const trialLists = () => {
         },
         { header: "Membership Plan", render: (item) => item?.paymentPlanData?.title },
 
-        { header: "Status", render: (item) => getStatusBadge(item.status) },
+        { header: "Status", render: (item , student) => getStatusBadge(student.studentStatus) },
     ];
     if (loading) return <Loader />;
 

@@ -121,9 +121,9 @@ const ParentProfile = (stateData) => {
         }
     }, []);
 
-    useEffect(() => {
-        fetchComments();
-    }, [])
+      // useEffect(() => {
+    //     fetchComments();
+    // }, [])
     const handleSubmitComment = async (e) => {
 
         e.preventDefault();

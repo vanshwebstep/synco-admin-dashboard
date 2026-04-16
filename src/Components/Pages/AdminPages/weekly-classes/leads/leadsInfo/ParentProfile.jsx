@@ -269,9 +269,9 @@ const ParentProfile = (fetchedData) => {
     }
   }, [token, API_BASE_URL]);
 
-  useEffect(() => {
-    fetchComments();
-  }, [fetchComments]);
+    // useEffect(() => {
+  //   fetchComments();
+  // }, [fetchComments]);
 
 
   const renderPopup = useCallback(

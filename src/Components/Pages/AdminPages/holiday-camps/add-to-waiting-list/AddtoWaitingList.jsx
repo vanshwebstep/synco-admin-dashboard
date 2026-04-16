@@ -66,7 +66,7 @@ const HolidayAddtoWaitingList = () => {
     const fetchData = async () => {
       if (classId) {
         await fetchHolidayClassesbyId(classId);
-        await fetchComments();
+        // await fetchComments();
         await fetchKeyInfo();
       }
     };

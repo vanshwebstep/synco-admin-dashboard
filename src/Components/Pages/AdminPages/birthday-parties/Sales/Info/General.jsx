@@ -240,9 +240,9 @@ const General = () => {
         }
     }
 
-    useEffect(() => {
-        fetchComments();
-    }, [])
+    // useEffect(() => {
+    //     fetchComments();
+    // }, [])
 
 
 

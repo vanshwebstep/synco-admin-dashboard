@@ -31,6 +31,15 @@ const List = () => {
     const [expression, setExpression] = useState('');
     const [studentRemoved, setStudentRemoved] = useState(false);
     const [numberOfStudents, setNumberOfStudents] = useState(1);
+    const [nameOnCard, setCardHolderName] = useState("");
+    const [cardNumber, setCardNumber] = useState("");
+    const [expiryDate, setExpiryDate] = useState("");
+    const [cvc, setCvc] = useState("");
+    const [errors, setErrors] = useState({});
+
+    const [checkoutCountry, setCheckoutCountry] = useState("United States");
+    const [zipCode, setZipCode] = useState("");
+    const [step, setStep] = useState(1);
     const { keyInfoData, fetchKeyInfo } = useMembers();
     const token = localStorage.getItem("adminToken");
     const [isDiscountLoading, setIsDiscountLoading] = useState(false);
@@ -50,12 +59,88 @@ const List = () => {
         starterPackPrice: 0,
         totalAmount: 0
     });
+    const formatCardNumber = (val) => {
+        const digits = val.replace(/\D/g, "").slice(0, 16);
+        return digits.replace(/(.{4})/g, "$1 ").trim();
+    };
+
+    const formatExpiry = (val) => {
+        const digits = val.replace(/\D/g, "").slice(0, 4);
+        if (digits.length >= 3) return digits.slice(0, 2) + "/" + digits.slice(2);
+        return digits;
+    };
+
+    const formatCvc = (val) => val.replace(/\D/g, "").slice(0, 4);
+
+    const formatZip = (val) => val.replace(/[^a-zA-Z0-9 ]/g, "").slice(0, 10);
 
     // store selected code silently
     const handleChange = (value, data) => {
         // When library fires onChange, just update the dial code
         setDialCode("+" + data.dialCode);
     };
+    const validateField = (field, value) => {
+        switch (field) {
+            case "nameOnCard":
+                return value.trim() ? "" : "Name on card is required";
+            case "cardNumber":
+                return value.replace(/\s/g, "").length === 16 ? "" : "Enter a valid 16-digit card number";
+            case "expiryDate": {
+                if (!value || value.length < 5) return "Enter expiry as MM/YY";
+                const [mm, yy] = value.split("/");
+                const month = parseInt(mm, 10);
+                const year = parseInt("20" + yy, 10);
+                const now = new Date();
+                const expDate = new Date(year, month - 1, 1);
+                if (month < 1 || month > 12) return "Invalid month";
+                if (expDate < new Date(now.getFullYear(), now.getMonth(), 1)) return "Card has expired";
+                return "";
+            }
+            case "cvc":
+                return value.length >= 3 ? "" : "Enter a valid CVC";
+            case "country":
+                return value.trim() ? "" : "Country is required";
+            case "zipCode":
+                return value.trim() ? "" : "ZipCode is required";
+            default:
+                return "";
+        }
+    };
+
+    const isFormValid = !Object.keys(errors).length &&
+        nameOnCard.trim() && cardNumber && expiryDate && cvc && checkoutCountry && zipCode;
+
+    const validateAll = () => {
+        const fields = { nameOnCard, cardNumber, expiryDate, cvc, checkoutCountry, zipCode };
+        const newErrors = {};
+        Object.entries(fields).forEach(([field, value]) => {
+            const msg = validateField(field, value);
+            if (msg) newErrors[field] = msg;
+        });
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleCheckoutChange = (field, rawValue) => {
+        let value = rawValue;
+
+        if (field === "cardNumber") value = formatCardNumber(rawValue);
+        if (field === "expiryDate") value = formatExpiry(rawValue);
+        if (field === "cvc") value = formatCvc(rawValue);
+        if (field === "zipCode") value = formatZip(rawValue);
+
+        const setters = { nameOnCard: setCardHolderName, cardNumber: setCardNumber, expiryDate: setExpiryDate, cvc: setCvc, checkoutCountry: setCheckoutCountry, zipCode: setZipCode };
+        setters[field]?.(value);
+
+        const msg = validateField(field, value);
+        setErrors((prev) => {
+            const copy = { ...prev };
+            if (msg) copy[field] = msg;
+            else delete copy[field];
+            return copy;
+        });
+    };
+
     const handleChange2 = (value, data) => {
         // When library fires onChange, just update the dial code
         setDialCode("+" + data.dialCode);
@@ -198,7 +283,45 @@ const List = () => {
     const paymentPlanOptions = numberOfStudents
         ? allPaymentPlans.filter((plan) => plan.all?.students === Number(numberOfStudents))
         : allPaymentPlans;
-    // console.log('singleClassSchedulesOnly', singleClassSchedulesOnly)
+
+    const countries = [
+        "United States",
+        "United Kingdom",
+        "Canada",
+        "Australia"
+    ];
+    const
+        countryOptions = countries.map((c) => ({
+            value: c,
+            label: c,
+        })); const customSelectStyles = {
+            control: (base, state) => ({
+                ...base,
+                backgroundColor: "#ffffff",
+                borderRadius: "4px",
+                padding: "2px 8px",
+                border: "none",
+                boxShadow: "0 0 0 1px rgba(0,0,0,0.05)", // similar to mainShadow
+                minHeight: "40px",
+                marginTop: "4px",
+            }),
+            placeholder: (base) => ({
+                ...base,
+                color: "#494949",
+                fontWeight: 500,
+            }),
+            valueContainer: (base) => ({
+                ...base,
+                padding: "0 8px",
+            }),
+            indicatorSeparator: () => ({
+                display: "none",
+            }),
+            dropdownIndicator: (base) => ({
+                ...base,
+                padding: "4px",
+            }),
+        };
 
 
     const classesWithCapacity = Array.isArray(singleClassSchedulesOnly?.venueClasses) ? singleClassSchedulesOnly?.venueClasses?.filter((cls) => {
@@ -260,7 +383,72 @@ const List = () => {
             }
         }
     };
+    const validationCheck = () => {
+        // -------- STUDENTS VALIDATION --------
+        for (let i = 0; i < students.length; i++) {
+            const s = students[i];
 
+            if (!s.studentFirstName) {
+                showError("Required Fields", `Student ${i + 1}: First name is required`);
+                return false;
+            }
+            if (!s.studentLastName) {
+                showError("Required Fields", `Student ${i + 1}: Last name is required`);
+                return false;
+            }
+            if (!s.dateOfBirth) {
+                showError("Required Fields", `Student ${i + 1}: Date of Birth is required`);
+                return false;
+            }
+
+            if (!s.gender) {
+                showError("Required Fields", `Student ${i + 1}: Gender is required`);
+                return false;
+            }
+            if (!s.medicalInformation) {
+                showError("Required Fields", `Student ${i + 1}: Medical Information is required`);
+                return false;
+            }
+
+            // Class validation (except first if already auto)
+            if (i !== 0 && !comesFrom && !s.selectedClassId) {
+                showError("Required Fields", `Student ${i + 1}: Please select class`);
+                return false;
+            }
+        }
+
+        // -------- PARENTS VALIDATION --------
+        for (let i = 0; i < parents.length; i++) {
+            const p = parents[i];
+
+            if (!p.parentFirstName) {
+                showError("Required Fields", `Parent ${i + 1}: First name is required`);
+                return false;
+            }
+            if (!p.parentLastName) {
+                showError("Required Fields", `Parent ${i + 1}: Last name is required`);
+                return false;
+            }
+            if (!p.parentEmail) {
+                showError("Required Fields", `Parent ${i + 1}: Email is required`);
+                return false;
+            }
+            if (!p.parentPhoneNumber) {
+                showError("Required Fields", `Parent ${i + 1}: Phone number is required`);
+                return false;
+            }
+            if (!p.relationToChild) {
+                showError("Required Fields", `Parent ${i + 1}: Relation is required`);
+                return false;
+            }
+            if (!p.howDidYouHear) {
+                showError("Required Fields", `Parent ${i + 1}: Please select how you heard about us`);
+                return false;
+            }
+        }
+
+        return true;
+    };
 
     const handlePlanChange = (plan) => {
         setMembershipPlan(plan);
@@ -371,7 +559,7 @@ const List = () => {
                 setIsBooked(false);
                 await fetchFindClassID(finalClassId);
                 await fetchKeyInfo();
-                await fetchComments();
+                // await fetchComments();
             }
         };
         fetchData();
@@ -548,6 +736,9 @@ const List = () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, [showModal, clickedIcon, setShowModal]);
+
+    const inputClass = (field) =>
+        `w-full mt-1 mainShadow bg-white placeholder:text-[#494949] placeholder:font-medium rounded-[6px] px-4 py-2 outline-none${errors[field] ? " border border-red-500" : ""}`;
 
 
     const allTermRanges = Array.isArray(congestionNote)
@@ -737,21 +928,34 @@ const List = () => {
 
     const toDateOnly = (date) => {
         if (!date) return null;
-        const d = new Date(date);
 
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, "0");
-        const day = String(d.getDate()).padStart(2, "0");
+        const [day, month, year] = date.split("/").map(Number);
 
-        // PURE DATE, NO TIMEZONE CONVERSION POSSIBLE
-        return `${year}-${month}-${day}`;
+        // Validate first
+        if (!day || !month || !year) return null;
+
+        const d = new Date(year, month - 1, day);
+
+        // Extra validation (same jo tumne upar kiya hai)
+        if (
+            d.getDate() !== day ||
+            d.getMonth() !== month - 1 ||
+            d.getFullYear() !== year
+        ) {
+            return null;
+        }
+
+        const formattedMonth = String(month).padStart(2, "0");
+        const formattedDay = String(day).padStart(2, "0");
+
+        return `${year}-${formattedMonth}-${formattedDay}`;
     };
-    const handleSubmit = async () => {
+    const handleSubmit = async (finalpayload) => {
         if (!selectedDate) {
             showWarning("Trial Date Required", "Please select a trial date before submitting.");
             return;
         }
-
+        console.log('finalpayload', finalpayload)
         const filteredPayment = Object.fromEntries(
             Object.entries(payment || {}).filter(
                 ([, value]) => value !== null && value !== "" && value !== undefined
@@ -861,7 +1065,17 @@ const List = () => {
             })(),
             paymentPlanId: membershipPlan?.value ?? null,
 
-            ...(paymentData && { payment: paymentData }),
+            ...(paymentData && {
+                payment: {
+                    ...paymentData,
+                    nameOnCard: finalpayload?.cardDetails?.nameOnCard?.trim(),
+                    cardNumber: finalpayload?.cardDetails?.cardNumber?.replace(/\s+/g, ''), // ✅ FIX
+                    expiryDate: finalpayload?.cardDetails?.expiryDate,
+                    cvc: finalpayload?.cardDetails?.cvc,
+                    country: finalpayload?.cardDetails?.country,
+                    zipCode: finalpayload?.cardDetails?.zipCode
+                }
+            }),
         };
         console.log('amountToSend', amountToSend);
         console.log('payload', payload);
@@ -1037,6 +1251,26 @@ const List = () => {
 
         }
     }, []);
+    const handleFinalSubmit = async () => {
+        // setLoading(true);
+        try {
+            const finalPayload = {
+                directDebit: directDebitData,
+                cardDetails: {
+                    nameOnCard,
+                    cardNumber,
+                    expiryDate,
+                    cvc,
+                    country: checkoutCountry,
+                    zipCode
+                }
+            };
+
+            await handleSubmit(finalPayload);
+        } finally {
+            // setLoading(false);
+        }
+    };
     const handleSubmitComment = async (e) => {
 
         e.preventDefault();
@@ -1186,104 +1420,104 @@ const List = () => {
         hasInitialized.current = true;
     }, [sessionDatesSet]);
     console.log('membershipPlan', membershipPlan);
- const calculateAmount = (startDate) => {
-    console.log("🚀 ===== CALCULATION START =====");
+    const calculateAmount = (startDate) => {
+        console.log("🚀 ===== CALCULATION START =====");
 
-    if (!membershipPlan || !startDate) {
-        console.log("❌ Missing membershipPlan or startDate");
-        return;
-    }
+        if (!membershipPlan || !startDate) {
+            console.log("❌ Missing membershipPlan or startDate");
+            return;
+        }
 
-    const pricePerLesson = membershipPlan?.all?.priceLesson || 0;
-    console.log("💰 Price Per Lesson:", pricePerLesson);
+        const pricePerLesson = membershipPlan?.all?.priceLesson || 0;
+        console.log("💰 Price Per Lesson:", pricePerLesson);
 
-    const starterPack = singleClassSchedulesOnly?.venue?.starterPack
-        ? membershipPlan?.starterPackPrice || 0
-        : 0;
-    console.log("🎁 Starter Pack:", starterPack);
+        const starterPack = singleClassSchedulesOnly?.venue?.starterPack
+            ? membershipPlan?.starterPackPrice || 0
+            : 0;
+        console.log("🎁 Starter Pack:", starterPack);
 
-    const durationMonths = membershipPlan?.all?.duration || 1;
-    console.log("📆 Duration (months):", durationMonths);
+        const durationMonths = membershipPlan?.all?.duration || 1;
+        console.log("📆 Duration (months):", durationMonths);
 
-    const monthlyPrice =
-        membershipPlan?.all?.price / durationMonths || 0;
-    console.log("📅 Monthly Price:", monthlyPrice);
-    console.log("📅 Monthly PricemembershipPlan?.all?.price:", membershipPlan?.all?.price);
+        const monthlyPrice =
+            membershipPlan?.all?.price / durationMonths || 0;
+        console.log("📅 Monthly Price:", monthlyPrice);
+        console.log("📅 Monthly PricemembershipPlan?.all?.price:", membershipPlan?.all?.price);
 
-    const selected = new Date(startDate);
-    selected.setHours(0, 0, 0, 0);
-    console.log("📍 Selected Start Date:", selected);
+        const selected = new Date(startDate);
+        selected.setHours(0, 0, 0, 0);
+        console.log("📍 Selected Start Date:", selected);
 
-    const selectedMonth = selected.getMonth();
-    const selectedYear = selected.getFullYear();
+        const selectedMonth = selected.getMonth();
+        const selectedYear = selected.getFullYear();
 
-    const allSessions = Array.from(sessionDatesSet)
-        .map((d) => {
-            const date = new Date(d);
-            date.setHours(0, 0, 0, 0);
-            return date;
-        })
-        .sort((a, b) => a - b);
+        const allSessions = Array.from(sessionDatesSet)
+            .map((d) => {
+                const date = new Date(d);
+                date.setHours(0, 0, 0, 0);
+                return date;
+            })
+            .sort((a, b) => a - b);
 
-    console.log("📚 All Sessions:", allSessions);
+        console.log("📚 All Sessions:", allSessions);
 
-    const monthSessions = allSessions.filter(
-        (d) =>
-            d.getMonth() === selectedMonth &&
-            d.getFullYear() === selectedYear
-    );
+        const monthSessions = allSessions.filter(
+            (d) =>
+                d.getMonth() === selectedMonth &&
+                d.getFullYear() === selectedYear
+        );
 
-    console.log("📅 Sessions in Selected Month:", monthSessions);
+        console.log("📅 Sessions in Selected Month:", monthSessions);
 
-    const remainingSessions = monthSessions.filter((d) => d >= selected);
-    console.log("⏳ Remaining Sessions:", remainingSessions);
+        const remainingSessions = monthSessions.filter((d) => d >= selected);
+        console.log("⏳ Remaining Sessions:", remainingSessions);
 
-    let remainingLessons = remainingSessions.length;
-    console.log("🔢 Remaining Lessons Count:", remainingLessons);
+        let remainingLessons = remainingSessions.length;
+        console.log("🔢 Remaining Lessons Count:", remainingLessons);
 
-    let proRatedCost = remainingLessons * pricePerLesson;
-    console.log("💸 Pro Rated Cost:", proRatedCost);
+        let proRatedCost = remainingLessons * pricePerLesson;
+        console.log("💸 Pro Rated Cost:", proRatedCost);
 
-    const firstSessionOfMonth = monthSessions[0];
-    console.log("🥇 First Session of Month:", firstSessionOfMonth);
+        const firstSessionOfMonth = monthSessions[0];
+        console.log("🥇 First Session of Month:", firstSessionOfMonth);
 
-    if (selected.getTime() === firstSessionOfMonth?.getTime()) {
-        console.log("⚠️ Selected date is first session → No prorated cost");
-        remainingLessons = 0;
-        proRatedCost = 0;
-    }
+        if (selected.getTime() === firstSessionOfMonth?.getTime()) {
+            console.log("⚠️ Selected date is first session → No prorated cost");
+            remainingLessons = 0;
+            proRatedCost = 0;
+        }
 
-    const totalToday =
-        proRatedCost === 0
-            ? monthlyPrice + starterPack
-            : proRatedCost + starterPack;
+        const totalToday =
+            proRatedCost === 0
+                ? monthlyPrice + starterPack
+                : proRatedCost + starterPack;
 
-    console.log("🧮 Total Today (Before Fix):", totalToday);
+        console.log("🧮 Total Today (Before Fix):", totalToday);
 
-    const formattedTotal = Number(totalToday.toFixed(2));
-    const formattedProRated = Number(proRatedCost.toFixed(2));
-    const formattedMonthly = Number(monthlyPrice.toFixed(2));
+        const formattedTotal = Number(totalToday.toFixed(2));
+        const formattedProRated = Number(proRatedCost.toFixed(2));
+        const formattedMonthly = Number(monthlyPrice.toFixed(2));
 
-    console.log("✅ Formatted Total:", formattedTotal);
-    console.log("✅ Formatted ProRated:", formattedProRated);
-    console.log("✅ Formatted Monthly:", formattedMonthly);
+        console.log("✅ Formatted Total:", formattedTotal);
+        console.log("✅ Formatted ProRated:", formattedProRated);
+        console.log("✅ Formatted Monthly:", formattedMonthly);
 
-    console.log("🏁 ===== CALCULATION END =====");
+        console.log("🏁 ===== CALCULATION END =====");
 
-    setRemainingLessons(remainingLessons);
-    setCalculatedAmount(formattedTotal);
+        setRemainingLessons(remainingLessons);
+        setCalculatedAmount(formattedTotal);
 
-    setPricingBreakdown({
-        pricePerClassPerChild: pricePerLesson,
-        numberOfLessonsProRated: remainingLessons,
-        costOfProRatedLessons: formattedProRated,
-        starterPack: starterPack,
-        totalAmountToday: formattedTotal,
-        nextMonthPayment: formattedMonthly,
-    });
+        setPricingBreakdown({
+            pricePerClassPerChild: pricePerLesson,
+            numberOfLessonsProRated: remainingLessons,
+            costOfProRatedLessons: formattedProRated,
+            starterPack: starterPack,
+            totalAmountToday: formattedTotal,
+            nextMonthPayment: formattedMonthly,
+        });
 
-    return formattedTotal;
-};
+        return formattedTotal;
+    };
 
     console.log('pricingBreakdown', pricingBreakdown);
     console.log("All Available Dates:", Array.from(sessionDatesSet));
@@ -1351,10 +1585,10 @@ const List = () => {
         );
     };
     console.log('appliedDiscount', appliedDiscount)
-    if (loading) return <Loader />;
     const finalAmount =
         appliedDiscount?.data?.finalPrice ??
         singleClassSchedulesOnly?.starterPack?.[0]?.price;
+    if (loading) return <Loader />;
 
     return (
         <div className="pt-1 bg-gray-50 min-h-screen">
@@ -2442,29 +2676,35 @@ const List = () => {
                             <button
                                 type="button"
                                 onClick={() => {
+                                    // Step 1: Membership validation
                                     if (!membershipPlan || !selectedDate) {
                                         let msg = "";
-                                        if (!membershipPlan && !selectedDate) msg = "Please select Membership Plan and  Date";
+                                        if (!membershipPlan && !selectedDate) msg = "Please select Membership Plan and Date";
                                         else if (!membershipPlan) msg = "Please select Membership Plan";
-                                        else if (!selectedDate) msg = "Please select  Date";
+                                        else if (!selectedDate) msg = "Please select Date";
 
                                         showError("Required Fields", msg);
-
                                         return;
                                     }
 
-                                    // If both are selected, proceed
+                                    // Step 2: Form validation
+                                    if (!validationCheck()) return;
+
+                                    // Step 3: Proceed
                                     setShowPopup(true);
                                 }}
                                 className={`text-white font-semibold text-[18px] px-6 py-3 rounded-lg ${isBooked
                                     ? "bg-green-600 border-green-600 cursor-default"
-                                    : isSubmitting || membershipPlan && selectedDate
+                                    : isSubmitting || (membershipPlan && selectedDate)
                                         ? "bg-[#237FEA] border border-[#237FEA]"
                                         : "bg-gray-400 border-gray-400 cursor-not-allowed"
                                     }`}
                             >
                                 {isBooked
-                                    ? "Booked" : isSubmitting ? "Submitting..." : "Setup Direct Debit"}
+                                    ? "Booked"
+                                    : isSubmitting
+                                        ? "Submitting..."
+                                        : "Setup Direct Debit"}
                             </button>
 
 
@@ -2510,7 +2750,7 @@ const List = () => {
                                                 </p>
                                             </div>
 
-                                            <hr className="my-4 border-gray-300 poppins" />
+                                            {singleClassSchedulesOnly?.venue?.starterPack && (<hr className="my-4 border-gray-300 poppins" />)}
 
                                             {singleClassSchedulesOnly?.venue?.starterPack && (
                                                 <div className="mb-4">
@@ -2533,7 +2773,7 @@ const List = () => {
                                                 </div>
                                             )}
 
-                                            <hr className="my-4 border-gray-300" />
+                                            {pricingBreakdown.numberOfLessonsProRated !== 0 && (<hr className="my-4 border-gray-300" />)}
 
                                             {pricingBreakdown.numberOfLessonsProRated !== 0 && (
                                                 <div className="mb-4 grid gap-2">
@@ -2573,80 +2813,173 @@ const List = () => {
                                         </div>
                                     </div>
                                     {/* RIGHT FORM (MATCHED DESIGN) */}
-                                    <div className="flex-1 flex flex-col overflow-y-auto scrollbar-hide">
-                                        <div className="flex justify-between items-center mb-3">
-                                            <h2 className="text-2xl font-semibold poppins">Set up your direct debit</h2>
-                                            <img src="/images/Directdebitlogo.png" alt="Direct Debit" className="h-10" />
-                                        </div>
+                                    {step === 1 && (
+                                        <div className="flex-1 flex flex-col overflow-y-auto scrollbar-hide">
+                                            <div className="flex justify-between items-center mb-3">
+                                                <h2 className="text-2xl font-semibold poppins">Set up your direct debit</h2>
+                                                <img src="/images/Directdebitlogo.png" alt="Direct Debit" className="h-10" />
+                                            </div>
 
-                                        <p className="text-[#797A88] text-[14px] mb-6 poppins">
-                                            Your regular Direct Debit payments will be collected <br />
-                                            from this account starting from the 1st of next month.
-                                        </p>
+                                            <p className="text-[#797A88] text-[14px] mb-6 poppins">
+                                                Your regular Direct Debit payments will be collected <br />
+                                                from this account starting from the 1st of next month.
+                                            </p>
 
-                                        {/* ================= Personal Details ================= */}
-                                        <label className="block mb-4">
-                                            <span className="block text-gray-700 text-[14px] mb-1 poppins">Email address</span>
-                                            <input
-                                                type="email"
-                                                value={payment.email}
-                                                onChange={(e) => setPayment({ ...payment, email: e.target.value })}
-                                                className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
-                                            />
-                                        </label>
+                                            {/* ================= Personal Details ================= */}
+                                            <label className="block mb-4">
+                                                <span className="block text-gray-700 text-[14px] mb-1 poppins">Email address</span>
+                                                <input
+                                                    type="email"
+                                                    value={payment.email}
+                                                    onChange={(e) => setPayment({ ...payment, email: e.target.value })}
+                                                    className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
+                                                />
+                                            </label>
 
-                                        {/* ================= Payment Method ================= */}
-                                        <p className="text-[14px] font-medium text-[#34353B] mb-3">
-                                            Payment Method:{" "}
-                                            <span className="font-semibold poppins">
-                                                {isFranchisee ? "GoCardless" : "Access Pay Suite"}
-                                            </span>
-                                        </p>
+                                            {/* ================= Payment Method ================= */}
+                                            <p className="text-[14px] font-medium text-[#34353B] mb-3">
+                                                Payment Method:{" "}
+                                                <span className="font-semibold poppins">
+                                                    {isFranchisee ? "GoCardless" : "Access Pay Suite"}
+                                                </span>
+                                            </p>
 
-                                        {/* ================= BANK (GOCARDLESS) ================= */}
-                                        {isFranchisee && (
-                                            <div className="space-y-4">
+                                            {/* ================= BANK (GOCARDLESS) ================= */}
+                                            {isFranchisee && (
+                                                <div className="space-y-4">
 
-                                                <label className="block">
-                                                    <span className="block poppins text-gray-700 text-[14px] mb-1">
-                                                        Account Holder Name
-                                                    </span>
-                                                    <input
-                                                        type="text"
-                                                        value={payment.account_holder_name}
-                                                        onChange={(e) => {
-                                                            const fullName = e.target.value;
-                                                            const parts = fullName.trim().split(" ");
-                                                            setPayment({
-                                                                ...payment,
-                                                                account_holder_name: fullName,
-                                                                firstName: parts[0] || "",
-                                                                lastName: parts.slice(1).join(" "),
-                                                            });
-                                                        }}
-                                                        className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
-                                                    />
-                                                </label>
-
-                                                <div className="md:flex gap-4">
-                                                    <label className="flex-1">
+                                                    <label className="block">
                                                         <span className="block poppins text-gray-700 text-[14px] mb-1">
-                                                            Sort Code
+                                                            Account Holder Name
                                                         </span>
                                                         <input
                                                             type="text"
-                                                            value={payment.branch_code}
-                                                            onChange={(e) =>
+                                                            value={payment.account_holder_name}
+                                                            onChange={(e) => {
+                                                                const fullName = e.target.value;
+                                                                const parts = fullName.trim().split(" ");
                                                                 setPayment({
                                                                     ...payment,
-                                                                    branch_code: e.target.value.replace(/\D/g, ""),
-                                                                })
+                                                                    account_holder_name: fullName,
+                                                                    firstName: parts[0] || "",
+                                                                    lastName: parts.slice(1).join(" "),
+                                                                });
+                                                            }}
+                                                            className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
+                                                        />
+                                                    </label>
+
+                                                    <div className="md:flex gap-4">
+                                                        <label className="flex-1">
+                                                            <span className="block poppins text-gray-700 text-[14px] mb-1">
+                                                                Sort Code
+                                                            </span>
+                                                            <input
+                                                                type="text"
+                                                                value={payment.branch_code}
+                                                                onChange={(e) =>
+                                                                    setPayment({
+                                                                        ...payment,
+                                                                        branch_code: e.target.value.replace(/\D/g, ""),
+                                                                    })
+                                                                }
+                                                                className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
+                                                            />
+                                                        </label>
+
+                                                        <label className="flex-1">
+                                                            <span className="block poppins text-gray-700 text-[14px] mb-1">
+                                                                Account Number
+                                                            </span>
+                                                            <input
+                                                                type="text"
+                                                                value={payment.account_number}
+                                                                onChange={(e) =>
+                                                                    setPayment({
+                                                                        ...payment,
+                                                                        account_number: e.target.value.replace(/\D/g, ""),
+                                                                    })
+                                                                }
+                                                                className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
+                                                            />
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* ================= CARD (ACCESS PAY SUITE) ================= */}
+                                            {!isFranchisee && (
+                                                <div className="space-y-4 mt-4">
+
+                                                    <label className="block">
+                                                        <span className="block poppins text-gray-700 text-[14px] mb-1">
+                                                            Account Holder Name
+                                                        </span>
+                                                        <input
+                                                            type="text"
+                                                            value={payment.account_holder_name}
+                                                            onChange={(e) => {
+                                                                const fullName = e.target.value;
+                                                                const parts = fullName.trim().split(" ");
+                                                                setPayment({
+                                                                    ...payment,
+                                                                    account_holder_name: fullName,
+                                                                    firstName: parts[0] || "",
+                                                                    lastName: parts.slice(1).join(" "),
+                                                                });
+                                                            }}
+                                                            className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
+                                                        />
+                                                    </label>
+
+                                                    {/* Address Line 1 */}
+                                                    <label className="block">
+                                                        <span className="block poppins text-gray-700 text-[14px] mb-1">
+                                                            Address Line 1
+                                                        </span>
+                                                        <input
+                                                            type="text"
+                                                            value={payment.line1}
+                                                            onChange={(e) =>
+                                                                setPayment({ ...payment, line1: e.target.value })
                                                             }
                                                             className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
                                                         />
                                                     </label>
 
-                                                    <label className="flex-1">
+                                                    {/* City + Postal */}
+                                                    <div className="md:flex gap-4">
+                                                        <label className="flex-1">
+                                                            <span className="block poppins text-gray-700 text-[14px] mb-1">
+                                                                City
+                                                            </span>
+                                                            <input
+                                                                type="text"
+                                                                value={payment.city}
+                                                                onChange={(e) =>
+                                                                    setPayment({ ...payment, city: e.target.value })
+                                                                }
+                                                                className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
+                                                            />
+                                                        </label>
+
+                                                        <label className="flex-1">
+                                                            <span className="block poppins text-gray-700 text-[14px] mb-1">
+                                                                Postal Code
+                                                            </span>
+                                                            <input
+                                                                type="text"
+                                                                value={payment.postalCode}
+                                                                onChange={(e) =>
+                                                                    setPayment({ ...payment, postalCode: e.target.value })
+                                                                }
+                                                                className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
+                                                            />
+                                                        </label>
+                                                    </div>
+
+                                                    {/* Account Number */}
+                                                    <label className="block">
                                                         <span className="block poppins text-gray-700 text-[14px] mb-1">
                                                             Account Number
                                                         </span>
@@ -2662,170 +2995,233 @@ const List = () => {
                                                             className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
                                                         />
                                                     </label>
-                                                </div>
-                                            </div>
-                                        )}
 
-                                        {/* ================= CARD (ACCESS PAY SUITE) ================= */}
-                                        {!isFranchisee && (
-                                            <div className="space-y-4 mt-4">
-
-                                                <label className="block">
-                                                    <span className="block poppins text-gray-700 text-[14px] mb-1">
-                                                        Account Holder Name
-                                                    </span>
-                                                    <input
-                                                        type="text"
-                                                        value={payment.account_holder_name}
-                                                        onChange={(e) => {
-                                                            const fullName = e.target.value;
-                                                            const parts = fullName.trim().split(" ");
-                                                            setPayment({
-                                                                ...payment,
-                                                                account_holder_name: fullName,
-                                                                firstName: parts[0] || "",
-                                                                lastName: parts.slice(1).join(" "),
-                                                            });
-                                                        }}
-                                                        className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
-                                                    />
-                                                </label>
-
-                                                {/* Address Line 1 */}
-                                                <label className="block">
-                                                    <span className="block poppins text-gray-700 text-[14px] mb-1">
-                                                        Address Line 1
-                                                    </span>
-                                                    <input
-                                                        type="text"
-                                                        value={payment.line1}
-                                                        onChange={(e) =>
-                                                            setPayment({ ...payment, line1: e.target.value })
-                                                        }
-                                                        className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
-                                                    />
-                                                </label>
-
-                                                {/* City + Postal */}
-                                                <div className="md:flex gap-4">
-                                                    <label className="flex-1">
+                                                    {/* Sort Code */}
+                                                    <label className="block">
                                                         <span className="block poppins text-gray-700 text-[14px] mb-1">
-                                                            City
+                                                            Sort Code
                                                         </span>
                                                         <input
                                                             type="text"
-                                                            value={payment.city}
+                                                            value={payment.branch_code}
                                                             onChange={(e) =>
-                                                                setPayment({ ...payment, city: e.target.value })
-                                                            }
-                                                            className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
-                                                        />
-                                                    </label>
-
-                                                    <label className="flex-1">
-                                                        <span className="block poppins text-gray-700 text-[14px] mb-1">
-                                                            Postal Code
-                                                        </span>
-                                                        <input
-                                                            type="text"
-                                                            value={payment.postalCode}
-                                                            onChange={(e) =>
-                                                                setPayment({ ...payment, postalCode: e.target.value })
+                                                                setPayment({
+                                                                    ...payment,
+                                                                    branch_code: e.target.value.replace(/\D/g, ""),
+                                                                })
                                                             }
                                                             className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
                                                         />
                                                     </label>
                                                 </div>
+                                            )}
 
-                                                {/* Account Number */}
-                                                <label className="block">
-                                                    <span className="block poppins text-gray-700 text-[14px] mb-1">
-                                                        Account Number
-                                                    </span>
-                                                    <input
-                                                        type="text"
-                                                        value={payment.account_number}
-                                                        onChange={(e) =>
-                                                            setPayment({
-                                                                ...payment,
-                                                                account_number: e.target.value.replace(/\D/g, ""),
-                                                            })
-                                                        }
-                                                        className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
-                                                    />
-                                                </label>
-
-                                                {/* Sort Code */}
-                                                <label className="block">
-                                                    <span className="block poppins text-gray-700 text-[14px] mb-1">
-                                                        Sort Code
-                                                    </span>
-                                                    <input
-                                                        type="text"
-                                                        value={payment.branch_code}
-                                                        onChange={(e) =>
-                                                            setPayment({
-                                                                ...payment,
-                                                                branch_code: e.target.value.replace(/\D/g, ""),
-                                                            })
-                                                        }
-                                                        className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
-                                                    />
-                                                </label>
-                                            </div>
-                                        )}
-
-                                        {/* ================= AUTHORISE ================= */}
-                                        <label className="flex items-center gap-2 mt-4 mb-6 text-sm text-gray-700">
-                                            <input
-                                                type="checkbox"
-                                                checked={payment.authorise}
-                                                onChange={(e) =>
-                                                    setPayment({ ...payment, authorise: e.target.checked })
-                                                }
-                                            />
-                                            <span className="underline poppins">
-                                                I can authorise Direct Debits on this account myself
-                                            </span>
-                                        </label>
-
-                                        {/* BUTTON */}
-                                        <div className="flex justify-end">
-                                            <button
-                                                onClick={() => setShowPopup(false)}
-
-                                                type="button"
-                                                className="flex items-center justify-center cursor-pointer gap-1 border-2 border-[#717073] mr-6 text-[#717073] px-12 text-[18px]  py-2 rounded-lg font-semibold bg-none"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button
-                                                disabled={
-                                                    isSubmitting ||
-                                                    !payment.authorise ||
-                                                    (isFranchisee ? isBankInvalid : isCardInvalid)
-                                                }
-                                                onClick={async () => {
-                                                    setIsSubmitting(true);
-                                                    try {
-                                                        setDirectDebitData([...directDebitData, payment]);
-                                                        setShowPopup(false);
-                                                        await handleSubmit(payment);
-                                                    } finally {
-                                                        setIsSubmitting(false);
+                                            {/* ================= AUTHORISE ================= */}
+                                            <label className="flex items-center gap-2 mt-4 mb-6 text-sm text-gray-700">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={payment.authorise}
+                                                    onChange={(e) =>
+                                                        setPayment({ ...payment, authorise: e.target.checked })
                                                     }
-                                                }}
-                                                className={`bg-[#042C89] text-white rounded-[6px] px-6 py-2 font-semibold ${isSubmitting ||
-                                                    !payment.authorise ||
-                                                    (isFranchisee ? isBankInvalid : isCardInvalid)
-                                                    ? "opacity-50 cursor-not-allowed"
-                                                    : "hover:bg-blue-800"
-                                                    }`}
-                                            >
-                                                {isSubmitting ? "Submitting..." : "Set up Direct Debit"}
-                                            </button>
+                                                />
+                                                <span className="underline poppins">
+                                                    I can authorise Direct Debits on this account myself
+                                                </span>
+                                            </label>
+
+                                            {/* BUTTON */}
+                                            <div className="flex justify-end">
+                                                <button
+                                                    onClick={() => setShowPopup(false)}
+
+                                                    type="button"
+                                                    className="flex items-center justify-center cursor-pointer gap-1 border-2 border-[#717073] mr-6 text-[#717073] px-12 text-[18px]  py-2 rounded-lg font-semibold bg-none"
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    disabled={
+                                                        isSubmitting ||
+                                                        !payment.authorise ||
+                                                        (isFranchisee ? isBankInvalid : isCardInvalid)
+                                                    }
+                                                    onClick={() => {
+                                                        const hasStarterPack = singleClassSchedulesOnly?.venue?.starterPack;
+                                                        const hasProrata = pricingBreakdown?.numberOfLessonsProRated !== 0;
+
+                                                        if (hasStarterPack || hasProrata) {
+                                                            // 👉 Step 2 flow
+                                                            setDirectDebitData([...directDebitData, payment]);
+                                                            setStep(2);
+                                                        } else {
+                                                            // 👉 Direct final submit
+                                                            handleFinalSubmit();
+                                                        }
+                                                    }}
+                                                    className={`bg-[#042C89] text-white rounded-[6px] px-6 py-2 font-semibold ${isSubmitting ||
+                                                        !payment.authorise ||
+                                                        (isFranchisee ? isBankInvalid : isCardInvalid)
+                                                        ? "opacity-50 cursor-not-allowed"
+                                                        : "hover:bg-blue-800"
+                                                        }`}
+                                                >
+                                                    {isSubmitting ? "Submitting..." : "Set up Direct Debit"}
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
+                                    {step === 2 && (
+                                        <div className="flex-1 flex flex-col">
+                                            <h2 className="text-2xl font-semibold poppins pb-4">Checkout</h2>
+                                            <p className="text-gray-600 mb-12 poppins text-[14px]">
+                                                Fill out your card details below to pay for the Joining Fee and Pro-Rata lessons
+                                            </p>
+
+                                            {/* Name on Card */}
+                                            <div className="mb-4">
+                                                <label className="block text-gray-700  poppins text-[14px] font-medium mb-1">
+                                                    Name on card<span className="text-red-500 ml-0.5">*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={nameOnCard}
+                                                    onChange={(e) => handleCheckoutChange("nameOnCard", e.target.value)}
+                                                    placeholder="Enter name on card"
+                                                    className={inputClass("nameOnCard")}
+                                                />
+                                                {errors.nameOnCard && <span className="text-red-500 text-[12px] mt-1 block">{errors.nameOnCard}</span>}
+                                            </div>
+
+                                            {/* Card Number */}
+                                            <div className="mb-4">
+                                                <label className="block text-gray-700 poppins text-[14px] font-medium mb-1">
+                                                    Card number<span className="text-red-500 ml-0.5">*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={cardNumber}
+                                                    onChange={(e) => handleCheckoutChange("cardNumber", e.target.value)}
+                                                    placeholder="1234 1234 1234 1234"
+                                                    maxLength={19}
+                                                    inputMode="numeric"
+                                                    className={inputClass("cardNumber")}
+                                                />
+                                                {errors.cardNumber && <span className="text-red-500 text-[12px] mt-1 block">{errors.cardNumber}</span>}
+                                            </div>
+
+                                            {/* Expiry + CVC */}
+                                            <div className="flex gap-4 mb-4">
+                                                <div className="flex-1">
+                                                    <label className="block text-gray-700  poppins text-[14px] font-medium mb-1">
+                                                        Expiration date<span className="text-red-500 ml-0.5">*</span>
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={expiryDate}
+                                                        onChange={(e) => handleCheckoutChange("expiryDate", e.target.value)}
+                                                        placeholder="MM/YY"
+                                                        maxLength={5}
+                                                        inputMode="numeric"
+                                                        className={inputClass("expiryDate")}
+                                                    />
+                                                    {errors.expiryDate && <span className="text-red-500 text-[12px] mt-1 block">{errors.expiryDate}</span>}
+                                                </div>
+
+                                                <div className="flex-1">
+                                                    <label className="block text-gray-700 poppins text-[14px] font-medium mb-1">
+                                                        CVC<span className="text-red-500 ml-0.5">*</span>
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={cvc}
+                                                        onChange={(e) => handleCheckoutChange("cvc", e.target.value)}
+                                                        placeholder="CVC"
+                                                        maxLength={4}
+                                                        inputMode="numeric"
+                                                        className={inputClass("cvc")}
+                                                    />
+                                                    {errors.cvc && <span className="text-red-500 text-[12px] mt-1 block">{errors.cvc}</span>}
+                                                </div>
+                                            </div>
+
+                                            {/* Country + Zip */}
+                                            <div className="flex gap-4 mb-6">
+                                                <div className="flex-1 ">
+                                                    <label className="block text-gray-700 poppins text-[14px] font-medium mb-1">
+                                                        Country or region<span className="text-red-500 ml-0.5">*</span>
+                                                    </label>
+                                                    {/* <select
+                                                        value={checkoutCountry}
+                                                        onChange={(e) => handleCheckoutChange("country", e.target.value)}
+                                                        className={inputClass("country")}
+                                                    >
+                                                        <option value="United States">United States</option>
+                                                        <option value="United Kingdom">United Kingdom</option>
+                                                        <option value="Canada">Canada</option>
+                                                        <option value="Australia">Australia</option>
+                                                    </select> */}
+                                                    <Select
+                                                        options={countryOptions}
+                                                        value={countryOptions.find(opt => opt.value === checkoutCountry)}
+                                                        onChange={(selectedOption) =>
+                                                            handleCheckoutChange("country", selectedOption?.value)
+                                                        }
+                                                        styles={customSelectStyles}
+                                                        // placeholder="Enter zip / postcode"
+                                                        className="mt-2 mainShadow rounded-xl"
+
+                                                        classNamePrefix="react-select"
+                                                    />
+                                                    {errors.country && <span className="text-red-500 text-[12px] mt-1 block">{errors.country}</span>}
+                                                </div>
+
+                                                <div className="flex-1">
+                                                    <label className="block text-gray-700 poppins text-[14px] font-medium mb-1">
+                                                        Zip<span className="text-red-500 ml-0.5">*</span>
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={zipCode}
+                                                        onChange={(e) => handleCheckoutChange("zipCode", e.target.value)}
+                                                        placeholder="Enter zip"
+                                                        className={inputClass("zipCode")}
+                                                    />
+                                                    {errors.zipCode && <span className="text-red-500 text-[12px] mt-1 block">{errors.zipCode}</span>}
+                                                </div>
+                                            </div>
+
+                                            <p className="font-semibold text-[#34353B] poppins text-md">
+                                                Total to pay now{" "}
+                                                <span className="float-right poppins text-blue-900"
+                                                    style={{ fontSize: "22px" }}>£{calculatedAmount}</span>
+                                            </p>
+
+                                            <div className="flex justify-end">
+                                                <button
+                                                    onClick={() => {
+                                                        setShowPopup(false);
+                                                        setStep(1);
+                                                    }}
+
+                                                    type="button"
+                                                    className={`mt-6 px-6 py-2 poppins rounded-[6px] bg-white-900 text-blue-900 mr-6 border-blue-900 border-2 font-semibold ${loading ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-800 hover:text-white "
+                                                        }`}
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    disabled={!isFormValid || loading}
+                                                    onClick={handleFinalSubmit}
+                                                    className={`mt-6 px-6 py-2 poppins rounded-[6px] bg-blue-900 text-white font-semibold ${!isFormValid || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-800"
+                                                        }`}
+                                                    type="button"
+                                                >
+                                                    {loading ? "Processing..." : "Complete Booking"}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
