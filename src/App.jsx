@@ -176,6 +176,8 @@ import { CoachProProvider } from './Components/Pages/AdminPages/contexts/CoachPr
 import { GlobalSearchProvider } from './Components/Pages/AdminPages/contexts/GlobalSearchContext.jsx';
 import { EmailProvider } from './Components/Pages/AdminPages/contexts/messages/SendEmailContext.jsx';
 import { CancelMembershipProvider } from './Components/Pages/AdminPages/contexts/messages/CancelMembershipContext.jsx';
+import { PhoneInputProvider } from './Components/Pages/AdminPages/contexts/PhoneInputContext.jsx';
+import { RevertMembershipProvider } from './Components/Pages/AdminPages/contexts/RevertMembershipContext.jsx';
 
 const commonRole = ['Admin', 'user', 'Member', 'Agent', 'Super Admin'];
 
@@ -1330,7 +1332,11 @@ function App() {
                                                       <StarterPackProvider>
                                                         <EmailProvider>
                                                           <CancelMembershipProvider>
-                                                            <AppRoutes />
+                                                            <PhoneInputProvider>
+                                                              <RevertMembershipProvider>
+                                                                <AppRoutes />
+                                                              </RevertMembershipProvider>
+                                                            </PhoneInputProvider>
                                                           </CancelMembershipProvider>
                                                         </EmailProvider>
                                                       </StarterPackProvider>

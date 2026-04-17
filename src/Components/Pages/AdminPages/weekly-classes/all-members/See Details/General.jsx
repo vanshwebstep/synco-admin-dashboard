@@ -19,6 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import PhoneInput from 'react-phone-input-2';
 import Comments from '../../../Common/Comments';
 import { useEmail } from '../../../contexts/messages/SendEmailContext';
+import { useCancelMembership } from '../../../contexts/messages/CancelMembershipContext';
 
 const ParentProfile = (stateData) => {
     const profile = stateData?.stateData || {};
@@ -27,6 +28,7 @@ const ParentProfile = (stateData) => {
     const { serviceHistoryMembership } = useBookFreeTrial();
     const [textloading, setTextLoading] = useState(null);
     const { openEmailPopup } = useEmail();
+    const { openCancelPopup } = useCancelMembership();
 
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const {
@@ -121,7 +123,7 @@ const ParentProfile = (stateData) => {
         }
     }, []);
 
-      // useEffect(() => {
+    // useEffect(() => {
     //     fetchComments();
     // }, [])
     const handleSubmitComment = async (e) => {
@@ -844,15 +846,15 @@ const ParentProfile = (stateData) => {
                     </div>
 
                     <Comments
-                            adminInfo={adminInfo}
-                            comment={comment}
-                            setComment={setComment}
-                            handleSubmitComment={handleSubmitComment}
-                            loadingComment={loadingComment}
-                            commentsList={commentsList}
-                            currentComments={currentComments}
-                            formatTimeAgo={formatTimeAgo}
-                          />
+                        adminInfo={adminInfo}
+                        comment={comment}
+                        setComment={setComment}
+                        handleSubmitComment={handleSubmitComment}
+                        loadingComment={loadingComment}
+                        commentsList={commentsList}
+                        currentComments={currentComments}
+                        formatTimeAgo={formatTimeAgo}
+                    />
                 </div>
                 <div className="md:w-4/12 max-h-fit rounded-full  text-base space-y-5">
                     {/* Card Wrapper */}
@@ -990,13 +992,13 @@ const ParentProfile = (stateData) => {
                                 {/* Top Row: Email + Text */}
                                 <div className="flex gap-7">
 
-                                   <button className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-[#717073] font-medium" onClick={() => {
-                                                                          const parentEmails = parents.map(p => p.parentEmail).filter(Boolean);
-                                                                          openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
-                                                                      }}>
-                                                                          Send Email
-                                                                      </button>
-                                  
+                                    <button className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-[#717073] font-medium" onClick={() => {
+                                        const parentEmails = parents.map(p => p.parentEmail).filter(Boolean);
+                                        openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
+                                    }}>
+                                        Send Email
+                                    </button>
+
 
                                     <button disabled={textloading} onClick={() => sendText([bookingId])} className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
                                         <img src="/images/icons/sendText.png" alt="" />  {textloading ? (
@@ -1062,9 +1064,15 @@ const ParentProfile = (stateData) => {
                                 )}
                                 {(status == 'active' || status == 'frozen' || status === "request_to_cancel") && canCancelTrial && (
                                     <button
-                                        onClick={() => setshowCancelTrial(true)}
+                                        onClick={() =>
+                                            openCancelPopup(bookingId, profile?.students, {
+                                                showError,
+                                                showWarning,
+                                                onSubmit: cancelMembershipSubmit,
+                                            })
+                                        }
                                         className={`w-full border text-[18px] rounded-xl py-3 font-medium transition-shadow duration-300
-    ${showCancelTrial
+                                        ${showCancelTrial
                                                 ? "bg-[#FF6C6C] text-white shadow-md border-transparent"
                                                 : "border-gray-300 text-[#717073] hover:bg-[#FF6C6C] hover:text-white hover:shadow-md"
                                             }`}
@@ -1112,13 +1120,13 @@ const ParentProfile = (stateData) => {
                                 {/* Top Row: Email + Text */}
                                 <div className="flex gap-7">
 
-                                  <button className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-[#717073] font-medium" onClick={() => {
-                                                                         const parentEmails = parents.map(p => p.parentEmail).filter(Boolean);
-                                                                         openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
-                                                                     }}>
-                                                                         Send Email
-                                                                     </button>
-                                 
+                                    <button className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-[#717073] font-medium" onClick={() => {
+                                        const parentEmails = parents.map(p => p.parentEmail).filter(Boolean);
+                                        openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
+                                    }}>
+                                        Send Email
+                                    </button>
+
 
                                     <button disabled={textloading} onClick={() => sendText([bookingId])} className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
                                         <img src="/images/icons/sendText.png" alt="" />  {textloading ? (
@@ -1628,9 +1636,9 @@ const ParentProfile = (stateData) => {
                                         }}
                                         className="w-1/2 bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
                                     >
-                                         {cancelData.cancellationType !== "immediate"
-                                        ? "Request to Cancel"
-                                        : "Cancel Membership"}
+                                        {cancelData.cancellationType !== "immediate"
+                                            ? "Request to Cancel"
+                                            : "Cancel Membership"}
                                     </button>
 
                                 </div>

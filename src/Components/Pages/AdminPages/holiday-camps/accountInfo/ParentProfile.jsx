@@ -17,6 +17,8 @@ const ParentProfile = () => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const { formData, setFormData, emergency, setEmergency, handleUpdateHoliday, students } = useAccountsInfo();
   const [loading, setLoading] = useState(false);
+      const [loadingComment, setLoadingComment] = useState(false);
+  
   const [commentsList, setCommentsList] = useState([]);
   const [commentLoading, setCommentLoading] = useState(false);
   const [comment, setComment] = useState('');

@@ -62,7 +62,9 @@ const CancelMembershipPopup = () => {
                 </button>
 
                 <div className="text-center py-6 border-b border-gray-300">
-                    <h2 className="font-semibold text-[24px]">Cancel Membership</h2>
+                    <h2 className="font-semibold text-[24px]">{cancelData.cancellationType !== "immediate"
+                        ? "Request to Cancel"
+                        : "Cancel Membership"}</h2>
                 </div>
 
                 <div className="space-y-4 px-6 pb-6 pt-4">
@@ -112,21 +114,30 @@ const CancelMembershipPopup = () => {
                         <div className="mt-3 space-y-2">
                             {studentsList.map((student) => {
                                 const isCancelled = student.studentStatus === "cancelled";
+                                const isRequesttoCancelled = student.studentStatus === "request_to_cancel";
+
                                 return (
                                     <label
                                         key={student.id}
-                                        className={`flex items-center space-x-3 ${isCancelled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+                                        className={`flex items-center space-x-3 ${isCancelled || isRequesttoCancelled
+                                                ? "cursor-not-allowed opacity-50"
+                                                : "cursor-pointer"
+                                            }`}
                                     >
                                         <input
                                             type="checkbox"
-                                            disabled={isCancelled}
+                                            disabled={isCancelled || isRequesttoCancelled}
                                             checked={selectedStudents.some((s) => s.id === student.id)}
-                                            onChange={() => !isCancelled && handleStudentToggle(student)}
+                                            onChange={() =>
+                                                (!isCancelled && !isRequesttoCancelled) &&
+                                                handleStudentToggle(student)
+                                            }
                                             className="w-4 h-4"
                                         />
                                         <span className="text-[15px]">
                                             {student.studentFirstName} {student.studentLastName}
                                             {isCancelled && " (Already Cancelled)"}
+                                            {isRequesttoCancelled && " (Already Request to Cancel)"}
                                         </span>
                                     </label>
                                 );
@@ -184,8 +195,8 @@ const CancelMembershipPopup = () => {
                             {cancelLoading
                                 ? "Processing..."
                                 : cancelData.cancellationType !== "immediate"
-                                ? "Request to Cancel"
-                                : "Cancel Membership"}
+                                    ? "Request to Cancel"
+                                    : "Cancel Membership"}
                         </button>
                     </div>
                 </div>

@@ -57,7 +57,7 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
     icon,    // header icon
     progress // e.g. "6/12 months"
   } = serviceHistory;
-  console.log('comesFrom',comesFrom)
+  console.log('comesFrom', comesFrom)
   const statusStyles = {
     attended: "bg-green-500 text-white",
     active: "bg-green-500 text-white",
@@ -68,8 +68,8 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
     request_to_cancel: "bg-white text-red-500 ",
   };
   const recurringPayment = payments?.find(
-  (p) => p.paymentCategory === "recurring"
-);
+    (p) => p.paymentCategory === "recurring"
+  );
   return (
     <div className="transition-all duration-300 flex-1 bg-white">
       <div className="rounded-4xl w-full">
@@ -200,13 +200,13 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
                         {labels.price || "Price"}
                       </div>
                       <div className="text-[16px] font-semibold text-[#384455]">
-                      {recurringPayment?.price ? (
-  <>£{recurringPayment.price}</>
-) : paymentPlan?.price ? (
-  <>£{paymentPlan.price}</>
-) : (
-  "-"
-)}
+                        {recurringPayment?.price ? (
+                          <>£{recurringPayment.price}</>
+                        ) : paymentPlan?.price ? (
+                          <>£{paymentPlan.price}</>
+                        ) : (
+                          "-"
+                        )}
                       </div>
                     </div>
                   )}
@@ -304,9 +304,22 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
                     ]).map((btn, i) => (
                       <button
                         key={i}
-                        onClick={() =>  navigate(`/weekly-classes/all-members/see-details?id=${itemId || serviceHistory.id || ""}`, {
-                                state: { itemId: serviceHistory.id, memberInfo: comesFrom },
-                            }) }
+                        onClick={() => {
+                          let tab = "General";
+
+                          if (btn === "Attendance") tab = "Attendance";
+                          if (btn === "See Payments") tab = "History of Payments";
+                          if (btn === "Credits") tab = "Credits";
+                          if (btn === "See details") tab = "General";
+
+                          navigate(`/weekly-classes/all-members/see-details?id=${itemId || serviceHistory.id || ""}`, {
+                            state: {
+                              itemId: serviceHistory.id,
+                              memberInfo: comesFrom,
+                              defaultTab: tab, // ✅ important
+                            },
+                          });
+                        }}
                         className="font-semibold whitespace-nowrap border border-[#BEBEBE] px-3 py-2 rounded-xl text-[15px] font-medium"
                       >
                         {btn}

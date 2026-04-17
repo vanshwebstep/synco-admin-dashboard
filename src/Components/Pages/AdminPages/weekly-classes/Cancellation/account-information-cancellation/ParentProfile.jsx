@@ -12,12 +12,17 @@ import { useBookFreeTrial } from '../../../contexts/BookAFreeTrialContext';
 import Loader from '../../../contexts/Loader';
 import { usePermission } from '../../../Common/permission';
 import { addDays } from "date-fns";
-import { showSuccess, showError, showWarning } from '../../../../../../utils/swalHelper';
+import { showSuccess, showError, showWarning, showConfirm } from '../../../../../../utils/swalHelper';
 
 import { useNotification } from '../../../contexts/NotificationContext';
 import PhoneInput from 'react-phone-input-2';
 import Comments from '../../../Common/Comments';
 import { useEmail } from '../../../contexts/messages/SendEmailContext';
+import { useNavigate } from 'react-router-dom';
+import { useRevertMembership } from '../../../contexts/RevertMembershipContext';
+import RevertMembershipPopup from '../../../Common/RevertMembershipPoppup';
+import PhoneNumberInput from '../../../Common/PhoneNumberInput';
+
 const ParentProfile = ({ ParentProfile }) => {
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const [selectedDate, setSelectedDate] = useState(null);
@@ -26,7 +31,12 @@ const ParentProfile = ({ ParentProfile }) => {
     const [transferVenue, setTransferVenue] = useState(false);
     const [textloading, setTextLoading] = useState(null)
     const { openEmailPopup } = useEmail();
+    const navigate = useNavigate();
+    const { openRevertPopup } = useRevertMembership();
 
+    const [revertPopup, setRevertPopup] = useState(false);
+    const [selectedStudents, setSelectedStudents] = useState([]);
+    const [currentBookingId, setCurrentBookingId] = useState(null);
     const { loading, cancelFreeTrial, sendCancelFreeTrialmail, rebookFreeTrialsubmit, cancelMembershipSubmit, reactivateDataSubmit, addtoWaitingListSubmit, freezerMembershipSubmit, sendAllmail, sendFullTomail, sendRequestTomail, transferMembershipSubmit } = useBookFreeTrial() || {};
     const [addToWaitingList, setaddToWaitingList] = useState(false);
     const [freezeMembership, setFreezeMembership] = useState(false);
@@ -87,6 +97,7 @@ const ParentProfile = ({ ParentProfile }) => {
             setTextLoading(false);
         }
     };
+
     const handleCancel = () => {
         console.log("Payload:", formData);
         cancelFreeTrial(formData);
@@ -125,6 +136,7 @@ const ParentProfile = ({ ParentProfile }) => {
         students,
         venueId,
         classSchedule,
+        venue,
         paymentPlan,
         paymentPlans,
     } = ParentProfile;
@@ -135,7 +147,7 @@ const ParentProfile = ({ ParentProfile }) => {
         reasonForNonAttendance: "",
         additionalNote: "",
     });
-
+    console.log('venue', venue)
     const [waitingListData, setWaitingListData] = useState({
         bookingId: id,
         classScheduleId: null,
@@ -186,6 +198,11 @@ const ParentProfile = ({ ParentProfile }) => {
     });
     console.log('parents', ParentProfile)
     const studentsList = ParentProfile?.students || [];
+
+    const cancelRequestStudents = studentsList?.filter(
+        (s) => s.studentStatus === "request_to_cancel"
+    );
+    console.log('cancelRequestStudents', cancelRequestStudents)
     const parents = ParentProfile.parents || [];
     const [formData, setFormData] = useState({
         bookingId: id,
@@ -197,6 +214,24 @@ const ParentProfile = ({ ParentProfile }) => {
     const emergency = ParentProfile.emergency || [];
     console.log('matchedPlan', matchedPlan)
 
+    const handleReinstateMembership = () => {
+        showConfirm(
+            "Are you sure?",
+            "Do you want to Reinstate membership?",
+            "Yes, Book it!"
+        ).then((result) => {
+            if (result.isConfirmed) {
+                // Navigate to your component/route
+                navigate("/weekly-classes/find-a-class/book-a-membership", {
+                    state: { TrialData: ParentProfile, comesFrom: "cancellation" },
+                });
+            }
+        });
+    };
+    const handleRevertMembership = (id) => {
+        setCurrentBookingId(id);
+        setRevertPopup(true);
+    };
     const { checkPermission } = usePermission();
     const formatTimeAgo = (timestamp) => {
         const now = new Date();
@@ -237,7 +272,7 @@ const ParentProfile = ({ ParentProfile }) => {
         }
     }, []);
 
-      // useEffect(() => {
+    // useEffect(() => {
     //     fetchComments();
     // }, [])
     const handleSubmitComment = async (e) => {
@@ -303,7 +338,50 @@ const ParentProfile = ({ ParentProfile }) => {
         stateSetter((prev) => ({ ...prev, [field]: value }));
     };
 
+    const handleSubmitRevert = async () => {
+        if (!selectedStudents.length) {
+            showWarning("Please select at least one student");
+            return;
+        }
 
+        setTextLoading(true);
+
+        const headers = {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` })
+        };
+        console.log('selectedStudents', selectedStudents)
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/api/admin/cancel-membership/revert-membership`,
+                {
+                    method: "PUT",
+                    headers,
+                    body: JSON.stringify({
+                        bookingId: currentBookingId,
+                        studentIds: selectedStudents.map((s) => s.value)
+                    }),
+                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || "Failed");
+            }
+
+            await showSuccess("Success!", result.message);
+
+            setRevertPopup(false);
+            setSelectedStudents([]);
+
+        } catch (error) {
+            console.error(error);
+            showError("Error", error.message);
+        } finally {
+            setTextLoading(false);
+        }
+    };
     // Unified handler for DatePicker
     const handleDateChange = (date, field, stateSetter) => {
         if (!date) {
@@ -418,31 +496,10 @@ const ParentProfile = ({ ParentProfile }) => {
                                     </div>
                                     <div className="w-1/2">
                                         <label className="block text-[16px] font-semibold">Phone number</label>
-                                        <div className="flex items-center border border-gray-300 rounded-xl px-4 py-3 mt-2">
-
-                                            <PhoneInput
-                                                country="uk"
-                                                value="+44"
-                                                disableDropdown={true}       // disables changing the country
-                                                disableCountryCode={true}
-                                                countryCodeEditable={false}
-                                                inputStyle={{
-                                                    width: "0px",
-                                                    maxWidth: '20px',
-                                                    height: "0px",
-                                                    opacity: 0,
-                                                    pointerEvents: "none",
-                                                    position: "absolute",
-                                                }}
-                                                buttonClass="!bg-white !border-none !p-0"
-                                            />
-                                            <input
-                                                type='number'
-                                                className="border-none w-full focus:outline-none"
-                                                value={parent.parentPhoneNumber}
-                                                readOnly
-                                            />
-                                        </div>
+                                      <PhoneNumberInput
+                                            value={parent.parentPhoneNumber}
+                                            placeholder="Enter phone number"
+                                        />
                                     </div>
                                 </div>
 
@@ -595,7 +652,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                 <div>
                                     <div className="text-[20px] font-bold tracking-wide">Venue</div>
                                     <div className="inline-block bg-[#007BFF] text-white text-[14px] px-3 py-1 rounded-md my-2">
-                                        {classSchedule?.venue?.name || "-"}
+                                        {classSchedule?.venue?.name || venue?.name}
                                     </div>
                                 </div>
 
@@ -689,6 +746,16 @@ const ParentProfile = ({ ParentProfile }) => {
                                         </div>
                                     </div>
                                 )}
+                                {ParentProfile?.cancelData?.updatedAt && (
+                                    <div className="border-t border-[#495362] py-5">
+                                        <div className="text-[20px] text-white">
+                                            Cancelled Date
+                                        </div>
+                                        <div className="text-[16px] mt-1 text-gray-400">
+                                            {formatDate(ParentProfile?.cancelData?.updatedAt)}
+                                        </div>
+                                    </div>
+                                )}
 
                             </div>
                         </div>
@@ -750,7 +817,19 @@ const ParentProfile = ({ ParentProfile }) => {
                                         Add to the waiting list
                                     </button>
                                 )}
+                                {(status === "cancelled") && (
+                                    <button
+                                        onClick={handleReinstateMembership}
+                                        className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
+            ${addToWaitingList
+                                                ? "bg-[#237FEA] text-white shadow-md"   // Active state
+                                                : "bg-white  border border-gray-300  hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"
+                                            }`}
+                                    >
+                                        Reinstate Membership
 
+                                    </button>
+                                )}
 
                                 {(status === "active" || status === "request_to_cancel") && canCancelTrial && (
                                     <button
@@ -758,6 +837,16 @@ const ParentProfile = ({ ParentProfile }) => {
                                         className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
                                     >
                                         Freeze Membership
+                                    </button>
+                                )}
+                                {(status === "active" || status === "request_to_cancel") && canCancelTrial && (
+                                    <button
+                                        onClick={() => openRevertPopup(id)}
+
+                                        // onClick={() => handleRevertMembership(id)}
+                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                    >
+                                        Revert Membership
                                     </button>
                                 )}
                                 {(status === "active" || status === "request_to_cancel") && canCancelTrial && classSchedule?.venue?.name && (
@@ -1308,6 +1397,60 @@ const ParentProfile = ({ ParentProfile }) => {
                     </div>
 
                 )}
+                {revertPopup && (
+                    <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
+                        <div className="bg-white rounded-2xl w-[500px] max-h-[90%] overflow-y-auto relative">
+
+                            {/* Close */}
+                            <button
+                                className="absolute top-4 left-4"
+                                onClick={() => {
+                                    setRevertPopup(false);
+                                    setSelectedStudents([]);
+                                }}
+                            >
+                                ✕
+                            </button>
+
+                            {/* Heading */}
+                            <div className="text-center py-6 border-b">
+                                <h2 className="font-semibold text-[22px]">
+                                    Revert Membership
+                                </h2>
+                            </div>
+
+                            <div className="p-6 space-y-4">
+
+                                {/* Select Students */}
+                                <div>
+                                    <label className="font-semibold">
+                                        Select Students
+                                    </label>
+
+                                    <Select
+                                        isMulti
+                                        value={selectedStudents}
+                                        onChange={setSelectedStudents}
+                                        options={cancelRequestStudents?.map((student) => ({
+                                            value: student.id,
+                                            label: `${student.studentFirstName} ${student.studentLastName}`
+                                        }))}
+                                        placeholder="Select students"
+                                    />
+                                </div>
+
+                                {/* Submit */}
+                                <button
+                                    className="w-full bg-[#22C55E] text-white rounded-xl py-3 font-medium"
+                                    onClick={handleSubmitRevert}
+                                >
+                                    Confirm Revert
+                                </button>
+
+                            </div>
+                        </div>
+                    </div>
+                )}
                 {freezeMembership && (
                     <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
                         <div className="bg-white rounded-2xl w-[541px] max-h-[90%] overflow-y-auto relative scrollbar-hide">
@@ -1409,6 +1552,8 @@ const ParentProfile = ({ ParentProfile }) => {
                         </div>
                     </div>
                 )}
+                <RevertMembershipPopup studentsList={studentsList} />
+
                 {reactivateMembership && (
                     <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
                         <div className="bg-white rounded-2xl w-[541px] max-h-[90%] overflow-y-auto relative scrollbar-hide">

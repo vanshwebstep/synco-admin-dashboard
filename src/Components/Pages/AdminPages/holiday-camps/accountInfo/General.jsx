@@ -516,15 +516,15 @@ const General = () => {
                     ))}
 
                     <Comments
-                            adminInfo={adminInfo}
-                            comment={comment}
-                            setComment={setComment}
-                            handleSubmitComment={handleSubmitComment}
-                            loadingComment={loadingComment}
-                            commentsList={commentsList}
-                            currentComments={currentComments}
-                            formatTimeAgo={formatTimeAgo}
-                          />
+                        adminInfo={adminInfo}
+                        comment={comment}
+                        setComment={setComment}
+                        handleSubmitComment={handleSubmitComment}
+                        loadingComment={loadingComment}
+                        commentsList={commentsList}
+                        currentComments={currentComments}
+                        formatTimeAgo={formatTimeAgo}
+                    />
                 </div>
                 <div className="md:w-[34%]">
                     <div className="md:max-w-[510px]">

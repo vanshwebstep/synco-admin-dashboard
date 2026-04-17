@@ -21,7 +21,7 @@ export const BookFreeTrialProvider = ({ children }) => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [removeWaiting, setRemoveWaiting] = useState(false);
   const [isBooked, setIsBooked] = useState(false);
- const [parentData, setParentData] = useState(null);
+  const [parentData, setParentData] = useState(null);
 
   const [isEditBookFreeTrial, setIsEditBookFreeTrial] = useState(false);
   const [singleBookFreeTrials, setSingleBookFreeTrials] = useState([]);
@@ -41,8 +41,8 @@ export const BookFreeTrialProvider = ({ children }) => {
   }
 
   useEffect(() => {
-   setSearchTerm("");
-   setSelectedVenue(null);
+    setSearchTerm("");
+    setSelectedVenue(null);
   }, [navigate]);
 
   const [formData, setFormData] = useState({
@@ -344,7 +344,7 @@ export const BookFreeTrialProvider = ({ children }) => {
       setLoading(false);
     }
   };
-   const createBookFreeTrialsByWaitingList = async (bookFreeTrialData, islead) => {
+  const createBookFreeTrialsByWaitingList = async (bookFreeTrialData, islead) => {
     setLoading(true);
     console.log('bookFreeTrialData', bookFreeTrialData)
     console.log('islead', islead)
@@ -1210,62 +1210,62 @@ export const BookFreeTrialProvider = ({ children }) => {
       setLoading(false);
     }
   };
-const cancelMembershipSubmit = async (bookingIds, comesfrom, selectedStudents) => {
-  setLoading(true);
+  const cancelMembershipSubmit = async (bookingIds, comesfrom, selectedStudents) => {
+    setLoading(true);
 
-  const headers = {
-    "Content-Type": "application/json",
-  };
+    const headers = {
+      "Content-Type": "application/json",
+    };
 
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  // ✅ Base payload
-  let payload = {
-    ...bookingIds,
-    cancelReason:
-      bookingIds.cancelReason === "other"
-        ? bookingIds.otherReason
-        : bookingIds.cancelReason,
-  };
-
-  // ✅ Add studentIds ONLY if selectedStudents exist
-  if (selectedStudents && selectedStudents.length > 0) {
-    payload.studentIds = selectedStudents.map((s) => s.id);
-  }
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/cancel-membership/`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(payload),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.message || "Failed to cancel Membership");
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
-    await showSuccess("Success!", result.message || "Membership cancelled successfully.");
+    // ✅ Base payload
+    let payload = {
+      ...bookingIds,
+      cancelReason:
+        bookingIds.cancelReason === "other"
+          ? bookingIds.otherReason
+          : bookingIds.cancelReason,
+    };
 
-    if (comesfrom === "allMembers") {
-      navigate(`/weekly-classes/all-members/list`);
-    } else {
-      navigate(`/weekly-classes/all-members/membership-sales`);
+    // ✅ Add studentIds ONLY if selectedStudents exist
+    if (selectedStudents && selectedStudents.length > 0) {
+      payload.studentIds = selectedStudents.map((s) => s.id);
     }
 
-    return result;
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/cancel-membership/`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload),
+      });
 
-  } catch (error) {
-    console.error("Error cancelling membership:", error);
-    await showError("Error", error.message || "Something went wrong.");
-    throw error;
-  } finally {
-    setLoading(false);
-  }
-};
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to cancel Membership");
+      }
+
+      await showSuccess("Success!", result.message || "Membership cancelled successfully.");
+
+      if (comesfrom === "allMembers") {
+        navigate(`/weekly-classes/all-members/list`);
+      } else {
+        navigate(`/weekly-classes/all-members/membership-sales`);
+      }
+
+      return result;
+
+    } catch (error) {
+      console.error("Error cancelling membership:", error);
+      await showError("Error", error.message || "Something went wrong.");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
   const cancelHolidaySubmit = async (bookingIds, comesfrom) => {
     setLoading(true);
 
@@ -1345,6 +1345,56 @@ const cancelMembershipSubmit = async (bookingIds, comesfrom, selectedStudents) =
         navigate(`/weekly-classes/all-members/list`);
       } else {
         navigate(`/weekly-classes/all-members/membership-sales`);
+      }
+
+      return result;
+
+    } catch (error) {
+      console.error("Error creating class schedule:", error);
+      await showError("Error", error.message || "Something went wrong while creating class schedule.");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+  const transferTrialSubmit = async (bookingIds, comesfrom) => {
+    setLoading(true);
+
+    const headers = {
+      "Content-Type": "application/json",
+    };
+    // console.log('bookingIds', bookingIds)
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/book/free-trials/transfer-class`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(bookingIds, // make sure bookingIds is an array like [96, 97]
+        ),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        if (result?.message?.includes("No slots left")) {
+          showWarning("Warning", result.message || "No slots left in the target class for transfer.");
+          return;
+        }
+
+        showError("Error", result.message || "Failed to transfer membership.");
+        return;
+      }
+
+
+
+
+      await showSuccess("Success!", result.message || "Trialsssssss has been created successfully.");
+      if (comesfrom === "allMembers") {
+        navigate(`/weekly-classes/trial/list`);
+      } else {
+        navigate(`/weekly-classes/trial/list`);
       }
 
       return result;
@@ -2612,34 +2662,34 @@ const cancelMembershipSubmit = async (bookingIds, comesfrom, selectedStudents) =
   }, []);
 
 
-const fetchMembershipByParent = useCallback(async (ID) => {
-  const token = localStorage.getItem("adminToken");
-  if (!token || !ID) return;
+  const fetchMembershipByParent = useCallback(async (ID) => {
+    const token = localStorage.getItem("adminToken");
+    if (!token || !ID) return;
 
-  setLoading(true);
-  try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/admin/book/free-trials/get-parent/${ID}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/admin/book/free-trials/get-parent/${ID}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    const resultRaw = await response.json();
-    const result = resultRaw.data || null;
+      const resultRaw = await response.json();
+      const result = resultRaw.data || null;
 
-    console.log("fetchMembershipByParent result", result);
+      console.log("fetchMembershipByParent result", result);
 
-    setParentData(result); // 👈 store in hook state
-  } catch (error) {
-    console.error("Failed to fetch parent:", error);
-  } finally {
-    setLoading(false);
-  }
-}, []);
+      setParentData(result); // 👈 store in hook state
+    } catch (error) {
+      console.error("Failed to fetch parent:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
   return (
     <BookFreeTrialContext.Provider
       value={{// Free Trials
@@ -2670,6 +2720,7 @@ const fetchMembershipByParent = useCallback(async (ID) => {
         cancelMembershipSubmit,
         cancelHolidaySubmit,
         transferMembershipSubmit,
+        transferTrialSubmit,
         freezerMembershipSubmit,
         reactivateDataSubmit,
         fetchMembershipSales,
@@ -2743,9 +2794,9 @@ const fetchMembershipByParent = useCallback(async (ID) => {
         ServiceHistoryFulltto,
         ServiceHistoryAlltto,
         setIsBooked, isBooked,
-        fetchMembershipSalesLoading,parentData, setParentData, createBookLeads, createBookBirthday, addToWaitingList, setaddToWaitingList, showCancelTrial, setshowCancelTrial
+        fetchMembershipSalesLoading, parentData, setParentData, createBookLeads, createBookBirthday, addToWaitingList, setaddToWaitingList, showCancelTrial, setshowCancelTrial
 
-        ,fetchMembershipByParent
+        , fetchMembershipByParent
       }}>
       {children}
     </BookFreeTrialContext.Provider>

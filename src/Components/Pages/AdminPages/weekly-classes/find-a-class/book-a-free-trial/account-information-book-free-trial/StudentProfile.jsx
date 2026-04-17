@@ -451,6 +451,22 @@ const StudentProfile = ({ StudentProfile }) => {
     const handleSelectChange = (selected, field, stateSetter) => {
         stateSetter((prev) => ({ ...prev, [field]: selected?.value || null }));
     };
+       const getStatusColor = (status) => {
+        switch (status) {
+            case "active": return "text-[#43BE4F]";
+            case "attended": return "text-[#43BE4F]";
+            case "frozen": return "text-[#509EF9]";
+            case "cancelled": return "text-[#FC5D5D]";
+            case "not attended": return "text-[#FC5D5D]";
+
+            case "waiting list": return "text-[#A4A5A6]";
+            case "request_to_cancel": return "text-[#FC5D5D]";
+            case "pending": return "text-[#f1b400]";
+
+
+            default: return "text-[#A4A5A6]";
+        }
+    };
     const formatStatus = (status) => {
         if (!status) return "-";
         return status
@@ -488,7 +504,9 @@ const StudentProfile = ({ StudentProfile }) => {
                             >
                                 {/* Header + Pencil/Save */}
                                 <div className="flex justify-between items-start">
-                                    <h2 className="text-[20px] font-semibold">Student Information</h2>
+                                    <h2 className="text-[20px] font-semibold">Student Information <span className={`capitalize ${getStatusColor(student.studentStatus)}`}>
+                                        ( {student.studentStatus} )
+                                    </span></h2>
                                     <button
                                         onClick={() => toggleEditStudent(index)}
                                         className="text-gray-600 hover:text-blue-600"
@@ -891,7 +909,7 @@ const StudentProfile = ({ StudentProfile }) => {
                                         type="text"
                                         className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                         placeholder="Select Venue"
-                                        value={classSchedule?.venue?.name || "-"}
+                                        value={classSchedule?.venue?.name || StudentProfile?.venue?.name}
                                         readOnly
                                     />
                                 </div>

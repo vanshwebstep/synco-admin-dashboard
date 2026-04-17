@@ -443,7 +443,7 @@ const General = () => {
         }
 
         try {
-            setLoa(true);
+            setLoadingData(true);
 
             const response = await fetch(
                 `${API_BASE_URL}/api/admin/one-to-one/cancel/${id}`,

@@ -19,17 +19,20 @@ import { useNotification } from '../../../../contexts/NotificationContext';
 import PhoneInput from 'react-phone-input-2';
 import Comments from '../../../../Common/Comments';
 import { useEmail } from '../../../../contexts/messages/SendEmailContext';
+import PhoneNumberInput from '../../../../Common/PhoneNumberInput';
 
 const ParentProfile = ({ ParentProfile }) => {
     const { serviceHistoryFetchById } = useBookFreeTrial();
     const [textloading, setTextLoading] = useState(null);
     const { openEmailPopup } = useEmail();
+    const [transferVenue, setTransferVenue] = useState(false);
+
     const [loadingComment, setLoadingComment] = useState(false);
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const [selectedDate, setSelectedDate] = useState(null);
     const navigate = useNavigate();
     const [editingIndex, setEditingIndex] = useState(null);
-    const { loading, cancelFreeTrial, sendCancelFreeTrialmail, rebookFreeTrialsubmit, noMembershipSubmit, updateBookFreeTrialsFamily } = useBookFreeTrial() || {};
+    const { loading, cancelFreeTrial, sendCancelFreeTrialmail, rebookFreeTrialsubmit, noMembershipSubmit, updateBookFreeTrialsFamily, transferTrialSubmit } = useBookFreeTrial() || {};
     const [commentsList, setCommentsList] = useState([]);
     const [comment, setComment] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -48,7 +51,7 @@ const ParentProfile = ({ ParentProfile }) => {
         if (page > totalPages) page = totalPages;
         setCurrentPage(page);
     };
-    const [emergencyContacts, setEmergencyContacts] = useState(ParentProfile.emergency || []);
+    const [emergencyContacts, setEmergencyContacts] = useState(ParentProfile?.emergency || []);
     const [editingEmergency, setEditingEmergency] = useState(null);
     const [showRebookTrial, setshowRebookTrial] = useState(false);
     const [showCancelTrial, setshowCancelTrial] = useState(false);
@@ -116,7 +119,7 @@ const ParentProfile = ({ ParentProfile }) => {
         }
     }, []);
 
-      // useEffect(() => {
+    // useEffect(() => {
     //     fetchComments();
     // }, [])
     const handleSubmitComment = async (e) => {
@@ -269,7 +272,14 @@ const ParentProfile = ({ ParentProfile }) => {
     console.log('trialDate', trialDate)
 
     const { checkPermission } = usePermission();
-
+    const [transferData, setTransferData] = useState({
+        bookingId: bookingId || null,
+        venueId: classSchedule?.venue?.id || null,
+        transferReasonClass: "", // optional notes
+        classScheduleId: null,
+        selectedStudents: [],
+        studentTransfers: {},
+    });
     const canCancelTrial =
         checkPermission({ module: 'cancel-free-trial', action: 'create' })
     const canRebooking =
@@ -290,7 +300,46 @@ const ParentProfile = ({ ParentProfile }) => {
             reasonForNonAttendance: selectedOption ? selectedOption.value : "",
         }));
     };
+    const handleStudentSelectChange = (selectedOptions) => {
+        setTransferData((prev) => {
+            const newTransfers = { ...prev.studentTransfers };
+            // Initialize config for new selections if not exists
+            selectedOptions?.forEach(opt => {
+                if (!newTransfers[opt.value]) {
+                    newTransfers[opt.value] = {
+                        classScheduleId: null,
+                        transferReasonClass: ""
+                    };
+                }
+            });
+            // Optional: clean up removed students? Keeping them is safer for now or we can delete.
+            // Let's keep it simple.
+            return {
+                ...prev,
+                selectedStudents: selectedOptions || [],
+                studentTransfers: newTransfers
+            };
+        });
+    };
+    const handleRadioChange = (value, field, stateSetter) => {
+        stateSetter((prev) => ({ ...prev, [field]: value }));
+    };
+    const [waitingListData, setWaitingListData] = useState({
+        bookingId: bookingId,
+        venueId: classSchedule?.venue?.id || null,
+        startDate: null,
+        notes: "",
+        selectedStudents: [],
+        studentConfigs: {},
+    });
 
+    const newClasses = ParentProfile?.newClasses?.map((cls) => ({
+        value: cls.id,
+        label: `${cls.className} - ${cls.day} (${cls.startTime} - ${cls.endTime})`,
+    }));
+    const selectedClass = newClasses?.find(
+        (cls) => cls.value === waitingListData?.classScheduleId
+    );
     const handleNoteChange = (e) => {
         setAdditionalNote(e.target.value);
         setRebookFreeTrial((prev) => ({
@@ -376,7 +425,18 @@ const ParentProfile = ({ ParentProfile }) => {
             setEditingEmergency(index);
         }
     };
-
+    const handleTransferConfigChange = (studentId, field, value) => {
+        setTransferData(prev => ({
+            ...prev,
+            studentTransfers: {
+                ...prev.studentTransfers,
+                [studentId]: {
+                    ...prev.studentTransfers[studentId],
+                    [field]: value
+                }
+            }
+        }));
+    };
     const handleSelectChange = (selected, field, stateSetter) => {
         stateSetter((prev) => ({ ...prev, [field]: selected?.value || null }));
     };
@@ -468,34 +528,16 @@ const ParentProfile = ({ ParentProfile }) => {
                                     </div>
                                     <div className="w-1/2">
                                         <label className="block text-[16px] font-semibold">Phone number</label>
-                                        <div className="flex items-center border border-gray-300 rounded-xl px-4 py-3 mt-2">
 
-                                            <PhoneInput
-                                                country="uk"
-                                                value="+44"
-                                                disableDropdown={true}       // disables changing the country
-                                                disableCountryCode={true}
-                                                countryCodeEditable={false}
-                                                inputStyle={{
-                                                    width: "0px",
-                                                    maxWidth: '20px',
-                                                    height: "0px",
-                                                    opacity: 0,
-                                                    pointerEvents: "none",
-                                                    position: "absolute",
-                                                }}
-                                                buttonClass="!bg-white !border-none !p-0"
-                                            />
-                                            <input
-                                                type='number'
-                                                className="border-none w-full focus:outline-none"
-                                                value={parent.parentPhoneNumber}
-                                                readOnly={editingIndex !== index}
-                                                onChange={(e) =>
-                                                    handleDataChange(index, "parentPhoneNumber", e.target.value)
-                                                }
-                                            />
-                                        </div>
+                                        <PhoneNumberInput
+                                            value={parent.parentPhoneNumber}
+                                            readOnly={editingIndex !== index}
+                                            onChange={(e) =>
+                                                handleDataChange(index, "parentPhoneNumber", e.target.value)
+                                            }
+                                            placeholder="Enter phone number"
+                                        />
+
                                     </div>
                                 </div>
 
@@ -612,14 +654,16 @@ const ParentProfile = ({ ParentProfile }) => {
                             <div className="flex gap-4">
                                 <div className="w-1/2">
                                     <label className="block text-[16px] font-semibold">Phone number</label>
-                                    <input
-                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+
+                                    <PhoneNumberInput
                                         value={emergency.emergencyPhoneNumber}
                                         readOnly={editingEmergency !== index}
                                         onChange={(e) =>
                                             handleEmergencyChange(index, "emergencyPhoneNumber", e.target.value)
                                         }
+                                        placeholder="Enter phone number"
                                     />
+
                                 </div>
                                 <div className="w-1/2">
                                     <label className="block text-[16px] font-semibold">Relation to child</label>
@@ -794,12 +838,12 @@ const ParentProfile = ({ ParentProfile }) => {
                                 {/* Top Row: Email + Text */}
                                 <div className="flex gap-7">
 
-                                 <button className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-[#717073] font-medium" onClick={() => {
-    const parentEmails = parents.map(p => p.parentEmail).filter(Boolean);
-    openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
-}}>
-    Send Email
-</button>
+                                    <button className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-[#717073] font-medium" onClick={() => {
+                                        const parentEmails = parents.map(p => p.parentEmail).filter(Boolean);
+                                        openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
+                                    }}>
+                                        Send Email
+                                    </button>
 
                                     <button disabled={textloading} onClick={() => sendText([id])} className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
                                         <img src="/images/icons/sendText.png" alt="" />
@@ -873,7 +917,14 @@ const ParentProfile = ({ ParentProfile }) => {
                                     </>
                                 )}
 
-
+                                {/* {(status === "attended" || (status === "request_to_cancel" && canCancelTrial)) && ( */}
+                                <button
+                                    onClick={() => setTransferVenue(true)}
+                                    className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                >
+                                    Transfer Class
+                                </button>
+                                {/* )} */}
                             </div>
                         </>
                     )}
@@ -919,7 +970,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                         type="text"
                                         className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                         placeholder="Select Venue"
-                                        value={classSchedule?.venue?.name || "-"}
+                                        value={classSchedule?.venue?.name || ParentProfile?.venue?.name}
                                         readOnly
                                     />
                                 </div>
@@ -931,7 +982,16 @@ const ParentProfile = ({ ParentProfile }) => {
                                         type="text"
                                         className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                         placeholder="Select Class"
-                                        value={classSchedule?.className || "-"}
+                                        value={
+                                            students?.length > 1
+                                                ? students
+                                                    .map(
+                                                        (s) =>
+                                                            `${s.studentFirstName} ${s.studentLastName} (${s?.classSchedule?.className || "-"})`
+                                                    )
+                                                    .join(", ")
+                                                : students?.[0]?.classSchedule?.className || "-"
+                                        }
                                         readOnly
                                     />
                                 </div>
@@ -956,8 +1016,17 @@ const ParentProfile = ({ ParentProfile }) => {
                                         <input
                                             type="text"
                                             className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                            placeholder="Select Class"
-                                            value={classSchedule?.startTime || "-"}
+                                            placeholder="Select Time"
+                                            value={
+                                                students?.length > 1
+                                                    ? students
+                                                        .map(
+                                                            (s) =>
+                                                                `${s.studentFirstName} ${s.studentLastName} (${s?.classSchedule?.startTime || "-"})`
+                                                        )
+                                                        .join(", ")
+                                                    : students?.[0]?.classSchedule?.startTime || "-"
+                                            }
                                             readOnly
                                         />
                                         {/* <DatePicker
@@ -1046,6 +1115,186 @@ const ParentProfile = ({ ParentProfile }) => {
                         </div>
                     </div>
 
+                )}
+                {transferVenue && (
+                    <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
+                        <div className="bg-white rounded-2xl w-[541px] max-h-[90%] overflow-y-auto relative scrollbar-hide">
+                            <button
+                                className="absolute top-4 left-4 p-2"
+                                onClick={() => setTransferVenue(false)}
+                            >
+                                <img src="/images/icons/cross.png" alt="Close" />
+                            </button>
+
+                            <div className="text-center py-6 border-b border-gray-300">
+                                <h2 className="font-semibold text-[24px]">Transfer Class Form</h2>
+                            </div>
+
+                            <div className="space-y-4 px-6 pb-6 pt-4">
+                                {/* Current Class */}
+
+                                <div>
+
+
+                                    <label className="block text-[16px] font-semibold">
+                                        Select Student
+                                    </label>
+
+                                    <Select
+                                        value={transferData.selectedStudents}
+                                        onChange={handleStudentSelectChange}
+                                        options={studentsList?.map((student) => ({
+                                            value: student.id,
+                                            label: student.studentFirstName + " " + student.studentLastName,
+                                            classSchedule: student.classSchedule
+                                        })) || []}
+                                        placeholder="Select Student"
+                                        isMulti
+                                        className="rounded-lg mt-2"
+                                        styles={{
+                                            control: (base) => ({
+                                                ...base,
+                                                borderRadius: "0.7rem",
+                                                boxShadow: "none",
+                                                padding: "4px 8px",
+                                                minHeight: "48px",
+                                            }),
+                                            placeholder: (base) => ({ ...base, fontWeight: 600 }),
+                                            dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
+                                            indicatorSeparator: () => ({ display: "none" }),
+                                        }}
+                                    />
+
+                                </div>
+                                {/* Per-Student Configuration */}
+                                {transferData.selectedStudents.length > 0 && (
+                                    <div className="space-y-6 border-t pt-4">
+                                        {transferData.selectedStudents.map((studentOption) => {
+                                            const studentId = studentOption.value;
+                                            const studentConfig = transferData.studentTransfers?.[studentId] || {};
+                                            const currentClass = studentOption.classSchedule?.className || "-";
+                                            const currentVenue = studentOption.classSchedule?.venue?.name || "-";
+                                            console.log('transferData', transferData)
+                                            console.log('studentConfig', studentConfig)
+                                            console.log('studentOption', studentOption)
+                                            return (
+                                                <div key={studentId} className="bg-gray-50 p-4 rounded-xl space-y-3 border border-gray-200">
+                                                    <h3 className="font-semibold capitalize text-lg text-gray-800  pb-2">
+                                                        {studentOption.label}
+                                                    </h3>
+
+                                                    {/* Current Info */}
+                                                    {/* Current Info */}
+                                                    <div className="grid gap-4 text-sm text-gray-600">
+                                                        <div>
+                                                            <label className="block text-sm font-semibold mb-1">Current Class</label>
+                                                            <input
+                                                                type="text"
+                                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
+                                                                value={currentClass}
+                                                                readOnly
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-semibold mb-1">Venue</label>
+                                                            <input
+                                                                type="text"
+                                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
+                                                                value={ParentProfile?.venue?.name}
+                                                                readOnly
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* New Class Select */}
+                                                    <div>
+                                                        <label className="block text-sm font-semibold mb-1">New Class</label>
+                                                        <Select
+                                                            value={
+                                                                studentConfig.classScheduleId
+                                                                    ? newClasses.find((cls) => cls.value === studentConfig.classScheduleId) || null
+                                                                    : null
+                                                            }
+                                                            onChange={(selected) =>
+                                                                handleTransferConfigChange(studentId, "classScheduleId", selected?.value)
+                                                            }
+                                                            options={newClasses}
+                                                            placeholder="Select New Class"
+                                                            className="rounded-lg"
+                                                            styles={{
+                                                                control: (base) => ({
+                                                                    ...base,
+                                                                    borderRadius: "0.5rem",
+                                                                    minHeight: "40px",
+                                                                }),
+                                                            }}
+                                                        />
+                                                    </div>
+
+                                                    {/* Reason */}
+                                                    <div>
+                                                        <label className="block text-sm font-semibold mb-1">Reason (Optional)</label>
+                                                        <textarea
+                                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                                                            rows={2}
+                                                            placeholder="Reason for transfer"
+                                                            value={studentConfig.transferReasonClass || ""}
+                                                            onChange={(e) => handleTransferConfigChange(studentId, "transferReasonClass", e.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+
+
+
+                                {/* Buttons */}
+                                <div className="flex gap-4 pt-4 justify-end">
+
+
+                                    <button
+                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={transferData.selectedStudents.length === 0}
+                                        onClick={() => {
+                                            if (!transferData.selectedStudents.length) {
+                                                showWarning("Missing Information", "Please select at least one student.");
+                                                return;
+                                            }
+
+
+                                            // Construct Payload
+                                            const transfers = transferData.selectedStudents.map(studentOption => {
+                                                const config = transferData.studentTransfers?.[studentOption.value] || {};
+                                                return {
+                                                    studentId: studentOption.value,
+                                                    classScheduleId: config.classScheduleId,
+                                                    transferReasonClass: config.transferReasonClass
+                                                };
+                                            });
+
+                                            // Validation: Check if any student is missing a class selection
+                                            const incomplete = transfers.some(t => !t.classScheduleId);
+                                            if (incomplete) {
+                                                showWarning("Missing Information", "Please select a new class for all selected students.");
+                                                return;
+                                            }
+
+                                            const payload = {
+                                                id: ParentProfile?.id,
+                                                transfers: transfers
+                                            };
+
+                                            transferTrialSubmit(payload, 'allMembers');
+                                        }}
+                                    >
+                                        Submit Transfer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 )}
                 {showCancelTrial && (
                     <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">

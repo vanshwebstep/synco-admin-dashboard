@@ -16,6 +16,8 @@ import { useNotification } from '../../../contexts/NotificationContext';
 import { showSuccess, showError } from '../../../../../../utils/swalHelper';
 import Comments from '../../../Common/Comments';
 import { useEmail } from '../../../contexts/messages/SendEmailContext';
+import { useRevertMembership } from '../../../contexts/RevertMembershipContext';
+import RevertMembershipPopup from '../../../Common/RevertMembershipPoppup';
 
 const StudentProfile = ({ StudentProfile }) => {
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -24,7 +26,7 @@ const StudentProfile = ({ StudentProfile }) => {
     const [transferVenue, setTransferVenue] = useState(false);
     const [textloading, setTextLoading] = useState(null)
     const { openEmailPopup } = useEmail();
-
+    const { openRevertPopup } = useRevertMembership();
     const { loading, cancelFreeTrial, sendCancelFreeTrialmail, rebookFreeTrialsubmit, cancelMembershipSubmit, transferMembershipSubmit, reactivateDataSubmit, addtoWaitingListSubmit, freezerMembershipSubmit, sendAllmail, sendFullTomail, sendRequestTomail } = useBookFreeTrial() || {};
     const [addToWaitingList, setaddToWaitingList] = useState(false);
     const [freezeMembership, setFreezeMembership] = useState(false);
@@ -80,6 +82,7 @@ const StudentProfile = ({ StudentProfile }) => {
         students,
         venueId,
         classSchedule,
+        venue,
         paymentPlan,
         paymentPlans,
     } = StudentProfile;
@@ -202,7 +205,7 @@ const StudentProfile = ({ StudentProfile }) => {
         }
     }, []);
 
-      // useEffect(() => {
+    // useEffect(() => {
     //     fetchComments();
     // }, [])
     const handleSubmitComment = async (e) => {
@@ -340,6 +343,17 @@ const StudentProfile = ({ StudentProfile }) => {
     const selectedClass = newClasses?.find(
         (cls) => cls.value === waitingListData?.classScheduleId
     );
+    const getStatusColor = (status) => {
+        switch (status) {
+            case "active": return "text-[#43BE4F]";
+            case "frozen": return "text-[#509EF9]";
+            case "cancelled": return "text-[#FC5D5D]";
+            case "waiting list": return "text-[#A4A5A6]";
+            case "request_to_cancel": return "text-[#FC5D5D]";
+
+            default: return "text-[#A4A5A6]";
+        }
+    };
     const getStatusBgColor = (status) => {
         switch (status) {
             case "active": return "bg-[#43BE4F]";
@@ -372,7 +386,14 @@ const StudentProfile = ({ StudentProfile }) => {
                             >
                                 {/* Top Header Row */}
                                 <div className="flex justify-between items-start">
-                                    <h2 className="text-[20px] font-semibold">Student information</h2>
+                                    <h2 className="text-[20px] font-semibold">
+                                        Student information{" "}
+                                        {student.studentStatus && (
+                                            <span className={`capitalize ${getStatusColor(student?.studentStatus)}`}>
+                                                ({student?.studentStatus})
+                                            </span>
+                                        )}
+                                    </h2>
 
                                 </div>
 
@@ -586,7 +607,7 @@ const StudentProfile = ({ StudentProfile }) => {
                                 <div>
                                     <div className="text-[20px] font-bold tracking-wide">Venue</div>
                                     <div className="inline-block bg-[#007BFF] text-white text-[14px] px-3 py-1 rounded-md my-2">
-                                        {classSchedule?.venue?.name || "-"}
+                                        {classSchedule?.venue?.name || venue?.name}
                                     </div>
                                 </div>
 
@@ -678,6 +699,16 @@ const StudentProfile = ({ StudentProfile }) => {
                                         <div className="text-[16px]  mt-1 text-gray-400">{StudentProfile?.cancelData.cancelReason}</div>
                                     </div>
                                 )}
+                                {StudentProfile?.cancelData?.updatedAt && (
+                                    <div className="border-t border-[#495362] py-5">
+                                        <div className="text-[20px] text-white">
+                                            Cancelled Date
+                                        </div>
+                                        <div className="text-[16px] mt-1 text-gray-400">
+                                            {formatDate(StudentProfile?.cancelData?.updatedAt)}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -746,6 +777,14 @@ const StudentProfile = ({ StudentProfile }) => {
                                             className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
                                         >
                                             Freeze Membership
+                                        </button>
+                                    )}
+                                    {(status === "active" || status === "request_to_cancel") && canCancelTrial && (
+                                        <button
+                                            onClick={() => openRevertPopup(id)}
+                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                        >
+                                            Revert Membership
                                         </button>
                                     )}
                                     {(status === "active" || status === "request_to_cancel") && canCancelTrial && classSchedule?.venue?.name && (
@@ -1415,6 +1454,7 @@ const StudentProfile = ({ StudentProfile }) => {
                         </div>
                     </div>
                 )}
+                <RevertMembershipPopup studentsList={studentsList} />
                 {reactivateMembership && (
                     <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
                         <div className="bg-white rounded-2xl w-[541px] max-h-[90%] overflow-y-auto relative scrollbar-hide">

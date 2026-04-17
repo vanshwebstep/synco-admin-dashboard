@@ -31,6 +31,7 @@ import { useMembers } from '../../../contexts/MemberContext';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { useTermContext } from '../../../contexts/TermDatesSessionContext';
 import Comments from '../../../Common/Comments';
+import PhoneNumberInput from '../../../Common/PhoneNumberInput';
 const AddtoWaitingList = () => {
   const [loadingComment, setLoadingComment] = useState(false);
   const [expression, setExpression] = useState('');
@@ -111,15 +112,15 @@ const AddtoWaitingList = () => {
     { value: "Guardian", label: "Guardian" },
   ];
   const interestReasonOptions = [
-        { value: "To build my child's confidence", label: "To build my child's confidence" },
-        { value: "To improve their technical football skills", label: "To improve their technical football skills" },
-        { value: "Because my child loves football", label: "Because my child loves football" },
-        { value: "To help my child make friends and build social skills", label: "To help my child make friends and build social skills" },
-        { value: "To keep my child active and healthy", label: "To keep my child active and healthy" },
-        { value: "High-quality coaching in a fun, positive environment", label: "High-quality coaching in a fun, positive environment" },
-        { value: "Other", label: "Other" },
+    { value: "To build my child's confidence", label: "To build my child's confidence" },
+    { value: "To improve their technical football skills", label: "To improve their technical football skills" },
+    { value: "Because my child loves football", label: "Because my child loves football" },
+    { value: "To help my child make friends and build social skills", label: "To help my child make friends and build social skills" },
+    { value: "To keep my child active and healthy", label: "To keep my child active and healthy" },
+    { value: "High-quality coaching in a fun, positive environment", label: "High-quality coaching in a fun, positive environment" },
+    { value: "Other", label: "Other" },
 
-    ];
+  ];
   const ClassOptions = [
     { value: "4–7 years", label: "4–7 years" },
     { value: "7–10 years", label: "7-10 years" },
@@ -1381,36 +1382,14 @@ const AddtoWaitingList = () => {
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">Phone number</label>
 
-                      <div className="flex items-center border border-gray-300 rounded-xl px-4 py-3 mt-2">
-                        {/* Flag Dropdown */}
-                        <PhoneInput
-                          country="uk"
-                          value={dialCode2}
-                          onChange={handleChange2}
-                          onCountryChange={handleCountryChange2}
-                          disableDropdown={true}
-                          disableCountryCode={true}
-                          countryCodeEditable={false}
-                          inputStyle={{
-                            width: "0px",
-                            maxWidth: '20px',
-                            height: "0px",
-                            opacity: 0,
-                            pointerEvents: "none", // ✅ prevents blocking typing
-                            position: "absolute",
-                          }}
-                          buttonClass="!bg-white !border-none !p-0"
-                        />
-                        <input
-                          type="number"
-                          value={parent.parentPhoneNumber}
-                          onChange={(e) =>
-                            handleParentChange(index, "parentPhoneNumber", e.target.value)
-                          }
-                          placeholder="Enter phone number"
-                          className='border-none w-full focus:outline-none'
-                        />
-                      </div>
+                      <PhoneNumberInput
+                        value={parent.parentPhoneNumber}
+                        onChange={(fullNumber) =>
+                          handleParentChange(index, "parentPhoneNumber", fullNumber)
+                        }
+
+                        placeholder="Enter phone number"
+                      />
 
                     </div>
                   </div>
@@ -1570,39 +1549,14 @@ const AddtoWaitingList = () => {
               <div className="flex gap-4">
                 <div className="w-1/2">
                   <label className="block text-[16px] font-semibold">Phone number</label>
-                  <div className="flex items-center border border-gray-300 rounded-xl px-4 py-3 mt-2">
-                    {/* Flag Dropdown */}
-                    <PhoneInput
-                      country="uk"
-                      value={dialCode}
-                      onChange={handleChange}
-                      onCountryChange={handleCountryChange}
-                      disableDropdown={true}
-                      disableCountryCode={true}
-                      countryCodeEditable={false}
-                      inputStyle={{
-                        width: "0px",
-                        maxWidth: '20px',
-                        height: "0px",
-                        opacity: 0,
-                        pointerEvents: "none", // ✅ prevents blocking typing
-                        position: "absolute",
-                      }}
-                      buttonClass="!bg-white !border-none !p-0"
-                    />
-                    <input
-                      type="number"
-                      value={emergency.emergencyPhoneNumber}
-                      onChange={(e) =>
-                        setEmergency((prev) => ({
-                          ...prev,
-                          emergencyPhoneNumber: e.target.value,
-                        }))
-                      }
-                      className='border-none w-full focus:outline-none' placeholder="Enter phone number"
-                    />
+                  <PhoneNumberInput
+                    value={emergency.emergencyPhoneNumber}
+                    onChange={(fullNumber) =>
+                      setEmergency(prev => ({ ...prev, emergencyPhoneNumber: fullNumber }))
+                    }
 
-                  </div>
+                    placeholder="Enter phone number"
+                  />
 
                 </div>
                 <div className="w-1/2">

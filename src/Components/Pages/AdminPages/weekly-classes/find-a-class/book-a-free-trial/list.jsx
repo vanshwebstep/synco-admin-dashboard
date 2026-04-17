@@ -31,6 +31,7 @@ import { useMembers } from '../../../contexts/MemberContext';
 import { useNotification } from '../../../contexts/NotificationContext';
 import Loader from '../../../contexts/Loader';
 import Comments from '../../../Common/Comments';
+import PhoneNumberInput from '../../../Common/PhoneNumberInput';
 
 const List = () => {
     useEffect(() => {
@@ -153,7 +154,7 @@ const List = () => {
         { value: "Other", label: "Other" },
 
     ];
-const handleRemoveStudent = (indexToRemove) => {
+    const handleRemoveStudent = (indexToRemove) => {
         setStudents((prevStudents) => {
             const updatedStudents = prevStudents.filter((_, i) => i !== indexToRemove);
 
@@ -1357,7 +1358,7 @@ const handleRemoveStudent = (indexToRemove) => {
                                     transition={{ duration: 0.4, delay: index * 0.1 }}
                                     className="bg-white mb-10 p-6 rounded-3xl shadow-sm space-y-6 relative"
                                 >
-                                     {students.length > 1 && (
+                                    {students.length > 1 && (
                                         <button
                                             onClick={() => handleRemoveStudent(index)}
                                             className="absolute top-4 right-4 text-red-500 hover:text-red-700 text-xl"
@@ -1603,37 +1604,14 @@ const handleRemoveStudent = (indexToRemove) => {
                                         </div>
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Phone number</label>
-                                            <div className="flex items-center border border-gray-300 rounded-xl px-4 py-3 mt-2">
-                                                {/* Flag Dropdown */}
-                                                <PhoneInput
-                                                    country="uk"
-                                                    value={dialCode2}
-                                                    onChange={handleChange2}
-                                                    disableDropdown={true}       // disables changing the country
-                                                    disableCountryCode={true}
-                                                    countryCodeEditable={false}
-                                                    inputStyle={{
-                                                        width: "0px",
-                                                        maxWidth: '20px',
-                                                        height: "0px",
-                                                        opacity: 0,
-                                                        pointerEvents: "none",
-                                                        position: "absolute",
-                                                    }}
-                                                    buttonClass="!bg-white !border-none !p-0"
-                                                />
+                                            <PhoneNumberInput
+                                                value={parent.parentPhoneNumber}
+                                                onChange={(fullNumber) =>
+                                                    handleParentChange(index, "parentPhoneNumber", fullNumber)
+                                                }
 
-                                                <input
-                                                    type="number"
-                                                    disabled={isPrefilled} // Disable if pre-filled from existing parent data
-                                                    value={parent.parentPhoneNumber}
-                                                    onChange={(e) =>
-                                                        handleParentChange(index, "parentPhoneNumber", e.target.value)
-                                                    }
-                                                    placeholder="Enter phone number"
-                                                    className='border-none w-full focus:outline-none'
-                                                />
-                                            </div>
+                                                placeholder="Enter phone number"
+                                            />
 
 
                                         </div>
@@ -1798,39 +1776,15 @@ const handleRemoveStudent = (indexToRemove) => {
                             <div className="flex gap-4">
                                 <div className="w-1/2">
                                     <label className="block text-[16px] font-semibold">Phone number</label>
-                                    <div className="flex items-center border border-gray-300 rounded-xl px-4 py-3 mt-2">
-                                        {/* Flag Dropdown */}
-                                        <PhoneInput
-                                            country="uk"
-                                            value={dialCode}
-                                            onChange={handleChange}
-                                            onCountryChange={handleCountryChange}
-                                            disableDropdown={true}
-                                            disableCountryCode={true}
-                                            countryCodeEditable={false}
-                                            inputStyle={{
-                                                width: "0px",
-                                                maxWidth: '20px',
-                                                height: "0px",
-                                                opacity: 0,
-                                                pointerEvents: "none", // ✅ prevents blocking typing
-                                                position: "absolute",
-                                            }}
-                                            buttonClass="!bg-white !border-none !p-0"
-                                        />
-                                        <input
-                                            type="number"
-                                            value={emergency.emergencyPhoneNumber}
-                                            onChange={(e) =>
-                                                setEmergency((prev) => ({
-                                                    ...prev,
-                                                    emergencyPhoneNumber: e.target.value,
-                                                }))
-                                            }
-                                            className='border-none w-full focus:outline-none' placeholder="Enter phone number"
-                                        />
+                                 
+                                    <PhoneNumberInput
+                                        value={emergency.emergencyPhoneNumber}
+                                       onChange={(fullNumber) =>
+                      setEmergency(prev => ({ ...prev, emergencyPhoneNumber: fullNumber }))
+                    }
 
-                                    </div>
+                                        placeholder="Enter phone number"
+                                    />
                                 </div>
                                 <div className="w-1/2">
                                     <label className="block text-[16px] font-semibold">Relation to child</label>

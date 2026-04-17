@@ -532,6 +532,8 @@ const StudentProfile = ({ profile }) => {
             case "frozen": return "text-[#509EF9]";
             case "cancelled": return "text-[#FC5D5D]";
             case "waiting list": return "text-[#A4A5A6]";
+            case "request_to_cancel": return "text-[#FC5D5D]";
+
             default: return "text-[#A4A5A6]";
         }
     };

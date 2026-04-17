@@ -2,17 +2,17 @@ import { useState } from "react";
 
 const Attendance = ({ stateData }) => {
   const students = stateData?.students || [];
-
+  const [activeIndex, setActiveIndex] = useState(0);
   // Date format (DOB → optional use)
   const formatDate = (dateStr) => {
     if (!dateStr) return "-";
     const d = new Date(dateStr);
     return isNaN(d) ? "-" : d.toLocaleDateString("en-GB");
   };
-
+  const activeStudent = students[activeIndex];
   return (
     <div className="p-6 bg-white rounded-xl shadow-sm">
-      
+
       {/* Title */}
       <h2 className="text-lg font-semibold mb-4">Attendance</h2>
 
@@ -21,11 +21,11 @@ const Attendance = ({ stateData }) => {
         {students.map((student, index) => (
           <button
             key={student.id}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
-              index === 0
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${activeIndex === index
                 ? "bg-blue-500 text-white"
                 : "bg-gray-100 text-gray-600"
-            }`}
+              }`}
+            onClick={() => setActiveIndex(index)}
           >
             {student.studentFirstName} {student.studentLastName}
           </button>
@@ -35,7 +35,7 @@ const Attendance = ({ stateData }) => {
       {/* Table */}
       <div className="overflow-hidden border border-gray-200 rounded-lg">
         <table className="w-full text-sm">
-          
+
           {/* Header */}
           <thead className="bg-gray-100 text-gray-500 text-left">
             <tr>
@@ -47,41 +47,33 @@ const Attendance = ({ stateData }) => {
 
           {/* Body */}
           <tbody className="divide-y">
-            {students.length > 0 ? (
-              students.map((student) => {
-                const isAttended =
-                  student.attendance?.toLowerCase() === "attended";
+            {activeStudent ? (
+              <tr className="hover:bg-gray-50">
 
-                return (
-                  <tr key={student.id} className="hover:bg-gray-50">
-                    
-                    {/* Venue (static ya API se aayega) */}
-                    <td className="py-3 px-4">
-                      {student.classSchedule?.className || "Acton"}
-                    </td>
+                {/* Venue */}
+                <td className="py-3 px-4">
+                  {activeStudent.classSchedule?.className || "Acton"}
+                </td>
 
-                    {/* Date (time use kar rahe) */}
-                    <td className="py-3 px-4">
-                      {student.classSchedule?.startTime} -{" "}
-                      {student.classSchedule?.endTime}
-                    </td>
+                {/* Date */}
+                <td className="py-3 px-4">
+                  {activeStudent.classSchedule?.startTime} -{" "}
+                  {activeStudent.classSchedule?.endTime}
+                </td>
 
-                    {/* Attendance */}
-                    <td className="py-3 px-4">
-                      <span
-                        className={`px-3 py-1 capitalize rounded-md text-xs font-medium ${
-                          isAttended
-                            ? "bg-green-100 text-green-600"
-                            : "bg-red-100 text-red-500"
-                        }`}
-                      >
-                       {student.attendance || "Not Recorded"}
-                      </span>
-                    </td>
+                {/* Attendance */}
+                <td className="py-3 px-4">
+                  <span
+                    className={`px-3 py-1 capitalize rounded-md text-xs font-medium ${activeStudent.attendance?.toLowerCase() === "attended"
+                        ? "bg-green-100 text-green-600"
+                        : "bg-red-100 text-red-500"
+                      }`}
+                  >
+                    {activeStudent.attendance || "Not Recorded"}
+                  </span>
+                </td>
 
-                  </tr>
-                );
-              })
+              </tr>
             ) : (
               <tr>
                 <td colSpan={3} className="text-center py-6 text-gray-500">

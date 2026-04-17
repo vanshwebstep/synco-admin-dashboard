@@ -121,6 +121,8 @@ const MainTable = () => {
         request_to_cancel: "bg-red-500 text-white",
         pending: "bg-yellow-500 text-white",
         frozen: "bg-blue-500 text-white",
+        attended: "bg-green-500 text-white",
+
     };
 
     useEffect(() => {
@@ -219,112 +221,138 @@ const MainTable = () => {
                                     </tr>
                                 </thead>
 
-                                <tbody>
-                                    {currentMembers.map((main) => {
-                                        const user = main?.booking || main;
-                                        const isChecked = selectedUserIds.includes(main.id);
-                                        return (
-                                            <tr key={main.id} onClick={() => navigate(`/weekly-classes/account-information?id=${main.id}&serviceType=${activeTab}`)} className="border-t font-semibold text-[#282829] border-[#EFEEF2] hover:bg-gray-50">
-                                                <td className="p-4 cursor-pointer">
-                                                    <div className="flex items-center gap-3">
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();        // ⛔ prevent row click
-                                                                toggleCheckbox(main?.id);
-                                                            }}
-                                                            className={`min-w-5 min-h-5 flex items-center justify-center rounded-md border-2 ${isChecked ? 'border-gray-500' : 'border-gray-300'
-                                                                }`}
-                                                        >
-                                                            {isChecked && (
-                                                                <Check size={16} strokeWidth={3} className="text-gray-500" />
-                                                            )}
-                                                        </button>
+                             <tbody>
+  {currentMembers.map((main) => {
+    const user = main?.booking || main;
+    const students = user?.students || [];
+    const userstatus = main.status;
 
-                                                        <img
-                                                            src={
-                                                                main?.profile && main.profile.trim() !== ""
-                                                                    ? main.profile
-                                                                    : "/members/dummymain.png"
-                                                            }
-                                                            alt={main?.firstName || "User"}
+    return students.map((student, index) => {
+      const isChecked = selectedUserIds.includes(student.id);
 
-                                                            className="w-10 h-10 rounded-full object-contain"
-                                                            onError={(e) => {
-                                                                e.currentTarget.onerror = null;
-                                                                e.currentTarget.src = "/members/dummyuser.png";
-                                                            }}
-                                                        />
+      return (
+        <tr
+          key={student.id || index}
+          onClick={() =>
+            navigate(
+              `/weekly-classes/account-information?id=${main.id}&serviceType=${activeTab}`
+            )
+          }
+          className="border-t font-semibold text-[#282829] border-[#EFEEF2] hover:bg-gray-50"
+        >
+          <td className="p-4 cursor-pointer">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleCheckbox(student?.id);
+                }}
+                className={`min-w-5 min-h-5 flex items-center justify-center rounded-md border-2 ${
+                  isChecked ? "border-gray-500" : "border-gray-300"
+                }`}
+              >
+                {isChecked && (
+                  <Check size={16} strokeWidth={3} className="text-gray-500" />
+                )}
+              </button>
 
+              <img
+                src={
+                  student?.profile && student.profile.trim() !== ""
+                    ? student.profile
+                    : "/members/dummymain.png"
+                }
+                alt={student?.studentFirstName || "User"}
+                className="w-10 h-10 rounded-full object-contain"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "/members/dummyuser.png";
+                }}
+              />
 
-                                                        <span >
-                                                            {`${safe(user?.students?.[0]?.studentFirstName)} ${safe(user?.students?.[0]?.studentLastName)}`}
-                                                        </span>
-                                                    </div>
-                                                </td>
+              <span>
+                {`${safe(student?.studentFirstName)} ${safe(
+                  student?.studentLastName
+                )}`}
+              </span>
+            </div>
+          </td>
 
-                                                <td className="p-4 whitespace-nowrap">
-                                                    {safe(user?.students?.[0]?.age)}
-                                                </td>
-                                                <td className="p-4 ">
-                                                    <div className='w-[200px]'>
+          <td className="p-4 whitespace-nowrap">
+            {safe(student?.age)}
+          </td>
 
-                                                        {safe(user?.venue?.name || user?.address || 'N/A')}
-                                                    </div>
-                                                </td>
-                                                <td className="p-4 whitespace-nowrap">
-                                                    {user?.createdAt || user.date ? new Date(user.createdAt || user.date).toLocaleDateString() : 'N/A'}
-                                                </td>
-                                                <td className="p-4 whitespace-nowrap">
-                                                    {(() => {
-                                                        const source = main?.source?.trim();
+          <td className="p-4">
+            <div className="w-[200px]">
+              {safe(user?.venue?.name || user?.address || "N/A")}
+            </div>
+          </td>
 
-                                                        // Admin name (booked by admin)
-                                                        const adminName = user?.bookedByAdmin?.firstName
-                                                            ? `${safe(user.bookedByAdmin.firstName)}${user.bookedByAdmin.lastName &&
-                                                                user.bookedByAdmin.lastName !== "null"
-                                                                ? ` ${safe(user.bookedByAdmin.lastName)}`
-                                                                : ""
-                                                            }`
-                                                            : "";
+          <td className="p-4 whitespace-nowrap">
+            {user?.createdAt || user.date
+              ? new Date(user.createdAt || user.date).toLocaleDateString()
+              : "N/A"}
+          </td>
 
-                                                        // Creator name (fallback)
-                                                        const creatorName = main?.creator?.firstName
-                                                            ? `${safe(main.creator.firstName)}${main.creator.lastName &&
-                                                                main.creator.lastName !== "null"
-                                                                ? ` ${safe(main.creator.lastName)}`
-                                                                : ""
-                                                            }`
-                                                            : "";
+          <td className="p-4 whitespace-nowrap">
+            {(() => {
+              const source = main?.source?.trim();
 
-                                                        const name = adminName || creatorName;
+              const adminName = user?.bookedByAdmin?.firstName
+                ? `${safe(user.bookedByAdmin.firstName)}${
+                    user.bookedByAdmin.lastName &&
+                    user.bookedByAdmin.lastName !== "null"
+                      ? ` ${safe(user.bookedByAdmin.lastName)}`
+                      : ""
+                  }`
+                : "";
 
-                                                        if (source && name) {
-                                                            return `${source} (${name})`;
-                                                        }
+              const creatorName = main?.creator?.firstName
+                ? `${safe(main.creator.firstName)}${
+                    main.creator.lastName &&
+                    main.creator.lastName !== "null"
+                      ? ` ${safe(main.creator.lastName)}`
+                      : ""
+                  }`
+                : "";
 
-                                                        if (source) {
-                                                            return source;
-                                                        }
+              const name = adminName || creatorName;
 
-                                                        return name || "-";
-                                                    })()}
-                                                </td>
+              if (source && name) return `${source} (${name})`;
+              if (source) return source;
+              return name || "-";
+            })()}
+          </td>
 
-                                                <td className="p-4 whitespace-nowrap">{safe(user?.paymentPlan?.title)}</td>
-                                                <td className="p-4 whitespace-nowrap">
-                                                    {user?.paymentPlan?.duration && user?.paymentPlan?.interval
-                                                        ? `${user.paymentPlan?.duration} ${user.paymentPlan?.interval}${user.paymentPlan?.duration > 1 ? 's' : ''}`
-                                                        : ''}
-                                                </td>
-                                                <td className="p-4 whitespace-nowrap">
-                                                    <span className={`px-3 py-1 rounded-md capitalize font-semibold ${statusColors[main?.status] || 'bg-gray-100 text-gray-800'}`}>
-                                                        {safe(main?.status)}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
+          <td className="p-4 whitespace-nowrap">
+            {safe(user?.paymentPlan?.title)}
+          </td>
+
+          <td className="p-4 whitespace-nowrap">
+            {user?.paymentPlan?.duration &&
+            user?.paymentPlan?.interval
+              ? `${user.paymentPlan.duration} ${
+                  user.paymentPlan.interval
+                }${user.paymentPlan.duration > 1 ? "s" : ""}`
+              : ""}
+          </td>
+
+          {/* ✅ FIXED STATUS */}
+          <td className="p-4 whitespace-nowrap">
+            <span
+              className={`px-3 py-1 rounded-md capitalize font-semibold ${
+                statusColors[student?.studentStatus || user.status || userstatus] ||
+                "bg-gray-100 text-gray-800"
+              }`}
+            >
+              {safe(student?.studentStatus || user.status || userstatus)}
+            </span>
+          </td>
+        </tr>
+      );
+    });
+  })}
+</tbody>
                             </table>
                         </div>
 

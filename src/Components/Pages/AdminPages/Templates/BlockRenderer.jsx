@@ -1835,7 +1835,7 @@ const STYLE_GROUPS = {
 
 const getStyleConfig = (block) => {
   const config = [];
-
+  console.log("STYLE_GROUPS.grid:", STYLE_GROUPS.grid);
   // Common styles for almost everyone
   if (block.type === "text" || block.type === "heading" || block.type === "btn" || block.type === "textEditor") {
     config.push(STYLE_GROUPS.layout("style"));
@@ -1868,7 +1868,7 @@ const getStyleConfig = (block) => {
   }
 
   if (block.type === "cardRow") {
-    config.push(STYLE_GROUPS.grid("style")); // Grid Layout
+    config.push(STYLE_GROUPS?.grid("style")); // Grid Layout
     const cardAppearance = STYLE_GROUPS.appearance("cardStyle", "Card Style");
     cardAppearance.fields.push({ label: "Alignment", key: "textAlign", type: "align", path: "cardStyle" });
     config.push(cardAppearance); // Card Appearance
@@ -2295,7 +2295,7 @@ const FooterBlockRenderer = ({ block = {} }) => {
             </td> {/* Text */} <td style={{ width: "40.33%", padding: "0px 7px", textAlign: "left", color: "#fff", }}>
                 <p style={{ margin: "0px", lineHeight: "11px", fontSize: "18px", }}> Let’s be friends </p>
                 <p style={{ margin: "0px", fontSize: "10px", lineHeight: "11px", }}> If we are not playing football you can find us socialising on… </p>
-              </td> {/* Social Icons */} 
+              </td> {/* Social Icons */}
               <td style={{ width: "30.33%", padding: "0px", textAlign: "left" }}>
                 <table role="presentation">
                   <tr> {[{ href: "https://www.facebook.com/sambasoccerschools", src: "https://uploads.grabbite.com/emailIcons/facebook.png", }, { href: "https://www.instagram.com/sambasoccer_uk/", src: "https://uploads.grabbite.com/emailIcons/instagram.png", }, { href: "https://www.youtube.com/channel/UCtt-dIsSs2zi_IIUm0-BmUQ", src: "https://uploads.grabbite.com/emailIcons/youtube.png", }, { href: "https://www.linkedin.com/uas/login?session_redirect=%2Fcompany%2F3529892", src: "https://uploads.grabbite.com/emailIcons/linkedin.png", }, { href: "https://x.com/Samba_Soccer?mx=2", src: "https://uploads.grabbite.com/emailIcons/twitter.png", },].map((icon, i) => (<td key={i} style={{ paddingRight: "3px" }}>

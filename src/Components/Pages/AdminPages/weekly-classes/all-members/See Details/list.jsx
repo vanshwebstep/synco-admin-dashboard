@@ -23,7 +23,19 @@ const SeeDetails = () => {
     const [itemId, setItemId] = useState(null);
     const [memberInfo, setMemberInfo] = useState(null);
     console.log('memberInfo', memberInfo)
+    useEffect(() => {
+        if (location.state?.itemId) {
+            setItemId(location.state.itemId);
+        }
 
+        if (location.state?.memberInfo) {
+            setMemberInfo(location.state.memberInfo);
+        }
+
+        if (location.state?.defaultTab) {
+            setActiveTab(location.state.defaultTab); // ✅ set tab
+        }
+    }, [location.state]);
 
     useEffect(() => {
         if (location.state?.itemId) {
@@ -44,28 +56,28 @@ const SeeDetails = () => {
         };
         fetchData();
     }, [itemId, serviceHistoryMembership]);
-    const [activeTab, setActiveTab] = useState("Parent Profile");
+    const [activeTab, setActiveTab] = useState("General");
 
-  const navigateTo =
-    memberInfo === "allMembers" || memberInfo === "freeTrial"
-        ? {
-            pathname: "/weekly-classes/trial/find-a-class/book-a-free-trial/account-info/list",
-            state: { itemId: itemId }
-        }
-        : memberInfo === "cancellation"
-        ? {
-            pathname: "/weekly-classes/cancellation/account-info/list",
-            state: { itemId: itemId }
-        }
-          : memberInfo === "waitingList"
-        ? {
-            pathname: "/weekly-classes/add-to-waiting-list/account-info",
-            state: { itemId: itemId }
-        }
-        : {
-            pathname: "/weekly-classes/all-members/account-info",
-            state: { itemId: itemId }
-        };
+    const navigateTo =
+        memberInfo === "allMembers" || memberInfo === "freeTrial"
+            ? {
+                pathname: "/weekly-classes/trial/find-a-class/book-a-free-trial/account-info/list",
+                state: { itemId: itemId }
+            }
+            : memberInfo === "cancellation"
+                ? {
+                    pathname: "/weekly-classes/cancellation/account-info/list",
+                    state: { itemId: itemId }
+                }
+                : memberInfo === "waitingList"
+                    ? {
+                        pathname: "/weekly-classes/add-to-waiting-list/account-info",
+                        state: { itemId: itemId }
+                    }
+                    : {
+                        pathname: "/weekly-classes/all-members/account-info",
+                        state: { itemId: itemId }
+                    };
     return (
         <>
             <div className=" flex justify-between items-end mb-5 gap-2 md:gap-3">

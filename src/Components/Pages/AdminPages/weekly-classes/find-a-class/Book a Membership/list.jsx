@@ -23,6 +23,7 @@ import "react-phone-input-2/lib/style.css";
 import { useMembers } from "../../../contexts/MemberContext";
 import { useNotification } from "../../../contexts/NotificationContext";
 import Comments from "../../../Common/Comments";
+import PhoneNumberInput from "../../../Common/PhoneNumberInput";
 
 const List = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -45,9 +46,10 @@ const List = () => {
     const [isDiscountLoading, setIsDiscountLoading] = useState(false);
     const { adminInfo, setAdminInfo } = useNotification();
     const [country, setCountry] = useState("uk"); // default country
-    const [country2, setCountry2] = useState("uk"); // default country
+
     const [dialCode, setDialCode] = useState("+44"); // store selected code silently
     const [dialCode2, setDialCode2] = useState("+44");
+    const [country2, setCountry2] = useState("gb");
     const [isChecked, setIsChecked] = useState(false);
     const [calculatedAmount, setCalculatedAmount] = useState(0);
     const [remainingLessons, setRemainingLessons] = useState(0);
@@ -59,6 +61,106 @@ const List = () => {
         starterPackPrice: 0,
         totalAmount: 0
     });
+    const DIAL_CODES = [
+        { dialCode: "+1", countryCode: "us" },
+        { dialCode: "+7", countryCode: "ru" },
+        { dialCode: "+20", countryCode: "eg" },
+        { dialCode: "+27", countryCode: "za" },
+        { dialCode: "+30", countryCode: "gr" },
+        { dialCode: "+31", countryCode: "nl" },
+        { dialCode: "+32", countryCode: "be" },
+        { dialCode: "+33", countryCode: "fr" },
+        { dialCode: "+34", countryCode: "es" },
+        { dialCode: "+36", countryCode: "hu" },
+        { dialCode: "+39", countryCode: "it" },
+        { dialCode: "+40", countryCode: "ro" },
+        { dialCode: "+41", countryCode: "ch" },
+        { dialCode: "+43", countryCode: "at" },
+        { dialCode: "+44", countryCode: "gb" },
+        { dialCode: "+45", countryCode: "dk" },
+        { dialCode: "+46", countryCode: "se" },
+        { dialCode: "+47", countryCode: "no" },
+        { dialCode: "+48", countryCode: "pl" },
+        { dialCode: "+49", countryCode: "de" },
+        { dialCode: "+51", countryCode: "pe" },
+        { dialCode: "+52", countryCode: "mx" },
+        { dialCode: "+53", countryCode: "cu" },
+        { dialCode: "+54", countryCode: "ar" },
+        { dialCode: "+55", countryCode: "br" },
+        { dialCode: "+56", countryCode: "cl" },
+        { dialCode: "+57", countryCode: "co" },
+        { dialCode: "+58", countryCode: "ve" },
+        { dialCode: "+60", countryCode: "my" },
+        { dialCode: "+61", countryCode: "au" },
+        { dialCode: "+62", countryCode: "id" },
+        { dialCode: "+63", countryCode: "ph" },
+        { dialCode: "+64", countryCode: "nz" },
+        { dialCode: "+65", countryCode: "sg" },
+        { dialCode: "+66", countryCode: "th" },
+        { dialCode: "+81", countryCode: "jp" },
+        { dialCode: "+82", countryCode: "kr" },
+        { dialCode: "+84", countryCode: "vn" },
+        { dialCode: "+86", countryCode: "cn" },
+        { dialCode: "+90", countryCode: "tr" },
+        { dialCode: "+91", countryCode: "in" },
+        { dialCode: "+92", countryCode: "pk" },
+        { dialCode: "+93", countryCode: "af" },
+        { dialCode: "+94", countryCode: "lk" },
+        { dialCode: "+95", countryCode: "mm" },
+        { dialCode: "+98", countryCode: "ir" },
+        { dialCode: "+212", countryCode: "ma" },
+        { dialCode: "+213", countryCode: "dz" },
+        { dialCode: "+216", countryCode: "tn" },
+        { dialCode: "+218", countryCode: "ly" },
+        { dialCode: "+220", countryCode: "gm" },
+        { dialCode: "+221", countryCode: "sn" },
+        { dialCode: "+234", countryCode: "ng" },
+        { dialCode: "+254", countryCode: "ke" },
+        { dialCode: "+255", countryCode: "tz" },
+        { dialCode: "+256", countryCode: "ug" },
+        { dialCode: "+260", countryCode: "zm" },
+        { dialCode: "+263", countryCode: "zw" },
+        { dialCode: "+351", countryCode: "pt" },
+        { dialCode: "+352", countryCode: "lu" },
+        { dialCode: "+353", countryCode: "ie" },
+        { dialCode: "+354", countryCode: "is" },
+        { dialCode: "+355", countryCode: "al" },
+        { dialCode: "+356", countryCode: "mt" },
+        { dialCode: "+358", countryCode: "fi" },
+        { dialCode: "+359", countryCode: "bg" },
+        { dialCode: "+370", countryCode: "lt" },
+        { dialCode: "+371", countryCode: "lv" },
+        { dialCode: "+372", countryCode: "ee" },
+        { dialCode: "+380", countryCode: "ua" },
+        { dialCode: "+381", countryCode: "rs" },
+        { dialCode: "+385", countryCode: "hr" },
+        { dialCode: "+386", countryCode: "si" },
+        { dialCode: "+420", countryCode: "cz" },
+        { dialCode: "+421", countryCode: "sk" },
+        { dialCode: "+880", countryCode: "bd" },
+        { dialCode: "+960", countryCode: "mv" },
+        { dialCode: "+961", countryCode: "lb" },
+        { dialCode: "+962", countryCode: "jo" },
+        { dialCode: "+963", countryCode: "sy" },
+        { dialCode: "+964", countryCode: "iq" },
+        { dialCode: "+966", countryCode: "sa" },
+        { dialCode: "+967", countryCode: "ye" },
+        { dialCode: "+968", countryCode: "om" },
+        { dialCode: "+971", countryCode: "ae" },
+        { dialCode: "+972", countryCode: "il" },
+        { dialCode: "+973", countryCode: "bh" },
+        { dialCode: "+974", countryCode: "qa" },
+        { dialCode: "+975", countryCode: "bt" },
+        { dialCode: "+976", countryCode: "mn" },
+        { dialCode: "+977", countryCode: "np" },
+        { dialCode: "+992", countryCode: "tj" },
+        { dialCode: "+993", countryCode: "tm" },
+        { dialCode: "+994", countryCode: "az" },
+        { dialCode: "+995", countryCode: "ge" },
+        { dialCode: "+996", countryCode: "kg" },
+        { dialCode: "+998", countryCode: "uz" },
+    ].sort((a, b) => b.dialCode.length - a.dialCode.length); // longest first ✅
+
     const formatCardNumber = (val) => {
         const digits = val.replace(/\D/g, "").slice(0, 16);
         return digits.replace(/(.{4})/g, "$1 ").trim();
@@ -141,10 +243,8 @@ const List = () => {
         });
     };
 
-    const handleChange2 = (value, data) => {
-        // When library fires onChange, just update the dial code
-        setDialCode("+" + data.dialCode);
-    };
+
+
     const handleDiscountChange = (e) => {
         setDiscountCode(e.target.value);
         setIsChecked(false);
@@ -155,10 +255,80 @@ const List = () => {
         setCountry(countryData.countryCode);
         setDialCode2("+" + countryData.dialCode);
     };
+
+
+    // State
+
+
+    // ✅ Country change handler
     const handleCountryChange2 = (countryData) => {
-        setCountry2(countryData.countryCode);
-        setDialCode2("+" + countryData.dialCode);
+        const newDialCode = "+" + countryData.dialCode;
+        setDialCode2(newDialCode);
+        setCountry2(countryData.countryCode); // ✅ country2 bhi update
+
+        // Sabke parents ka phone update karo (raw number rakhkar)
+        const updated = parents.map((p) => {
+            const rawNumber = stripDialCode(p.parentPhoneNumber || "");
+            return {
+                ...p,
+                parentPhoneNumber: `${newDialCode}${rawNumber}`,
+            };
+        });
+        setParents(updated);
     };
+    const handleChange2 = (value, data) => {
+        const newDialCode = "+" + data.dialCode;
+        setDialCode2(newDialCode);
+        setCountry2(data.countryCode); // ✅ yahan bhi
+    };
+
+
+    const stripDialCode = (phoneNumber) => {
+        if (!phoneNumber) return "";
+
+        // Longest match pehle try karo
+        for (const { dialCode } of DIAL_CODES) {
+            if (phoneNumber.startsWith(dialCode)) {
+                return phoneNumber.slice(dialCode.length).trim();
+            }
+        }
+
+        // Fallback: agar koi match nahi + ke baad digits hain
+        const match = phoneNumber.match(/^\+\d{1,4}/);
+        if (match) return phoneNumber.slice(match[0].length).trim();
+
+        return phoneNumber;
+    };
+    const matchDialCode = (phone) => {
+        if (!phone) return null;
+        for (const entry of DIAL_CODES) {
+            if (phone.startsWith(entry.dialCode)) {
+                return entry;
+            }
+        }
+        return null;
+    };
+
+    // ✅ Fetch ke time auto-populate (jab parent data aaye API se)
+    const populateParentData = (fetchedParent) => {
+        const phone = fetchedParent.parentPhoneNumber || "";
+
+        // Phone number se country detect karo
+        if (phone) {
+            // react-phone-input-2 ka parsePhoneNumber use kar sakte ho
+            // Ya manually match karo
+            const matched = matchDialCode(phone); // helper neeche hai
+            if (matched) {
+                setDialCode2(matched.dialCode);
+                setCountry2(matched.countryCode);
+            }
+        }
+
+        setParents([fetchedParent]); // ya jo bhi structure ho
+    };
+
+    // ✅ Phone number se dial code detect karna
+
 
     const [isOpenMembership, setIsOpenMembership] = useState(false);
     const [commentsList, setCommentsList] = useState([]);
@@ -512,37 +682,54 @@ const List = () => {
 
     useEffect(() => {
         if (TrialData) {
-            // console.log('stp1')
             if (Array.isArray(TrialData.students) && TrialData.students.length > 0) {
-                // console.log('stp2')
                 setStudents(TrialData.students);
                 setNumberOfStudents(TrialData?.totalStudents);
-                // console.log('comesfromtrialdaata', TrialData)
             }
-            // console.log('stp3')
+
             if (Array.isArray(TrialData.parents) && TrialData.parents.length > 0) {
                 const mappedParents = TrialData.parents.map((p, idx) => {
                     const isPredefined = interestReasonOptions.some(
                         (opt) => opt.value === p.interestReason
                     );
-
                     return {
                         id: idx + 1,
                         ...p,
                         isCustomReason: !isPredefined,
-                        interestReason: isPredefined
-                            ? p.interestReason
-                            : p.interestReason || p.interestReason || "",
+                        interestReason: isPredefined ? p.interestReason : p.interestReason || "",
                     };
                 });
-
                 setParents(mappedParents);
+
+                // ✅ AUTO-DETECT COUNTRY from first parent's phone
+                const firstPhone = TrialData.parents[0]?.parentPhoneNumber;
+                if (firstPhone) {
+                    const matched = matchDialCode(firstPhone);
+                    if (matched) {
+                        setDialCode2(matched.dialCode);
+                        setCountry2(matched.countryCode);
+                    }
+                }
             }
-            if (Array.isArray(TrialData.emergency) && TrialData.emergency.length > 0) {
-                setEmergency({
-                    sameAsAbove: false,
-                    ...TrialData.emergency[0],
-                });
+
+            if (TrialData.emergency) {
+                let emergencyData = null;
+
+                if (Array.isArray(TrialData.emergency)) {
+                    emergencyData = TrialData.emergency[0];
+                } else if (typeof TrialData.emergency === "object") {
+                    emergencyData = TrialData.emergency;
+                }
+
+                if (emergencyData) {
+                    setEmergency({
+                        sameAsAbove: false,
+                        emergencyFirstName: emergencyData.emergencyFirstName || "",
+                        emergencyLastName: emergencyData.emergencyLastName || "",
+                        emergencyPhoneNumber: emergencyData.emergencyPhoneNumber || "",
+                        emergencyRelation: emergencyData.emergencyRelation || "",
+                    });
+                }
             }
         }
     }, [TrialData]);
@@ -911,19 +1098,20 @@ const List = () => {
     };
 
 
-    useEffect(() => {
-        if (emergency.sameAsAbove && parents.length > 0) {
-            const firstParent = parents[0];
-            setEmergency(prev => ({
-                ...prev,
-                emergencyFirstName: firstParent.parentFirstName || "",
-                emergencyLastName: firstParent.parentLastName || "",
-                emergencyPhoneNumber: firstParent.parentPhoneNumber || "",
-                emergencyRelation: firstParent.relationToChild || "", // or whatever default you want
-            }));
-        }
-    }, [emergency.sameAsAbove, parents]);
+    // ✅ FIXED useEffect - sahi dependency aur uncheck handling
+useEffect(() => {
+    if (emergency.sameAsAbove && parents.length > 0) {
+        const firstParent = parents[0];
 
+        setEmergency(prev => ({
+            ...prev,
+            emergencyFirstName: firstParent.parentFirstName || "",
+            emergencyLastName: firstParent.parentLastName || "",
+            emergencyPhoneNumber: firstParent.parentPhoneNumber || "",
+            emergencyRelation: firstParent.relationToChild || "",
+        }));
+    }
+}, [emergency.sameAsAbove, parents]);
 
 
     const toDateOnly = (date) => {
@@ -1171,6 +1359,9 @@ const List = () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, [activePopup]);
+    useEffect(() => {
+    console.log("Emergency STATE:", emergency);
+}, [emergency]);
     useEffect(() => {
         if (singleClassSchedulesOnly?.venue?.paymentGroups?.length > 0) {
             const cleanedPlans = singleClassSchedulesOnly.venue.paymentGroups[0].paymentPlans.map(plan => ({
@@ -1428,95 +1619,124 @@ const List = () => {
             return;
         }
 
-        const pricePerLesson = membershipPlan?.all?.priceLesson || 0;
-        console.log("💰 Price Per Lesson:", pricePerLesson);
+        const durationMonths = membershipPlan?.all?.duration || 1;
+        const monthlyPrice = Number(membershipPlan?.all?.price ?? 0);
+        const totalLessons = membershipPlan?.all?.totalLessons || 40;
 
         const starterPack = singleClassSchedulesOnly?.venue?.starterPack
-            ? membershipPlan?.starterPackPrice || 0
+            ? Number(membershipPlan?.starterPackPrice || 0)
             : 0;
-        console.log("🎁 Starter Pack:", starterPack);
 
-        const durationMonths = membershipPlan?.all?.duration || 1;
-        console.log("📆 Duration (months):", durationMonths);
+        console.log("📦 PLAN DETAILS");
+        console.log("➡️ Duration (months):", durationMonths);
+        console.log("➡️ Monthly Price:", monthlyPrice);
+        console.log("➡️ Total Lessons (fixed):", totalLessons);
+        console.log("➡️ Starter Pack:", starterPack);
 
-        const monthlyPrice =
-            membershipPlan?.all?.price / durationMonths || 0;
-        console.log("📅 Monthly Price:", monthlyPrice);
-        console.log("📅 Monthly PricemembershipPlan?.all?.price:", membershipPlan?.all?.price);
+        // ✅ SAFE DATE PARSER
+        const parseLocalDate = (dateStr) => {
+            const [y, m, d] = dateStr.split("-").map(Number);
+            return new Date(y, m - 1, d);
+        };
 
-        const selected = new Date(startDate);
+        // ── SELECTED DATE ──
+        const selected = parseLocalDate(startDate);
         selected.setHours(0, 0, 0, 0);
-        console.log("📍 Selected Start Date:", selected);
+        const selectedTime = selected.getTime();
 
+        console.log("📅 SELECTED DATE");
+        console.log("➡️ Selected:", selected.toDateString());
+
+        // ── ALL SESSIONS ──
+        const allSessions = Array.from(sessionDatesSet).map((d) => {
+            const date = parseLocalDate(d);
+            date.setHours(0, 0, 0, 0);
+            return date;
+        });
+
+        console.log("📚 ALL SESSIONS");
+        console.log("➡️ Total Sessions Loaded:", allSessions.length);
+        console.log("➡️ Sessions:", allSessions.map(d => d.toDateString()));
+
+        // ── CURRENT MONTH SESSIONS ──
         const selectedMonth = selected.getMonth();
         const selectedYear = selected.getFullYear();
 
-        const allSessions = Array.from(sessionDatesSet)
-            .map((d) => {
-                const date = new Date(d);
-                date.setHours(0, 0, 0, 0);
-                return date;
-            })
-            .sort((a, b) => a - b);
-
-        console.log("📚 All Sessions:", allSessions);
-
-        const monthSessions = allSessions.filter(
+        const sessionsInStartMonth = allSessions.filter(
             (d) =>
                 d.getMonth() === selectedMonth &&
                 d.getFullYear() === selectedYear
         );
 
-        console.log("📅 Sessions in Selected Month:", monthSessions);
+        console.log("📆 SESSIONS IN START MONTH");
+        console.log("➡️ Count:", sessionsInStartMonth.length);
+        console.log("➡️ Dates:", sessionsInStartMonth.map(d => d.toDateString()));
 
-        const remainingSessions = monthSessions.filter((d) => d >= selected);
-        console.log("⏳ Remaining Sessions:", remainingSessions);
+        // ── REMAINING SESSIONS ──
+        const remainingSessions = sessionsInStartMonth.filter(
+            (d) => d.getTime() >= selectedTime
+        );
 
-        let remainingLessons = remainingSessions.length;
-        console.log("🔢 Remaining Lessons Count:", remainingLessons);
+        const proRataLessons = remainingSessions.length;
 
-        let proRatedCost = remainingLessons * pricePerLesson;
-        console.log("💸 Pro Rated Cost:", proRatedCost);
+        console.log("⏳ REMAINING (PRO-RATA) SESSIONS");
+        console.log("➡️ Count:", proRataLessons);
+        console.log("➡️ Dates:", remainingSessions.map(d => d.toDateString()));
 
-        const firstSessionOfMonth = monthSessions[0];
-        console.log("🥇 First Session of Month:", firstSessionOfMonth);
+        // ── PRICE PER LESSON ──
+        const rawPricePerLesson = (monthlyPrice * durationMonths) / totalLessons;
+        const pricePerLesson = Math.floor(rawPricePerLesson * 100) / 100;
 
-        if (selected.getTime() === firstSessionOfMonth?.getTime()) {
-            console.log("⚠️ Selected date is first session → No prorated cost");
-            remainingLessons = 0;
-            proRatedCost = 0;
-        }
+        console.log("💷 PRICE PER LESSON CALCULATION");
+        console.log("➡️ Formula:", `(${monthlyPrice} × ${durationMonths}) ÷ ${totalLessons}`);
+        console.log("➡️ Raw Value:", rawPricePerLesson);
+        console.log("➡️ Final (2dp):", pricePerLesson);
 
-        const totalToday =
-            proRatedCost === 0
-                ? monthlyPrice + starterPack
-                : proRatedCost + starterPack;
+        // ── PRO-RATA COST ──
+        const rawProRataCost = proRataLessons * pricePerLesson;
+        // convert to pence to avoid floating issue
+        const pricePerLessonPence = Math.round(pricePerLesson * 100);
 
-        console.log("🧮 Total Today (Before Fix):", totalToday);
+        const proRataCostPence = proRataLessons * pricePerLessonPence;
 
-        const formattedTotal = Number(totalToday.toFixed(2));
-        const formattedProRated = Number(proRatedCost.toFixed(2));
-        const formattedMonthly = Number(monthlyPrice.toFixed(2));
+        const proRataCost = Number((proRataCostPence / 100).toFixed(2));
 
-        console.log("✅ Formatted Total:", formattedTotal);
-        console.log("✅ Formatted ProRated:", formattedProRated);
-        console.log("✅ Formatted Monthly:", formattedMonthly);
+        console.log("💸 PRO-RATA COST");
+        console.log("➡️ Formula:", `${proRataLessons} × ${pricePerLesson}`);
+        console.log("➡️ Raw Value:", rawProRataCost);
+        console.log("➡️ Final (2dp):", proRataCost);
 
-        console.log("🏁 ===== CALCULATION END =====");
+        // ── TOTAL TODAY ──
+        const totalToday = Number(
+            ((proRataLessons > 0 ? proRataCost : monthlyPrice) + starterPack).toFixed(2)
+        );
 
-        setRemainingLessons(remainingLessons);
-        setCalculatedAmount(formattedTotal);
+        console.log("🧮 TOTAL TODAY");
+        console.log("➡️ Formula:", `(${proRataLessons > 0 ? proRataCost : monthlyPrice} + ${starterPack})`);
+        console.log("➡️ Final Total:", totalToday);
+
+        // ── NEXT MONTH PAYMENT ──
+        const nextMonthPayment = Number(monthlyPrice.toFixed(2));
+
+        console.log("📆 NEXT MONTH PAYMENT");
+        console.log("➡️ Monthly:", nextMonthPayment);
+
+        // ── STATE ──
+        setRemainingLessons(proRataLessons);
+        setCalculatedAmount(totalToday);
 
         setPricingBreakdown({
             pricePerClassPerChild: pricePerLesson,
-            numberOfLessonsProRated: remainingLessons,
-            costOfProRatedLessons: formattedProRated,
+            numberOfLessonsProRated: proRataLessons,
+            costOfProRatedLessons: proRataCost,
             starterPack: starterPack,
-            totalAmountToday: formattedTotal,
-            nextMonthPayment: formattedMonthly,
+            totalAmountToday: totalToday,
+            nextMonthPayment: nextMonthPayment,
         });
 
-        return formattedTotal;
+        console.log("🏁 ===== CALCULATION END =====");
+
+        return totalToday;
     };
 
     console.log('pricingBreakdown', pricingBreakdown);
@@ -2038,54 +2258,69 @@ const List = () => {
                                 animate={{ opacity: 1, height: "auto" }}
                                 exit={{ opacity: 0, height: 0 }}
                                 transition={{ duration: 0.3 }}
-                                className="bg-white mt-4 rounded-2xl shadow p-6   font-semibold  space-y-4 text-[16px]"
+                                className="bg-white mt-4 rounded-2xl shadow p-6 font-semibold space-y-4 text-[16px]"
                             >
-                                {/* <div className="mt-4 space-y-1 text-sm">
-                                    <p>Remaining Lessons: <b>{remainingLessons}</b></p>
-                                    <p>Joining Fee: <b>₹{membershipPlan?.all?.joiningFee}</b></p>
-                                    <p className="text-lg font-bold">
-                                        Total Amount: ₹{calculatedAmount}
-                                    </p>
-                                </div> */}
+                                {/* ── Membership Plan ── */}
                                 <div className="flex justify-between text-[#333]">
                                     <span>Membership Plan</span>
                                     <span>
-                                        {membershipPlan?.all?.duration} {membershipPlan?.all?.interval}
-                                        {membershipPlan?.all?.duration > 1 ? 's' : ''}
+                                        {membershipPlan?.all?.duration}{" "}
+                                        {membershipPlan?.all?.interval}
+                                        {membershipPlan?.all?.duration > 1 ? "s" : ""}
                                     </span>
                                 </div>
-                                <div className="flex justify-between text-[#333]">
-                                    <span>Subscription Fee</span>
-                                    <span>£{membershipPlan?.all?.price}</span>
-                                </div>
-                                {!(membershipPlan?.all?.duration === 1 && membershipPlan?.all?.interval === "Month") && (
+
+                                {/* ❌ REMOVED: Subscription Fee (client ne mana kiya) */}
+
+                                {/* ── Monthly Fee ── */}
+                                {membershipPlan?.all?.duration > 1 && (
                                     <div className="flex justify-between text-[#333]">
-                                        <span>Monthly Subscription Fee</span>
-                                        <span>£{pricingBreakdown?.nextMonthPayment} p/m</span>
+                                        <span>Monthly Payment</span>
+                                        <span>£{pricingBreakdown?.nextMonthPayment?.toFixed(2)} p/m</span>
                                     </div>
                                 )}
+
+                                {/* ── Starter Pack ── */}
                                 {singleClassSchedulesOnly?.venue?.starterPack && (
                                     <div className="flex justify-between text-[#333]">
                                         <span>Starter Pack</span>
-                                        <span>£{finalAmount}</span>
+                                        <span>£{pricingBreakdown?.starterPack?.toFixed(2)}</span>
                                     </div>
                                 )}
-                                {pricingBreakdown.numberOfLessonsProRated !== 0 && (
+
+                                {/* 🔥 ALWAYS SHOW PRO-RATA */}
+                                <div className="border-t border-gray-200 pt-4 space-y-2">
+
                                     <div className="flex justify-between text-[#333]">
-                                        <span>Number of lessons pro-rated</span>
+                                        <span>Price Per Lesson</span>
+                                        <span>£{pricingBreakdown.pricePerClassPerChild?.toFixed(2)}</span>
+                                    </div>
+
+                                    <div className="flex justify-between text-[#333]">
+                                        <span>Number of Pro-Rata Lessons</span>
                                         <span>{pricingBreakdown.numberOfLessonsProRated}</span>
                                     </div>
-                                )}
-                                <div className="flex justify-between text-[#333]">
-                                    <span>Price per class per lessons</span>
-                                    <span>£{pricingBreakdown.pricePerClassPerChild}</span>
-                                </div>
-                                {pricingBreakdown.numberOfLessonsProRated !== 0 && (
+
                                     <div className="flex justify-between text-[#000]">
-                                        <span>Cost of pro-rated lessons</span>
-                                        <span>£{pricingBreakdown.costOfProRatedLessons}</span>
+                                        <span>Total Pro-Rata Cost</span>
+                                        <span>£{pricingBreakdown.costOfProRatedLessons?.toFixed(2)}</span>
                                     </div>
-                                )}
+                                </div>
+
+                                {/* ── TOTAL ── */}
+                                <div className="border-t border-gray-200 pt-4">
+                                    <div className="flex justify-between text-[#000] text-[18px] font-bold">
+                                        <span>Total Due Today</span>
+                                        <span>£{pricingBreakdown.totalAmountToday?.toFixed(2)}</span>
+                                    </div>
+
+                                    {membershipPlan?.all?.duration > 1 && (
+                                        <div className="flex justify-between text-[#666] text-[14px] mt-2 font-normal">
+                                            <span>Then monthly</span>
+                                            <span>£{pricingBreakdown.nextMonthPayment?.toFixed(2)} p/m</span>
+                                        </div>
+                                    )}
+                                </div>
                             </motion.div>
                         )}
                     </div>
@@ -2351,37 +2586,14 @@ const List = () => {
                                         </div>
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Phone number</label>
-                                            <div className="flex items-center border border-gray-300 rounded-xl px-4 py-3 mt-2">
-                                                {/* Flag Dropdown */}
-                                                <PhoneInput
-                                                    country="uk"
-                                                    value={dialCode2}
-                                                    onChange={handleChange2}
-                                                    onCountryChange={handleCountryChange2}
-                                                    disableDropdown={true}
-                                                    disableCountryCode={true}
-                                                    countryCodeEditable={false}
-                                                    inputStyle={{
-                                                        width: "0px",
-                                                        maxWidth: '20px',
-                                                        height: "0px",
-                                                        opacity: 0,
-                                                        pointerEvents: "none", // ✅ prevents blocking typing
-                                                        position: "absolute",
-                                                    }}
-                                                    buttonClass="!bg-white !border-none !p-0"
-                                                />
-                                                <input
+                                            <PhoneNumberInput
+                                                value={parent.parentPhoneNumber}
+                                                onChange={(fullNumber) =>
+                                                    handleParentChange(index, "parentPhoneNumber", fullNumber)
+                                                }
 
-                                                    type="number"
-                                                    value={parent.parentPhoneNumber}
-                                                    onChange={(e) =>
-                                                        handleParentChange(index, "parentPhoneNumber", e.target.value)
-                                                    }
-                                                    placeholder="Enter phone number"
-                                                    className='border-none w-full focus:outline-none'
-                                                />
-                                            </div>
+                                                placeholder="Enter phone number"
+                                            />
                                         </div>
                                     </div>
 
@@ -2538,41 +2750,17 @@ const List = () => {
                             </div>
 
                             <div className="flex gap-4">
+
                                 <div className="w-1/2">
                                     <label className="block text-[16px] font-semibold">Phone number</label>
-                                    <div className="flex items-center border border-gray-300 rounded-xl px-4 py-3 mt-2">
-                                        {/* Flag Dropdown */}
-                                        <PhoneInput
-                                            country="uk"
-                                            value={dialCode}
-                                            onChange={handleChange}
-                                            onCountryChange={handleCountryChange}
-                                            disableDropdown={true}
-                                            disableCountryCode={true}
-                                            countryCodeEditable={false}
-                                            inputStyle={{
-                                                width: "0px",
-                                                maxWidth: '20px',
-                                                height: "0px",
-                                                opacity: 0,
-                                                pointerEvents: "none", // ✅ prevents blocking typing
-                                                position: "absolute",
-                                            }}
-                                            buttonClass="!bg-white !border-none !p-0"
-                                        />
-                                        <input
-                                            type="number"
-                                            value={emergency.emergencyPhoneNumber}
-                                            onChange={(e) =>
-                                                setEmergency((prev) => ({
-                                                    ...prev,
-                                                    emergencyPhoneNumber: e.target.value,
-                                                }))
-                                            }
-                                            className='border-none w-full focus:outline-none' placeholder="Enter phone number"
-                                        />
+                                    <PhoneNumberInput
+                                        value={emergency.emergencyPhoneNumber}
+                                        onChange={(fullNumber) =>
+                                            setEmergency(prev => ({ ...prev, emergencyPhoneNumber: fullNumber }))
+                                        }
 
-                                    </div>
+                                        placeholder="Enter phone number"
+                                    />
                                 </div>
                                 <div className="w-1/2">
                                     <label className="block text-[16px] font-semibold">Relation to child</label>
@@ -2688,7 +2876,7 @@ const List = () => {
                                     }
 
                                     // Step 2: Form validation
-                                    if (!validationCheck()) return;
+                                    // if (!validationCheck()) return;
 
                                     // Step 3: Proceed
                                     setShowPopup(true);

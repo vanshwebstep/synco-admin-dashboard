@@ -9,21 +9,23 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAccountsInfo } from "../../contexts/AccountsInfoContext";
 import Loader from '../../contexts/Loader';
 
-const tabs = [
-  { name: "Parent Profile", component: <ParentProfile /> },
-  { name: "Student Profile", component: <StudentProfile /> },
-  { name: "Service History", component: <ServiceHistory /> },
-  { name: "Feedback", component: <Feedback /> },
-  { name: "Rewards", component: <Rewards /> },
-  { name: "Events", component: <Events /> },
-];
 
 const Account = () => {
-  const [activeTab, setActiveTab] = useState(tabs[0].name);
   const navigate = useNavigate();
   const accountsInfo = useAccountsInfo();
+  // const { serviceHistoryMembership, serviceHistory, error, loading } = useBookFreeTrial()
 
-  const { loading, setMainId, fetchMembers } = accountsInfo;
+  const { loading, setMainId, fetchMembers , data } = accountsInfo;
+
+const tabs = [
+  { name: "Parent Profile", component: <ParentProfile profile={data}  /> },
+  { name: "Student Profile", component: <StudentProfile profile={data} /> },
+  { name: "Service History", component: <ServiceHistory profile={data} /> },
+  { name: "Feedback", component: <Feedback profile={data}  /> },
+  { name: "Rewards", component: <Rewards profile={data}  /> },
+  { name: "Events", component: <Events  profile={data}  /> },
+];
+  const [activeTab, setActiveTab] = useState(tabs[0].name);
 
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
