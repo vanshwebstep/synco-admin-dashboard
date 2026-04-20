@@ -1170,6 +1170,47 @@ export const BookFreeTrialProvider = ({ children }) => {
       setLoading(false);
     }
   };
+  const createBookMembershipbyCancellation = async (bookFreeMembershipData) => {
+    setLoading(true);
+
+    const headers = {
+      "Content-Type": "application/json",
+    };
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/book-membership/reinstate`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(bookFreeMembershipData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to create Membership");
+      }
+
+      await showSuccess("Success!", result.message || "Membership has been created successfully.");
+      setIsBooked(true);
+      setTimeout(() => {
+        navigate(`/weekly-classes/all-members/list`)
+      }, 1000);
+      return result;
+
+    } catch (error) {
+      console.error("Error creating class schedule:", error);
+      await showError("Error", error.message || "Booking submitted. Confirmation may be delayed due to network issues. Check your email shortly");
+
+      throw error;
+    } finally {
+      await fetchBookMemberships();
+      setLoading(false);
+    }
+  };
   const sendBookMembershipMail = async (bookingIds) => {
     setLoading(true);
 
@@ -2716,6 +2757,7 @@ export const BookFreeTrialProvider = ({ children }) => {
         createBookMembership,
         createBookMembershipByfreeTrial,
         createBookMembershipByWaitingList,
+        createBookMembershipbyCancellation,
         fetchBookMemberships,
         cancelMembershipSubmit,
         cancelHolidaySubmit,

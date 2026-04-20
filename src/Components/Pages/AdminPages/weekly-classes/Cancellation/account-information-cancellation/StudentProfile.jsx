@@ -254,6 +254,20 @@ const StudentProfile = ({ StudentProfile }) => {
             setLoadingComment(false)
         }
     }
+    const handleReinstateMembership = () => {
+        showConfirm(
+            "Are you sure?",
+            "Do you want to Reinstate membership?",
+            "Yes, Book it!"
+        ).then((result) => {
+            if (result.isConfirmed) {
+                // Navigate to your component/route
+                navigate("/weekly-classes/find-a-class/book-a-membership", {
+                    state: { TrialData: StudentProfile, comesFrom: "cancellation" },
+                });
+            }
+        });
+    };
     const canCancelTrial =
         checkPermission({ module: 'cancel-free-trial', action: 'create' })
     const canRebooking =
@@ -346,10 +360,14 @@ const StudentProfile = ({ StudentProfile }) => {
     const getStatusColor = (status) => {
         switch (status) {
             case "active": return "text-[#43BE4F]";
+            case "attended": return "text-[#43BE4F]";
             case "frozen": return "text-[#509EF9]";
             case "cancelled": return "text-[#FC5D5D]";
+            case "not attended": return "text-[#FC5D5D]";
+
             case "waiting list": return "text-[#A4A5A6]";
             case "request_to_cancel": return "text-[#FC5D5D]";
+            case "pending": return "text-[#f1b400]";
 
             default: return "text-[#A4A5A6]";
         }
@@ -769,7 +787,19 @@ const StudentProfile = ({ StudentProfile }) => {
                                             Add to the waiting list
                                         </button>
                                     )}
+                                    {(status === "cancelled") && (
+                                        <button
+                                            onClick={handleReinstateMembership}
+                                            className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
+            ${addToWaitingList
+                                                    ? "bg-[#237FEA] text-white shadow-md"   // Active state
+                                                    : "bg-white  border border-gray-300  hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"
+                                                }`}
+                                        >
+                                            Reinstate Membership
 
+                                        </button>
+                                    )}
 
                                     {(status === "active" || status === "request_to_cancel") && canCancelTrial && (
                                         <button

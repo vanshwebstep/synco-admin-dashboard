@@ -20,6 +20,7 @@ import PhoneInput from 'react-phone-input-2';
 import Comments from '../../../Common/Comments';
 import { useEmail } from '../../../contexts/messages/SendEmailContext';
 import { useCancelMembership } from '../../../contexts/messages/CancelMembershipContext';
+import PhoneNumberInput from '../../../Common/PhoneNumberInput';
 
 const ParentProfile = (stateData) => {
     const profile = stateData?.stateData || {};
@@ -57,11 +58,113 @@ const ParentProfile = (stateData) => {
     const totalPages = Math.ceil(commentsList.length / commentsPerPage);
     const { adminInfo, setAdminInfo } = useNotification();
     const token = localStorage.getItem("adminToken");
+    const serviceType = profile?.serviceType || "weekly class membership";
+    const isMembership = serviceType === "weekly class membership";
+    const isHolidayCamp = serviceType === "holiday camp";
+    const isTrials = serviceType === "weekly class trial";
+    const isBirthdayParty = profile?.booking?.serviceType === "birthday party";
+    const isOneToOne = profile?.booking?.serviceType === "one to one";
 
     const goToPage = (page) => {
         if (page < 1) page = 1;
         if (page > totalPages) page = totalPages;
         setCurrentPage(page);
+    };
+    const formatDate = (dateString, withTime = false) => {
+        if (!dateString) return "-";
+        const date = new Date(dateString);
+        const options = {
+            year: "numeric",
+            month: "short",
+            day: "2-digit",
+        };
+        if (withTime) {
+            return (
+                date.toLocaleDateString("en-US", options) +
+                ", " +
+                date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+            );
+        }
+        return date.toLocaleDateString("en-US", options);
+    };
+    // ── Service-type label for the right panel ────────────────────────────────
+    const serviceLabel = isBirthdayParty ? "Birthday Party" : isOneToOne ? "One to One" : "Membership";
+    const getBg = () => {
+        switch (status?.toLowerCase()) {
+            case "pending":
+                return "/frames/Pending.png";
+            case "active":
+                return "/frames/Active.png";
+            case "completed":
+                return "/frames/Completed.png";
+            case "cancelled":
+                return "/frames/Cancelled.png";
+            default:
+                return "/frames/Default.png"; // fallback if needed
+        }
+    };
+    // ── Extra info rows for the right panel (service-specific) ───────────────
+    const renderExtraInfoRows = () => {
+        if (isBirthdayParty) {
+            return (
+                <>
+                    <div className="border-t border-[#495362] pt-5">
+                        <div className="text-[20px] text-white">Party Address</div>
+                        <div className="text-[16px] mt-1 text-gray-400">{profile._extra?.address || "N/A"}</div>
+                    </div>
+                    <div className="border-t border-[#495362] pt-5">
+                        <div className="text-[20px] text-white">Party Time</div>
+                        <div className="text-[16px] mt-1 text-gray-400">{profile._extra?.time || "N/A"}</div>
+                    </div>
+                    <div className="border-t border-[#495362] pt-5">
+                        <div className="text-[20px] text-white">Capacity</div>
+                        <div className="text-[16px] mt-1 text-gray-400">{profile._extra?.capacity ?? "N/A"}</div>
+                    </div>
+                </>
+            );
+        }
+        if (isOneToOne) {
+            return (
+                <>
+                    <div className="border-t border-[#495362] pt-5">
+                        <div className="text-[20px] text-white">Session Address</div>
+                        <div className="text-[16px] mt-1 text-gray-400">{profile._extra?.address || "N/A"}</div>
+                    </div>
+                    <div className="border-t border-[#495362] pt-5">
+                        <div className="text-[20px] text-white">Session Time</div>
+                        <div className="text-[16px] mt-1 text-gray-400">{profile._extra?.sessionTime || "N/A"}</div>
+                    </div>
+                    {profile._extra?.areaWorkOn && (
+                        <div className="border-t border-[#495362] pt-5">
+                            <div className="text-[20px] text-white">Area to Work On</div>
+                            <div className="text-[16px] mt-1 text-gray-400">{profile._extra.areaWorkOn}</div>
+                        </div>
+                    )}
+                </>
+            );
+        }
+        // Membership — existing fields
+        return (
+            <>
+                <div className="border-t border-[#495362] pt-5">
+                    <div className="text-[20px] text-white">Membership Tenure</div>
+                    <div className="text-[16px] mt-1 text-gray-400">{MembershipTenure || "N/A"}</div>
+                </div>
+                <div className="border-t border-[#495362] pt-5">
+                    <div className="text-[20px] text-white">ID</div>
+                    <div className="text-[16px] mt-1 text-gray-400">{ID}</div>
+                </div>
+                <div className="border-t border-[#495362] py-5">
+                    <div className="text-[20px] text-white mb-3">Progress</div>
+                    <div className="flex items-center justify-between">
+                        <div className="w-[90%] bg-[#fff] h-3 rounded-full overflow-hidden">
+                            <div className="bg-green-500 h-4 rounded-full" style={{ width: "78%" }}></div>
+                        </div>
+                        <div className="text-white text-right mt-1 text-[14px]">78%</div>
+                    </div>
+                </div>
+            </>
+        );
     };
     const studentsList = profile?.students || [];
     const bookedBy = profile?.bookedByAdmin || profile?.bookedBy;
@@ -659,35 +762,16 @@ const ParentProfile = (stateData) => {
                                         </div>
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Phone number</label>
-                                            <div className="flex items-center border border-gray-300 rounded-xl px-4 py-3 mt-2">
+                                            
 
-                                                <PhoneInput
-                                                    country="uk"
-                                                    value="+44"
-                                                    disableDropdown={true}       // disables changing the country
-                                                    disableCountryCode={true}
-                                                    countryCodeEditable={false}
-                                                    inputStyle={{
-                                                        width: "0px",
-                                                        maxWidth: '20px',
-                                                        height: "0px",
-                                                        opacity: 0,
-                                                        pointerEvents: "none",
-                                                        position: "absolute",
-                                                    }}
-                                                    buttonClass="!bg-white !border-none !p-0"
-                                                />
-
-                                                <input
-                                                    type='number'
-                                                    className="border-none w-full focus:outline-none"
-                                                    value={parent.parentPhoneNumber}
-                                                    readOnly={editingIndex !== index}
-                                                    onChange={(e) =>
-                                                        handleDataChange(index, "parentPhoneNumber", e.target.value)
-                                                    }
-                                                />
-                                            </div>
+                                               <PhoneNumberInput
+                                                value={parent.parentPhoneNumber}
+                                                onChange={(fullNumber) =>
+                                                    handleDataChange(index, "parentPhoneNumber", fullNumber)
+                                                }
+                                                readOnly={editingIndex !== index}
+                                                placeholder="Enter phone number"
+                                            />
                                         </div>
                                     </div>
 
@@ -856,320 +940,916 @@ const ParentProfile = (stateData) => {
                         formatTimeAgo={formatTimeAgo}
                     />
                 </div>
-                <div className="md:w-4/12 max-h-fit rounded-full  text-base space-y-5">
-                    {/* Card Wrapper */}
-                    <div className="rounded-3xl bg-[#363E49] overflow-hidden shadow-md border border-gray-200">
-                        {/* Header */}
-                        <div className={`m-2 px-6 rounded-3xl py-3 flex items-center justify-between bg-no-repeat bg-center `}
-                            style={{
-                                backgroundImage: status === "cancelled"
-                                    ? "url('/frames/Cancelled.png')"
-                                    : status === "frozen"
-                                        ? "url('/frames/Frozen.png')"
-                                        : status === "active"
-                                            ? "url('/frames/Active.png')"
-                                            : status === "request_to_cancel"
-                                                ? "url('/frames/reqCancel.png')"
-                                                : status === "waiting list"
-                                                    ? "url('/frames/Waiting.png')"
+                {isBirthdayParty ?
+                    <div className="md:w-4/12 max-h-fit rounded-full text-base space-y-5">
+                        <div className="rounded-3xl bg-[#363E49] overflow-hidden shadow-md border border-gray-200">
+
+                            {/* 🔷 STATUS HEADER (SAME STYLE) */}
+                            <div
+                                className="m-2 px-6 rounded-3xl py-3 flex items-center justify-between bg-no-repeat bg-center"
+                                style={{
+                                    backgroundImage:
+                                        status === "cancelled"
+                                            ? "url('/frames/Cancelled.png')"
+                                            : status === "frozen"
+                                                ? "url('/frames/Frozen.png')"
+                                                : status === "active"
+                                                    ? "url('/frames/Active.png')"
                                                     : "url('/frames/Pending.png')",
-
-
-                                backgroundSize: "cover",
-                            }}>
-                            <div>
-                                <div className="text-[20px] font-bold text-[#1F2937]">Account Status</div>
-                                <div className="text-[16px] font-semibold capitalize text-[#1F2937]">      <span>
-                                    {status ? status.replaceAll("_", " ") : "Unknown"}
-                                </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-[#363E49] text-white px-6 py-6 space-y-6">
-                            {/* Avatar & Account Holder */}
-                            <div className="flex items-center gap-4">
-                                <img
-                                    src={
-                                        bookedBy?.profile
-                                            ? `${API_BASE_URL}/${bookedBy?.profile}`
-                                            : "https://cdn-icons-png.flaticon.com/512/147/147144.png"
-                                    }
-                                    alt="avatar"
-                                    className="w-18 h-18 rounded-full"
-                                    onError={(e) => {
-                                        e.currentTarget.src = "https://cdn-icons-png.flaticon.com/512/147/147144.png"; // fallback if image fails to load
-                                    }}
-                                />
-
+                                    backgroundSize: "cover",
+                                }}
+                            >
                                 <div>
-                                    <div className="text-[24px] font-semibold leading-tight">
-                                        Booked By
+                                    <div className="text-[20px] font-bold text-[#1F2937]">
+                                        Account Status
                                     </div>
-                                    <div className="text-[16px] text-gray-300">
-                                        {bookedBy?.firstName} {bookedBy?.lastName}
-
+                                    <div className="text-[16px] font-semibold capitalize text-[#1F2937]">
+                                        {status || "Unknown"}
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Details */}
-                            <div className="space-y">
-                                <div className='mb-4'>
-                                    <div className="text-[20px] font-bold tracking-wide">Venue</div>
-                                    <div className="inline-block bg-[#007BFF] text-white text-[14px] px-3 py-1 rounded-md mt-1">
-                                        {venueName || "-"}
-                                    </div>
-                                </div>
+                            {/* 🔷 DARK CONTENT AREA (EXACT SAME STYLE) */}
+                            <div className="bg-[#363E49] text-white px-6 py-6 space-y-6">
 
-                                <div className="border-t border-[#495362] pt-5">
-
-                                    <div className="text-[20px] text-white">Membership Plan</div>
-
-                                    <div className="text-[1s6px] mt-1 text-gray-400">
-                                        {MembershipPlan} Plan
-                                    </div>
-
-                                </div>
-                                <div className="border-t border-[#495362] pt-5">
-
-                                    <div className="text-[20px] text-white">Membership Start Date</div>
-
-                                    <div className="text-[1s6px] mt-1 text-gray-400">
-                                        {formatISODate(dateBooked)}
-                                    </div>
-
-                                </div>
-
-                                <div className="border-t border-[#495362] pt-5">
-
-                                    <div className="text-[20px] text-white">Membership Tenure</div>
-                                    <div className="text-[1s6px] mt-1 text-gray-400">
-                                        {MembershipTenure || 'N/A'}
-                                    </div>
-
-                                </div>
-                                <div className="border-t border-[#495362] pt-5">
-
-                                    <div className="text-[20px] text-white">ID</div>
-                                    <div className="text-[1s6px] mt-1 text-gray-400">
-                                        {ID}
-                                    </div>
-
-                                </div>
-                                <div className="border-t border-[#495362] py-5">
-                                    <div className="text-[20px] text-white mb-3">Progress</div>
-                                    <div className="flex items-center justify-between">
-                                        <div className="w-[90%] bg-[#fff] h-3 rounded-full overflow-hidden">
-                                            <div
-                                                className="bg-green-500 h-4 rounded-full"
-                                                style={{ width: "78%" }}
-                                            ></div>
+                                {/* Avatar + Coach */}
+                                <div className="flex items-center gap-4">
+                                    <img
+                                        src="/members/user2.png"
+                                        alt="Coach"
+                                        className="w-16 h-16 rounded-full object-cover"
+                                    />
+                                    <div>
+                                        <div className="text-[22px] font-semibold">Coach</div>
+                                        <div className="text-[16px] text-gray-300">
+                                            {profile?.booking?.coach
+                                                ? `${profile.booking.coach.firstName} ${profile.booking.coach.lastName}`
+                                                : "N/A"}
                                         </div>
-                                        <div className="text-white text-right mt-1 text-[14px]">78%</div>
                                     </div>
                                 </div>
 
-                                <div className="border-t border-[#495362] py-5">
-                                    <div className=" text-[20px] text-white">Price</div>
-                                    <div className="text-[16px] mt-1 text-gray-400">
-                                        {MembershipPrice
-                                            ? `£${MembershipPrice}`
-                                            : "-"}
+                                {/* Venue */}
+                                <div>
+                                    <div className="text-[20px] font-bold">Venue</div>
+                                    <div className="inline-block bg-[#007BFF] text-white text-[14px] px-3 py-1 rounded-md mt-1">
+                                        {profile?.booking?.address || "N/A"}
                                     </div>
                                 </div>
 
+                                {/* Parent */}
+                                <div className="border-t border-[#495362] pt-5">
+                                    <div className="text-[20px]">Parent Name</div>
+                                    <div className="text-[16px] text-gray-400 mt-1">
+                                        {profile?.booking?.parents?.[0]
+                                            ? `${profile.booking.parents[0].parentFirstName} ${profile.booking.parents[0].parentLastName}`
+                                            : profile?.parentName || "N/A"}
+                                    </div>
+                                </div>
+
+                                {/* Age */}
+                                <div className="border-t border-[#495362] pt-5">
+                                    <div className="text-[20px]">Child Age</div>
+                                    <div className="text-[16px] text-gray-400 mt-1">
+                                        {profile?.age || "N/A"}
+                                    </div>
+                                </div>
+
+                                {/* Date */}
+                                <div className="border-t border-[#495362] pt-5">
+                                    <div className="text-[20px]">Date of Party</div>
+                                    <div className="text-[16px] text-gray-400 mt-1">
+                                        {profile?.booking?.date
+                                            ? new Date(profile.booking.date).toLocaleDateString("en-GB", {
+                                                day: "2-digit",
+                                                month: "short",
+                                                year: "numeric",
+                                            })
+                                            : "N/A"}
+                                    </div>
+                                </div>
+
+                                {/* Package */}
+                                <div className="border-t border-[#495362] pt-5">
+                                    <div className="text-[20px]">Package</div>
+                                    <div className="text-[16px] text-gray-400 mt-1">
+                                        {profile?.booking?.paymentPlan?.title ||
+                                            profile?.packageInterest ||
+                                            "N/A"}
+                                    </div>
+                                </div>
+
+                                {/* Source */}
+                                <div className="border-t border-[#495362] pt-5">
+                                    <div className="text-[20px]">Source</div>
+                                    <div className="text-[16px] text-gray-400 mt-1">
+                                        {profile?.source ||
+                                            profile?.booking?.parents?.[0]?.howDidHear ||
+                                            "N/A"}
+                                    </div>
+                                </div>
+
+                                {/* Price */}
+                                <div className="border-t border-[#495362] pt-5">
+                                    <div className="text-[20px]">Price</div>
+                                    <div className="text-[16px] text-gray-400 mt-1">
+                                        £
+                                        {profile?.booking?.payment?.amount
+                                            ? parseFloat(profile.booking.payment.amount).toFixed(2)
+                                            : "0.00"}
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
+                        {/* 🔷 ACTIONS (EXACT SAME WHITE BOX STYLE) */}
+                        <div className="bg-white rounded-3xl p-6 space-y-4">
 
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => {
+                                        if (bookingId) {
+                                            sendBirthdayMail(bookingId);
+                                        } else {
+                                            showWarning(
+                                                "No Students Selected",
+                                                "Please select at least one Lead before sending an email."
+                                            );
+                                        }
+                                    }}
+                                    className="flex-1 border border-[#717073] rounded-xl py-3 text-[18px] flex items-center justify-center gap-2 text-[#717073] font-medium hover:shadow-md"
+                                >
+                                    Send Email
+                                </button>
 
+                                <button className="flex-1 border border-[#717073] rounded-xl py-3 text-[18px] flex items-center justify-center gap-2 text-[#717073] font-medium hover:shadow-md">
+                                    Send Text
+                                </button>
+                            </div>
+
+                            {status !== "active" ? (
+                                <button
+                                    onClick={handleRenewBirthdayPackage}
+                                    className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700"
+                                >
+                                    Renew Package
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={handleCancelBirthdayPackage}
+                                    className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 font-medium hover:bg-[#FF6C6C] hover:text-white"
+                                >
+                                    Cancel Package
+                                </button>
+                            )}
+                        </div>
                     </div>
-                    {status !== 'cancelled' && (
-                        <>
-                            <div className="bg-white rounded-3xl p-6  space-y-4 mt-4">
+                    : isOneToOne ? <>
+                        <div className="md:w-[34%]">
+                            <div className="md:max-w-[510px] rounded-3xl bg-[#363E49] overflow-hidden shadow-md border border-gray-200">
 
-                                {/* Top Row: Email + Text */}
+                                {/* 🔷 STATUS HEADER (EXACT SAME) */}
+                                <div
+                                    className="m-2 px-6 rounded-3xl py-3 flex items-center justify-between bg-no-repeat bg-center"
+                                    style={{
+                                        backgroundImage:
+                                            status === "cancelled"
+                                                ? "url('/frames/Cancelled.png')"
+                                                : status === "frozen"
+                                                    ? "url('/frames/Frozen.png')"
+                                                    : status === "active"
+                                                        ? "url('/frames/Active.png')"
+                                                        : status === "request_to_cancel"
+                                                            ? "url('/frames/reqCancel.png')"
+                                                            : "url('/frames/Pending.png')",
+                                        backgroundSize: "cover",
+                                    }}
+                                >
+                                    <div>
+                                        <div className="text-[20px] font-bold text-[#1F2937]">
+                                            Account Status
+                                        </div>
+                                        <div className="text-[16px] font-semibold capitalize text-[#1F2937]">
+                                            {status ? status.replaceAll("_", " ") : "Unknown"}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 🔷 DARK CONTENT AREA (IDENTICAL STRUCTURE) */}
+                                <div className="bg-[#363E49] text-white px-6 py-6 space-y-6">
+
+                                    {/* Avatar + Coach */}
+                                    <div className="flex items-center gap-4">
+                                        <img
+                                            src="/members/user2.png"
+                                            alt="Coach"
+                                            className="w-18 h-18 rounded-full"
+                                        />
+                                        <div>
+                                            <div className="text-[24px] font-semibold leading-tight">
+                                                Coach
+                                            </div>
+                                            <div className="text-[16px] text-gray-300">
+                                                {profile?.booking?.coach
+                                                    ? `${profile.booking.coach.firstName} ${profile.booking.coach.lastName}`
+                                                    : "N/A"}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* DETAILS BLOCK (same grouping style) */}
+                                    <div className="space-y">
+
+                                        {/* Venue */}
+                                        <div className="mb-4">
+                                            <div className="text-[20px] font-bold tracking-wide">Venue</div>
+                                            <div className="inline-block bg-[#007BFF] text-white text-[14px] px-3 py-1 rounded-md mt-1">
+                                                {profile?.booking?.location || "-"}
+                                            </div>
+                                        </div>
+
+                                        {/* Parent */}
+                                        <div className="border-t border-[#495362] py-5">
+                                            <div className="text-[20px] text-white">Parent Name</div>
+                                            <div className="text-[16px] mt-1 text-gray-400">
+                                                {profile?.booking?.parents?.[0]
+                                                    ? `${profile.booking.parents[0].parentFirstName} ${profile.booking.parents[0].parentLastName}`
+                                                    : profile?.parentName || "N/A"}
+                                            </div>
+                                        </div>
+
+                                        {/* Booking Date */}
+                                        <div className="border-t border-[#495362] py-5">
+                                            <div className="text-[20px] text-white">Date of Class</div>
+                                            <div className="text-[16px] mt-1 text-gray-400">
+                                                {profile?.booking?.date
+                                                    ? new Date(profile.booking.date).toLocaleDateString("en-GB", {
+                                                        day: "2-digit",
+                                                        month: "short",
+                                                        year: "numeric",
+                                                    })
+                                                    : "-"}
+                                            </div>
+                                        </div>
+
+                                        {/* Package */}
+                                        <div className="border-t border-[#495362] pt-5">
+                                            <div className="text-[20px] text-white">Package</div>
+                                            <div className="text-[16px] mt-1 text-gray-400">
+                                                {profile?.booking?.paymentPlan?.title ||
+                                                    profile?.packageInterest ||
+                                                    "-"}
+                                            </div>
+                                        </div>
+
+                                        {/* Source */}
+                                        <div className="border-t border-[#495362] py-5">
+                                            <div className="text-[20px] text-white">Source</div>
+                                            <div className="text-[16px] mt-1 text-gray-400">
+                                                {profile?.source ||
+                                                    profile?.booking?.parents?.[0]?.howDidHear ||
+                                                    "-"}
+                                            </div>
+                                        </div>
+
+                                        {/* Price */}
+                                        <div className="border-t border-[#495362] py-5">
+                                            <div className="text-[20px] text-white">Price</div>
+                                            <div className="text-[16px] mt-1 text-gray-400">
+                                                £
+                                                {profile?.booking?.payment?.amount
+                                                    ? parseFloat(profile.booking.payment.amount).toFixed(2)
+                                                    : "0.00"}
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 🔷 ACTIONS (EXACT SAME BOX BELOW) */}
+                            <div className="bg-white rounded-3xl p-6 space-y-4 mt-4">
+
                                 <div className="flex gap-7">
-
-                                    <button className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-[#717073] font-medium" onClick={() => {
-                                        const parentEmails = parents.map(p => p.parentEmail).filter(Boolean);
-                                        openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
-                                    }}>
+                                    <button
+                                        onClick={() => {
+                                            if (bookingId) {
+                                                sendOnetoOneMail(bookingId);
+                                            } else {
+                                                showWarning("Booking ID not found. Cannot send email.");
+                                            }
+                                        }}
+                                        className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 text-[#717073] font-medium hover:shadow-md transition-shadow duration-300"
+                                    >
                                         Send Email
                                     </button>
 
-
-                                    <button disabled={textloading} onClick={() => sendText([bookingId])} className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
-                                        <img src="/images/icons/sendText.png" alt="" />  {textloading ? (
-                                            <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
-                                        ) : (
-                                            <>
-                                                Send Text
-                                            </>
-                                        )}
+                                    <button
+                                        className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium"
+                                    >
+                                        Send Text
                                     </button>
                                 </div>
 
-
-                                {(status === "active" || status === "frozen" || status === "cancelled" || status === "request_to_cancel") && (
+                                {status !== "active" ? (
                                     <button
-                                        onClick={() => setaddToWaitingList(true)}
-                                        className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
-            ${addToWaitingList
-                                                ? "bg-[#237FEA] text-white shadow-md"   // Active state
-                                                : "bg-white  border border-gray-300  hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"
-                                            }`}
-                                    >
-                                        Add to the waiting list
-                                    </button>
-                                )}
-
-                                {(
-                                    !profile?.freezeBooking &&
-                                    (status === "active" || (status === "request_to_cancel" && canCancelTrial)) &&
-                                    !(profile?.paymentPlan?.duration === 1 && profile?.paymentPlan?.interval === "Month")
-                                ) ? (
-                                    <button
-                                        onClick={() => setFreezeMembership(true)}
-                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
-                                    >
-                                        Freeze Membership
-                                    </button>
-                                ) : profile?.freezeBooking ? (
-                                    <button
-                                        onClick={() => setReactivateMembership(true)}
+                                        onClick={handleRenewPackage}
                                         className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
                                     >
-                                        Reactivate Membership
+                                        Renew Package
                                     </button>
-                                ) : null}
-
-
-                                {(status === "active" || (status === "request_to_cancel" && canCancelTrial)) && (
+                                ) : (
                                     <button
-                                        onClick={() => setTransferVenue(true)}
-                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                        onClick={handleCancelPackage}
+                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 font-medium hover:bg-[#FF6C6C] hover:text-white hover:shadow-md transition-shadow duration-300"
                                     >
-                                        Transfer Class
+                                        Cancel Package
                                     </button>
                                 )}
-                                {status == 'waiting list' && canCancelTrial && (
-                                    <button
-                                        onClick={() => setRemoveWaiting(true)}
-                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
-                                    >
-                                        Remove Waiting List
-                                    </button>
-                                )}
-                                {(status == 'active' || status == 'frozen' || status === "request_to_cancel") && canCancelTrial && (
-                                    <button
-                                        onClick={() =>
-                                            openCancelPopup(bookingId, profile?.students, {
-                                                showError,
-                                                showWarning,
-                                                onSubmit: cancelMembershipSubmit,
-                                            })
-                                        }
-                                        className={`w-full border text-[18px] rounded-xl py-3 font-medium transition-shadow duration-300
-                                        ${showCancelTrial
-                                                ? "bg-[#FF6C6C] text-white shadow-md border-transparent"
-                                                : "border-gray-300 text-[#717073] hover:bg-[#FF6C6C] hover:text-white hover:shadow-md"
-                                            }`}
-                                    >
-                                        Cancel Membership
-                                    </button>
-
-                                )}
-
-                                {/* {status !== 'pending' && status !== 'attended' && (
-                                    <button className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium">
-                                        Book a Membership
-                                    </button>
-                                )} */}
-
-                                {status === 'attended' && (
-                                    <div className="flex gap-7">
-                                        <button className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium">
-                                            No Membership
-                                        </button>
-
-                                        <button className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium">
-                                            Book a Membership
-                                        </button>
-                                    </div>
-                                )}
-                                {!profile?.paymentPlan && profile?.classSchedule?.capacity !== 0 && status !== 'active' && status !== "request_to_cancel" && (
-
-                                    <button
-                                        onClick={handleBookMembership}
-                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
-                                    >
-                                        Book a Membership
-                                    </button>
-                                )}
-
-
                             </div>
-                        </>
-                    )}
-                    {status == 'cancelled' && (
-                        <>
-                            <div className="bg-white rounded-3xl p-6  space-y-4 mt-4">
+                        </div></> :
+                        isHolidayCamp ? <>
+                            <div className="md:w-[34%]">
+                                <div className="md:max-w-[510px]">
 
-                                {/* Top Row: Email + Text */}
-                                <div className="flex gap-7">
+                                    {/* 🔷 MAIN CARD */}
+                                    <div className="rounded-3xl bg-[#363E49] overflow-hidden shadow-md border border-gray-200">
 
-                                    <button className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-[#717073] font-medium" onClick={() => {
-                                        const parentEmails = parents.map(p => p.parentEmail).filter(Boolean);
-                                        openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
-                                    }}>
-                                        Send Email
-                                    </button>
+                                        {/* 🔷 STATUS HEADER (MATCHED) */}
+                                        <div
+                                            className="m-2 px-6 rounded-3xl py-3 flex items-center justify-between bg-no-repeat bg-center"
+                                            style={{
+                                                backgroundImage:
+                                                    status === "cancelled"
+                                                        ? "url('/frames/Cancelled.png')"
+                                                        : status === "active"
+                                                            ? "url('/frames/Active.png')"
+                                                            : status === "request_to_cancel"
+                                                                ? "url('/frames/reqCancel.png')"
+                                                                : "url('/frames/Pending.png')",
+                                                backgroundSize: "cover",
+                                            }}
+                                        >
+                                            <div>
+                                                <div className="text-[20px] font-bold text-[#1F2937]">
+                                                    Account Status
+                                                </div>
+                                                <div className="text-[16px] font-semibold capitalize text-[#1F2937]">
+                                                    {profile?.status ||
+                                                        profile?.booking?.payment?.paymentStatus ||
+                                                        "N/A"}
+                                                </div>
+                                            </div>
+                                        </div>
 
+                                        {/* 🔷 DARK CONTENT */}
+                                        <div className="bg-[#363E49] text-white px-6 py-6 space-y-6">
 
-                                    <button disabled={textloading} onClick={() => sendText([bookingId])} className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
-                                        <img src="/images/icons/sendText.png" alt="" />  {textloading ? (
-                                            <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
-                                        ) : (
-                                            <>
-                                                Send Text
-                                            </>
+                                            {/* Booked By */}
+                                            <div className="flex items-center gap-4">
+                                                <img
+                                                    src="/members/user2.png"
+                                                    alt="Coach"
+                                                    className="w-18 h-18 rounded-full object-cover"
+                                                />
+                                                <div>
+                                                    <div className="text-[24px] font-semibold leading-tight">
+                                                        Booked In By
+                                                    </div>
+                                                    <div className="text-[16px] text-gray-300">
+                                                        {profile?.bookedByAdmin
+                                                            ? `${profile.bookedByAdmin.firstName} ${profile.bookedByAdmin.lastName}`
+                                                            : "N/A"}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* DETAILS GROUP */}
+                                            <div className="space-y">
+
+                                                {/* Venue */}
+                                                <div className="mb-4">
+                                                    <div className="text-[20px] font-bold tracking-wide">Venue</div>
+                                                    <div className="inline-block bg-[#007BFF] text-white text-[14px] px-3 py-1 rounded-md mt-1">
+                                                        {profile?.holidayVenue?.name || "-"}
+                                                    </div>
+                                                </div>
+
+                                                {/* Students */}
+                                                <div className="border-t border-[#495362] py-5">
+                                                    <div className="text-[20px] text-white">No. Of Students</div>
+                                                    <div className="text-[16px] mt-1 text-gray-400">
+                                                        {profile?.totalStudents || "-"}
+                                                    </div>
+                                                </div>
+
+                                                {/* Days */}
+                                                <div className="border-t border-[#495362] py-5">
+                                                    <div className="text-[20px] text-white">Days</div>
+                                                    <div className="text-[16px] mt-1 text-gray-400">
+                                                        {profile?.holidayCamp?.holidayCampDates?.[0]?.totalDays || "-"}
+                                                    </div>
+                                                </div>
+
+                                                {/* Discount */}
+                                                <div className="border-t border-[#495362] py-5">
+                                                    <div className="text-[20px] text-white">Discounts</div>
+                                                    <div className="text-[16px] mt-1 text-gray-400">
+                                                        {profile?.payment?.discount_amount || "-"}
+                                                    </div>
+                                                </div>
+
+                                                {/* Price */}
+                                                <div className="border-t border-[#495362] py-5">
+                                                    <div className="text-[20px] text-white">Price</div>
+                                                    <div className="text-[16px] mt-1 text-gray-400">
+                                                        £{profile?.payment?.amount || "0.00"}
+                                                    </div>
+                                                </div>
+
+                                                {/* Source */}
+                                                <div className="border-t border-[#495362] py-5">
+                                                    <div className="text-[20px] text-white">Source</div>
+                                                    <div className="text-[16px] mt-1 text-gray-400">
+                                                        {profile?.marketingChannel || "-"}
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 🔷 ACTIONS (MATCHED WHITE BOX) */}
+                                    <div className="bg-white rounded-3xl p-6 space-y-4 mt-4">
+
+                                        <div className="flex gap-7">
+                                            <button
+                                                onClick={() => {
+                                                    if (bookingId) {
+                                                        sendEmail();
+                                                    } else {
+                                                        showWarning("No Booking ID", "No booking ID found to send email.");
+                                                    }
+                                                }}
+                                                className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 text-[#717073] font-medium hover:shadow-md transition-shadow duration-300"
+                                            >
+                                                Send Email
+                                            </button>
+
+                                            <button
+                                                onClick={() => {
+                                                    if (bookingId) {
+                                                        sendText();
+                                                    } else {
+                                                        showWarning("No Booking ID", "No booking ID found to send email.");
+                                                    }
+                                                }}
+                                                className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium"
+                                            >
+                                                {textloading ? (
+                                                    <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
+                                                ) : (
+                                                    "Send Text"
+                                                )}
+                                            </button>
+                                        </div>
+
+                                        {status !== "cancelled" && (
+                                            <button
+                                                onClick={() => setshowCancelTrial(true)}
+                                                className={`w-full border text-[18px] rounded-xl py-3 font-medium transition-shadow duration-300
+                          ${showCancelTrial
+                                                        ? "bg-[#FF6C6C] text-white shadow-md border-transparent"
+                                                        : "border-gray-300 text-[#717073] hover:bg-[#FF6C6C] hover:text-white hover:shadow-md"
+                                                    }`}
+                                            >
+                                                Cancel Membership
+                                            </button>
                                         )}
-                                    </button>
+                                    </div>
                                 </div>
 
+                                {/* 🔷 MODAL (UNCHANGED — already correct) */}
+                                {showCancelTrial && (
+                                    <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
+                                        <div className="bg-white rounded-2xl w-[541px] max-h-[90%] overflow-y-auto relative scrollbar-hide">
 
-                                {(status === "frozen" || status === "cancelled") &&
-                                    classSchedule?.capacity > 0 &&
-                                    canRebooking && (
-                                        <button
-                                            onClick={() => setReactivateMembership(true)}
-                                            className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
-                                        >
-                                            Reactivate Membership
-                                        </button>
+                                            <button
+                                                className="absolute top-4 left-4 p-2"
+                                                onClick={() => setshowCancelTrial(false)}
+                                            >
+                                                <img src="/images/icons/cross.png" alt="Close" />
+                                            </button>
+
+                                            <div className="text-center py-6 border-b border-gray-300">
+                                                <h2 className="font-semibold text-[24px]">Cancel Membership</h2>
+                                            </div>
+
+                                            <div className="space-y-4 px-6 pb-6 pt-4">
+
+                                                <div>
+                                                    <label className="block text-[16px] font-semibold">
+                                                        Reason for Cancellation
+                                                    </label>
+                                                    <Select
+                                                        value={reasonOptions.find(
+                                                            (opt) => opt.value === cancelData.cancelReason
+                                                        )}
+                                                        onChange={(selected) =>
+                                                            handleSelectChange(selected, "cancelReason", setCancelData)
+                                                        }
+                                                        options={reasonOptions}
+                                                        className="rounded-lg mt-2"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-[16px] font-semibold">
+                                                        Additional Notes (Optional)
+                                                    </label>
+                                                    <textarea
+                                                        className="w-full bg-gray-100 mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                                        rows={3}
+                                                        name="additionalNote"
+                                                        value={cancelData.additionalNote}
+                                                        onChange={(e) => handleInputChange(e, setCancelData)}
+                                                    />
+                                                </div>
+
+                                                <div className="flex justify-end gap-4 pt-4">
+                                                    <button
+                                                        onClick={() => {
+                                                            if (!cancelData.cancelReason) {
+                                                                showWarning("Missing Field", "Please select a reason.");
+                                                                return;
+                                                            }
+                                                            setshowCancelTrial(false);
+                                                            cancelHolidaySubmit(cancelData, "allMembers");
+                                                        }}
+                                                        className="w-full bg-[#FF6C6C] text-white text-[18px] py-3 rounded-xl font-medium hover:bg-red-600"
+                                                    >
+                                                        Cancel Camp
+                                                    </button>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </> :
+                            <>
+                                <div className="md:w-4/12 max-h-fit rounded-full text-base space-y-5">
+                                    <div className="rounded-3xl bg-[#363E49] overflow-hidden shadow-md border border-gray-200">
+                                        {/* Status header */}
+                                        {isTrials ? <div className=" m-2 px-6 rounded-3xl py-3 flex items-center justify-between bg-no-repeat bg-center"
+                                            style={{
+                                                backgroundImage: status === "cancelled"
+                                                    ? "url('/frames/Cancelled.png')"
+                                                    : status === "frozen"
+                                                        ? "url('/frames/Frozen.png')"
+                                                        : status === "active"
+                                                            ? "url('/frames/Active.png')"
+                                                            : status === "waiting list"
+                                                                ? "url('/frames/Waiting.png')"
+                                                                : "url('/frames/Pending.png')",
+
+
+                                                backgroundSize: "cover",
+                                            }}>
+                                            <div>
+                                                <div className="text-[20px] font-bold text-[#1F2937]">Account Status</div>
+                                                <div className="text-[16px] font-semibold text-[#1F2937]">Trials</div>
+                                            </div>
+                                            <div className="bg-[#343A40] flex items-center gap-2  text-white text-[14px] px-3 py-2 rounded-xl">
+
+                                                <div className="flex items-center gap-2">
+                                                    {status === 'pending' && (
+                                                        <img src="/images/icons/loadingWhite.png" alt="Pending" />
+                                                    )}
+                                                    {status === 'not attend' && (
+                                                        <img src="/images/icons/x-circle-contained.png" alt="Not Attended" />
+                                                    )}
+                                                    {status === 'attended' && (
+                                                        <img src="/images/icons/attendedicon.png" alt="Attended" />
+                                                    )}
+                                                    {status === 'cancelled' && (
+                                                        <img src="/images/icons/x-circle-contained.png" alt="Cancelled" />
+                                                    )}
+
+                                                    {/* Fallback for any other or undefined status */}
+                                                    {!status && (
+                                                        <>
+                                                            <img src="/images/icons/x-circle-contained.png" alt="Not Attended" />
+                                                            Not Attended
+                                                        </>
+                                                    )}
+
+                                                    {/* Status text */}
+                                                    <span className="capitalize">
+                                                        {status ? status.replaceAll("_", " ") : "Unknown"}
+                                                    </span>
+                                                </div>
+
+                                            </div>
+                                        </div> :
+                                            <div
+                                                className="m-2 px-6 rounded-3xl py-3 flex items-center justify-between bg-no-repeat bg-center"
+                                                style={{
+                                                    backgroundImage: status === "cancelled"
+                                                        ? "url('/frames/Cancelled.png')"
+                                                        : status === "frozen"
+                                                            ? "url('/frames/Frozen.png')"
+                                                            : status === "active"
+                                                                ? "url('/frames/Active.png')"
+                                                                : status === "request_to_cancel"
+                                                                    ? "url('/frames/reqCancel.png')"
+                                                                    : status === "waiting list"
+                                                                        ? "url('/frames/Waiting.png')"
+                                                                        : "url('/frames/Pending.png')",
+                                                    backgroundSize: "cover",
+                                                }}
+                                            >
+                                                <div>
+                                                    <div className="text-[20px] font-bold text-[#1F2937]">Account Status</div>
+                                                    <div className="text-[16px] font-semibold capitalize text-[#1F2937]">
+                                                        {status ? status.replaceAll("_", " ") : "Unknown"}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                        <div className="bg-[#363E49] text-white px-6 py-6 space-y-6">
+                                            {/* Avatar & Booked By */}
+                                            <div className="flex items-center gap-4">
+                                                <img
+                                                    src={bookedBy?.profile ? `${API_BASE_URL}/${bookedBy.profile}` : "https://cdn-icons-png.flaticon.com/512/147/147144.png"}
+                                                    alt="avatar"
+                                                    className="w-18 h-18 rounded-full"
+                                                    onError={(e) => { e.currentTarget.src = "https://cdn-icons-png.flaticon.com/512/147/147144.png"; }}
+                                                />
+                                                <div>
+                                                    <div className="text-[24px] font-semibold leading-tight">
+                                                        {isBirthdayParty || isOneToOne ? "Coach" : "Booked By"}
+                                                    </div>
+                                                    <div className="text-[16px] text-gray-300">
+                                                        {bookedBy?.firstName} {bookedBy?.lastName}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Common details */}
+                                            <div className="space-y">
+                                                {/* Venue — only for membership */}
+                                                {isMembership && (
+                                                    <div className="mb-4">
+                                                        <div className="text-[20px] font-bold tracking-wide">Venue</div>
+                                                        <div className="inline-block bg-[#007BFF] text-white text-[14px] px-3 py-1 rounded-md mt-1">
+                                                            {venueName || "-"}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Service type badge */}
+                                                {(isBirthdayParty || isOneToOne) && (
+                                                    <div className="mb-4">
+                                                        <div className="text-[20px] font-bold tracking-wide">Service Type</div>
+                                                        <div className="inline-block bg-[#007BFF] text-white text-[14px] px-3 py-1 rounded-md mt-1 capitalize">
+                                                            {serviceLabel}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {isTrials && (
+                                                    <>
+                                                        <div className="space-y">
+                                                            <div>
+                                                                <div className="text-[20px] font-bold tracking-wide">Venue</div>
+                                                                <div className="inline-block bg-[#007BFF] text-white text-[14px] px-3 py-1 rounded-md my-2">
+                                                                    {profile?.venue?.name || "-"}
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="border-t border-[#495362] py-5">
+
+                                                                <>
+                                                                    <div className="text-[20px] text-white">Students</div>
+                                                                    <div className="text-[16px] mt-1 text-gray-400">{profile?.students?.length || 0}</div>
+                                                                </>
+
+
+                                                            </div>
+
+                                                            <div className="border-t border-[#495362] py-5">
+                                                                {status === 'pending' || status === 'attended' ? (
+                                                                    <>
+                                                                        <div className=" text-[20px] text-white">Booking Date</div>
+                                                                        <div className="text-[16px]  mt-1 text-gray-400"> {formatDate(profile?.createdAt, true)}</div>
+
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+
+                                                                        <div className=" text-[20px] text-white">Date of Booking</div>
+                                                                        <div className="text-[16px]  mt-1 text-gray-400"> {formatDate(profile?.createdAt, true)}</div>
+                                                                    </>
+                                                                )}
+
+                                                            </div>
+
+                                                            <div className="border-t border-[#495362] py-5">
+                                                                <div className=" text-[20px] text-white">Date of Trial</div>
+                                                                <div className="text-[16px]  mt-1 text-gray-400">{formatDate(profile?.trialDate)}</div>
+                                                            </div>
+
+                                                            <>
+                                                                <div className="border-t border-[#495362] py-5">
+                                                                    <div className=" text-[20px] text-white">Booking Source</div>
+                                                                    <div className="text-[16px]  mt-1 text-gray-400"> {bookedBy?.firstName} {bookedBy?.lastName}</div>
+                                                                </div>
+                                                            </>
+
+                                                        </div></>
+                                                )}
+                                                {isMembership && (<>
+                                                    <div className="border-t border-[#495362] pt-5">
+                                                        <div className="text-[20px] text-white">
+                                                            {isBirthdayParty ? "Package" : "Membership Plan"}
+                                                        </div>
+                                                        <div className="text-[16px] mt-1 text-gray-400">
+                                                            {MembershipPlan ? `${MembershipPlan} Plan` : "N/A"}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="border-t border-[#495362] pt-5">
+                                                        <div className="text-[20px] text-white">
+                                                            {isBirthdayParty ? "Party Date" : isOneToOne ? "Session Date" : "Membership Start Date"}
+                                                        </div>
+                                                        <div className="text-[16px] mt-1 text-gray-400">{formatISODate(dateBooked)}</div>
+                                                    </div>
+
+                                                    {/* Service-specific extra rows */}
+                                                    {renderExtraInfoRows()}
+
+                                                    <div className="border-t border-[#495362] py-5">
+                                                        <div className="text-[20px] text-white">Price</div>
+                                                        <div className="text-[16px] mt-1 text-gray-400">
+                                                            {MembershipPrice ? `£${MembershipPrice}` : "-"}
+                                                        </div>
+                                                    </div>
+                                                </>)}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* ── Action Buttons ─────────────────────────────────────── */}
+                                    {status !== 'cancelled' && (
+                                        <div className="bg-white rounded-3xl p-6 space-y-4 mt-4">
+                                            <div className="flex gap-7">
+                                                <button
+                                                    className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-[#717073] font-medium"
+                                                    onClick={() => {
+                                                        const parentEmails = parents.map(p => p.parentEmail).filter(Boolean);
+                                                        openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
+                                                    }}
+                                                >
+                                                    Send Email
+                                                </button>
+                                                <button
+                                                    disabled={textloading}
+                                                    onClick={() => sendText([bookingId])}
+                                                    className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium"
+                                                >
+                                                    <img src="/images/icons/sendText.png" alt="" />
+                                                    {textloading ? <Loader2 className="animate-spin w-5 h-5 text-blue-500" /> : "Send Text"}
+                                                </button>
+                                            </div>
+
+                                            {/* Membership-only actions */}
+                                            {isMembership && (
+                                                <>
+                                                    {(status === "active" || status === "frozen" || status === "cancelled" || status === "request_to_cancel") && (
+                                                        <button
+                                                            onClick={() => setaddToWaitingList(true)}
+                                                            className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
+                                                                ${addToWaitingList ? "bg-[#237FEA] text-white shadow-md" : "bg-white border border-gray-300 hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"}`}
+                                                        >
+                                                            Add to the waiting list
+                                                        </button>
+                                                    )}
+
+                                                    {(!profile.freezeBooking && (status === "active" || (status === "request_to_cancel" && canCancelTrial)) && !(profile?.paymentPlan?.duration === 1 && profile?.paymentPlan?.interval === "Month")) ? (
+                                                        <button
+                                                            onClick={() => setFreezeMembership(true)}
+                                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                                        >
+                                                            Freeze Membership
+                                                        </button>
+                                                    ) : profile.freezeBooking ? (
+                                                        <button
+                                                            onClick={() => setReactivateMembership(true)}
+                                                            className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+                                                        >
+                                                            Reactivate Membership
+                                                        </button>
+                                                    ) : null}
+
+                                                    {(status === "active" || (status === "request_to_cancel" && canCancelTrial)) && (
+                                                        <button
+                                                            onClick={() => setTransferVenue(true)}
+                                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                                        >
+                                                            Transfer Class
+                                                        </button>
+                                                    )}
+
+                                                    {status === 'waiting list' && canCancelTrial && (
+                                                        <button
+                                                            onClick={() => setRemoveWaiting(true)}
+                                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                                        >
+                                                            Remove Waiting List
+                                                        </button>
+                                                    )}
+
+                                                    {(status === 'active' || status === 'frozen' || status === "request_to_cancel") && canCancelTrial && (
+                                                        <button
+                                                            onClick={() => setshowCancelTrial(true)}
+                                                            className={`w-full border text-[18px] rounded-xl py-3 font-medium transition-shadow duration-300
+                                                                ${showCancelTrial ? "bg-[#FF6C6C] text-white shadow-md border-transparent" : "border-gray-300 text-[#717073] hover:bg-[#FF6C6C] hover:text-white hover:shadow-md"}`}
+                                                        >
+                                                            Cancel Membership
+                                                        </button>
+                                                    )}
+
+                                                    {!profile?.paymentPlan && profile?.classSchedule?.capacity !== 0 && status !== 'active' && status !== "request_to_cancel" && (
+                                                        <button
+                                                            onClick={handleBookMembership}
+                                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                                        >
+                                                            Book a Membership
+                                                        </button>
+                                                    )}
+                                                </>
+                                            )}
+
+                                            {/* Birthday party / one-to-one — simple cancel only */}
+                                            {(isBirthdayParty || isOneToOne) && canCancelTrial && (
+                                                <button
+                                                    onClick={() => setshowCancelTrial(true)}
+                                                    className={`w-full border text-[18px] rounded-xl py-3 font-medium transition-shadow duration-300
+                                                        ${showCancelTrial ? "bg-[#FF6C6C] text-white shadow-md border-transparent" : "border-gray-300 text-[#717073] hover:bg-[#FF6C6C] hover:text-white hover:shadow-md"}`}
+                                                >
+                                                    Cancel Booking
+                                                </button>
+                                            )}
+                                        </div>
                                     )}
 
+                                    {status === 'cancelled' && (
+                                        <div className="bg-white rounded-3xl p-6 space-y-4 mt-4">
+                                            <div className="flex gap-7">
+                                                <button
+                                                    className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-[#717073] font-medium"
+                                                    onClick={() => {
+                                                        const parentEmails = parents.map(p => p.parentEmail).filter(Boolean);
+                                                        openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
+                                                    }}
+                                                >
+                                                    Send Email
+                                                </button>
+                                                <button
+                                                    disabled={textloading}
+                                                    onClick={() => sendText([bookingId])}
+                                                    className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium"
+                                                >
+                                                    <img src="/images/icons/sendText.png" alt="" />
+                                                    {textloading ? <Loader2 className="animate-spin w-5 h-5 text-blue-500" /> : "Send Text"}
+                                                </button>
+                                            </div>
 
-                                {(status === "active" || status === "frozen" || status === "cancelled" || status === "request_to_cancel") && (
-                                    <button
-                                        onClick={() => setaddToWaitingList(true)}
-                                        className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
-            ${addToWaitingList
-                                                ? "bg-[#237FEA] text-white shadow-md"   // Active state
-                                                : "bg-white  border border-gray-300  hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"
-                                            }`}
-                                    >
-                                        Add to the waiting list
-                                    </button>
-                                )}
-
-
-                            </div>
-                        </>
-                    )}
-                </div>
+                                            {isMembership && (
+                                                <>
+                                                    {classSchedule?.capacity > 0 && canRebooking && (
+                                                        <button
+                                                            onClick={() => setReactivateMembership(true)}
+                                                            className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+                                                        >
+                                                            Reactivate Membership
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={() => setaddToWaitingList(true)}
+                                                        className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
+                                                            ${addToWaitingList ? "bg-[#237FEA] text-white shadow-md" : "bg-white border border-gray-300 hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"}`}
+                                                    >
+                                                        Add to the waiting list
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                }
                 {addToWaitingList && (
                     <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
                         <div className="bg-white rounded-2xl w-[541px] max-h-[90%] overflow-y-auto relative scrollbar-hide">

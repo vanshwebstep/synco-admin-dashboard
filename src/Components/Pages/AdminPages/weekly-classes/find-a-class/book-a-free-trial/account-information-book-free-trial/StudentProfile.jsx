@@ -20,11 +20,13 @@ import Comments from '../../../../Common/Comments';
 import { useEmail } from '../../../../contexts/messages/SendEmailContext';
 
 const StudentProfile = ({ StudentProfile }) => {
-    const { serviceHistoryFetchById } = useBookFreeTrial();
+    const { serviceHistoryFetchById ,transferTrialSubmit} = useBookFreeTrial();
     const [textloading, setTextLoading] = useState(null);
     const { openEmailPopup } = useEmail();
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const [selectedDate, setSelectedDate] = useState(null);
+    const [transferVenue, setTransferVenue] = useState(false);
+
     const navigate = useNavigate();
     const [commentsList, setCommentsList] = useState([]);
     const [loadingComment, setLoadingComment] = useState(false);
@@ -32,6 +34,8 @@ const StudentProfile = ({ StudentProfile }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const commentsPerPage = 5; // Number of comments per page
     console.log('StudentProfile', StudentProfile)
+        const studentsList = StudentProfile?.students || [];
+
     // Pagination calculations
     const indexOfLastComment = currentPage * commentsPerPage;
     const indexOfFirstComment = indexOfLastComment - commentsPerPage;
@@ -214,11 +218,25 @@ const StudentProfile = ({ StudentProfile }) => {
         cancelReason: "",
         additionalNote: "",
     });
+       const [transferData, setTransferData] = useState({
+        bookingId: bookingId || null,
+        venueId: classSchedule?.venue?.id || null,
+        transferReasonClass: "", // optional notes
+        classScheduleId: null,
+        selectedStudents: [],
+        studentTransfers: {},
+    });
     const studentCount = students?.length || 0;
     const matchedPlan = paymentPlans?.find(plan => plan.students === studentCount);
     const emergency = StudentProfile?.emergency;
 
-
+ const newClasses = StudentProfile?.newClasses?.map((cls) => ({
+        value: cls.id,
+        label: `${cls.className} - (${cls.startTime} - ${cls.endTime})`,
+    }));
+    // const selectedClass = newClasses?.find(
+    //     (cls) => cls.value === waitingListData?.classScheduleId
+    // );
     const { checkPermission } = usePermission();
 
     const canCancelTrial =
@@ -388,8 +406,31 @@ const StudentProfile = ({ StudentProfile }) => {
     };
 
 
-
-      // useEffect(() => {
+    const handleStudentSelectChange = (selectedOptions) => {
+        setTransferData((prev) => {
+            const newTransfers = { ...prev.studentTransfers };
+            // Initialize config for new selections if not exists
+            selectedOptions?.forEach(opt => {
+                if (!newTransfers[opt.value]) {
+                    newTransfers[opt.value] = {
+                        classScheduleId: null,
+                        transferReasonClass: ""
+                    };
+                }
+            });
+            // Optional: clean up removed students? Keeping them is safer for now or we can delete.
+            // Let's keep it simple.
+            return {
+                ...prev,
+                selectedStudents: selectedOptions || [],
+                studentTransfers: newTransfers
+            };
+        });
+    };
+    const handleRadioChange = (value, field, stateSetter) => {
+        stateSetter((prev) => ({ ...prev, [field]: value }));
+    };
+    // useEffect(() => {
     //     fetchComments();
     // }, [])
     const formatDOBForAPI = (dob) => {
@@ -451,7 +492,7 @@ const StudentProfile = ({ StudentProfile }) => {
     const handleSelectChange = (selected, field, stateSetter) => {
         stateSetter((prev) => ({ ...prev, [field]: selected?.value || null }));
     };
-       const getStatusColor = (status) => {
+    const getStatusColor = (status) => {
         switch (status) {
             case "active": return "text-[#43BE4F]";
             case "attended": return "text-[#43BE4F]";
@@ -466,6 +507,18 @@ const StudentProfile = ({ StudentProfile }) => {
 
             default: return "text-[#A4A5A6]";
         }
+    };
+      const handleTransferConfigChange = (studentId, field, value) => {
+        setTransferData(prev => ({
+            ...prev,
+            studentTransfers: {
+                ...prev.studentTransfers,
+                [studentId]: {
+                    ...prev.studentTransfers[studentId],
+                    [field]: value
+                }
+            }
+        }));
     };
     const formatStatus = (status) => {
         if (!status) return "-";
@@ -834,6 +887,7 @@ const StudentProfile = ({ StudentProfile }) => {
                                         Cancel Trial
                                     </button>
                                 )}
+                               
 
                                 {status !== 'pending' && status !== 'attended' && (
                                     <button
@@ -863,6 +917,12 @@ const StudentProfile = ({ StudentProfile }) => {
                                         </button>
                                     </>
                                 )}
+                                 <button
+                                    onClick={() => setTransferVenue(true)}
+                                    className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                >
+                                    Transfer Class
+                                </button>
 
 
                             </div>
@@ -1029,6 +1089,186 @@ const StudentProfile = ({ StudentProfile }) => {
                         </div>
                     </div>
 
+                )}
+                {transferVenue && (
+                    <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
+                        <div className="bg-white rounded-2xl w-[541px] max-h-[90%] overflow-y-auto relative scrollbar-hide">
+                            <button
+                                className="absolute top-4 left-4 p-2"
+                                onClick={() => setTransferVenue(false)}
+                            >
+                                <img src="/images/icons/cross.png" alt="Close" />
+                            </button>
+
+                            <div className="text-center py-6 border-b border-gray-300">
+                                <h2 className="font-semibold text-[24px]">Transfer Class Form</h2>
+                            </div>
+
+                            <div className="space-y-4 px-6 pb-6 pt-4">
+                                {/* Current Class */}
+
+                                <div>
+
+
+                                    <label className="block text-[16px] font-semibold">
+                                        Select Student
+                                    </label>
+
+                                    <Select
+                                        value={transferData.selectedStudents}
+                                        onChange={handleStudentSelectChange}
+                                        options={studentsList?.map((student) => ({
+                                            value: student.id,
+                                            label: student.studentFirstName + " " + student.studentLastName,
+                                            classSchedule: student.classSchedule
+                                        })) || []}
+                                        placeholder="Select Student"
+                                        isMulti
+                                        className="rounded-lg mt-2"
+                                        styles={{
+                                            control: (base) => ({
+                                                ...base,
+                                                borderRadius: "0.7rem",
+                                                boxShadow: "none",
+                                                padding: "4px 8px",
+                                                minHeight: "48px",
+                                            }),
+                                            placeholder: (base) => ({ ...base, fontWeight: 600 }),
+                                            dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
+                                            indicatorSeparator: () => ({ display: "none" }),
+                                        }}
+                                    />
+
+                                </div>
+                                {/* Per-Student Configuration */}
+                                {transferData.selectedStudents.length > 0 && (
+                                    <div className="space-y-6 border-t pt-4">
+                                        {transferData.selectedStudents.map((studentOption) => {
+                                            const studentId = studentOption.value;
+                                            const studentConfig = transferData.studentTransfers?.[studentId] || {};
+                                            const currentClass = studentOption.classSchedule?.className || "-";
+                                            const currentVenue = studentOption.classSchedule?.venue?.name || "-";
+                                            console.log('transferData', transferData)
+                                            console.log('studentConfig', studentConfig)
+                                            console.log('studentOption', studentOption)
+                                            return (
+                                                <div key={studentId} className="bg-gray-50 p-4 rounded-xl space-y-3 border border-gray-200">
+                                                    <h3 className="font-semibold capitalize text-lg text-gray-800  pb-2">
+                                                        {studentOption.label}
+                                                    </h3>
+
+                                                    {/* Current Info */}
+                                                    {/* Current Info */}
+                                                    <div className="grid gap-4 text-sm text-gray-600">
+                                                        <div>
+                                                            <label className="block text-sm font-semibold mb-1">Current Class</label>
+                                                            <input
+                                                                type="text"
+                                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
+                                                                value={currentClass}
+                                                                readOnly
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-semibold mb-1">Venue</label>
+                                                            <input
+                                                                type="text"
+                                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
+                                                                value={StudentProfile?.venue?.name}
+                                                                readOnly
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* New Class Select */}
+                                                    <div>
+                                                        <label className="block text-sm font-semibold mb-1">New Class</label>
+                                                        <Select
+                                                            value={
+                                                                studentConfig.classScheduleId
+                                                                    ? newClasses.find((cls) => cls.value === studentConfig.classScheduleId) || null
+                                                                    : null
+                                                            }
+                                                            onChange={(selected) =>
+                                                                handleTransferConfigChange(studentId, "classScheduleId", selected?.value)
+                                                            }
+                                                            options={newClasses}
+                                                            placeholder="Select New Class"
+                                                            className="rounded-lg"
+                                                            styles={{
+                                                                control: (base) => ({
+                                                                    ...base,
+                                                                    borderRadius: "0.5rem",
+                                                                    minHeight: "40px",
+                                                                }),
+                                                            }}
+                                                        />
+                                                    </div>
+
+                                                    {/* Reason */}
+                                                    <div>
+                                                        <label className="block text-sm font-semibold mb-1">Reason (Optional)</label>
+                                                        <textarea
+                                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                                                            rows={2}
+                                                            placeholder="Reason for transfer"
+                                                            value={studentConfig.transferReasonClass || ""}
+                                                            onChange={(e) => handleTransferConfigChange(studentId, "transferReasonClass", e.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+
+
+
+                                {/* Buttons */}
+                                <div className="flex gap-4 pt-4 justify-end">
+
+
+                                    <button
+                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={transferData.selectedStudents.length === 0}
+                                        onClick={() => {
+                                            if (!transferData.selectedStudents.length) {
+                                                showWarning("Missing Information", "Please select at least one student.");
+                                                return;
+                                            }
+
+
+                                            // Construct Payload
+                                            const transfers = transferData.selectedStudents.map(studentOption => {
+                                                const config = transferData.studentTransfers?.[studentOption.value] || {};
+                                                return {
+                                                    studentId: studentOption.value,
+                                                    classScheduleId: config.classScheduleId,
+                                                    transferReasonClass: config.transferReasonClass
+                                                };
+                                            });
+
+                                            // Validation: Check if any student is missing a class selection
+                                            const incomplete = transfers.some(t => !t.classScheduleId);
+                                            if (incomplete) {
+                                                showWarning("Missing Information", "Please select a new class for all selected students.");
+                                                return;
+                                            }
+
+                                            const payload = {
+                                                id: StudentProfile?.id,
+                                                transfers: transfers
+                                            };
+
+                                            transferTrialSubmit(payload, 'allMembers');
+                                        }}
+                                    >
+                                        Submit Transfer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 )}
                 {showCancelTrial && (
                     <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">

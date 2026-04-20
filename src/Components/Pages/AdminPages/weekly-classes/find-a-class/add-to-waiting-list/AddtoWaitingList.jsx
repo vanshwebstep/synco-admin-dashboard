@@ -452,6 +452,7 @@ const AddtoWaitingList = () => {
 
 
 
+
   // 🔁 Sync Emergency Contact
 
   const [students, setStudents] = useState([
@@ -685,16 +686,28 @@ const AddtoWaitingList = () => {
 
   const toDateOnly = (date) => {
     if (!date) return null;
-    const d = new Date(date);
 
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
+    const [day, month, year] = date.split("/").map(Number);
 
-    // PURE DATE, NO TIMEZONE CONVERSION POSSIBLE
-    return `${year}-${month}-${day}`;
+    // Validate first
+    if (!day || !month || !year) return null;
+
+    const d = new Date(year, month - 1, day);
+
+    // Extra validation (same jo tumne upar kiya hai)
+    if (
+      d.getDate() !== day ||
+      d.getMonth() !== month - 1 ||
+      d.getFullYear() !== year
+    ) {
+      return null;
+    }
+
+    const formattedMonth = String(month).padStart(2, "0");
+    const formattedDay = String(day).padStart(2, "0");
+
+    return `${year}-${formattedMonth}-${formattedDay}`;
   };
-
   const handleStudentClassChange = (index, selectedOption) => {
     const selectedClass = singleClassSchedulesOnly?.venueClasses?.find(
       (cls) => cls.id === selectedOption.value
@@ -737,8 +750,8 @@ const AddtoWaitingList = () => {
       parents: parents.map(({ id, ...rest }) => rest),
       emergency,
     };
-
-
+    console.log('payload', payload)
+    // return
     try {
       if (leadId) {
         await createWaitinglist(payload, leadId);

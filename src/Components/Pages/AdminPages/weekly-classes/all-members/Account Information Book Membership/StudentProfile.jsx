@@ -528,11 +528,15 @@ const StudentProfile = ({ profile }) => {
 
     const getStatusColor = (status) => {
         switch (status) {
-            case "active": return "text-[#43BE4F]";
+   case "active": return "text-[#43BE4F]";
+            case "attended": return "text-[#43BE4F]";
             case "frozen": return "text-[#509EF9]";
             case "cancelled": return "text-[#FC5D5D]";
+            case "not attended": return "text-[#FC5D5D]";
+
             case "waiting list": return "text-[#A4A5A6]";
             case "request_to_cancel": return "text-[#FC5D5D]";
+            case "pending": return "text-[#f1b400]";
 
             default: return "text-[#A4A5A6]";
         }

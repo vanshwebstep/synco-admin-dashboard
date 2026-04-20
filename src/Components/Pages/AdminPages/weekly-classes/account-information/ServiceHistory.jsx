@@ -378,7 +378,9 @@ const ServiceHistory = () => {
   const handleCheckboxChange = (key) => {
     setCheckedStatuses((prev) => ({ ...prev, [key]: !prev[key] }));
   };
+
   const today = new Date();
+
   const formattedDate = today.toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",
@@ -502,7 +504,7 @@ const ServiceHistory = () => {
             />
             <div className="block">
               <div className="whitespace-nowrap font-semibold text-[#717073] text-[14px]">Total Payments</div>
-              <div className="text-[20px] font-semibold text-[#384455]">£{data?.paymentPlan?.price  || data?.payment?.amount || data?.booking?.payment?.amount}</div>
+              <div className="text-[20px] font-semibold text-[#384455]">£{data?.paymentPlan?.price || data?.payment?.amount || data?.booking?.payment?.amount}</div>
             </div>
           </div>
 

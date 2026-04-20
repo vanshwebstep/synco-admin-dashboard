@@ -10,6 +10,7 @@ import PhoneInput from "react-phone-input-2";
 import DatePicker from "react-datepicker";
 import Select from "react-select";
 import { ChevronDown, ChevronUp, Info, CheckCircle2 } from "lucide-react";
+import { getNames } from "country-list";
 
 import PlanTabs from "../PlanTabs";
 import Loader from "../../../contexts/Loader";
@@ -28,7 +29,7 @@ import PhoneNumberInput from "../../../Common/PhoneNumberInput";
 const List = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const { createBookMembership, createBookMembershipByfreeTrial, createBookMembershipByWaitingList, isBooked, setIsBooked } = useBookFreeTrial()
+    const { createBookMembership, createBookMembershipByfreeTrial, createBookMembershipbyCancellation, createBookMembershipByWaitingList, isBooked, setIsBooked } = useBookFreeTrial()
     const [expression, setExpression] = useState('');
     const [studentRemoved, setStudentRemoved] = useState(false);
     const [numberOfStudents, setNumberOfStudents] = useState(1);
@@ -358,7 +359,7 @@ const List = () => {
     const img3Ref = useRef(null); // add a ref for the image
     const img1Ref = useRef(null); // add a ref for the image
     const img2Ref = useRef(null); // add a ref for the image
-    // console.log('comesFrom', comesFrom)
+    console.log('comesFrom', comesFrom)
     const [showPopup, setShowPopup] = useState(false);
     const [directDebitData, setDirectDebitData] = useState([]);
     const [payment, setPayment] = useState({
@@ -461,9 +462,9 @@ const List = () => {
         "Australia"
     ];
     const
-        countryOptions = countries.map((c) => ({
-            value: c,
-            label: c,
+        countryOptions = getNames().map(country => ({
+            value: country,
+            label: country,
         })); const customSelectStyles = {
             control: (base, state) => ({
                 ...base,
@@ -512,10 +513,7 @@ const List = () => {
             return updated;
         });
     };
-    const venueClassOptions = classesWithCapacity?.map((cls) => ({
-        value: cls.id,
-        label: cls.className
-    }));
+
     const handleNumberChange = (e) => {
         const val = e.target.value === "" ? "" : Number(e.target.value);
 
@@ -553,6 +551,10 @@ const List = () => {
             }
         }
     };
+    const venueClassOptions = classesWithCapacity?.map((cls) => ({
+        value: cls.id,
+        label: cls.className
+    }));
     const validationCheck = () => {
         // -------- STUDENTS VALIDATION --------
         for (let i = 0; i < students.length; i++) {
@@ -652,9 +654,8 @@ const List = () => {
     };
     useEffect(() => {
         setStudents((prevStudents) => {
-            const n = Number(numberOfStudents) || 0; // safety for null/undefined
+            const n = Number(numberOfStudents) || 0;
 
-            // If count increases → add new blank students
             if (n > prevStudents.length) {
                 const newStudents = Array.from({ length: n - prevStudents.length }).map(() => ({
                     studentFirstName: '',
@@ -663,30 +664,40 @@ const List = () => {
                     age: '',
                     gender: '',
                     medicalInformation: '',
-                    class: singleClassSchedulesOnly?.className || '',
-                    time: singleClassSchedulesOnly?.startTime || '',
+
+                    // ✅ IMPORTANT FIX
+                    selectedClassId: singleClassSchedulesOnly?.id || null,
+                    selectedClassData: singleClassSchedulesOnly || null,
                 }));
+
                 return [...prevStudents, ...newStudents];
             }
 
-            // If count decreases → trim array
             if (n < prevStudents.length) {
                 return prevStudents.slice(0, n);
             }
 
-            // Same number → just return as is
             return prevStudents;
         });
-    }, [numberOfStudents]);
-
-
+    }, [numberOfStudents, singleClassSchedulesOnly]);
     useEffect(() => {
         if (TrialData) {
             if (Array.isArray(TrialData.students) && TrialData.students.length > 0) {
-                setStudents(TrialData.students);
+
+                const mappedStudents = TrialData.students.map((student, index) => ({
+                    ...student,
+
+                    // ✅ Inject default class if missing
+                    selectedClassId:
+                        student.selectedClassId || singleClassSchedulesOnly?.id || null,
+
+                    selectedClassData:
+                        student.selectedClassData || singleClassSchedulesOnly || null,
+                }));
+
+                setStudents(mappedStudents);
                 setNumberOfStudents(TrialData?.totalStudents);
             }
-
             if (Array.isArray(TrialData.parents) && TrialData.parents.length > 0) {
                 const mappedParents = TrialData.parents.map((p, idx) => {
                     const isPredefined = interestReasonOptions.some(
@@ -752,6 +763,21 @@ const List = () => {
         fetchData();
     }, [finalClassId, fetchFindClassID, fetchKeyInfo]);
     const [activePopup, setActivePopup] = useState(null);
+    useEffect(() => {
+        if (!singleClassSchedulesOnly) return;
+
+        setStudents((prev) => {
+            const updated = prev.map((student) => ({
+                ...student,
+                selectedClassId: singleClassSchedulesOnly.id,
+                selectedClassData: singleClassSchedulesOnly,
+            }));
+
+            console.log("Reset + Updated Students:", updated);
+
+            return updated;
+        });
+    }, [singleClassSchedulesOnly]);
     const togglePopup = (id) => {
         setActivePopup((prev) => (prev === id ? null : id));
     };
@@ -1099,19 +1125,19 @@ const List = () => {
 
 
     // ✅ FIXED useEffect - sahi dependency aur uncheck handling
-useEffect(() => {
-    if (emergency.sameAsAbove && parents.length > 0) {
-        const firstParent = parents[0];
+    useEffect(() => {
+        if (emergency.sameAsAbove && parents.length > 0) {
+            const firstParent = parents[0];
 
-        setEmergency(prev => ({
-            ...prev,
-            emergencyFirstName: firstParent.parentFirstName || "",
-            emergencyLastName: firstParent.parentLastName || "",
-            emergencyPhoneNumber: firstParent.parentPhoneNumber || "",
-            emergencyRelation: firstParent.relationToChild || "",
-        }));
-    }
-}, [emergency.sameAsAbove, parents]);
+            setEmergency(prev => ({
+                ...prev,
+                emergencyFirstName: firstParent.parentFirstName || "",
+                emergencyLastName: firstParent.parentLastName || "",
+                emergencyPhoneNumber: firstParent.parentPhoneNumber || "",
+                emergencyRelation: firstParent.relationToChild || "",
+            }));
+        }
+    }, [emergency.sameAsAbove, parents]);
 
 
     const toDateOnly = (date) => {
@@ -1278,6 +1304,14 @@ useEffect(() => {
             else if (leadId) {
                 await createBookMembership(payload, leadId);
             }
+            else if (comesFrom === "cancellation") {
+                const updatedPayload = {
+                    ...payload,
+                    oldBookingId: TrialData.id,
+                };
+
+                await createBookMembershipbyCancellation(updatedPayload);
+            }
             else {
                 await createBookMembership(payload);
             }
@@ -1360,8 +1394,8 @@ useEffect(() => {
         };
     }, [activePopup]);
     useEffect(() => {
-    console.log("Emergency STATE:", emergency);
-}, [emergency]);
+        console.log("Emergency STATE:", emergency);
+    }, [emergency]);
     useEffect(() => {
         if (singleClassSchedulesOnly?.venue?.paymentGroups?.length > 0) {
             const cleanedPlans = singleClassSchedulesOnly.venue.paymentGroups[0].paymentPlans.map(plan => ({
@@ -1626,26 +1660,15 @@ useEffect(() => {
         const starterPack = singleClassSchedulesOnly?.venue?.starterPack
             ? Number(membershipPlan?.starterPackPrice || 0)
             : 0;
-
-        console.log("📦 PLAN DETAILS");
-        console.log("➡️ Duration (months):", durationMonths);
-        console.log("➡️ Monthly Price:", monthlyPrice);
-        console.log("➡️ Total Lessons (fixed):", totalLessons);
-        console.log("➡️ Starter Pack:", starterPack);
-
-        // ✅ SAFE DATE PARSER
+        // ✅ DATE PARSER
         const parseLocalDate = (dateStr) => {
             const [y, m, d] = dateStr.split("-").map(Number);
             return new Date(y, m - 1, d);
         };
 
-        // ── SELECTED DATE ──
         const selected = parseLocalDate(startDate);
         selected.setHours(0, 0, 0, 0);
         const selectedTime = selected.getTime();
-
-        console.log("📅 SELECTED DATE");
-        console.log("➡️ Selected:", selected.toDateString());
 
         // ── ALL SESSIONS ──
         const allSessions = Array.from(sessionDatesSet).map((d) => {
@@ -1653,10 +1676,6 @@ useEffect(() => {
             date.setHours(0, 0, 0, 0);
             return date;
         });
-
-        console.log("📚 ALL SESSIONS");
-        console.log("➡️ Total Sessions Loaded:", allSessions.length);
-        console.log("➡️ Sessions:", allSessions.map(d => d.toDateString()));
 
         // ── CURRENT MONTH SESSIONS ──
         const selectedMonth = selected.getMonth();
@@ -1668,10 +1687,6 @@ useEffect(() => {
                 d.getFullYear() === selectedYear
         );
 
-        console.log("📆 SESSIONS IN START MONTH");
-        console.log("➡️ Count:", sessionsInStartMonth.length);
-        console.log("➡️ Dates:", sessionsInStartMonth.map(d => d.toDateString()));
-
         // ── REMAINING SESSIONS ──
         const remainingSessions = sessionsInStartMonth.filter(
             (d) => d.getTime() >= selectedTime
@@ -1679,47 +1694,38 @@ useEffect(() => {
 
         const proRataLessons = remainingSessions.length;
 
-        console.log("⏳ REMAINING (PRO-RATA) SESSIONS");
-        console.log("➡️ Count:", proRataLessons);
-        console.log("➡️ Dates:", remainingSessions.map(d => d.toDateString()));
-
         // ── PRICE PER LESSON ──
         const rawPricePerLesson = (monthlyPrice * durationMonths) / totalLessons;
         const pricePerLesson = Math.floor(rawPricePerLesson * 100) / 100;
 
-        console.log("💷 PRICE PER LESSON CALCULATION");
-        console.log("➡️ Formula:", `(${monthlyPrice} × ${durationMonths}) ÷ ${totalLessons}`);
-        console.log("➡️ Raw Value:", rawPricePerLesson);
-        console.log("➡️ Final (2dp):", pricePerLesson);
-
         // ── PRO-RATA COST ──
-        const rawProRataCost = proRataLessons * pricePerLesson;
-        // convert to pence to avoid floating issue
         const pricePerLessonPence = Math.round(pricePerLesson * 100);
-
         const proRataCostPence = proRataLessons * pricePerLessonPence;
-
         const proRataCost = Number((proRataCostPence / 100).toFixed(2));
 
-        console.log("💸 PRO-RATA COST");
-        console.log("➡️ Formula:", `${proRataLessons} × ${pricePerLesson}`);
-        console.log("➡️ Raw Value:", rawProRataCost);
-        console.log("➡️ Final (2dp):", proRataCost);
+        // ── TOTAL BEFORE DISCOUNT ──
+        const totalBeforeDiscount =
+            (proRataLessons > 0 ? proRataCost : monthlyPrice) + starterPack;
 
-        // ── TOTAL TODAY ──
-        const totalToday = Number(
-            ((proRataLessons > 0 ? proRataCost : monthlyPrice) + starterPack).toFixed(2)
-        );
+        // ── DISCOUNT ──
+        let discountAmount = 0;
 
-        console.log("🧮 TOTAL TODAY");
-        console.log("➡️ Formula:", `(${proRataLessons > 0 ? proRataCost : monthlyPrice} + ${starterPack})`);
-        console.log("➡️ Final Total:", totalToday);
+        if (isApplied && appliedDiscount?.data) {
+            if (appliedDiscount.data.type === "percentage") {
+                discountAmount =
+                    (totalBeforeDiscount * Number(appliedDiscount.data.value)) / 100;
+            } else {
+                discountAmount = Number(appliedDiscount.data.discountAmount || 0);
+            }
+        }
+
+        // safety (never negative)
+        const finalTotal = Math.max(totalBeforeDiscount - discountAmount, 0);
+
+        const totalToday = Number(finalTotal.toFixed(2));
 
         // ── NEXT MONTH PAYMENT ──
         const nextMonthPayment = Number(monthlyPrice.toFixed(2));
-
-        console.log("📆 NEXT MONTH PAYMENT");
-        console.log("➡️ Monthly:", nextMonthPayment);
 
         // ── STATE ──
         setRemainingLessons(proRataLessons);
@@ -1730,9 +1736,15 @@ useEffect(() => {
             numberOfLessonsProRated: proRataLessons,
             costOfProRatedLessons: proRataCost,
             starterPack: starterPack,
+            discount: discountAmount, // ✅ important
+            totalBeforeDiscount: totalBeforeDiscount, // optional but useful
             totalAmountToday: totalToday,
             nextMonthPayment: nextMonthPayment,
         });
+
+        console.log("💸 TOTAL BEFORE DISCOUNT:", totalBeforeDiscount);
+        console.log("🏷️ DISCOUNT:", discountAmount);
+        console.log("✅ FINAL TOTAL:", totalToday);
 
         console.log("🏁 ===== CALCULATION END =====");
 
@@ -1808,6 +1820,11 @@ useEffect(() => {
     const finalAmount =
         appliedDiscount?.data?.finalPrice ??
         singleClassSchedulesOnly?.starterPack?.[0]?.price;
+    useEffect(() => {
+        if (selectedDate && membershipPlan) {
+            calculateAmount(selectedDate);
+        }
+    }, [isApplied, appliedDiscount]);
     if (loading) return <Loader />;
 
     return (
@@ -2284,7 +2301,20 @@ useEffect(() => {
                                 {singleClassSchedulesOnly?.venue?.starterPack && (
                                     <div className="flex justify-between text-[#333]">
                                         <span>Starter Pack</span>
-                                        <span>£{pricingBreakdown?.starterPack?.toFixed(2)}</span>
+                                        <span className="text-right">
+    {isApplied && appliedDiscount?.data ? (
+        <>
+            <div className="line-through text-gray-400 text-sm">
+                £{membershipPlan?.starterPackPrice?.toFixed(2)}
+            </div>
+            <div className="text-green-600 font-semibold">
+                £{appliedDiscount.data.finalPrice}
+            </div>
+        </>
+    ) : (
+        `£${pricingBreakdown?.starterPack?.toFixed(2)}`
+    )}
+</span>
                                     </div>
                                 )}
 
@@ -2439,35 +2469,25 @@ useEffect(() => {
                                         </div>
                                     </div>
 
-                                    {/* Row 4 */}
                                     <div className="flex gap-4">
                                         {/* CLASS */}
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Class</label>
 
-                                            {index === 0 || comesFrom ? (
-                                                <input
-                                                    type="text"
-                                                    value={singleClassSchedulesOnly?.className || ""}
-                                                    readOnly
-                                                    className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3"
-                                                />
-                                            ) : (
-                                                <Select
-                                                    className="w-full mt-2 text-base"
-                                                    classNamePrefix="react-select"
-                                                    placeholder="Select class"
-                                                    options={venueClassOptions}
-                                                    value={
-                                                        venueClassOptions.find(
-                                                            (opt) => opt.value === student.selectedClassId
-                                                        ) || null
-                                                    }
-                                                    onChange={(option) =>
-                                                        handleStudentClassChange(index, option)
-                                                    }
-                                                />
-                                            )}
+                                            <Select
+                                                className="w-full mt-2 text-base"
+                                                classNamePrefix="react-select"
+                                                placeholder="Select class"
+                                                options={venueClassOptions}
+                                                value={
+                                                    venueClassOptions.find(
+                                                        (opt) => opt.value === student.selectedClassId
+                                                    ) || null
+                                                }
+                                                onChange={(option) =>
+                                                    handleStudentClassChange(index, option)
+                                                }
+                                            />
                                         </div>
 
                                         {/* TIME */}
@@ -2478,17 +2498,14 @@ useEffect(() => {
                                                 type="text"
                                                 readOnly
                                                 value={
-                                                    index === 0 || comesFrom
-                                                        ? `${singleClassSchedulesOnly?.startTime || ""} - ${singleClassSchedulesOnly?.endTime || ""}`
-                                                        : student.selectedClassData
-                                                            ? `${student.selectedClassData.startTime} - ${student.selectedClassData.endTime}`
-                                                            : ""
+                                                    student.selectedClassData
+                                                        ? `${student.selectedClassData.startTime} - ${student.selectedClassData.endTime}`
+                                                        : ""
                                                 }
                                                 className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3"
                                                 placeholder="Automatic entry"
                                             />
                                         </div>
-
                                     </div>
 
 
@@ -2952,10 +2969,19 @@ useEffect(() => {
                                                     </p>
                                                     <p>
                                                         <span className="poppins " style={{ fontSize: "14px" }}> Starter Pack</span>
-                                                        <span className="poppins float-right">
-                                                            {isApplied && appliedDiscount?.data
-                                                                ? `£${appliedDiscount.data.finalPrice}`
-                                                                : `£${singleClassSchedulesOnly?.starterPack?.[0]?.price || 0}`}
+                                                        <span className="poppins float-right text-right">
+                                                            {isApplied && appliedDiscount?.data ? (
+                                                                <>
+                                                                    <div className="line-through text-gray-400 text-sm">
+                                                                        £{singleClassSchedulesOnly?.starterPack?.[0]?.price || 0}
+                                                                    </div>
+                                                                    <div className="text-green-600 font-semibold">
+                                                                        £{appliedDiscount.data.finalPrice}
+                                                                    </div>
+                                                                </>
+                                                            ) : (
+                                                                `£${singleClassSchedulesOnly?.starterPack?.[0]?.price || 0}`
+                                                            )}
                                                         </span>
                                                     </p>
                                                 </div>
@@ -3353,7 +3379,7 @@ useEffect(() => {
                                                         options={countryOptions}
                                                         value={countryOptions.find(opt => opt.value === checkoutCountry)}
                                                         onChange={(selectedOption) =>
-                                                            handleCheckoutChange("country", selectedOption?.value)
+                                                            handleCheckoutChange("checkoutCountry", selectedOption?.value)
                                                         }
                                                         styles={customSelectStyles}
                                                         // placeholder="Enter zip / postcode"
@@ -3399,13 +3425,13 @@ useEffect(() => {
                                                     Cancel
                                                 </button>
                                                 <button
-                                                    disabled={!isFormValid || loading}
+                                                    disabled={!isFormValid || isSubmitting}
                                                     onClick={handleFinalSubmit}
                                                     className={`mt-6 px-6 py-2 poppins rounded-[6px] bg-blue-900 text-white font-semibold ${!isFormValid || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-800"
                                                         }`}
                                                     type="button"
                                                 >
-                                                    {loading ? "Processing..." : "Complete Booking"}
+                                                    {isSubmitting ? "Processing..." : "Complete Booking"}
                                                 </button>
                                             </div>
                                         </div>

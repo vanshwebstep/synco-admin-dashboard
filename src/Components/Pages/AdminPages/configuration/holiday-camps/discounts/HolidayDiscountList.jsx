@@ -124,9 +124,17 @@ const HolidayDiscountList = () => {
                               <div>
                                 <span>{user.code}</span>
                                 <br />
-                                <span className="text-[12px] text-gray-400">
-                                  {`${user.value} %off in holiday Camps`}
-                                </span>
+                                              <span className="text-[12px] text-gray-400">
+  {`${user.value}% off in ${
+    user.appliesTo
+      ?.map(item =>
+        item.target
+          .replaceAll("_", " ")
+          .replace(/\b\w/g, char => char.toUpperCase())
+      )
+      .join(" and ")
+  }`}
+</span>
                               </div>
                             </div>
                           </td>

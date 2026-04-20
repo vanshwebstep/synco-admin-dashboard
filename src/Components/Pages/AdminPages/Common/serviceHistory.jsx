@@ -314,7 +314,10 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
 
                           navigate(`/weekly-classes/all-members/see-details?id=${itemId || serviceHistory.id || ""}`, {
                             state: {
-                              itemId: serviceHistory.id,
+                              itemId: comesFrom === "membership"
+                                ? serviceHistory.bookingId
+                                : serviceHistory.id || "",
+
                               memberInfo: comesFrom,
                               defaultTab: tab, // ✅ important
                             },

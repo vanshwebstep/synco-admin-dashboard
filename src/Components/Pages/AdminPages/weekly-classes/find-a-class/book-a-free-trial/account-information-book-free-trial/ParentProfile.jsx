@@ -335,11 +335,12 @@ const ParentProfile = ({ ParentProfile }) => {
 
     const newClasses = ParentProfile?.newClasses?.map((cls) => ({
         value: cls.id,
-        label: `${cls.className} - ${cls.day} (${cls.startTime} - ${cls.endTime})`,
+        label: `${cls.className} - (${cls.startTime} - ${cls.endTime})`,
     }));
     const selectedClass = newClasses?.find(
         (cls) => cls.value === waitingListData?.classScheduleId
     );
+    
     const handleNoteChange = (e) => {
         setAdditionalNote(e.target.value);
         setRebookFreeTrial((prev) => ({

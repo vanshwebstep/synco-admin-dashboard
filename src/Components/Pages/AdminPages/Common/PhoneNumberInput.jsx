@@ -1,4 +1,5 @@
 // components/PhoneNumberInput.jsx
+import { useEffect } from "react"; // 👈 add this
 import PhoneInput from "react-phone-input-2";
 import { usePhoneInput } from "../contexts/PhoneInputContext";
 import "react-phone-input-2/lib/style.css";
@@ -17,8 +18,19 @@ const PhoneNumberInput = ({
         setCountry,
         stripDialCode,
         buildFullNumber,
+        detectCountryFromPhone,
     } = usePhoneInput();
+    useEffect(() => {
+        if (!value) return;
+console.log('detec start ',  value)
+        const detected = detectCountryFromPhone(value);
+console.log('detec detected ',  detected)
 
+        if (detected) {
+            setDialCode(detected.dialCode);
+            setCountry(detected.countryCode);
+        }
+    }, [value]);
     const handleCountryChange = (countryData) => {
         const newDialCode = "+" + countryData.dialCode;
         setDialCode(newDialCode);

@@ -62,7 +62,19 @@ const List = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { keyInfoData, fetchKeyInfo } = useMembers();
     const { adminInfo, setAdminInfo } = useNotification();
-
+    const [students, setStudents] = useState([
+        {
+            studentFirstName: '',
+            studentLastName: '',
+            dateOfBirth: null,
+            age: '',
+            gender: '',
+            medicalInformation: '',
+            selectedClassId: null,
+            selectedClassData: null
+            // Add other fields if needed
+        },
+    ]);
     const [country, setCountry] = useState("uk"); // default country
     const [country2, setCountry2] = useState("uk"); // default country
     const [dialCode, setDialCode] = useState("+44"); // store selected code silently
@@ -432,11 +444,22 @@ const List = () => {
         if (TrialData) {
             // console.log('stp1')
             if (Array.isArray(TrialData.students) && TrialData.students.length > 0) {
-                // console.log('stp2')
-                setStudents(TrialData.students);
+
+                const mappedStudents = TrialData.students.map((student, index) => ({
+                    ...student,
+
+                    // ✅ Inject default class if missing
+                    selectedClassId:
+                        student.selectedClassId || singleClassSchedulesOnly?.id || null,
+
+                    selectedClassData:
+                        student.selectedClassData || singleClassSchedulesOnly || null,
+                }));
+                console.log('mappedStudents', mappedStudents)
+                setStudents(mappedStudents);
                 setNumberOfStudents(TrialData?.totalStudents);
-                // console.log('comesfromtrialdaata', TrialData)
             }
+            
             // console.log('stp3')
             if (Array.isArray(TrialData.parents) && TrialData.parents.length > 0) {
                 setParents(
@@ -454,6 +477,22 @@ const List = () => {
             }
         }
     }, [TrialData]);
+
+  useEffect(() => {
+    if (!singleClassSchedulesOnly) return;
+
+    setStudents((prev) => {
+        const updated = prev.map((student) => ({
+            ...student,
+            selectedClassId: singleClassSchedulesOnly.id,
+            selectedClassData: singleClassSchedulesOnly,
+        }));
+
+        console.log("Reset + Updated Students:", updated);
+
+        return updated;
+    });
+}, [singleClassSchedulesOnly]);
     const [dob, setDob] = useState('');
     const [age, setAge] = useState(null);
     const [time, setTime] = useState('');
@@ -517,28 +556,20 @@ const List = () => {
 
     // 🔁 Sync Emergency Contact
 
-    const [students, setStudents] = useState([
-        {
-            studentFirstName: '',
-            studentLastName: '',
-            dateOfBirth: null,
-            age: '',
-            gender: '',
-            medicalInformation: '',
-            selectedClassId: null,
-            selectedClassData: null
-            // Add other fields if needed
-        },
-    ]);
+
+
 
     const handleInputChange = (index, field, value) => {
         const updatedStudents = [...students];
         updatedStudents[index][field] = value;
         setStudents(updatedStudents);
     };
-    console.log('singleClassSchedulesOnly', singleClassSchedulesOnly);
+    console.log('singleClassSchedulesOnlsssy', singleClassSchedulesOnly);
+    const classesWithCapacity = Array.isArray(singleClassSchedulesOnly?.venueClasses) ? singleClassSchedulesOnly?.venueClasses?.filter((cls) => {
+        return cls.capacity > 0;
+    }) : [];
     const handleStudentClassChange = (index, selectedOption) => {
-        const selectedClass = singleClassSchedulesOnly?.venueClasses?.find(
+        const selectedClass = classesWithCapacity?.find(
             (cls) => cls.id === selectedOption.value
         );
 
@@ -552,17 +583,48 @@ const List = () => {
             return updated;
         });
     };
-    const venueClassOptions = singleClassSchedulesOnly?.venueClasses?.map((cls) => ({
+    const handleNumberChange = (e) => {
+        const val = e.target.value === "" ? "" : Number(e.target.value);
+
+        if (val === "" || [1, 2, 3, 4].includes(val)) {
+            setNumberOfStudents(val);
+
+            setStudents((prevStudents) => {
+                if (val === "") return [];
+
+                if (val > prevStudents.length) {
+                    const newStudents = Array.from(
+                        { length: val - prevStudents.length },
+                        () => ({
+                            studentFirstName: "",
+                            studentLastName: "",
+                            gender: "",
+                            age: "",
+                            dateOfBirth: "",
+                            medicalInformation: "",
+                            selectedClassId: "",
+                            selectedClassData: null,
+                        })
+                    );
+                    return [...prevStudents, ...newStudents];
+                }
+
+                return prevStudents.slice(0, val);
+            });
+
+
+        }
+    };
+    const venueClassOptions = classesWithCapacity?.map((cls) => ({
         value: cls.id,
         label: cls.className
     }));
 
-    console.log('singleClassSchedulesOnly', singleClassSchedulesOnly)
+    console.log('singleClassSchedulesOnlyasasasa', singleClassSchedulesOnly)
     useEffect(() => {
         setStudents((prevStudents) => {
-            const n = Number(numberOfStudents) || 0; // safety for null/undefined
+            const n = Number(numberOfStudents) || 0;
 
-            // If count increases → add new blank students
             if (n > prevStudents.length) {
                 const newStudents = Array.from({ length: n - prevStudents.length }).map(() => ({
                     studentFirstName: '',
@@ -571,22 +633,22 @@ const List = () => {
                     age: '',
                     gender: '',
                     medicalInformation: '',
-                    class: singleClassSchedulesOnly?.className || '',
-                    time: singleClassSchedulesOnly?.startTime || '',
+
+                    // ✅ IMPORTANT FIX
+                    selectedClassId: singleClassSchedulesOnly?.id || null,
+                    selectedClassData: singleClassSchedulesOnly || null,
                 }));
+                console.log('singleClassSchedulesOnly112', singleClassSchedulesOnly)
                 return [...prevStudents, ...newStudents];
             }
 
-            // If count decreases → trim array
             if (n < prevStudents.length) {
                 return prevStudents.slice(0, n);
             }
 
-            // Same number → just return as is
             return prevStudents;
         });
-    }, [numberOfStudents]);
-
+    }, [numberOfStudents, singleClassSchedulesOnly]);
 
     const [parents, setParents] = useState([
         {
@@ -1245,13 +1307,7 @@ const List = () => {
                                 <input
                                     type="number"
                                     value={numberOfStudents}
-                                    onChange={(e) => {
-                                        const val = Number(e.target.value);
-                                        if ([1, 2, 3, 4].includes(val) || e.target.value === "") {
-                                            setNumberOfStudents(e.target.value);
-                                        }
-                                        // Do nothing if invalid
-                                    }}
+                                    onChange={handleNumberChange}
                                     placeholder="Choose number of students"
                                     className="w-full border border-gray-300 rounded-xl px-3 text-[16px] py-3 focus:outline-none"
                                 />
@@ -1458,34 +1514,26 @@ const List = () => {
                                     </div>
 
                                     {/* Row 4 */}
-                                    <div className="flex gap-4">
 
+                                    <div className="flex gap-4">
                                         {/* CLASS */}
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Class</label>
 
-                                            {index === 0 ? (
-                                                <input
-                                                    type="text"
-                                                    value={singleClassSchedulesOnly?.className || ""}
-                                                    readOnly
-                                                    className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3"
-                                                />
-                                            ) : (
-                                                <Select
-                                                    className="w-full mt-2 text-base"
-                                                    classNamePrefix="react-select"
-                                                    options={venueClassOptions}
-                                                    value={
-                                                        venueClassOptions.find(
-                                                            (opt) => opt.value === student.selectedClassId
-                                                        ) || null
-                                                    }
-                                                    onChange={(option) =>
-                                                        handleStudentClassChange(index, option)
-                                                    }
-                                                />
-                                            )}
+                                            <Select
+                                                className="w-full mt-2 text-base"
+                                                classNamePrefix="react-select"
+                                                placeholder="Select class"
+                                                options={venueClassOptions}
+                                                value={
+                                                    venueClassOptions.find(
+                                                        (opt) => opt.value === student.selectedClassId
+                                                    ) || null
+                                                }
+                                                onChange={(option) =>
+                                                    handleStudentClassChange(index, option)
+                                                }
+                                            />
                                         </div>
 
                                         {/* TIME */}
@@ -1496,17 +1544,14 @@ const List = () => {
                                                 type="text"
                                                 readOnly
                                                 value={
-                                                    index === 0
-                                                        ? `${singleClassSchedulesOnly?.startTime || ""} - ${singleClassSchedulesOnly?.endTime || ""}`
-                                                        : student.selectedClassData
-                                                            ? `${student.selectedClassData.startTime} - ${student.selectedClassData.endTime}`
-                                                            : ""
+                                                    student.selectedClassData
+                                                        ? `${student.selectedClassData.startTime} - ${student.selectedClassData.endTime}`
+                                                        : ""
                                                 }
                                                 className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3"
                                                 placeholder="Automatic entry"
                                             />
                                         </div>
-
                                     </div>
                                 </motion.div>
                             ))}
@@ -1776,12 +1821,12 @@ const List = () => {
                             <div className="flex gap-4">
                                 <div className="w-1/2">
                                     <label className="block text-[16px] font-semibold">Phone number</label>
-                                 
+
                                     <PhoneNumberInput
                                         value={emergency.emergencyPhoneNumber}
-                                       onChange={(fullNumber) =>
-                      setEmergency(prev => ({ ...prev, emergencyPhoneNumber: fullNumber }))
-                    }
+                                        onChange={(fullNumber) =>
+                                            setEmergency(prev => ({ ...prev, emergencyPhoneNumber: fullNumber }))
+                                        }
 
                                         placeholder="Enter phone number"
                                     />

@@ -89,15 +89,7 @@ const ServiceHistory = ({ serviceHistory , itemId, labels = {}, comesFrom }) => 
         <div className="flex items-center bg-[#FCF9F6] flex-col lg:flex-row">
           <div className="px-4 w-full py-2 flex-1 space-y-6">
             <div className="md:flex gap-6 justify-between items-center ">
-              {/* Membership Plan */}
-              <div>
-                <div className="whitespace-nowrap font-semibold text-[14px]">
-                  Date Of Trial
-                </div>
-                <div className="font-semibold text-[16px] text-black">
-                  {startDate || '-'}
-                </div>
-              </div>
+       
 
               {/* Students */}
               <div className="block pr-3">

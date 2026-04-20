@@ -44,7 +44,7 @@ const StudentProfile = ({ profile }) => {
   const serviceType = profile?.serviceType || "membership";
 
   const isTrials = serviceType === "weekly class trial";
-console.log('isTrials',profile)
+  console.log('isTrials', profile)
   const [commentsList, setCommentsList] = useState([]);
   const [loadingComment, setLoadingComment] = useState(false);
   const [comment, setComment] = useState('');
@@ -533,11 +533,14 @@ console.log('isTrials',profile)
   const getStatusColor = (status) => {
     switch (status) {
       case "active": return "text-[#43BE4F]";
+      case "attended": return "text-[#43BE4F]";
       case "frozen": return "text-[#509EF9]";
       case "cancelled": return "text-[#FC5D5D]";
+      case "not attended": return "text-[#FC5D5D]";
+
       case "waiting list": return "text-[#A4A5A6]";
       case "request_to_cancel": return "text-[#FC5D5D]";
-
+      case "pending": return "text-[#f1b400]";
       default: return "text-[#A4A5A6]";
     }
   };

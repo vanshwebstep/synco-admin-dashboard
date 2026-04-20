@@ -496,13 +496,34 @@ const ParentProfile = ({ ParentProfile }) => {
                                     </div>
                                     <div className="w-1/2">
                                         <label className="block text-[16px] font-semibold">Phone number</label>
-                                      <PhoneNumberInput
+                                        <PhoneNumberInput
                                             value={parent.parentPhoneNumber}
                                             placeholder="Enter phone number"
                                         />
                                     </div>
                                 </div>
-
+                                <div className="flex gap-4">
+                                    <div className="w-1/2">
+                                        <label className="block text-[16px] font-semibold">
+                                            What's the main reason you're interested in Samba Soccer Schools?
+                                        </label>
+                                        <input
+                                            className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                            value={parent.interestReason || ""}
+                                            readOnly
+                                            // onChange={(e) => handleDataChange(index, "interestReason", e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="w-1/2">
+                                        <label className="block text-[16px] font-semibold mb-6">Tell us a bit more (optional)</label>
+                                        <input
+                                            className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                            value={parent.interestReasonOther || ""}
+                                            readOnly
+                                            // onChange={(e) => handleDataChange(index, "interestReasonOther", e.target.value)}
+                                        />
+                                    </div>
+                                </div>
                                 {/* Row 3 */}
                                 <div className="flex gap-4">
 

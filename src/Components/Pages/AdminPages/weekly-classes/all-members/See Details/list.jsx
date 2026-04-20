@@ -2,12 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useLocation } from "react-router-dom";
 
-const tabs = [
-    "General",
-    "History of Payments",
-    "Credits",
-    "Attendance",
-];
+
 // import ServiceHistory from "./serviceHistory";
 // import ParentProfile from "../ParentProfile";
 import { useBookFreeTrial } from '../../../contexts/BookAFreeTrialContext';
@@ -16,13 +11,13 @@ import Attendance from "./Attendance";
 import General from "./General";
 
 const SeeDetails = () => {
-    const { serviceHistoryMembership, serviceHistory } = useBookFreeTrial()
+    const { serviceHistoryMembership, serviceHistory, serviceHistoryFetchById } = useBookFreeTrial()
 
     const navigate = useNavigate();
     const location = useLocation();
     const [itemId, setItemId] = useState(null);
     const [memberInfo, setMemberInfo] = useState(null);
-    console.log('memberInfo', memberInfo)
+    console.log('location.state', location.state)
     useEffect(() => {
         if (location.state?.itemId) {
             setItemId(location.state.itemId);
@@ -33,31 +28,34 @@ const SeeDetails = () => {
         }
 
         if (location.state?.defaultTab) {
-            setActiveTab(location.state.defaultTab); // ✅ set tab
+            setActiveTab(location.state.defaultTab);
         }
     }, [location.state]);
-
     useEffect(() => {
-        if (location.state?.itemId) {
-            setItemId(location.state.itemId);
-        }
+        if (!itemId || !memberInfo) return;
 
-        if (location.state?.memberInfo) {
-            setMemberInfo(location.state.memberInfo);
-        }
-    }, [location.state]);
-
-
-    useEffect(() => {
         const fetchData = async () => {
-            if (itemId) {
+            if (memberInfo === 'freeTrial') {
+                await serviceHistoryFetchById(itemId);
+            } else {
                 await serviceHistoryMembership(itemId);
             }
         };
-        fetchData();
-    }, [itemId, serviceHistoryMembership]);
-    const [activeTab, setActiveTab] = useState("General");
 
+        fetchData();
+    }, [itemId, memberInfo]); // ✅ correct dependency
+    const [activeTab, setActiveTab] = useState("General");
+    const tabs = [
+        "General",
+        "History of Payments",
+        "Credits",
+        "Attendance",
+    ].filter(tab => {
+        if (memberInfo === 'freeTrial' && tab === "History of Payments") {
+            return false;
+        }
+        return true;
+    });
     const navigateTo =
         memberInfo === "allMembers" || memberInfo === "freeTrial"
             ? {
@@ -111,23 +109,24 @@ const SeeDetails = () => {
                     </div>
                 </div>
 
-
-                <div className=" flex items-start  gap-2 md:gap-3">
-                    <button
-                        className=" border border-black flex items-center gap-2 text-black px-8 py-8 md:py-[12px] rounded-xl hover:bg-gray-200 text-[18px]  "
-                    >
-                        See Failed Payments
-                    </button><button
-                        className="border border-[#237FEA]  flex items-center gap-2 text-[#237FEA] px-8 py-8 md:py-[12px] rounded-xl hover:bg-[#237FEA] hover:text-white text-[18px]  "
-                    >
-                        Add a subscription
-                    </button>
-                    <button
-                        className="bg-[#237FEA] flex items-center gap-2 text-white px-8 py-8 md:py-[12px] rounded-xl hover:bg-blue-700 text-[18px]  "
-                    >
-                        Create Payment
-                    </button>
-                </div>
+                {memberInfo !== 'freeTrial' &&
+                    <div className=" flex items-start  gap-2 md:gap-3">
+                        <button
+                            className=" border border-black flex items-center gap-2 text-black px-8 py-8 md:py-[12px] rounded-xl hover:bg-gray-200 text-[18px]  "
+                        >
+                            See Failed Payments
+                        </button><button
+                            className="border border-[#237FEA]  flex items-center gap-2 text-[#237FEA] px-8 py-8 md:py-[12px] rounded-xl hover:bg-[#237FEA] hover:text-white text-[18px]  "
+                        >
+                            Add a subscription
+                        </button>
+                        <button
+                            className="bg-[#237FEA] flex items-center gap-2 text-white px-8 py-8 md:py-[12px] rounded-xl hover:bg-blue-700 text-[18px]  "
+                        >
+                            Create Payment
+                        </button>
+                    </div>
+                }
             </div >
             {/* {/* {activeTab === "Service History" && (
         <ServiceHistory serviceHistory={serviceHistory} />

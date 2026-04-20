@@ -2017,7 +2017,8 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                         </div>
                                     )}
                                 </div>
-                            </>}
+                            </>
+                }
 
                 {/* ── Modals (unchanged — membership only, hidden for other types) ── */}
                 {addToWaitingList && isMembership && (
