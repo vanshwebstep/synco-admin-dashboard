@@ -43,10 +43,10 @@ const HistoryOfPayments = ({ stateData }) => {
           <div className="col-span-1 text-gray-500 border-b border-gray-200 pb-4">Address</div>
           <div className="col-span-1 text-end border-b border-gray-200 pb-4">
             {safeValue(
-  stateData?.payments?.length
-    ? stateData.payments[stateData.payments.length - 1]?.billingAddress
-    : null
-)}
+              stateData?.payments?.length
+                ? stateData.payments[stateData.payments.length - 1]?.billingAddress
+                : null
+            )}
           </div>
 
           <div className="col-span-1 text-gray-500">Email</div>
@@ -151,11 +151,16 @@ const HistoryOfPayments = ({ stateData }) => {
                           <span className="text-yellow-500 text-sm font-semibold">
                             Payment Pending
                           </span>
-                        ) : (
-                          <span className="text-green-600 text-sm font-semibold">
-                            Paid Successfully
-                          </span>
-                        )}
+                        ) :
+                          payment.paymentStatus === "cancelled" ? (
+                            <span className="text-red-500 whitespace-nowrap text-sm font-semibold">
+                              Payment Cancelled
+                            </span>
+                          ) : (
+                            <span className="text-green-600 text-sm font-semibold">
+                              Paid Successfully
+                            </span>
+                          )}
                       </td>
                     </tr>
                   );

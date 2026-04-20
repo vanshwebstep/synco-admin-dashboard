@@ -255,11 +255,15 @@ const StudentProfile = ({ StudentProfile }) => {
         }
     }
     const handleReinstateMembership = () => {
-        showConfirm(
-            "Are you sure?",
-            "Do you want to Reinstate membership?",
-            "Yes, Book it!"
-        ).then((result) => {
+             showConfirm(
+         "Reinstate Membership?",
+         `You are about to reinstate:
+         
+         Venue: ${ParentProfile?.venue?.name}
+         Class: ${ParentProfile?.students?.[0]?.classSchedule?.className}  
+         Continue?`,
+         "Yes, Reinstate"
+       ).then((result) => {
             if (result.isConfirmed) {
                 // Navigate to your component/route
                 navigate("/weekly-classes/find-a-class/book-a-membership", {

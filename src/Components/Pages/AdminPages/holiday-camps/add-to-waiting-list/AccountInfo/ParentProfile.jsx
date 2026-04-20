@@ -58,8 +58,13 @@ const ParentProfile = ({ profile }) => {
 
     const students = profile?.students || [];
     const [parents, setParents] = useState(profile.parents || []);
-    const [emergencyContacts, setEmergencyContacts] = useState(profile?.emergency || []);
+    const [emergencyContacts, setEmergencyContacts] = useState([]);
 
+    useEffect(() => {
+        if (profile?.emergency) {
+            setEmergencyContacts(profile.emergency);
+        }
+    }, [profile]);
     const bookedBy = profile?.bookedByAdmin;
     const [addToWaitingList, setaddToWaitingList] = useState(false);
     const [showCancelTrial, setshowCancelTrial] = useState(false);
@@ -136,7 +141,7 @@ const ParentProfile = ({ profile }) => {
         }
     }, []);
 
-      // useEffect(() => {
+    // useEffect(() => {
     //     fetchComments();
     // }, [])
     const handleSubmitComment = async (e) => {

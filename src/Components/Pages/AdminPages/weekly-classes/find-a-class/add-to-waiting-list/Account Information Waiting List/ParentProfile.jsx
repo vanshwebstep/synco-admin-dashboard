@@ -181,7 +181,7 @@ const ParentProfile = ({ profile }) => {
         }
     }, []);
 
-      // useEffect(() => {
+    // useEffect(() => {
     //     fetchComments();
     // }, [])
     const handleSubmitComment = async (e) => {
@@ -512,6 +512,26 @@ const ParentProfile = ({ profile }) => {
     const selectedClass = newClasses?.find(
         (cls) => cls.value === waitingListData?.classScheduleId
     );
+
+    const classInfo = students?.[0]?.classSchedule
+        ? `${students[0].classSchedule.className}, ${students[0].classSchedule.startTime}-${students[0].classSchedule.endTime}`
+        : "N/A";
+    const dateAdded = profile?.createdAt
+        ? new Date(profile?.createdAt).toLocaleString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        })
+        : "N/A";
+    const daysWaiting = profile?.createdAt
+        ? Math.floor((new Date() - new Date(profile?.createdAt)) / (1000 * 60 * 60 * 24))
+        : 0;
+    const interestLevel = profile?.interest
+        ? `${profile?.interest.charAt(0).toUpperCase() + profile?.interest.slice(1)}`
+        : "N/A";
+
     if (loading) return <Loader />;
 
 
@@ -578,7 +598,7 @@ const ParentProfile = ({ profile }) => {
                                     </div>
                                     <div className="w-1/2">
                                         <label className="block text-[16px] font-semibold">Phone number</label>
-                                         <PhoneNumberInput
+                                        <PhoneNumberInput
                                             value={parent.parentPhoneNumber}
                                             readOnly={editingIndex !== index}
                                             onChange={(e) =>
@@ -702,12 +722,12 @@ const ParentProfile = ({ profile }) => {
                                 <div className="flex gap-4">
                                     <div className="w-1/2">
                                         <label className="block text-[16px] font-semibold">Phone number</label>
-                                         <PhoneNumberInput
+                                        <PhoneNumberInput
                                             value={emergency.emergencyPhoneNumber}
-                                             readOnly={editingEmergency !== index}
-                                        onChange={(e) =>
-                                            handleEmergencyChange(index, "emergencyPhoneNumber", e.target.value)
-                                        }
+                                            readOnly={editingEmergency !== index}
+                                            onChange={(e) =>
+                                                handleEmergencyChange(index, "emergencyPhoneNumber", e.target.value)
+                                            }
                                             placeholder="Enter phone number"
                                         />
                                     </div>
@@ -794,65 +814,44 @@ const ParentProfile = ({ profile }) => {
 
                             {/* Details */}
                             <div className="space-y">
+
+                                {/* Venue */}
                                 <div>
                                     <div className="text-[20px] font-bold tracking-wide">Venue</div>
                                     <div className="inline-block bg-[#007BFF] text-white text-[14px] px-3 py-1 rounded-md my-2">
-                                        {venueName || "-"}
+                                        {profile?.venue?.name || "-"}
                                     </div>
                                 </div>
 
+                                {/* Class */}
                                 <div className="border-t border-[#495362] pt-5">
-
-                                    <div className="text-[20px] text-white">Membership Plan</div>
-
-                                    <div className="text-[1s6px] mt-1 text-gray-400">
-                                        {MembershipPlan ? `${MembershipPlan} Plan` : "N/A"}
-                                    </div>
-
-                                </div>
-                                <div className="border-t border-[#495362] pt-5">
-
-                                    <div className="text-[20px] text-white">Membership Start Date</div>
-
-                                    <div className="text-[1s6px] mt-1 text-gray-400">
-                                        {formatISODate(startDate)}
-                                    </div>
-
-                                </div>
-
-                                <div className="border-t border-[#495362] pt-5">
-
-                                    <div className="text-[20px] text-white">Membership Tenure</div>
-                                    <div className="text-[1s6px] mt-1 text-gray-400">
-                                        {MembershipTenure || 'N/A'}
-                                    </div>
-
-                                </div>
-                                <div className="border-t border-[#495362] pt-5">
-
-                                    <div className="text-[20px] text-white">ID</div>
-                                    <div className="text-[1s6px] mt-1 text-gray-400">
-                                        {ID}
-                                    </div>
-
-                                </div>
-                                {/* <div className="border-t border-[#495362] py-5">
-                                    <div className="text-[20px] text-white mb-3">Progress</div>
-                                    <div className="flex items-center justify-between">
-                                        <div className="w-[90%] bg-[#fff] h-3 rounded-full overflow-hidden">
-                                            <div
-                                                className="bg-green-500 h-4 rounded-full"
-                                                style={{ width: "78%" }}
-                                            ></div>
-                                        </div>
-                                        <div className="text-white text-right mt-1 text-[14px]">78%</div>
-                                    </div>
-                                </div> */}
-
-                                <div className="border-t border-[#495362] py-5">
-                                    <div className=" text-[20px] text-white">Price</div>
+                                    <div className="text-[20px] text-white">Class</div>
                                     <div className="text-[16px] mt-1 text-gray-400">
-                                        {MembershipPrice !== null && MembershipPrice !== undefined ? `£${MembershipPrice}` : "N/A"}
+                                        {classInfo}
+                                    </div>
+                                </div>
+
+                                {/* Date Added */}
+                                <div className="border-t border-[#495362] pt-5">
+                                    <div className="text-[20px] text-white">Date Added</div>
+                                    <div className="text-[16px] mt-1 text-gray-400">
+                                        {dateAdded}
+                                    </div>
+                                </div>
+
+                                {/* Days Waiting */}
+                                <div className="border-t border-[#495362] pt-5">
+                                    <div className="text-[20px] text-white">Days waiting</div>
+                                    <div className="text-[16px] mt-1 text-gray-400">
+                                        {daysWaiting} days
+                                    </div>
+                                </div>
+
+                                {/* Interest Level */}
+                                <div className="border-t border-[#495362] py-5">
+                                    <div className="text-[20px] text-white">Interest Level</div>
+                                    <div className="text-[16px] mt-1 text-gray-400">
+                                        {interestLevel} ({interestLevel === "High" ? "High" : interestLevel})
                                     </div>
                                 </div>
 

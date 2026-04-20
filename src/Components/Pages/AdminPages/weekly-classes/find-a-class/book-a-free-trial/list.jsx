@@ -459,7 +459,7 @@ const List = () => {
                 setStudents(mappedStudents);
                 setNumberOfStudents(TrialData?.totalStudents);
             }
-            
+
             // console.log('stp3')
             if (Array.isArray(TrialData.parents) && TrialData.parents.length > 0) {
                 setParents(
@@ -478,21 +478,21 @@ const List = () => {
         }
     }, [TrialData]);
 
-  useEffect(() => {
-    if (!singleClassSchedulesOnly) return;
+    useEffect(() => {
+        if (!singleClassSchedulesOnly) return;
 
-    setStudents((prev) => {
-        const updated = prev.map((student) => ({
-            ...student,
-            selectedClassId: singleClassSchedulesOnly.id,
-            selectedClassData: singleClassSchedulesOnly,
-        }));
+        setStudents((prev) => {
+            const updated = prev.map((student) => ({
+                ...student,
+                selectedClassId: singleClassSchedulesOnly.id,
+                selectedClassData: singleClassSchedulesOnly,
+            }));
 
-        console.log("Reset + Updated Students:", updated);
+            console.log("Reset + Updated Students:", updated);
 
-        return updated;
-    });
-}, [singleClassSchedulesOnly]);
+            return updated;
+        });
+    }, [singleClassSchedulesOnly]);
     const [dob, setDob] = useState('');
     const [age, setAge] = useState(null);
     const [time, setTime] = useState('');

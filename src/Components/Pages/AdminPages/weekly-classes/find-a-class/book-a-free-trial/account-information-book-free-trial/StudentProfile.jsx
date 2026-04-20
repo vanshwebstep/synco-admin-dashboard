@@ -20,7 +20,7 @@ import Comments from '../../../../Common/Comments';
 import { useEmail } from '../../../../contexts/messages/SendEmailContext';
 
 const StudentProfile = ({ StudentProfile }) => {
-    const { serviceHistoryFetchById ,transferTrialSubmit} = useBookFreeTrial();
+    const { serviceHistoryFetchById, transferTrialSubmit } = useBookFreeTrial();
     const [textloading, setTextLoading] = useState(null);
     const { openEmailPopup } = useEmail();
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -34,7 +34,7 @@ const StudentProfile = ({ StudentProfile }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const commentsPerPage = 5; // Number of comments per page
     console.log('StudentProfile', StudentProfile)
-        const studentsList = StudentProfile?.students || [];
+    const studentsList = StudentProfile?.students || [];
 
     // Pagination calculations
     const indexOfLastComment = currentPage * commentsPerPage;
@@ -218,7 +218,7 @@ const StudentProfile = ({ StudentProfile }) => {
         cancelReason: "",
         additionalNote: "",
     });
-       const [transferData, setTransferData] = useState({
+    const [transferData, setTransferData] = useState({
         bookingId: bookingId || null,
         venueId: classSchedule?.venue?.id || null,
         transferReasonClass: "", // optional notes
@@ -230,7 +230,7 @@ const StudentProfile = ({ StudentProfile }) => {
     const matchedPlan = paymentPlans?.find(plan => plan.students === studentCount);
     const emergency = StudentProfile?.emergency;
 
- const newClasses = StudentProfile?.newClasses?.map((cls) => ({
+    const newClasses = StudentProfile?.newClasses?.map((cls) => ({
         value: cls.id,
         label: `${cls.className} - (${cls.startTime} - ${cls.endTime})`,
     }));
@@ -404,7 +404,9 @@ const StudentProfile = ({ StudentProfile }) => {
         };
         setStudents(updatedStudents);
     };
-
+    const hasAnyAttended = students?.some(
+        (s) => s.studentStatus === "attended"
+    );
 
     const handleStudentSelectChange = (selectedOptions) => {
         setTransferData((prev) => {
@@ -508,7 +510,7 @@ const StudentProfile = ({ StudentProfile }) => {
             default: return "text-[#A4A5A6]";
         }
     };
-      const handleTransferConfigChange = (studentId, field, value) => {
+    const handleTransferConfigChange = (studentId, field, value) => {
         setTransferData(prev => ({
             ...prev,
             studentTransfers: {
@@ -528,21 +530,31 @@ const StudentProfile = ({ StudentProfile }) => {
             .join(" ");           // join with space
     };
     const handleBookMembership = () => {
+        const attendedStudents = students.filter(
+            (s) => s.studentStatus === "attended"
+        );
+
+        if (!attendedStudents.length) return;
+
         showConfirm(
             "Are you sure?",
             "Do you want to book a membership?",
             "Yes, Book it!"
         ).then((result) => {
             if (result.isConfirmed) {
-                // Navigate to your component/route
                 navigate("/weekly-classes/find-a-class/book-a-membership", {
-
-                    state: { TrialData: StudentProfile, comesFrom: "trials" },
+                    state: {
+                        TrialData: {
+                            ...StudentProfile,
+                            students: attendedStudents,
+                            totalStudents: attendedStudents.length, // ✅ FIX
+                        },
+                        comesFrom: "trials",
+                    },
                 });
             }
         });
     };
-
     if (loading) return <Loader />;
     console.log('students', students)
     return (
@@ -879,15 +891,7 @@ const StudentProfile = ({ StudentProfile }) => {
                                         </button>
                                     )}
 
-                                {status !== 'attended' && canCancelTrial && (
-                                    <button
-                                        onClick={() => setshowCancelTrial(true)}
-                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
-                                    >
-                                        Cancel Trial
-                                    </button>
-                                )}
-                               
+
 
                                 {status !== 'pending' && status !== 'attended' && (
                                     <button
@@ -898,26 +902,36 @@ const StudentProfile = ({ StudentProfile }) => {
                                     </button>
                                 )}
 
-                                {status === 'attended' && (
+                                {hasAnyAttended && (
                                     <>
                                         <div className="flex gap-7">
-                                            <button onClick={() => setNoMembershipSelect(true)} className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium">
+                                            <button
+                                                onClick={() => setNoMembershipSelect(true)}
+                                                className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium"
+                                            >
                                                 No Membership
                                             </button>
 
-                                            <button onClick={handleBookMembership} className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium">
+                                            <button
+                                                onClick={handleBookMembership}
+                                                className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium"
+                                            >
                                                 Book a Membership
                                             </button>
                                         </div>
-                                        <button
-                                            onClick={() => setshowCancelTrial(true)}
-                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
-                                        >
-                                            Cancel Trial
-                                        </button>
+
                                     </>
                                 )}
-                                 <button
+                                {status !== 'attended' && canCancelTrial && (
+                                    <button
+                                        onClick={() => setshowCancelTrial(true)}
+                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                    >
+                                        Cancel Trial
+                                    </button>
+                                )}
+
+                                <button
                                     onClick={() => setTransferVenue(true)}
                                     className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
                                 >

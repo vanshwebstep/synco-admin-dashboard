@@ -51,7 +51,20 @@ const ParentProfile = ({ ParentProfile }) => {
         if (page > totalPages) page = totalPages;
         setCurrentPage(page);
     };
-    const [emergencyContacts, setEmergencyContacts] = useState(ParentProfile?.emergency || []);
+    const [emergencyContacts, setEmergencyContacts] = useState([]);
+
+    useEffect(() => {
+        const emergency = ParentProfile?.emergency;
+
+        if (Array.isArray(emergency)) {
+            setEmergencyContacts(emergency);
+        } else if (emergency) {
+            // agar single object aata hai
+            setEmergencyContacts([emergency]);
+        } else {
+            setEmergencyContacts([]);
+        }
+    }, [ParentProfile]);
     const [editingEmergency, setEditingEmergency] = useState(null);
     const [showRebookTrial, setshowRebookTrial] = useState(false);
     const [showCancelTrial, setshowCancelTrial] = useState(false);
@@ -340,7 +353,7 @@ const ParentProfile = ({ ParentProfile }) => {
     const selectedClass = newClasses?.find(
         (cls) => cls.value === waitingListData?.classScheduleId
     );
-    
+
     const handleNoteChange = (e) => {
         setAdditionalNote(e.target.value);
         setRebookFreeTrial((prev) => ({

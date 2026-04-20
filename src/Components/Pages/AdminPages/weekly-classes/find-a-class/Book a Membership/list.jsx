@@ -2302,19 +2302,19 @@ const List = () => {
                                     <div className="flex justify-between text-[#333]">
                                         <span>Starter Pack</span>
                                         <span className="text-right">
-    {isApplied && appliedDiscount?.data ? (
-        <>
-            <div className="line-through text-gray-400 text-sm">
-                £{membershipPlan?.starterPackPrice?.toFixed(2)}
-            </div>
-            <div className="text-green-600 font-semibold">
-                £{appliedDiscount.data.finalPrice}
-            </div>
-        </>
-    ) : (
-        `£${pricingBreakdown?.starterPack?.toFixed(2)}`
-    )}
-</span>
+                                            {isApplied && appliedDiscount?.data ? (
+                                                <>
+                                                    <div className="line-through text-gray-400 text-sm">
+                                                        £{membershipPlan?.starterPackPrice?.toFixed(2)}
+                                                    </div>
+                                                    <div className="text-green-600 font-semibold">
+                                                        £{appliedDiscount.data.finalPrice}
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                `£${pricingBreakdown?.starterPack?.toFixed(2)}`
+                                            )}
+                                        </span>
                                     </div>
                                 )}
 
