@@ -1389,8 +1389,8 @@ const ParentProfile = ({ profile }) => {
 
                             <div className="text-center py-6 border-b border-gray-300">
                                 <h2 className="font-semibold text-[24px]"> {cancelData.cancellationType !== "immediate"
-                                            ? "Request to Cancel"
-                                            : "Cancel Membership"} </h2>
+                                    ? "Request to Cancel"
+                                    : "Cancel Membership"} </h2>
                             </div>
 
                             <div className="space-y-4 px-6 pb-6 pt-4">

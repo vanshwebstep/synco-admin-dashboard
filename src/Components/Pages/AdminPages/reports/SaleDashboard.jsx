@@ -763,12 +763,12 @@ const SaleDashboard = () => {
                                                 <div className="w-full bg-gray-100 h-2 rounded-full">
                                                     <div
                                                         className="bg-[#237FEA] h-2 rounded-full transition-all duration-500"
-                                                        style={{ width: `${percent}%` }}
+                                                        style={{ width: `${percent}` }}
                                                     />
                                                 </div>
 
                                                 <span className="text-xs text-[#344054] font-semibold">
-                                                    {percent}%
+                                                    {percent}
                                                 </span>
                                             </div>
                                         </div>

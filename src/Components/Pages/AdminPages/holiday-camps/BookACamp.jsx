@@ -34,6 +34,7 @@ const BookACamp = () => {
         time: "",
         classScheduleId: "",
     };
+    const [loadingComment, setLoadingComment] = useState(false);
 
     const [formData, setFormData] = useState({
         students: [{ ...emptyStudent }],

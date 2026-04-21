@@ -529,32 +529,44 @@ const StudentProfile = ({ StudentProfile }) => {
             .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // capitalize first letter
             .join(" ");           // join with space
     };
-    const handleBookMembership = () => {
-        const attendedStudents = students.filter(
-            (s) => s.studentStatus === "attended"
-        );
+    // const handleBookMembership = () => {
+    //     const attendedStudents = students.filter(
+    //         (s) => s.studentStatus === "attended"
+    //     );
 
-        if (!attendedStudents.length) return;
+    //     if (!attendedStudents.length) return;
 
-        showConfirm(
-            "Are you sure?",
-            "Do you want to book a membership?",
-            "Yes, Book it!"
-        ).then((result) => {
-            if (result.isConfirmed) {
-                navigate("/weekly-classes/find-a-class/book-a-membership", {
-                    state: {
-                        TrialData: {
-                            ...StudentProfile,
-                            students: attendedStudents,
-                            totalStudents: attendedStudents.length, // ✅ FIX
-                        },
-                        comesFrom: "trials",
-                    },
-                });
-            }
-        });
-    };
+    //     showConfirm(
+    //         "Are you sure?",
+    //         "Do you want to book a membership?",
+    //         "Yes, Book it!"
+    //     ).then((result) => {
+    //         if (result.isConfirmed) {
+    //             navigate("/weekly-classes/find-a-class/book-a-membership", {
+    //                 state: {
+    //                     TrialData: {
+    //                         StudentProfile,
+    //                     },
+    //                     comesFrom: "trials",
+    //                 },
+    //             });
+    //         }
+    //     });
+    // };
+     const handleBookMembership = () => {
+            showConfirm(
+                "Are you sure?",
+                "Do you want to book a membership?",
+                "Yes, Book it!"
+            ).then((result) => {
+                if (result.isConfirmed) {
+                    // Navigate to your component/route
+                    navigate("/weekly-classes/find-a-class/book-a-membership", {
+                        state: { TrialData: StudentProfile, comesFrom: "trials" },
+                    });
+                }
+            });
+        };
     if (loading) return <Loader />;
     console.log('students', students)
     return (
@@ -901,9 +913,9 @@ const StudentProfile = ({ StudentProfile }) => {
                                         Book a Membership
                                     </button>
                                 )}
-
+{/* 
                                 {hasAnyAttended && (
-                                    <>
+                                    <> */}
                                         <div className="flex gap-7">
                                             <button
                                                 onClick={() => setNoMembershipSelect(true)}
@@ -919,9 +931,9 @@ const StudentProfile = ({ StudentProfile }) => {
                                                 Book a Membership
                                             </button>
                                         </div>
-
+{/* 
                                     </>
-                                )}
+                                )} */}
                                 {status !== 'attended' && canCancelTrial && (
                                     <button
                                         onClick={() => setshowCancelTrial(true)}

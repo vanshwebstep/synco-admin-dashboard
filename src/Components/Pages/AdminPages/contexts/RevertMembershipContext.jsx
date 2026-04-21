@@ -2,6 +2,8 @@
 import React, { createContext, useContext, useState } from "react";
 
 const RevertMembershipContext = createContext();
+import { showSuccess, showError, showWarning, showConfirm } from '../../../../utils/swalHelper';
+import { useNavigate } from 'react-router-dom';
 
 export const useRevertMembership = () => useContext(RevertMembershipContext);
 
@@ -10,6 +12,7 @@ export const RevertMembershipProvider = ({ children }) => {
     const [selectedStudents, setSelectedStudents] = useState([]);
     const [currentBookingId, setCurrentBookingId] = useState(null);
     const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
 
     const openRevertPopup = (bookingId) => {
         setCurrentBookingId(bookingId);
@@ -22,7 +25,7 @@ export const RevertMembershipProvider = ({ children }) => {
         setCurrentBookingId(null);
     };
 
-    const handleSubmitRevert = async ({ token, API_BASE_URL, showSuccess, showError }) => {
+    const handleSubmitRevert = async ({ token, API_BASE_URL }) => {
         if (!selectedStudents.length) {
             showError("Error", "Please select at least one student");
             return;
@@ -56,6 +59,7 @@ export const RevertMembershipProvider = ({ children }) => {
 
             showSuccess("Success!", result.message);
             closeRevertPopup();
+            navigate('/weekly-classes/cancellation');
         } catch (error) {
             console.error(error);
             showError("Error", error.message);

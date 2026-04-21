@@ -421,6 +421,8 @@ const List = () => {
     console.log('students', students)
     console.log('singleClassSchedulesOnly', singleClassSchedulesOnly)
     const [emergency, setEmergency] = useState({
+        id: Date.now(),
+
         sameAsAbove: false,
         emergencyFirstName: "",
         emergencyLastName: "",
@@ -684,8 +686,18 @@ const List = () => {
         if (TrialData) {
             if (Array.isArray(TrialData.students) && TrialData.students.length > 0) {
 
-                const mappedStudents = TrialData.students.map((student, index) => ({
+                const formatDOB = (dob) => {
+                    if (!dob) return "";
+
+                    const [year, month, day] = dob.split("-");
+                    return `${day}/${month}/${year}`;
+                };
+
+                const mappedStudents = TrialData.students.map((student) => ({
                     ...student,
+
+                    // ✅ DOB format convert
+                    dateOfBirth: formatDOB(student.dateOfBirth),
 
                     // ✅ Inject default class if missing
                     selectedClassId:
@@ -735,6 +747,7 @@ const List = () => {
                 if (emergencyData) {
                     setEmergency({
                         sameAsAbove: false,
+                        id: emergencyData.id || "",
                         emergencyFirstName: emergencyData.emergencyFirstName || "",
                         emergencyLastName: emergencyData.emergencyLastName || "",
                         emergencyPhoneNumber: emergencyData.emergencyPhoneNumber || "",
@@ -1257,14 +1270,18 @@ const List = () => {
             totalStudents: students.length,
             keyInformation: selectedKeyInfo,
 
-            students: students.map((s, index) => ({
-                ...s,
-                dateOfBirth: toDateOnly(s.dateOfBirth),
-                classScheduleId:
-                    index === 0 || comesFrom
-                        ? singleClassSchedulesOnly?.id
-                        : s.selectedClassData?.id,
-            })),
+            students: students.map((s, index) => {
+                const { studentStatus, ...rest } = s; // ❌ remove this field
+
+                return {
+                    ...rest,
+                    dateOfBirth: toDateOnly(s.dateOfBirth),
+                    classScheduleId:
+                        index === 0 || comesFrom
+                            ? singleClassSchedulesOnly?.id
+                            : s.selectedClassData?.id,
+                };
+            }),
 
             parents: parents.map(({ id, ...rest }) =>
                 studentRemoved ? rest : { id, ...rest }  // ✅
@@ -1273,10 +1290,10 @@ const List = () => {
                 ? membershipPlan?.starterPackPrice || 0
                 : 0,
             discountId: appliedDiscount?.data?.discountId || null,
-            emergency: (() => {
-                const { id, ...rest } = emergency || {};
-                return studentRemoved ? rest : { id, ...rest };  // ✅
-            })(),
+            emergency: studentRemoved
+                ? (({ id, ...rest }) => rest)(emergency)
+                : emergency,
+
             paymentPlanId: membershipPlan?.value ?? null,
 
             ...(paymentData && {
@@ -1293,6 +1310,8 @@ const List = () => {
         };
         console.log('amountToSend', amountToSend);
         console.log('payload', payload);
+        // setIsSubmitting(false);
+
         // return;
         try {
             if (comesFrom === "trials") {
@@ -3423,6 +3442,17 @@ const List = () => {
                                                         }`}
                                                 >
                                                     Cancel
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setStep(1);
+                                                    }}
+
+                                                    type="button"
+                                                    className={`mt-6 px-6 py-2 poppins rounded-[6px] bg-white-900 text-blue-900 mr-6 border-blue-900 border-2 font-semibold ${loading ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-800 hover:text-white "
+                                                        }`}
+                                                >
+                                                    Back
                                                 </button>
                                                 <button
                                                     disabled={!isFormValid || isSubmitting}

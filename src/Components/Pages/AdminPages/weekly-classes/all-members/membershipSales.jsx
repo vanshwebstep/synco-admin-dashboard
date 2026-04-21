@@ -330,7 +330,7 @@ const trialLists = () => {
             title: "Total Sales",
             value: statsMembership?.totalSales?.value || "0",
             icon: "/members/allmemberTotalRevenue.png",
-            change: `${(statsMembership?.totalSales?.change)}%`,
+            change: `${(statsMembership?.totalSales?.change)}`,
             color: "text-green-500",
             bg: "bg-[#F3FAF5]"
         },
@@ -356,7 +356,7 @@ const trialLists = () => {
             title: "Top Sales Agent",
             value: statsMembership?.topSaleAgent?.value || "0.00",
             icon: "/members/allmemberLifeCycle.png",
-            change: `${(statsMembership?.topSaleAgent?.change)}%`,
+            change: `${(statsMembership?.topSaleAgent?.change)}`,
             color: "text-green-500",
             bg: "bg-[#F0F9F9]"
         }

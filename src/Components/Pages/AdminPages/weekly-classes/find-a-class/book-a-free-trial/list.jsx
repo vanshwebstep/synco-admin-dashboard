@@ -37,6 +37,7 @@ const List = () => {
     useEffect(() => {
         window.scrollTo(0, 0); // scrolls to top on mount
     }, []);
+    const [studentRemoved, setStudentRemoved] = useState(false);
 
     const [expression, setExpression] = useState('');
     const [result, setResult] = useState('');
@@ -175,6 +176,8 @@ const List = () => {
 
             return updatedStudents;
         });
+        setStudentRemoved(true);
+
     };
     const ClassOptions = [
         { value: "4–7 years", label: "4–7 years" },
@@ -580,6 +583,7 @@ const List = () => {
                 selectedClassId: selectedOption.value,
                 selectedClassData: selectedClass
             };
+            console.log('updatedupdated', updated)
             return updated;
         });
     };
@@ -607,6 +611,8 @@ const List = () => {
                         })
                     );
                     return [...prevStudents, ...newStudents];
+                    console.log('sdasasasasa', prevStudents, newStudents)
+
                 }
 
                 return prevStudents.slice(0, val);
@@ -621,34 +627,35 @@ const List = () => {
     }));
 
     console.log('singleClassSchedulesOnlyasasasa', singleClassSchedulesOnly)
-    useEffect(() => {
-        setStudents((prevStudents) => {
-            const n = Number(numberOfStudents) || 0;
+    // useEffect(() => {
+    //     console.log('setStudentsasasasasas', students)
+    //     setStudents((prevStudents) => {
+    //         const n = Number(numberOfStudents) || 0;
 
-            if (n > prevStudents.length) {
-                const newStudents = Array.from({ length: n - prevStudents.length }).map(() => ({
-                    studentFirstName: '',
-                    studentLastName: '',
-                    dateOfBirth: null,
-                    age: '',
-                    gender: '',
-                    medicalInformation: '',
+    //         if (n > prevStudents.length) {
+    //             const newStudents = Array.from({ length: n - prevStudents.length }).map(() => ({
+    //                 studentFirstName: '',
+    //                 studentLastName: '',
+    //                 dateOfBirth: null,
+    //                 age: '',
+    //                 gender: '',
+    //                 medicalInformation: '',
 
-                    // ✅ IMPORTANT FIX
-                    selectedClassId: singleClassSchedulesOnly?.id || null,
-                    selectedClassData: singleClassSchedulesOnly || null,
-                }));
-                console.log('singleClassSchedulesOnly112', singleClassSchedulesOnly)
-                return [...prevStudents, ...newStudents];
-            }
+    //                 // ✅ IMPORTANT FIX
+    //                 selectedClassId: singleClassSchedulesOnly?.id || null,
+    //                 selectedClassData: singleClassSchedulesOnly || null,
+    //             }));
+    //             console.log('prevStudents', prevStudents, 'newStudents', newStudents)
+    //             return [...prevStudents, ...newStudents];
+    //         }
 
-            if (n < prevStudents.length) {
-                return prevStudents.slice(0, n);
-            }
+    //         if (n < prevStudents.length) {
+    //             return prevStudents.slice(0, n);
+    //         }
 
-            return prevStudents;
-        });
-    }, [numberOfStudents, singleClassSchedulesOnly]);
+    //         return prevStudents;
+    //     });
+    // }, [numberOfStudents, singleClassSchedulesOnly]);
 
     const [parents, setParents] = useState([
         {
@@ -872,23 +879,26 @@ const List = () => {
             trialDate: selectedDate,
             totalStudents: students.length,
 
-            students: students.map((s, index) => ({
-                studentFirstName: s.studentFirstName,
-                studentLastName: s.studentLastName,
-                gender: s.gender,
-                age: s.age,
-                medicalInformation: s.medicalInformation || "",
-                dateOfBirth: toDateOnly(s.dateOfBirth),
+            students: students.map((s, index) => {
+                const { studentStatus, ...rest } = s; // ❌ remove this field
 
-                // 👇 IMPORTANT
-                classScheduleId:
-                    index === 0
-                        ? singleClassSchedulesOnly?.id
-                        : s.selectedClassData?.id
-            })),
+                return {
+                    ...rest,
+                    dateOfBirth: toDateOnly(s.dateOfBirth),
+                    classScheduleId:
+                        index === 0 || comesFrom
+                            ? singleClassSchedulesOnly?.id
+                            : s.selectedClassData?.id,
+                };
+            }),
 
-            parents: parents.map(({ id, ...rest }) => rest),
-            emergency,
+
+            parents: parents.map(({ id, ...rest }) =>
+                studentRemoved ? rest : { id, ...rest }  // ✅
+            ),
+            emergency: studentRemoved
+                ? (({ id, ...rest }) => rest)(emergency)
+                : emergency,
         };
         const payloadwaitinglist = {
             bookingId: TrialData?.bookingId || null,
@@ -897,23 +907,26 @@ const List = () => {
             trialDate: selectedDate,
             totalStudents: students.length,
 
-            students: students.map((s, index) => ({
-                studentFirstName: s.studentFirstName,
-                studentLastName: s.studentLastName,
-                gender: s.gender,
-                age: s.age,
-                medicalInformation: s.medicalInformation || "",
-                dateOfBirth: toDateOnly(s.dateOfBirth),
+            students: students.map((s, index) => {
+                const { studentStatus, ...rest } = s; // ❌ remove this field
 
-                // 👇 IMPORTANT
-                classScheduleId:
-                    index === 0
-                        ? singleClassSchedulesOnly?.id
-                        : s.selectedClassData?.id
-            })),
+                return {
+                    ...rest,
+                    dateOfBirth: toDateOnly(s.dateOfBirth),
+                    classScheduleId:
+                        index === 0 || comesFrom
+                            ? singleClassSchedulesOnly?.id
+                            : s.selectedClassData?.id,
+                };
+            }),
 
-            parents: parents.map(({ id, ...rest }) => rest),
-            emergency,
+
+            parents: parents.map(({ id, ...rest }) =>
+                studentRemoved ? rest : { id, ...rest }  // ✅
+            ),
+            emergency: studentRemoved
+                ? (({ id, ...rest }) => rest)(emergency)
+                : emergency,
         };
 
 
@@ -938,6 +951,8 @@ const List = () => {
             // Optionally show error alert
         } finally {
             setIsSubmitting(false); // Stop loading
+            setStudentRemoved(false);
+
         }
     };
 

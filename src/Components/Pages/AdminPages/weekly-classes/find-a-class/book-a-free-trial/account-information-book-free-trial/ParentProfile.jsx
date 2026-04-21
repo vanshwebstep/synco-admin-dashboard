@@ -365,6 +365,18 @@ const ParentProfile = ({ ParentProfile }) => {
         const { name, value } = e.target;
         stateSetter((prev) => ({ ...prev, [name]: value }));
     };
+
+    const handleStudentDataChange = (index, field, value) => {
+        const updatedStudents = [...students];
+        updatedStudents[index] = {
+            ...updatedStudents[index],
+            [field]: value,
+        };
+        setStudents(updatedStudents);
+    };
+    const hasAnyAttended = students?.some(
+        (s) => s.studentStatus === "attended"
+    );
     const handleDataChange = (index, field, value) => {
         const updatedParents = [...parents];
         updatedParents[index][field] = value;
@@ -892,14 +904,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                         </button>
                                     )}
 
-                                {status !== 'attended' && canCancelTrial && (
-                                    <button
-                                        onClick={() => setshowCancelTrial(true)}
-                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
-                                    >
-                                        Cancel Trial
-                                    </button>
-                                )}
+                                
 
                                 {status !== 'pending' && status !== 'attended' && (
                                     <button
@@ -910,27 +915,32 @@ const ParentProfile = ({ ParentProfile }) => {
                                     </button>
                                 )}
 
-                                {status === 'attended' && (
-                                    <>
+                              
                                         <div className="flex gap-7">
-                                            <button onClick={() => setNoMembershipSelect(true)} className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium">
+                                            <button
+                                                onClick={() => setNoMembershipSelect(true)}
+                                                className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium"
+                                            >
                                                 No Membership
                                             </button>
 
-                                            <button onClick={handleBookMembership} className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium">
+                                            <button
+                                                onClick={handleBookMembership}
+                                                className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium"
+                                            >
                                                 Book a Membership
                                             </button>
-
                                         </div>
-                                        <button
-                                            onClick={() => setshowCancelTrial(true)}
-                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
-                                        >
-                                            Cancel Trial
-                                        </button>
-                                    </>
-                                )}
 
+                                   
+{status !== 'attended' && canCancelTrial && (
+                                    <button
+                                        onClick={() => setshowCancelTrial(true)}
+                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                    >
+                                        Cancel Trial
+                                    </button>
+                                )}
                                 {/* {(status === "attended" || (status === "request_to_cancel" && canCancelTrial)) && ( */}
                                 <button
                                     onClick={() => setTransferVenue(true)}
