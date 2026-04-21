@@ -217,7 +217,7 @@ const WaitingList = () => {
                         ? item.bookedByAdmin.lastName
                         : ""
                         }`.trim(),
-                    "Days Waiting": item.waitingDays || "N/A",
+                    "Days Waiting": item?.waitingDays ,
                     "Interest level": item.interest || "-",
                     Status: formatLabel(item.status) || "-",
                 });
@@ -607,7 +607,7 @@ const WaitingList = () => {
         },
         {
             header: "Days Waiting",
-            render: (item) => item.waitingDays || "N/A",
+            render: (item) => item?.waitingDays,
         },
         {
             header: "Interest level",

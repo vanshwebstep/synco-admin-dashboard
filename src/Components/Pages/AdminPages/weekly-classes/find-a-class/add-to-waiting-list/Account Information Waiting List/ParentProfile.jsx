@@ -65,7 +65,20 @@ const ParentProfile = ({ profile }) => {
     const students = profile?.students || [];
     console.log('students', students)
     const [parents, setParents] = useState(profile.parents || []);
-    const [emergencyContacts, setEmergencyContacts] = useState(profile?.emergency || []);
+    const [emergencyContacts, setEmergencyContacts] = useState([]);
+
+    useEffect(() => {
+        const emergency = profile?.emergency;
+
+        if (Array.isArray(emergency)) {
+            setEmergencyContacts(emergency);
+        } else if (emergency) {
+            // agar single object aata hai
+            setEmergencyContacts([emergency]);
+        } else {
+            setEmergencyContacts([]);
+        }
+    }, [profile]);
     console.log('profile', profile)
     const bookedBy = profile?.bookedByAdmin || profile?.bookedBy;
     const [addToWaitingList, setaddToWaitingList] = useState(false);

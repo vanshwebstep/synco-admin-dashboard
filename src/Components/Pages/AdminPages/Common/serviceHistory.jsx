@@ -170,10 +170,40 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
                       </div>
                     </div>
                   )}
+                  {(comesFrom === "cancellation") && (
+                    <div className="block pr-3">
+                      <div className="whitespace-nowrap font-semibold text-[14px]">
+                        {labels.membershipStartDate || "Membership Start Date"}
+                      </div>
+                      <div className="text-[16px] font-semibold text-[#384455]">
+                        {serviceHistory?.startDate || "-"}
+                      </div>
+                    </div>
+                  )}
+                  {(comesFrom === "cancellation") && (
+                    <div className="block pr-3">
+                      <div className="whitespace-nowrap font-semibold text-[14px]">
+                        {labels.cancellationReason || "Membership Start Date"}
+                      </div>
+                      <div className="text-[16px] font-semibold text-[#384455]">
+                        {serviceHistory?.cancelData?.cancelReason || serviceHistory?.cancelData?.reasonForCancelling || "-"}
+                      </div>
+                    </div>
+                  )}
+                  {(comesFrom === "cancellation") && (
+                    <div className="block pr-3">
+                      <div className="whitespace-nowrap font-semibold text-[14px]">
+                        {labels.cancellationDate || "Membership Start Date"}
+                      </div>
+                      <div className="text-[16px] font-semibold text-[#384455]">
+                        {formatDate(serviceHistory?.cancelData?.cancelDate) || "-"}
+                      </div>
+                    </div>
+                  )}
 
 
                   {/* Booking ID */}
-                  {(comesFrom === "cancellation" || comesFrom === "freeTrial" || comesFrom === "membership") && (
+                  {( comesFrom === "freeTrial" || comesFrom === "membership") && (
                     <div className="block pr-3">
                       <div className="whitespace-nowrap font-semibold text-[14px]">
                         {labels.bookingId || "Booking ID"}
@@ -194,7 +224,7 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
                     </div>
                   )}
 
-                  {(comesFrom === "cancellation" || comesFrom === "membership") && (
+                  {( comesFrom === "membership") && (
                     <div className="block pr-3">
                       <div className="whitespace-nowrap font-semibold text-[14px]">
                         {labels.price || "Price"}
@@ -237,16 +267,7 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
 
 
                   {/* Progress */}
-                  {(comesFrom === "cancellation") && (
-                    <div>
-                      <div className="whitespace-nowrap font-semibold text-[14px]">
-                        {labels.progress || "Progress"}
-                      </div>
-                      <div className="text-[16px] font-semibold text-[#384455]">
-                        {progress || "-"}
-                      </div>
-                    </div>
-                  )}
+               
                   {(comesFrom === "membership") && (
                     <div>
                       <div className="whitespace-nowrap font-semibold text-[14px]">

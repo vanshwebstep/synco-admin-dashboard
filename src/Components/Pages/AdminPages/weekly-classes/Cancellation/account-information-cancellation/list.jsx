@@ -155,7 +155,10 @@ const AccountInfoCancellation = (from) => {
               membershipPlan: "Membership Plan ",
               students: "Students",
               venue: "  Venue",
-               bookingId: serviceHistory?.payments?.[0]?.paymentType == "accesspaysuite"
+              membershipStartDate: "Membership Start Date",
+              cancellationReason: "Cancellation Reason",
+              cancellationDate: "Cancellation Date",
+              bookingId: serviceHistory?.payments?.[0]?.paymentType == "accesspaysuite"
                 ? "Accesspaysuite"
                 : "KGoCardless ID",
               price: "Monthly Price",

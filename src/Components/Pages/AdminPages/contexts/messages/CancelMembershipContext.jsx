@@ -29,8 +29,8 @@ const CancelMembershipPopup = () => {
         cancelLoading,
         closeCancelPopup,
         handleCancelSubmit,
+        alreadyrequestToCancel
     } = useContext(CancelMembershipContext);
-
     const handleRadioChange = (value) => {
         setCancelData((prev) => ({ ...prev, cancellationType: value }));
     };
@@ -62,16 +62,22 @@ const CancelMembershipPopup = () => {
                 </button>
 
                 <div className="text-center py-6 border-b border-gray-300">
-                    <h2 className="font-semibold text-[24px]">{cancelData.cancellationType !== "immediate"
-                        ? "Request to Cancel"
-                        : "Cancel Membership"}</h2>
+                    <h2 className="font-semibold text-[24px]">
+                        {alreadyrequestToCancel
+                            ? "Cancel Membership"
+                            : cancelData.cancellationType !== "immediate"
+                                ? "Request to Cancel"
+                                : "Cancel Membership"}
+                    </h2>
                 </div>
 
                 <div className="space-y-4 px-6 pb-6 pt-4">
                     {/* Cancellation Type */}
                     <div>
                         <label className="block text-[16px] font-semibold">Cancellation Type</label>
-                        {cancelTypeOptions.map((option) => (
+                        {cancelTypeOptions.filter(option =>
+                            alreadyrequestToCancel ? option.value === "immediate" : true
+                        ).map((option) => (
                             <label key={option.value} className="flex mt-4 items-center mb-2 cursor-pointer">
                                 <label className="flex items-center cursor-pointer space-x-2">
                                     <input
@@ -115,29 +121,28 @@ const CancelMembershipPopup = () => {
                             {studentsList.map((student) => {
                                 const isCancelled = student.studentStatus === "cancelled";
                                 const isRequesttoCancelled = student.studentStatus === "request_to_cancel";
-
+                                const isDisabled =
+                                    isCancelled ||
+                                    (cancelData.cancellationType !== "immediate" && isRequesttoCancelled);
                                 return (
                                     <label
                                         key={student.id}
-                                        className={`flex items-center space-x-3 ${isCancelled || isRequesttoCancelled
-                                                ? "cursor-not-allowed opacity-50"
-                                                : "cursor-pointer"
+                                        className={`flex items-center space-x-3 ${isDisabled
+                                            ? "cursor-not-allowed opacity-50"
+                                            : "cursor-pointer"
                                             }`}
                                     >
                                         <input
                                             type="checkbox"
-                                            disabled={isCancelled || isRequesttoCancelled}
+                                            disabled={isDisabled}
                                             checked={selectedStudents.some((s) => s.id === student.id)}
-                                            onChange={() =>
-                                                (!isCancelled && !isRequesttoCancelled) &&
-                                                handleStudentToggle(student)
-                                            }
+                                            onChange={() => !isDisabled && handleStudentToggle(student)}
                                             className="w-4 h-4"
                                         />
                                         <span className="text-[15px]">
                                             {student.studentFirstName} {student.studentLastName}
                                             {isCancelled && " (Already Cancelled)"}
-                                            {isRequesttoCancelled && " (Already Request to Cancel)"}
+                                            {isRequesttoCancelled && cancelData.cancellationType !== "immediate" && " (Already Request to Cancel)"}
                                         </span>
                                     </label>
                                 );
@@ -217,23 +222,32 @@ export const CancelMembershipProvider = ({ children }) => {
         otherReason: "",
         _selectedStudents: [],
     });
+    const [alreadyrequestToCancel, setAlreadyrequestToCancel] = useState(false);
+
     const [studentsList, setStudentsList] = useState([]);
     const [callbacks, setCallbacks] = useState({ showError: null, showWarning: null, onSubmit: null });
 
     const selectedStudents = cancelData._selectedStudents || [];
 
-    const openCancelPopup = (bookingId, students, { showError, showWarning, onSubmit }) => {
+    const openCancelPopup = (
+        bookingId,
+        students,
+        { showError, showWarning, onSubmit, alreadyrequestToCancel }
+    ) => {
         setCancelData({
             bookingId,
-            cancellationType: "immediate",
+            cancellationType: alreadyrequestToCancel ? "immediate" : "immediate",
             cancelReason: "",
             cancelDate: null,
             additionalNote: "",
             otherReason: "",
             _selectedStudents: [],
         });
+
         setStudentsList(Array.isArray(students) ? students : []);
         setCallbacks({ showError, showWarning, onSubmit });
+
+        setAlreadyrequestToCancel(!!alreadyrequestToCancel); // ✅ important
         setShowCancelPopup(true);
     };
 
@@ -261,7 +275,7 @@ export const CancelMembershipProvider = ({ children }) => {
         <CancelMembershipContext.Provider value={{
             showCancelPopup, cancelData, setCancelData,
             selectedStudents, studentsList,
-            cancelLoading, openCancelPopup, closeCancelPopup, handleCancelSubmit,
+            cancelLoading, openCancelPopup, closeCancelPopup, handleCancelSubmit, alreadyrequestToCancel
         }}>
             {children}
             <CancelMembershipPopup />

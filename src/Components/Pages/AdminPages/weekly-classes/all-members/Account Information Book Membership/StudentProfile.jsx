@@ -130,7 +130,7 @@ const StudentProfile = ({ profile }) => {
         }
     }, []);
 
-      // useEffect(() => {
+    // useEffect(() => {
     //     fetchComments();
     // }, [])
     const handleSubmitComment = async (e) => {
@@ -528,7 +528,7 @@ const StudentProfile = ({ profile }) => {
 
     const getStatusColor = (status) => {
         switch (status) {
-   case "active": return "text-[#43BE4F]";
+            case "active": return "text-[#43BE4F]";
             case "attended": return "text-[#43BE4F]";
             case "frozen": return "text-[#509EF9]";
             case "cancelled": return "text-[#FC5D5D]";

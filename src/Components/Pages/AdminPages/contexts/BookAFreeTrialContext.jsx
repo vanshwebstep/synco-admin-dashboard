@@ -1286,7 +1286,7 @@ export const BookFreeTrialProvider = ({ children }) => {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.message || "Failed to cancel Membership");
+        throw new Error(result.message || result.studentIds || "Failed to cancel Membership");
       }
 
       await showSuccess("Success!", result.message || "Membership cancelled successfully.");

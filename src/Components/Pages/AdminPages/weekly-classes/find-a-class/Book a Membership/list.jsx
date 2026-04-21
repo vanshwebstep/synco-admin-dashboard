@@ -561,7 +561,7 @@ const List = () => {
         // -------- STUDENTS VALIDATION --------
         for (let i = 0; i < students.length; i++) {
             const s = students[i];
-
+            console.log('sdsdsds', s)
             if (!s.studentFirstName) {
                 showError("Required Fields", `Student ${i + 1}: First name is required`);
                 return false;
@@ -574,7 +574,16 @@ const List = () => {
                 showError("Required Fields", `Student ${i + 1}: Date of Birth is required`);
                 return false;
             }
-
+            if (
+                s.selectedClassData &&
+                Number(s.selectedClassData.capacity) === 0
+            ) {
+                showError(
+                    "Class Full",
+                    `Student ${i + 1}: Please select a class which has available capacity`
+                );
+                return false;
+            }
             if (!s.gender) {
                 showError("Required Fields", `Student ${i + 1}: Gender is required`);
                 return false;
@@ -1417,7 +1426,7 @@ const List = () => {
     }, [emergency]);
     useEffect(() => {
         if (singleClassSchedulesOnly?.venue?.paymentGroups?.length > 0) {
-            const cleanedPlans = singleClassSchedulesOnly.venue.paymentGroups[0].paymentPlans.map(plan => ({
+            const cleanedPlans = singleClassSchedulesOnly.venue.paymentGroups[0].paymentPlans?.map(plan => ({
                 id: plan.id,
                 title: plan.title,
                 price: plan.price,
@@ -1714,8 +1723,14 @@ const List = () => {
         const proRataLessons = remainingSessions.length;
 
         // ── PRICE PER LESSON ──
-        const rawPricePerLesson = (monthlyPrice * durationMonths) / totalLessons;
-        const pricePerLesson = Math.floor(rawPricePerLesson * 100) / 100;
+        // const rawPricePerLesson = (monthlyPrice * durationMonths) / totalLessons;
+        const lessonsInThisMonth = sessionsInStartMonth.length || 1;
+
+        const pricePerLesson =
+            durationMonths === 1
+                ? monthlyPrice / lessonsInThisMonth
+                : (monthlyPrice * durationMonths) / totalLessons;
+        // const pricePerLesson = Math.floor(rawPricePerLesson * 100) / 100;
 
         // ── PRO-RATA COST ──
         const pricePerLessonPence = Math.round(pricePerLesson * 100);
@@ -2912,7 +2927,7 @@ const List = () => {
                                     }
 
                                     // Step 2: Form validation
-                                    // if (!validationCheck()) return;
+                                    if (!validationCheck()) return;
 
                                     // Step 3: Proceed
                                     setShowPopup(true);

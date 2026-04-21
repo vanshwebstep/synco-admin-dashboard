@@ -13,16 +13,21 @@ import Loader from '../../../contexts/Loader';
 import { usePermission } from '../../../Common/permission';
 import { addDays } from "date-fns";
 import { useNotification } from '../../../contexts/NotificationContext';
-import { showSuccess, showError } from '../../../../../../utils/swalHelper';
+import { showSuccess, showError, showWarning, showConfirm } from '../../../../../../utils/swalHelper';
 import Comments from '../../../Common/Comments';
 import { useEmail } from '../../../contexts/messages/SendEmailContext';
 import { useRevertMembership } from '../../../contexts/RevertMembershipContext';
 import RevertMembershipPopup from '../../../Common/RevertMembershipPoppup';
+import { useCancelMembership } from '../../../contexts/messages/CancelMembershipContext';
+import { useNavigate } from 'react-router-dom';
 
 const StudentProfile = ({ StudentProfile }) => {
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const [selectedDate, setSelectedDate] = useState(null);
     console.log('StudentProfile', StudentProfile)
+    const { openCancelPopup } = useCancelMembership();
+    const navigate = useNavigate();
+
     const [transferVenue, setTransferVenue] = useState(false);
     const [textloading, setTextLoading] = useState(null)
     const { openEmailPopup } = useEmail();
@@ -255,15 +260,15 @@ const StudentProfile = ({ StudentProfile }) => {
         }
     }
     const handleReinstateMembership = () => {
-             showConfirm(
-         "Reinstate Membership?",
-         `You are about to reinstate:
+        showConfirm(
+            "Reinstate Membership?",
+            `You are about to reinstate:
          
-         Venue: ${ParentProfile?.venue?.name}
-         Class: ${ParentProfile?.students?.[0]?.classSchedule?.className}  
+         Venue: ${StudentProfile?.venue?.name}
+         Class: ${StudentProfile?.students?.[0]?.classSchedule?.className}  
          Continue?`,
-         "Yes, Reinstate"
-       ).then((result) => {
+            "Yes, Reinstate"
+        ).then((result) => {
             if (result.isConfirmed) {
                 // Navigate to your component/route
                 navigate("/weekly-classes/find-a-class/book-a-membership", {
@@ -779,18 +784,6 @@ const StudentProfile = ({ StudentProfile }) => {
                                         )}
 
 
-                                    {(status === "active" || status === "frozen" || status === "cancelled" || status === "request_to_cancel") && (
-                                        <button
-                                            onClick={() => setaddToWaitingList(true)}
-                                            className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
-            ${addToWaitingList
-                                                    ? "bg-[#237FEA] text-white shadow-md"   // Active state
-                                                    : "bg-white  border border-gray-300  hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"
-                                                }`}
-                                        >
-                                            Add to the waiting list
-                                        </button>
-                                    )}
                                     {(status === "cancelled") && (
                                         <button
                                             onClick={handleReinstateMembership}
@@ -805,14 +798,7 @@ const StudentProfile = ({ StudentProfile }) => {
                                         </button>
                                     )}
 
-                                    {(status === "active" || status === "request_to_cancel") && canCancelTrial && (
-                                        <button
-                                            onClick={() => setFreezeMembership(true)}
-                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
-                                        >
-                                            Freeze Membership
-                                        </button>
-                                    )}
+
                                     {(status === "active" || status === "request_to_cancel") && canCancelTrial && (
                                         <button
                                             onClick={() => openRevertPopup(id)}
@@ -839,9 +825,16 @@ const StudentProfile = ({ StudentProfile }) => {
                                     )}
                                     {(status === "active" || status === "frozen" || status === "request_to_cancel") && canCancelTrial && (
                                         <button
-                                            onClick={() => setshowCancelTrial(true)}
+                                            onClick={() =>
+                                                openCancelPopup(id, StudentProfile?.students, {
+                                                    showError,
+                                                    showWarning,
+                                                    onSubmit: cancelMembershipSubmit,
+                                                    alreadyrequestToCancel: true
+                                                })
+                                            }
                                             className={`w-full border text-[18px] rounded-xl py-3 font-medium transition-shadow duration-300
-    ${showCancelTrial
+                                                                         ${showCancelTrial
                                                     ? "bg-[#FF6C6C] text-white shadow-md border-transparent"
                                                     : "border-gray-300 text-[#717073] hover:bg-[#FF6C6C] hover:text-white hover:shadow-md"
                                                 }`}

@@ -178,6 +178,7 @@ import { EmailProvider } from './Components/Pages/AdminPages/contexts/messages/S
 import { CancelMembershipProvider } from './Components/Pages/AdminPages/contexts/messages/CancelMembershipContext.jsx';
 import { PhoneInputProvider } from './Components/Pages/AdminPages/contexts/PhoneInputContext.jsx';
 import { RevertMembershipProvider } from './Components/Pages/AdminPages/contexts/RevertMembershipContext.jsx';
+import { WaitingListProvider } from './Components/Pages/AdminPages/contexts/messages/WaitingListContext.jsx';
 
 const commonRole = ['Admin', 'user', 'Member', 'Agent', 'Super Admin'];
 
@@ -1334,7 +1335,9 @@ function App() {
                                                           <CancelMembershipProvider>
                                                             <PhoneInputProvider>
                                                               <RevertMembershipProvider>
+                                                                <WaitingListProvider>
                                                                 <AppRoutes />
+                                                                </WaitingListProvider>
                                                               </RevertMembershipProvider>
                                                             </PhoneInputProvider>
                                                           </CancelMembershipProvider>

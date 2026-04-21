@@ -22,6 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import { useRevertMembership } from '../../../contexts/RevertMembershipContext';
 import RevertMembershipPopup from '../../../Common/RevertMembershipPoppup';
 import PhoneNumberInput from '../../../Common/PhoneNumberInput';
+import { useCancelMembership } from '../../../contexts/messages/CancelMembershipContext';
 
 const ParentProfile = ({ ParentProfile }) => {
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -30,6 +31,8 @@ const ParentProfile = ({ ParentProfile }) => {
     const token = localStorage.getItem("adminToken");
     const [transferVenue, setTransferVenue] = useState(false);
     const [textloading, setTextLoading] = useState(null)
+    const { openCancelPopup } = useCancelMembership();
+
     const { openEmailPopup } = useEmail();
     const navigate = useNavigate();
     const { openRevertPopup } = useRevertMembership();
@@ -215,15 +218,15 @@ const ParentProfile = ({ ParentProfile }) => {
     console.log('matchedPlan', matchedPlan)
 
     const handleReinstateMembership = () => {
-       showConfirm(
-  "Reinstate Membership?",
-  `You are about to reinstate:
+        showConfirm(
+            "Reinstate Membership?",
+            `You are about to reinstate:
   
   Venue: ${ParentProfile?.venue?.name}
   Class: ${ParentProfile?.students?.[0]?.classSchedule?.className}  
   Continue?`,
-  "Yes, Reinstate"
-).then((result) => {
+            "Yes, Reinstate"
+        ).then((result) => {
             if (result.isConfirmed) {
                 // Navigate to your component/route
                 navigate("/weekly-classes/find-a-class/book-a-membership", {
@@ -515,7 +518,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                             className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                             value={parent.interestReason || ""}
                                             readOnly
-                                            // onChange={(e) => handleDataChange(index, "interestReason", e.target.value)}
+                                        // onChange={(e) => handleDataChange(index, "interestReason", e.target.value)}
                                         />
                                     </div>
                                     <div className="w-1/2">
@@ -524,7 +527,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                             className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                             value={parent.interestReasonOther || ""}
                                             readOnly
-                                            // onChange={(e) => handleDataChange(index, "interestReasonOther", e.target.value)}
+                                        // onChange={(e) => handleDataChange(index, "interestReasonOther", e.target.value)}
                                         />
                                     </div>
                                 </div>
@@ -830,18 +833,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                     )}
 
 
-                                {(status === "active" || status === "frozen" || status === "cancelled" || status === "request_to_cancel") && (
-                                    <button
-                                        onClick={() => setaddToWaitingList(true)}
-                                        className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
-            ${addToWaitingList
-                                                ? "bg-[#237FEA] text-white shadow-md"   // Active state
-                                                : "bg-white  border border-gray-300  hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"
-                                            }`}
-                                    >
-                                        Add to the waiting list
-                                    </button>
-                                )}
+
                                 {(status === "cancelled") && (
                                     <button
                                         onClick={handleReinstateMembership}
@@ -856,14 +848,6 @@ const ParentProfile = ({ ParentProfile }) => {
                                     </button>
                                 )}
 
-                                {(status === "active" || status === "request_to_cancel") && canCancelTrial && (
-                                    <button
-                                        onClick={() => setFreezeMembership(true)}
-                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
-                                    >
-                                        Freeze Membership
-                                    </button>
-                                )}
                                 {(status === "active" || status === "request_to_cancel") && canCancelTrial && (
                                     <button
                                         onClick={() => openRevertPopup(id)}
@@ -892,9 +876,16 @@ const ParentProfile = ({ ParentProfile }) => {
                                 )}
                                 {(status === "active" || status === "frozen" || status === "request_to_cancel") && canCancelTrial && (
                                     <button
-                                        onClick={() => setshowCancelTrial(true)}
+                                        onClick={() =>
+                                            openCancelPopup(id, ParentProfile?.students, {
+                                                showError,
+                                                showWarning,
+                                                onSubmit: cancelMembershipSubmit,
+                                                alreadyrequestToCancel: true
+                                            })
+                                        }
                                         className={`w-full border text-[18px] rounded-xl py-3 font-medium transition-shadow duration-300
-    ${showCancelTrial
+                                       ${showCancelTrial
                                                 ? "bg-[#FF6C6C] text-white shadow-md border-transparent"
                                                 : "border-gray-300 text-[#717073] hover:bg-[#FF6C6C] hover:text-white hover:shadow-md"
                                             }`}
@@ -1298,7 +1289,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                             }
 
                                             // If all validations pass → call submit function
-                                            cancelMembershipSubmit(cancelData, "allMembers");
+                                            cancelMembershipSubmit(cancelData, "allMembers", selectedStudents);
                                         }}
                                         className="w-1/2 bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
                                     >
