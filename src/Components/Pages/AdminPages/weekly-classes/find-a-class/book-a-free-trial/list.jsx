@@ -38,14 +38,14 @@ const List = () => {
         window.scrollTo(0, 0); // scrolls to top on mount
     }, []);
     const [studentRemoved, setStudentRemoved] = useState(false);
-
+    const [selectedVenue, setSelectedVenue] = useState(null);
     const [expression, setExpression] = useState('');
     const [result, setResult] = useState('');
     const [isPrefilled, setIsPrefilled] = useState(false);
 
     const navigate = useNavigate();
     const location = useLocation();
-    const { classId, existingparentid, TrialData, comesFrom, from_lead, leadId } = location.state || {};
+    const { classId, existingparentid, TrialData, comesFrom, from_lead, leadId, useofRebook } = location.state || {};
     console.log('existingparentid-', existingparentid)
     const popup1Ref = useRef(null);
     const popup2Ref = useRef(null);
@@ -57,9 +57,10 @@ const List = () => {
     const [isOpen, setIsOpen] = useState(false);
     console.log('TrialData', TrialData)
     console.log('comesFrom', comesFrom)
-    // console.log('classId', classId)
+    console.log('classId', classId)
+    console.log('useofRebook', useofRebook)
     const { fetchFindClassID, singleClassSchedulesOnly, loading } = useClassSchedule() || {};
-    const { createBookFreeTrials, isBooked, setIsBooked, fetchMembershipByParent, parentData, createBookFreeTrialsByWaitingList, } = useBookFreeTrial()
+    const { createBookFreeTrials, isBooked, setIsBooked, fetchMembershipByParent, parentData, createBookFreeTrialsByWaitingList, createReBookFreeTrials } = useBookFreeTrial()
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { keyInfoData, fetchKeyInfo } = useMembers();
     const { adminInfo, setAdminInfo } = useNotification();
@@ -108,18 +109,23 @@ const List = () => {
     const [comment, setComment] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const commentsPerPage = 5; // Number of comments per page
+    const [selectedClassId, setSelectedClassId] = useState(null);
 
     // Pagination calculations
     const indexOfLastComment = currentPage * commentsPerPage;
     const indexOfFirstComment = indexOfLastComment - commentsPerPage;
     const currentComments = commentsList.slice(indexOfFirstComment, indexOfLastComment);
     const totalPages = Math.ceil(commentsList.length / commentsPerPage);
-    const finalClassId = classId || TrialData?.classScheduleId || TrialData?.students?.[0]?.classSchedule?.id;
-    const goToPage = (page) => {
-        if (page < 1) page = 1;
-        if (page > totalPages) page = totalPages;
-        setCurrentPage(page);
-    };
+    const finalClassId =
+        selectedClassId ||
+        classId ||
+        TrialData?.classScheduleId ||
+        TrialData?.students?.[0]?.classSchedule?.id; const goToPage = (page) => {
+            if (page < 1) page = 1;
+            if (page > totalPages) page = totalPages;
+            setCurrentPage(page);
+        };
+
     const [congestionNote, setCongestionNote] = useState(null);
     const [numberOfStudents, setNumberOfStudents] = useState(1)
     const [selectedDate, setSelectedDate] = useState(null);
@@ -294,7 +300,7 @@ const List = () => {
         }
     };
 
-
+    console.log('venues', venues)
     const handleDelete = (id) => {
         showConfirm(
             'Are you sure?',
@@ -572,18 +578,44 @@ const List = () => {
         return cls.capacity > 0;
     }) : [];
     const handleStudentClassChange = (index, selectedOption) => {
-        const selectedClass = classesWithCapacity?.find(
-            (cls) => cls.id === selectedOption.value
-        );
-
         setStudents((prev) => {
             const updated = [...prev];
-            updated[index] = {
-                ...updated[index],
-                selectedClassId: selectedOption.value,
-                selectedClassData: selectedClass
-            };
-            console.log('updatedupdated', updated)
+
+            // 👇 If cleared
+            if (!selectedOption) {
+                updated[index] = {
+                    ...updated[index],
+                    selectedClassId: null,
+                    selectedClassData: null,
+                    error: null
+                };
+                return updated;
+            }
+
+            const selectedClass = classesWithCapacity?.find(
+                (cls) => cls.id === selectedOption.value
+            );
+
+            // 👇 Check capacity condition
+            const isOnlyOneClass = classesWithCapacity?.length === 1;
+            const hasNoCapacity = selectedClass?.capacity === 0;
+
+            if (isOnlyOneClass && hasNoCapacity) {
+                updated[index] = {
+                    ...updated[index],
+                    selectedClassId: selectedOption.value,
+                    selectedClassData: null, // ❌ clear time
+                    error: "Class has no capacity"
+                };
+            } else {
+                updated[index] = {
+                    ...updated[index],
+                    selectedClassId: selectedOption.value,
+                    selectedClassData: selectedClass,
+                    error: null
+                };
+            }
+
             return updated;
         });
     };
@@ -858,6 +890,8 @@ const List = () => {
 
         return `${year}-${month}-${day}`;
     };
+    const firstStudentId =
+        students[0]?.id || TrialData?.students?.[0]?.id || null;
     const handleSubmit = async () => {
         if (!selectedDate) {
             showWarning("Trial Date Required", "Please select a trial date before submitting.");
@@ -865,7 +899,7 @@ const List = () => {
         }
         setIsSubmitting(true); // Start loading
         const missingClass = students.some(
-            (s, i) => i !== 0 && !s.selectedClassData
+            (s) => !s.selectedClassData && !singleClassSchedulesOnly?.id
         );
 
         if (missingClass) {
@@ -875,7 +909,7 @@ const List = () => {
 
         const payload = {
             keyInformation: selectedKeyInfo,
-            venueId: singleClassSchedulesOnly?.venue?.id,
+            venueId: selectedVenue?.id,
             trialDate: selectedDate,
             totalStudents: students.length,
 
@@ -886,9 +920,7 @@ const List = () => {
                     ...rest,
                     dateOfBirth: toDateOnly(s.dateOfBirth),
                     classScheduleId:
-                        index === 0 || comesFrom
-                            ? singleClassSchedulesOnly?.id
-                            : s.selectedClassData?.id,
+                        s.selectedClassData?.id || singleClassSchedulesOnly?.id,
                 };
             }),
 
@@ -903,7 +935,7 @@ const List = () => {
         const payloadwaitinglist = {
             bookingId: TrialData?.bookingId || null,
             keyInformation: selectedKeyInfo,
-            venueId: singleClassSchedulesOnly?.venue?.id,
+            venueId: selectedVenue?.id,
             trialDate: selectedDate,
             totalStudents: students.length,
 
@@ -914,9 +946,7 @@ const List = () => {
                     ...rest,
                     dateOfBirth: toDateOnly(s.dateOfBirth),
                     classScheduleId:
-                        index === 0 || comesFrom
-                            ? singleClassSchedulesOnly?.id
-                            : s.selectedClassData?.id,
+                        s.selectedClassData?.id || singleClassSchedulesOnly?.id,
                 };
             }),
 
@@ -937,7 +967,10 @@ const List = () => {
                 await createBookFreeTrials(payload, leadId); // assume it's a promise
             }
             else if (comesFrom === "waitingList") {
-                await createBookFreeTrialsByWaitingList(payloadwaitinglist, TrialData.id);
+                await createReBookFreeTrials(payloadwaitinglist, TrialData.id);
+            }
+            else if (useofRebook == "useofRebook") {
+                await createReBookFreeTrials(payload, TrialData.id);
             }
             else {
                 await createBookFreeTrials(payload); // assume it's a promise
@@ -968,11 +1001,13 @@ const List = () => {
 
                 await fetchFindClassID(finalClassId);
                 await fetchKeyInfo();
-                // await fetchComments();
 
-                // 👇 Call membership API
                 if (existingparentid) {
                     await fetchMembershipByParent(existingparentid);
+                }
+
+                if (useofRebook == 'useofRebook') {
+                    await fetchVenues();
                 }
             }
         };
@@ -1129,8 +1164,28 @@ const List = () => {
             showWarning("Please select a trial date");
             return;
         }
+        // console.log('mappedStudents', mappedStudents)
+        const mappedStudents = students.map((student, index) => ({
+
+            selectedClassData:
+                venueClassOptions.find(
+                    (opt) => opt.value === student.selectedClassId
+                )
+        }));
+        console.log('mappedStudents', mappedStudents)
+
+        if (!mappedStudents.every((s) => s?.selectedClassData?.value)) {
+            e.preventDefault();
+            showWarning("please select class first");
+            return;
+        }
         handleSubmit();
     };
+    useEffect(() => {
+        if (singleClassSchedulesOnly?.venue) {
+            setSelectedVenue(singleClassSchedulesOnly.venue);
+        }
+    }, [singleClassSchedulesOnly]);
     useEffect(() => {
         if (parentData?.id) {
             setParents([
@@ -1303,15 +1358,40 @@ const List = () => {
                         <h2 className="text-[24px] font-semibold">Enter Trial Information</h2>
                         <div className="">
                             <label htmlFor="" className="text-base font-semibold">Venue</label>
-                            <div className="relative mt-2 ">
-                                <input
-                                    type="text"
-                                    placeholder="Select venue"
-                                    value={singleClassSchedulesOnly?.venue?.name}
-                                    readOnly
-                                    className="w-full border border-gray-300 rounded-xl px-3 text-[16px] py-3 pl-9 focus:outline-none"
+                            <div className="relative mt-2">
+                                {useofRebook === "useofRebook" ? (
+                                    <select
+                                        value={selectedVenue?.id || ""}
+                                        onChange={(e) => {
+                                            const venue = venues.find(v => v.id === Number(e.target.value));
 
-                                />
+                                            setSelectedVenue(venue);
+
+                                            // 👇 get classScheduleId from selected venue
+                                            if (venue?.classSchedules?.length > 0) {
+                                                setSelectedClassId(venue.classSchedules[0].id); // or based on your logic
+                                            }
+                                        }}
+                                        className="w-full border border-gray-300 rounded-xl px-3 text-[16px] py-3 pl-9 focus:outline-none"
+                                    >
+                                        <option value="">Select venue</option>
+
+                                        {venues.map((venue) => (
+                                            <option key={venue.id} value={venue.id}>
+                                                {venue.name} ({venue.area})
+                                            </option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <input
+                                        type="text"
+                                        value={singleClassSchedulesOnly?.venue?.name || ""}
+                                        readOnly
+                                        placeholder="Select venue"
+                                        className="w-full border border-gray-300 rounded-xl px-3 text-[16px] py-3 pl-9 focus:outline-none"
+                                    />
+                                )}
+
                                 <FiSearch className="absolute left-3 top-4 text-[20px]" />
                             </div>
                         </div>
@@ -1538,6 +1618,7 @@ const List = () => {
                                             <Select
                                                 className="w-full mt-2 text-base"
                                                 classNamePrefix="react-select"
+                                                isClearable
                                                 placeholder="Select class"
                                                 options={venueClassOptions}
                                                 value={
@@ -1549,6 +1630,11 @@ const List = () => {
                                                     handleStudentClassChange(index, option)
                                                 }
                                             />
+                                            {student.error && (
+                                                <p className="text-red-500 text-sm mt-1">
+                                                    {student.error}
+                                                </p>
+                                            )}
                                         </div>
 
                                         {/* TIME */}

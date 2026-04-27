@@ -16,8 +16,11 @@ import { saveAs } from "file-saver";
 import StatsGrid from '../../Common/StatsGrid';
 import DynamicTable from '../../Common/DynamicTable';
 import { useBookFreeTrialLoader } from '../../contexts/BookAFreeTrialLoaderContext';
+import { useEmail } from '../../contexts/messages/SendEmailContext';
+
 const trialLists = () => {
     const { fetchBookFreeTrials, fetchBookFreeTrialsLoading, statsFreeTrial, bookFreeTrials, setSearchTerm, bookedByAdmin, searchTerm, loading, selectedVenue, setStatus, status, setSelectedVenue, myVenues, setMyVenues, sendFreeTrialmail } = useBookFreeTrial() || {};
+    const { openEmailPopup } = useEmail();
 
     const [currentDate, setCurrentDate] = useState(new Date());
     const [fromDate, setFromDate] = useState(null);
@@ -488,8 +491,8 @@ const trialLists = () => {
     
         const result = await showConfirm(
             "Are you sure?",
-            "These members will be permanently deleted.",
-            "warning"
+            "Are you sure you want to remove this account from Synco?",
+            "Yes"
         );
     
         if (!result.isConfirmed) return;
@@ -979,25 +982,51 @@ const trialLists = () => {
                                 </div>
                             </div>
                             <div className="grid md:grid-cols-3 gap-2 justify-between">
-                                <button
+                                 <button
+                                onClick={() => {
+                                    if (bookFreeTrials && bookFreeTrials.length > 0) {
 
-                                    onClick={() => {
-                                        if (!selectedStudents || selectedStudents.length === 0) {
-                                            showWarning("No students selected", "Please select at least one student before sending an email.");
-                                            return;
+                                        // Step 1: Filter only selected bookings
+                                        const filteredBookings = bookFreeTrials.filter(b =>
+                                            selectedStudents.includes(b.id)
+                                        );
+
+                                        // Step 2: Extract emails from filtered bookings
+                                        const parentEmails = filteredBookings.flatMap(b =>
+                                            (b.parents || [])
+                                                .map(p => p.parentEmail)
+                                                .filter(email => email)
+                                        );
+
+                                        if (parentEmails.length > 0) {
+                                            openEmailPopup(
+                                                parentEmails,
+                                                "/api/admin/send-manual-email",
+                                                { token, showError, showSuccess }
+                                            );
+                                        } else {
+                                            showWarning(
+                                                "No Emails Found",
+                                                "Selected parents do not have valid email addresses."
+                                            );
                                         }
 
-                                        sendFreeTrialmail(selectedStudents);
-                                    }}
-                                    className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-3 py-2 rounded-xl  text-[16px]"
-                                >
-                                    <img
-                                        src="/images/icons/mail.png"
-                                        className="w-4 h-4 sm:w-5 sm:h-5"
-                                        alt="mail"
-                                    />
-                                    Send Email
-                                </button>
+                                    } else {
+                                        showWarning(
+                                            "No Parents Found",
+                                            "No parent data available to send email."
+                                        );
+                                    }
+                                }}
+                                className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl text-[16px]"
+                            >
+                                <img
+                                    src="/images/icons/mail.png"
+                                    className="w-4 h-4 sm:w-5 sm:h-5"
+                                    alt=""
+                                />
+                                Send Email
+                            </button>
 
                                 <button
                                     onClick={() => {

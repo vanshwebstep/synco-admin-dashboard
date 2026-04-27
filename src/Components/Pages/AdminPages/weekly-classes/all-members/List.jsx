@@ -15,8 +15,11 @@ import { useBookFreeTrial } from '../../contexts/BookAFreeTrialContext';
 import debounce from "lodash.debounce";
 import toast from 'react-hot-toast';
 import axios from 'axios';
+import { useEmail } from '../../contexts/messages/SendEmailContext';
 
 const trialLists = () => {
+    const { openEmailPopup } = useEmail();
+
     const [currentDate, setCurrentDate] = useState(new Date());
     const [fromDate, setFromDate] = useState(null);
     const [toDate, setToDate] = useState(null);
@@ -137,7 +140,7 @@ const trialLists = () => {
     };
 
 
-
+    console.log('selectedStudents:', selectedStudents);
     // ✅ Define all filters with dynamic API mapping
     const filterOptions = [
         { label: "Pending", key: "pending", apiParam: "status", apiValue: "pending" },
@@ -498,44 +501,44 @@ const trialLists = () => {
         setSearchTerm(value);
         handleSearch(value);
     };
-const handleDelete = useCallback(async () => {
-    if (!token) return;
+    const handleDelete = useCallback(async () => {
+        if (!token) return;
 
-    if (!selectedStudents?.length) {
-        showWarning("Please select at least 1 student");
-        return;
-    }
+        if (!selectedStudents?.length) {
+            showWarning("Please select at least 1 student");
+            return;
+        }
 
-    const result = await showConfirm(
-        "Are you sure?",
-        "These members will be permanently deleted.",
-        "warning"
-    );
-
-    if (!result.isConfirmed) return;
-
-    try {
-        await axios.delete(
-            `${API_BASE_URL}/api/admin/delete`, // ✅ match your working fetch URL
-            {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                data: {
-                    bookingIds: selectedStudents, // ✅ body goes inside `data`
-                },
-            }
+        const result = await showConfirm(
+            "Are you sure?",
+            "Are you sure you want to remove this account from Synco?",
+            "Yes"
         );
 
-        showSuccess("Deleted!", "Members removed successfully.");
-        fetchBookMemberships();
+        if (!result.isConfirmed) return;
 
-    } catch (err) {
-        console.error(err);
-        toast.error(err?.response?.data?.message || "Failed to delete members");
-    }
-}, [token, selectedStudents, fetchBookMemberships]);
+        try {
+            await axios.delete(
+                `${API_BASE_URL}/api/admin/delete`, // ✅ match your working fetch URL
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    data: {
+                        bookingIds: selectedStudents, // ✅ body goes inside `data`
+                    },
+                }
+            );
+
+            showSuccess("Deleted!", "Members removed successfully.");
+            fetchBookMemberships();
+
+        } catch (err) {
+            console.error(err);
+            toast.error(err?.response?.data?.message || "Failed to delete members");
+        }
+    }, [token, selectedStudents, fetchBookMemberships]);
 
     const membershipColumns = [
         { header: "Name", key: "name", selectable: true }, // <-- checkbox + student name
@@ -606,6 +609,7 @@ const handleDelete = useCallback(async () => {
         },
         { header: "Status", render: (item, student) => getStatusBadge(student.studentStatus) },
     ];
+    console.log('bookMembership', bookMembership);
     if (loading) return <Loader />;
     return (
         <div className="pt-1 bg-gray-50 min-h-screen">
@@ -954,13 +958,41 @@ const handleDelete = useCallback(async () => {
                         <div className="grid mt-5 grid-cols-3 gap-2 justify-between">
                             <button
                                 onClick={() => {
-                                    if (selectedStudents && selectedStudents.length > 0) {
-                                        sendBookMembershipMail(selectedStudents);
+                                    if (bookMembership && bookMembership.length > 0) {
+
+                                        // Step 1: Filter only selected bookings
+                                        const filteredBookings = bookMembership.filter(b =>
+                                            selectedStudents.includes(b.id)
+                                        );
+
+                                        // Step 2: Extract emails from filtered bookings
+                                        const parentEmails = filteredBookings.flatMap(b =>
+                                            (b.parents || [])
+                                                .map(p => p.parentEmail)
+                                                .filter(email => email)
+                                        );
+
+                                        if (parentEmails.length > 0) {
+                                            openEmailPopup(
+                                                parentEmails,
+                                                "/api/admin/send-manual-email",
+                                                { token, showError, showSuccess }
+                                            );
+                                        } else {
+                                            showWarning(
+                                                "No Emails Found",
+                                                "Selected parents do not have valid email addresses."
+                                            );
+                                        }
+
                                     } else {
-                                        showWarning("No Students Selected", "Please select at least one student before sending an email.");
+                                        showWarning(
+                                            "No Parents Found",
+                                            "No parent data available to send email."
+                                        );
                                     }
                                 }}
-                                className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl  text-[16px]"
+                                className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl text-[16px]"
                             >
                                 <img
                                     src="/images/icons/mail.png"

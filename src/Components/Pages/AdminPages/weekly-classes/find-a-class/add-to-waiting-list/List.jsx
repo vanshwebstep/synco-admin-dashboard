@@ -14,6 +14,7 @@ import toast from 'react-hot-toast';
 import axios from 'axios';
 import StatsGrid from '../../../Common/StatsGrid';
 import DynamicTable from '../../../Common/DynamicTable';
+import { useEmail } from '../../../contexts/messages/SendEmailContext';
 
 const WaitingList = () => {
     const [textloading, setTextLoading] = useState(null);
@@ -22,6 +23,8 @@ const WaitingList = () => {
     const [fromDate, setFromDate] = useState(null);
     const [toDate, setToDate] = useState(null);
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+        const { openEmailPopup } = useEmail();
+    
     // const [selectedDate, setSelectedDate] = useState(null);
     const { fetchAddtoWaitingList, statsFreeTrial, bookFreeTrials, setSearchTerm, bookedByAdmin, searchTerm, loading, selectedVenue, setStatus, status, setSelectedVenue, myVenues, setMyVenues, sendWaitingListMail, setLoading } = useBookFreeTrial() || {};
     const [isFilterApplied, setIsFilterApplied] = useState(false);
@@ -217,7 +220,7 @@ const WaitingList = () => {
                         ? item.bookedByAdmin.lastName
                         : ""
                         }`.trim(),
-                    "Days Waiting": item?.waitingDays ,
+                    "Days Waiting": item?.waitingDays,
                     "Interest level": item.interest || "-",
                     Status: formatLabel(item.status) || "-",
                 });
@@ -985,26 +988,51 @@ const WaitingList = () => {
                             <div className="grid grid-cols-3 gap-2 mt-5  justify-between">
                                 <button
                                     onClick={() => {
-                                        if (!selectedStudents || selectedStudents.length === 0) {
-                                            showWarning(
-                                                "No students selected",
-                                                "Please select at least one student before sending an email."
-                                            );
-                                            return;
-                                        }
+                                        if (bookFreeTrials && bookFreeTrials.length > 0) {
 
-                                        sendWaitingListMail(selectedStudents);
+                                            // Step 1: Filter only selected bookings
+                                            const filteredBookings = bookFreeTrials.filter(b =>
+                                                selectedStudents.includes(b.id || b.bookingId)
+                                            );
+                                            console.log('selectedStudents', selectedStudents)
+                                            console.log('bookFreeTrials', bookFreeTrials)
+                                            console.log('filteredBookings', filteredBookings)
+                                            // Step 2: Extract emails from filtered bookings
+                                            const parentEmails = filteredBookings.flatMap(b =>
+                                                (b.parents || [])
+                                                    .map(p => p.parentEmail)
+                                                    .filter(email => email)
+                                            );
+
+                                            if (parentEmails.length > 0) {
+                                                openEmailPopup(
+                                                    parentEmails,
+                                                    "/api/admin/send-manual-email",
+                                                    { token, showError, showSuccess }
+                                                );
+                                            } else {
+                                                showWarning(
+                                                    "No Emails Found",
+                                                    "Selected parents do not have valid email addresses."
+                                                );
+                                            }
+
+                                        } else {
+                                            showWarning(
+                                                "No Parents Found",
+                                                "No parent data available to send email."
+                                            );
+                                        }
                                     }}
-                                    className="flex gap-2 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl  text-[16px]"
+                                    className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl text-[16px]"
                                 >
                                     <img
                                         src="/images/icons/mail.png"
                                         className="w-4 h-4 sm:w-5 sm:h-5"
-                                        alt="mail"
+                                        alt=""
                                     />
                                     Send Email
                                 </button>
-
 
                                 <button onClick={() => {
                                     if (!selectedStudents || selectedStudents.length === 0) {

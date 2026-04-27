@@ -57,7 +57,7 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
     icon,    // header icon
     progress // e.g. "6/12 months"
   } = serviceHistory;
-  console.log('comesFrom', comesFrom)
+  console.log('serviceHistory', serviceHistory)
   const statusStyles = {
     attended: "bg-green-500 text-white",
     active: "bg-green-500 text-white",
@@ -268,7 +268,7 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
 
                   {/* Progress */}
                
-                  {(comesFrom === "membership") && (
+                  {/* {(comesFrom === "membership") && (
                     <div>
                       <div className="whitespace-nowrap font-semibold text-[14px]">
                         {labels.coach || "Coach"}
@@ -277,7 +277,7 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
                         {bookedByAdmin?.firstName} {bookedByAdmin?.lastName}
                       </div>
                     </div>
-                  )}
+                  )} */}
 
 
                   {/* Booking Source */}

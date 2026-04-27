@@ -544,7 +544,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
     const duration = paymentPlan?.duration ?? 0;
     let interval = paymentPlan?.interval ?? "";
     if (duration > 1 && interval) interval += "s";
-    const MembershipTenure = duration && interval ? `${duration} ${interval}` : "";
+    const MembershipTenure = profile?.membershipTenure || "";
 
     const dateBooked = profile?.startDate || profile?._extra?.partyDate || profile?._extra?.sessionDate || profile?.booking?.date;
     const status = profile?.status;
@@ -569,6 +569,13 @@ const ParentProfile = ({ profile: rawProfile }) => {
         updated[index][field] = value;
         setEmergencyContacts(updated);
     };
+
+    const totalBars = profile?.progressBar?.totalBars || 0;
+    const filledBars = profile?.progressBar?.filledBars || 0;
+    console.log('filledBars', filledBars)
+    const progressPercent =
+        totalBars > 0 ? Math.round((filledBars / totalBars) * 100) : 0;
+
 
     const buildFamilyPayload = () =>
         studentsList.map((student, sIndex) => ({
@@ -870,10 +877,14 @@ const ParentProfile = ({ profile: rawProfile }) => {
                     <div className="text-[20px] text-white mb-3">Progress</div>
                     <div className="flex items-center justify-between">
                         <div className="w-[90%] bg-[#fff] h-3 rounded-full overflow-hidden">
-                            <div className="bg-green-500 h-4 rounded-full" style={{ width: "78%" }}></div>
+                            <div
+                                className="bg-green-500 h-4 rounded-full"
+                                style={{ width: `${progressPercent}%` }}
+                            ></div>
                         </div>
-                        <div className="text-white text-right mt-1 text-[14px]">78%</div>
-                    </div>
+                        <div className="text-white text-right mt-1 text-[14px]">
+                            {progressPercent}%
+                        </div> </div>
                 </div>
             </>
         );
@@ -2359,7 +2370,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                 </div>
                                 <div className="flex justify-end gap-4 pt-4">
                                     <button onClick={() => cancelWaitingListSpot(cancelWaitingList, 'allMembers')} className="w-1/2 bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow">
-                                        Cancel Spot
+                                      Submit
                                     </button>
                                 </div>
                             </div>

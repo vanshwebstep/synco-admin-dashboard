@@ -1,20 +1,24 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { FiSearch } from "react-icons/fi";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import Select from "react-select";
 import { Check, Filter, Loader2 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { useBookFreeTrial } from '../../contexts/BookAFreeTrialContext';
 import Loader from '../../contexts/Loader';
-import { showWarning, showSuccess, showError } from '../../../../../utils/swalHelper';
+import { showWarning, showConfirm, showSuccess, showError } from '../../../../../utils/swalHelper';
+import axios from "axios";
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import StatsGrid from '../../Common/StatsGrid';
 import DynamicTable from '../../Common/DynamicTable';
+import { useEmail } from '../../contexts/messages/SendEmailContext';
 const trialLists = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [fromDate, setFromDate] = useState(null);
     const [toDate, setToDate] = useState(null);
+    const { openEmailPopup } = useEmail();
+
     const [selectedDate, setSelectedDate] = useState(null);
     const navigate = useNavigate();
     const [isFilterApplied, setIsFilterApplied] = useState(false);
@@ -154,6 +158,48 @@ const trialLists = () => {
             setAgentsLoading(false);
         }
     }, []);
+
+    const handleDelete = useCallback(async () => {
+        if (!selectedStudents || selectedStudents.length === 0) {
+            showWarning("Please select at least 1 student");
+            return;
+        }
+
+        const result = await showConfirm(
+            "Are you sure?",
+            "Are you sure you want to remove this account from Synco?",
+            "Yes"
+        );
+
+        if (!result.isConfirmed) return;
+
+        const token = localStorage.getItem("adminToken");
+        if (!token) return;
+
+        try {
+            await axios.delete(
+                `${API_BASE_URL}/api/admin/delete`,
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    data: {
+                        bookingIds: selectedStudents,
+                    },
+                }
+            );
+
+            showSuccess("Deleted!", "Members removed successfully.");
+            fetchMembershipSales();
+            setSelectedStudents([]);
+        } catch (error) {
+            console.error("Failed to delete:", error);
+            showError("Error", "Failed to delete members.");
+        }
+    }, [selectedStudents, API_BASE_URL, fetchMembershipSales]);
+
+
 
 
 
@@ -551,7 +597,7 @@ const trialLists = () => {
         },
         { header: "Membership Plan", render: (item) => item?.paymentPlanData?.title },
 
-        { header: "Status", render: (item , student) => getStatusBadge(student.studentStatus) },
+        { header: "Status", render: (item, student) => getStatusBadge(student.studentStatus) },
     ];
     if (loading) return <Loader />;
 
@@ -564,6 +610,9 @@ const trialLists = () => {
                     <StatsGrid stats={stats} variant="B" />
 
                     <div className="flex justify-end items-center gap-2">
+                        <div className="bg-white min-w-[40px] min-h-[38px] border border-gray-300 p-2 rounded-full flex items-center justify-center">
+                            <Trash2 size={18} className='cursor-pointer text-red-500' onClick={handleDelete} />
+                        </div>
                         <div className="bg-white min-w-[38px] min-h-[38px]   border border-gray-300 p-2 rounded-full flex items-center justify-center"> <Filter size={16} className='cursor-pointer' onClick={() => setShowFilter(!showFilter)} />
                         </div>
                         <div onClick={handleClick} className="bg-white min-w-[38px] min-h-[38px]   border border-gray-300 p-2 rounded-full flex items-center justify-center">
@@ -883,17 +932,47 @@ const trialLists = () => {
                             <div className="grid grid-cols-3 md:flex-row gap-2 justify-between">
                                 <button
                                     onClick={() => {
-                                        if (selectedStudents && selectedStudents.length > 0) {
-                                            sendActiveBookMembershipMail(selectedStudents);
+                                        if (bookMembership && bookMembership.length > 0) {
+
+                                            // Step 1: Filter only selected bookings
+                                            const filteredBookings = bookMembership.filter(b =>
+                                                selectedStudents.includes(b.bookingId)
+                                            );
+                                            console.log('selectedStudents', selectedStudents)
+                                            console.log('bookMembership', bookMembership)
+                                            console.log('filteredBookings', filteredBookings)
+                                            // Step 2: Extract emails from filtered bookings
+                                            const parentEmails = filteredBookings.flatMap(b =>
+                                                (b.parents || [])
+                                                    .map(p => p.parentEmail)
+                                                    .filter(email => email)
+                                            );
+
+                                            if (parentEmails.length > 0) {
+                                                openEmailPopup(
+                                                    parentEmails,
+                                                    "/api/admin/send-manual-email",
+                                                    { token, showError, showSuccess }
+                                                );
+                                            } else {
+                                                showWarning(
+                                                    "No Emails Found",
+                                                    "Selected parents do not have valid email addresses."
+                                                );
+                                            }
+
                                         } else {
-                                            showWarning("No Students Selected", "Please select at least one student before sending an email.");
+                                            showWarning(
+                                                "No Parents Found",
+                                                "No parent data available to send email."
+                                            );
                                         }
                                     }}
-                                    className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-3 py-2 rounded-xl text-[16px]"
+                                    className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl text-[16px]"
                                 >
                                     <img
                                         src="/images/icons/mail.png"
-                                        className="md:w-[13px] md:h-[12px] "
+                                        className="w-4 h-4 sm:w-5 sm:h-5"
                                         alt=""
                                     />
                                     Send Email

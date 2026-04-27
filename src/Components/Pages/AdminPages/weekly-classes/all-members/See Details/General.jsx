@@ -158,9 +158,12 @@ const ParentProfile = (stateData) => {
                     <div className="text-[20px] text-white mb-3">Progress</div>
                     <div className="flex items-center justify-between">
                         <div className="w-[90%] bg-[#fff] h-3 rounded-full overflow-hidden">
-                            <div className="bg-green-500 h-4 rounded-full" style={{ width: "78%" }}></div>
+                            <div
+                                className="bg-green-500 h-4 rounded-full"
+                                style={{ width: `${progressPercent}%` }}
+                            ></div>
                         </div>
-                        <div className="text-white text-right mt-1 text-[14px]">78%</div>
+                        <div className="text-white text-right mt-1 text-[14px]"> {progressPercent}%</div>
                     </div>
                 </div>
             </>
@@ -445,9 +448,13 @@ const ParentProfile = (stateData) => {
     if (duration > 1 && interval) {
         interval += "s";
     }
-    const MembershipTenure = duration && interval
-        ? `${duration} ${interval}`
-        : "";
+    const MembershipTenure = profile?.membershipTenure || "";
+    const totalBars = profile?.progressBar?.totalBars || 0;
+    const filledBars = profile?.progressBar?.filledBars || 0;
+    console.log('filledBars', filledBars)
+    const progressPercent =
+        totalBars > 0 ? Math.round((filledBars / totalBars) * 100) : 0;
+
 
     const dateBooked = profile?.startDate;
     const status = profile?.status;
@@ -762,9 +769,9 @@ const ParentProfile = (stateData) => {
                                         </div>
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Phone number</label>
-                                            
 
-                                               <PhoneNumberInput
+
+                                            <PhoneNumberInput
                                                 value={parent.parentPhoneNumber}
                                                 onChange={(fullNumber) =>
                                                     handleDataChange(index, "parentPhoneNumber", fullNumber)
@@ -2389,7 +2396,7 @@ const ParentProfile = (stateData) => {
 
                                         className="w-1/2  bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
                                     >
-                                        Cancel Spot
+                                        Submit
                                     </button>
                                 </div>
                             </div>

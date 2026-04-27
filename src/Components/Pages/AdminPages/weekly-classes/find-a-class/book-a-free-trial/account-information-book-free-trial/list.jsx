@@ -17,6 +17,9 @@ import ServiceHistory from "../../../../Common/serviceHistory";
 import StudentProfile from "./StudentProfile";
 import Loader from "../../../../contexts/Loader";
 import Feedback from "./Feedback";
+import axios from "axios";
+import { showConfirm, showSuccess, showError } from "../../../../../../../utils/swalHelper";
+import { Trash2 } from "lucide-react";
 
 const list = () => {
   const { serviceHistoryFetchById, serviceHistory, loading } = useBookFreeTrial();
@@ -43,6 +46,40 @@ const list = () => {
   const [activeTab, setActiveTab] = useState("Parent Profile");
   console.log('serviceHistory', serviceHistory)
 
+  const handleDelete = async () => {
+    const result = await showConfirm(
+      "Are you sure?",
+      "Are you sure you want to remove this account from Synco?",
+      "Yes"
+    );
+
+    if (!result.isConfirmed) return;
+
+    const token = localStorage.getItem("adminToken");
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+    try {
+      await axios.delete(
+        `${API_BASE_URL}/api/admin/delete`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          data: {
+            bookingIds: [itemId],
+          },
+        }
+      );
+
+      showSuccess("Deleted!", "Account removed successfully.");
+      navigate('/weekly-classes/trial/list');
+    } catch (err) {
+      console.error(err);
+      showError("Error", err?.response?.data?.message || "Failed to delete account");
+    }
+  };
+
   if (loading) {
     return (
       <>
@@ -55,7 +92,7 @@ const list = () => {
     <>
       <div className="relative ">
 
-        <div className=" flex items-end mb-5 gap-2 md:gap-3">
+        <div className="flex justify-between items-center mb-5 w-full">
           <div className=" flex items-center gap-2 md:gap-3">
             <h2 onClick={() => {
               navigate('/weekly-classes/trial/list');
@@ -86,8 +123,10 @@ const list = () => {
               ))}
             </div>
           </div>
+          
+          <div className="flex items-center gap-2 md:gap-3">
           {activeTab === "Service History" && (
-            <div className=" flex items-start  gap-2 md:gap-3">
+            <>
               {/* <div className="flex gap-2  items-center    p-2 rounded-xl flex-wrap bg-white">
             <img
               src="/images/points.png"
@@ -130,8 +169,17 @@ const list = () => {
                 <img src="/members/add.png" className="w-4 md:w-5" alt="Add" />
                 Add booking
               </button>
-            </div>
+            </>
           )}
+
+          <button
+            onClick={handleDelete}
+            className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl hover:bg-red-100 transition-colors font-semibold"
+          >
+            <Trash2 size={18} />
+            Delete Account
+          </button>
+          </div>
         </div>
         {activeTab === "Service History" && <ServiceHistory
           serviceHistory={serviceHistory}

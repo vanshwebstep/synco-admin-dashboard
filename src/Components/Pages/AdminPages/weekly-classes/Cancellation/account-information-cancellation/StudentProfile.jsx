@@ -112,6 +112,7 @@ const StudentProfile = ({ StudentProfile }) => {
     const currentComments = commentsList.slice(indexOfFirstComment, indexOfLastComment);
     const totalPages = Math.ceil(commentsList.length / commentsPerPage);
 
+        const MembershipTenure = StudentProfile?.membershipTenure || "";
 
     const formatTimeAgo = (timestamp) => {
         const now = new Date();
@@ -708,7 +709,7 @@ const StudentProfile = ({ StudentProfile }) => {
                                 {status === 'request_to_cancel' ? (
                                     <div className="border-t border-[#495362] py-5">
                                         <div className=" text-[20px] text-white">Membership Tenure </div>
-                                        <div className="text-[16px]  mt-1 text-gray-400">11 Months (static)</div>
+                                        <div className="text-[16px]  mt-1 text-gray-400">{MembershipTenure}</div>
                                     </div>
                                 ) : (
                                     <>
@@ -853,7 +854,7 @@ const StudentProfile = ({ StudentProfile }) => {
                                     {status === 'attended' && (
                                         <div className="flex gap-7">
                                             <button className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium">
-                                                No Membership
+                                               Declined Membership
                                             </button>
 
                                             <button className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium">

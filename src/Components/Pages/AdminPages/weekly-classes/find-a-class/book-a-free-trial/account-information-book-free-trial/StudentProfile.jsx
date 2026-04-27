@@ -26,6 +26,7 @@ const StudentProfile = ({ StudentProfile }) => {
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const [selectedDate, setSelectedDate] = useState(null);
     const [transferVenue, setTransferVenue] = useState(false);
+    const [selectedStudents, setSelectedStudents] = useState([]);
 
     const navigate = useNavigate();
     const [commentsList, setCommentsList] = useState([]);
@@ -128,6 +129,7 @@ const StudentProfile = ({ StudentProfile }) => {
     const handleCancel = () => {
         const payload = {
             ...formData,
+            studentIds: selectedStudents.map(student => student.id),
             cancelReason:
                 formData.cancelReason === "other"
                     ? formData.otherReason
@@ -154,7 +156,17 @@ const StudentProfile = ({ StudentProfile }) => {
         }
         return date.toLocaleDateString("en-US", options);
     };
+    const handleStudentSelect = (student) => {
+        setSelectedStudents((prev) => {
+            const exists = prev.find((s) => s.id === student.id);
 
+            if (exists) {
+                return prev.filter((s) => s.id !== student.id);
+            } else {
+                return [...prev, student];
+            }
+        });
+    };
     const {
         id,
         bookingId,
@@ -553,20 +565,13 @@ const StudentProfile = ({ StudentProfile }) => {
     //         }
     //     });
     // };
-     const handleBookMembership = () => {
-            showConfirm(
-                "Are you sure?",
-                "Do you want to book a membership?",
-                "Yes, Book it!"
-            ).then((result) => {
-                if (result.isConfirmed) {
-                    // Navigate to your component/route
-                    navigate("/weekly-classes/find-a-class/book-a-membership", {
-                        state: { TrialData: StudentProfile, comesFrom: "trials" },
-                    });
-                }
-            });
-        };
+    const handleBookMembership = () => {
+
+        navigate("/weekly-classes/find-a-class/book-a-membership", {
+            state: { TrialData: StudentProfile, comesFrom: "trials" },
+        });
+
+    };
     if (loading) return <Loader />;
     console.log('students', students)
     return (
@@ -910,28 +915,28 @@ const StudentProfile = ({ StudentProfile }) => {
                                         onClick={handleBookMembership}
                                         className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
                                     >
-                                        Book a Membership
+                                        Start Membership
                                     </button>
                                 )}
-{/* 
+                                {/* 
                                 {hasAnyAttended && (
                                     <> */}
-                                        <div className="flex gap-7">
-                                            <button
-                                                onClick={() => setNoMembershipSelect(true)}
-                                                className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium"
-                                            >
-                                                No Membership
-                                            </button>
+                                <div className="flex gap-7">
+                                    <button
+                                        onClick={() => setNoMembershipSelect(true)}
+                                        className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium"
+                                    >
+                                        Declined Membership
+                                    </button>
 
-                                            <button
-                                                onClick={handleBookMembership}
-                                                className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium"
-                                            >
-                                                Book a Membership
-                                            </button>
-                                        </div>
-{/* 
+                                    <button
+                                        onClick={handleBookMembership}
+                                        className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium"
+                                    >
+                                        Start Membership
+                                    </button>
+                                </div>
+                                {/* 
                                     </>
                                 )} */}
                                 {status !== 'attended' && canCancelTrial && (
@@ -1311,7 +1316,44 @@ const StudentProfile = ({ StudentProfile }) => {
                             </div>
 
                             <div className="space-y-4 px-6 pb-6 pt-4">
-                                {/* Reason */}
+                                <div>
+                                    <label className="block text-[16px] font-semibold">
+                                        Select Students to Cancel
+                                    </label>
+
+                                    <div className="mt-3 space-y-2">
+                                        {studentsList.map((student) => {
+                                            const isCancelled = student.studentStatus === "cancelled";
+
+                                            return (
+                                                <label
+                                                    key={student.id}
+                                                    className={`flex items-center space-x-3 ${isCancelled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        disabled={isCancelled}
+                                                        checked={selectedStudents.some((s) => s.id === student.id)}
+                                                        onChange={() =>
+                                                            !isCancelled &&
+                                                            handleStudentSelect({
+                                                                id: student.id,
+                                                                studentFirstName: student.studentFirstName,
+                                                                studentLastName: student.studentLastName,
+                                                            })
+                                                        }
+                                                        className="w-4 h-4"
+                                                    />
+
+                                                    <span className="text-[15px]">
+                                                        {student.studentFirstName} {student.studentLastName}
+                                                        {isCancelled && " (Already Cancelled)"}
+                                                    </span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
                                 <div>
                                     <label className="block text-[16px] font-semibold">
                                         Reason for Cancellation
@@ -1394,13 +1436,13 @@ const StudentProfile = ({ StudentProfile }) => {
                             </button>
 
                             <div className="text-center py-6 border-b border-gray-300">
-                                <h2 className="font-semibold text-[24px]">No Membership Selected  </h2>
+                                <h2 className="font-semibold text-[24px]">Declined Membership  </h2>
                             </div>
 
                             <div className="space-y-4 px-6 pb-6 pt-4">
                                 <div>
                                     <label className="block text-[16px] font-semibold">
-                                        Reason for Not Proceeding
+                                        Reason for Declining Membership
                                     </label>
                                     <Select
                                         value={reasonOptions.find((opt) => opt.value === cancelWaitingList.noMembershipReason)}
@@ -1445,7 +1487,7 @@ const StudentProfile = ({ StudentProfile }) => {
 
                                         className="w-1/2  bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
                                     >
-                                        Cancel Spot
+                                        Submit
                                     </button>
                                 </div>
                             </div>

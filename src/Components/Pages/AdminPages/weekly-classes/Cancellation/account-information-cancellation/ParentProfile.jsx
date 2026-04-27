@@ -158,6 +158,8 @@ const ParentProfile = ({ ParentProfile }) => {
         preferredStartDate: null,
         notes: "",
     });
+        const MembershipTenure = ParentProfile?.membershipTenure || "";
+
     const [commentsList, setCommentsList] = useState([]);
     const [loadingComment, setLoadingComment] = useState(false);
     const [comment, setComment] = useState('');
@@ -752,7 +754,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                 {status === 'request_to_cancel' ? (
                                     <div className="border-t border-[#495362] py-5">
                                         <div className=" text-[20px] text-white">Membership Tenure </div>
-                                        <div className="text-[16px]  mt-1 text-gray-400">11 Months (static)</div>
+                                        <div className="text-[16px]  mt-1 text-gray-400">{MembershipTenure}</div>
                                     </div>
                                 ) : (
                                     <>

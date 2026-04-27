@@ -11,7 +11,8 @@ import {
 import { useLeads } from "../../contexts/LeadsContext";
 import Select from "react-select";
 import * as XLSX from "xlsx";
-import { showWarning } from "../../../../../utils/swalHelper";
+import { showError, showWarning ,showSuccess} from "../../../../../utils/swalHelper";
+import { useEmail } from '../../contexts/messages/SendEmailContext';
 
 import { saveAs } from "file-saver";
 function exportDataToExcel(data) {
@@ -58,6 +59,8 @@ function exportDataToExcel(data) {
 const Filters = () => {
 
     const { fetchData, activeTabm, setActiveTab, data, setSelectedVenue, selectedVenue, selectedUserIds, sendleadsMail, setCurrentPage, setSearchTerm, searchTerm } = useLeads()
+    const { openEmailPopup  } = useEmail();
+    const token = localStorage.getItem("adminToken");
 
     const today = new Date();
     const [noLoaderShow, setNoLoaderShow] = useState(false);
@@ -461,10 +464,46 @@ const Filters = () => {
             {/* Actions */}
             <div className="grid blockButton md:grid-cols-3 gap-3 mt-4">
                 <button
-                    className="flex-1 flex items-center justify-center text-[#717073] gap-1 border border-[#717073] rounded-lg py-2 text-sm hover:bg-gray-50"
-                    onClick={handleSendEmail}
+                    onClick={() => {
+                        if (data && data.length > 0) {
+
+                            // Step 1: Filter only selected bookings
+                            const filteredBookings = data.filter(b =>
+                                selectedUserIds.includes(b.id || b.bookingId)
+                            );
+                            console.log('selectedUserIds', selectedUserIds)
+                            console.log('data', data)
+                            console.log('filteredBookings', filteredBookings)
+                            // Step 2: Extract emails from filtered bookings
+                            const parentEmails = filteredBookings.map(p => p.email)
+                                    .filter(email => email)
+                            if (parentEmails.length > 0) {
+                                openEmailPopup(
+                                    parentEmails,
+                                    "/api/admin/send-manual-email",
+                                    { token, showError, showSuccess }
+                                );
+                            } else {
+                                showWarning(
+                                    "No Emails Found",
+                                    "Selected parents do not have valid email addresses."
+                                );
+                            }
+
+                        } else {
+                            showWarning(
+                                "No Parents Found",
+                                "No parent data available to send email."
+                            );
+                        }
+                    }}
+                    className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl text-[16px]"
                 >
-                    <Mail size={16} className="text-[#717073]" />
+                    <img
+                        src="/images/icons/mail.png"
+                        className="w-4 h-4 sm:w-5 sm:h-5"
+                        alt=""
+                    />
                     Send Email
                 </button>
 

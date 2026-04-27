@@ -26,6 +26,7 @@ const ParentProfile = ({ ParentProfile }) => {
     const [textloading, setTextLoading] = useState(null);
     const { openEmailPopup } = useEmail();
     const [transferVenue, setTransferVenue] = useState(false);
+    const [selectedStudents, setSelectedStudents] = useState([]);
 
     const [loadingComment, setLoadingComment] = useState(false);
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -100,6 +101,7 @@ const ParentProfile = ({ ParentProfile }) => {
     const handleCancel = () => {
         const payload = {
             ...formData,
+            studentIds: selectedStudents.map(student => student.id),
             cancelReason:
                 formData.cancelReason === "other"
                     ? formData.otherReason
@@ -131,7 +133,17 @@ const ParentProfile = ({ ParentProfile }) => {
             showError("Error", error.message || error.error || "Failed to fetch comments. Please try again later.");
         }
     }, []);
+    const handleStudentSelect = (student) => {
+        setSelectedStudents((prev) => {
+            const exists = prev.find((s) => s.id === student.id);
 
+            if (exists) {
+                return prev.filter((s) => s.id !== student.id);
+            } else {
+                return [...prev, student];
+            }
+        });
+    };
     // useEffect(() => {
     //     fetchComments();
     // }, [])
@@ -474,15 +486,23 @@ const ParentProfile = ({ ParentProfile }) => {
             .join(" ");           // join with space
     };
     const handleBookMembership = () => {
+
+        // Navigate to your component/route
+        navigate("/weekly-classes/find-a-class/book-a-membership", {
+            state: { TrialData: ParentProfile, comesFrom: "trials" },
+        });
+
+    };
+    const handleReBooktrial = () => {
         showConfirm(
             "Are you sure?",
-            "Do you want to book a membership?",
+            "Do you want to re book the trial?",
             "Yes, Book it!"
         ).then((result) => {
             if (result.isConfirmed) {
                 // Navigate to your component/route
-                navigate("/weekly-classes/find-a-class/book-a-membership", {
-                    state: { TrialData: ParentProfile, comesFrom: "trials" },
+                navigate("/weekly-classes/find-a-class/book-a-free-trial", {
+                    state: { TrialData: ParentProfile, comesFrom: "trials", useofRebook: "useofRebook" },
                 });
             }
         });
@@ -904,36 +924,36 @@ const ParentProfile = ({ ParentProfile }) => {
                                         </button>
                                     )}
 
-                                
+
 
                                 {status !== 'pending' && status !== 'attended' && (
                                     <button
                                         onClick={handleBookMembership}
                                         className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
                                     >
-                                        Book a Membership
+                                        Start Membership
                                     </button>
                                 )}
 
-                              
-                                        <div className="flex gap-7">
-                                            <button
-                                                onClick={() => setNoMembershipSelect(true)}
-                                                className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium"
-                                            >
-                                                No Membership
-                                            </button>
 
-                                            <button
-                                                onClick={handleBookMembership}
-                                                className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium"
-                                            >
-                                                Book a Membership
-                                            </button>
-                                        </div>
+                                <div className="flex gap-7">
+                                    <button
+                                        onClick={() => setNoMembershipSelect(true)}
+                                        className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium"
+                                    >
+                                        Declined Membership
+                                    </button>
 
-                                   
-{status !== 'attended' && canCancelTrial && (
+                                    <button
+                                        onClick={handleBookMembership}
+                                        className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium"
+                                    >
+                                        Start Membership
+                                    </button>
+                                </div>
+
+
+                                {status !== 'attended' && canCancelTrial && (
                                     <button
                                         onClick={() => setshowCancelTrial(true)}
                                         className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
@@ -952,24 +972,15 @@ const ParentProfile = ({ ParentProfile }) => {
                             </div>
                         </>
                     )}
-                    {status === 'cancelled' && (() => {
-                        const today = new Date();
-                        const trialDateObj = new Date(trialDate);
 
-                        // ✅ Strip time portion for fair date-only comparison
-                        today.setHours(0, 0, 0, 0);
-                        trialDateObj.setHours(0, 0, 0, 0);
 
-                        // ✅ Only show if trial date is *before* today
-                        return trialDateObj < today;
-                    })() && (
-                            <button
-                                onClick={() => setshowRebookTrial(true)}
-                                className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
-                            >
-                                Rebook FREE Trial
-                            </button>
-                        )}
+                    <button
+                        onClick={handleReBooktrial}
+                        className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+                    >
+                        Rebook FREE Trial
+                    </button>
+
 
                 </div>
                 {showRebookTrial && (
@@ -1335,6 +1346,44 @@ const ParentProfile = ({ ParentProfile }) => {
                             </div>
 
                             <div className="space-y-4 px-6 pb-6 pt-4">
+                                <div>
+                                    <label className="block text-[16px] font-semibold">
+                                        Select Students to Cancel
+                                    </label>
+
+                                    <div className="mt-3 space-y-2">
+                                        {studentsList.map((student) => {
+                                            const isCancelled = student.studentStatus === "cancelled";
+
+                                            return (
+                                                <label
+                                                    key={student.id}
+                                                    className={`flex items-center space-x-3 ${isCancelled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        disabled={isCancelled}
+                                                        checked={selectedStudents.some((s) => s.id === student.id)}
+                                                        onChange={() =>
+                                                            !isCancelled &&
+                                                            handleStudentSelect({
+                                                                id: student.id,
+                                                                studentFirstName: student.studentFirstName,
+                                                                studentLastName: student.studentLastName,
+                                                            })
+                                                        }
+                                                        className="w-4 h-4"
+                                                    />
+
+                                                    <span className="text-[15px]">
+                                                        {student.studentFirstName} {student.studentLastName}
+                                                        {isCancelled && " (Already Cancelled)"}
+                                                    </span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
                                 {/* Reason */}
                                 <div>
                                     <label className="block text-[16px] font-semibold">
@@ -1418,13 +1467,13 @@ const ParentProfile = ({ ParentProfile }) => {
                             </button>
 
                             <div className="text-center py-6 border-b border-gray-300">
-                                <h2 className="font-semibold text-[24px]">No Membership Selected  </h2>
+                                <h2 className="font-semibold text-[24px]">Declined Membership  </h2>
                             </div>
 
                             <div className="space-y-4 px-6 pb-6 pt-4">
                                 <div>
                                     <label className="block text-[16px] font-semibold">
-                                        Reason for Not Proceeding
+                                        Reason for Declining Membership
                                     </label>
                                     <Select
                                         value={reasonOptions.find((opt) => opt.value === cancelWaitingList.noMembershipReason)}
@@ -1469,7 +1518,7 @@ const ParentProfile = ({ ParentProfile }) => {
 
                                         className="w-1/2  bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
                                     >
-                                        Cancel Spot
+                                        Submit
                                     </button>
                                 </div>
                             </div>

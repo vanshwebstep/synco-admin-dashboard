@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { FiSearch } from "react-icons/fi";
-import { ChevronLeft,Loader2, ChevronRight } from "lucide-react";
+import { ChevronLeft, Loader2, ChevronRight } from "lucide-react";
 import Select from "react-select";
 import { Check, Filter } from "lucide-react";
 import { useBookFreeTrial } from '../../contexts/BookAFreeTrialContext';
@@ -14,6 +14,7 @@ import { useLocation } from "react-router-dom";
 import { saveAs } from "file-saver";
 import StatsGrid from '../../Common/StatsGrid';
 import DynamicTable from '../../Common/DynamicTable';
+import { useEmail } from '../../contexts/messages/SendEmailContext';
 const CancellationList = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [fromDate, setFromDate] = useState(null);
@@ -25,6 +26,7 @@ const CancellationList = () => {
     const [textloading, setTextLoading] = useState(null);
     const token = localStorage.getItem("adminToken");
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+    const { openEmailPopup } = useEmail();
 
     const [active, setActive] = useState("request"); // default selected
     const [showFilter, setShowFilter] = useState(false);
@@ -51,7 +53,7 @@ const CancellationList = () => {
                 : [...prev, studentId] // add if not selected
         );
     };
-console.log('statsFreeTrial',statsFreeTrial)
+    console.log('statsFreeTrial', statsFreeTrial)
     const sendText = async (id) => {
         setTextLoading(true);
 
@@ -960,29 +962,49 @@ console.log('statsFreeTrial',statsFreeTrial)
                         </div>
                         <div className="grid grid-cols-3 gap-2 mt-5 justify-between">
                             <button
-
                                 onClick={() => {
-                                    if (!selectedStudents || selectedStudents.length === 0) {
-                                        showWarning("No students selected", "Please select at least one student before sending an email.");
-                                        return;
-                                    }
-                                    if (active === "full") {
-                                        sendFullTomail(selectedStudents);
-                                        setSelectedStudents([]);
-                                    } else if (active === "request") {
-                                        sendRequestTomail(selectedStudents);
-                                        setSelectedStudents([]);
-                                    } else if (active === "all") {
-                                        sendAllmail(selectedStudents);
-                                        setSelectedStudents([]);
+                                    if (bookFreeTrials && bookFreeTrials.length > 0) {
+
+                                        // Step 1: Filter only selected bookings
+                                        const filteredBookings = bookFreeTrials.filter(b =>
+                                            selectedStudents.includes(b.id || b.bookingId)
+                                        );
+                                        console.log('selectedStudents', selectedStudents)
+                                        console.log('bookFreeTrials', bookFreeTrials)
+                                        console.log('filteredBookings', filteredBookings)
+                                        // Step 2: Extract emails from filtered bookings
+                                        const parentEmails = filteredBookings.flatMap(b =>
+                                            (b.parents || [])
+                                                .map(p => p.parentEmail)
+                                                .filter(email => email)
+                                        );
+
+                                        if (parentEmails.length > 0) {
+                                            openEmailPopup(
+                                                parentEmails,
+                                                "/api/admin/send-manual-email",
+                                                { token, showError, showSuccess }
+                                            );
+                                        } else {
+                                            showWarning(
+                                                "No Emails Found",
+                                                "Selected parents do not have valid email addresses."
+                                            );
+                                        }
+
+                                    } else {
+                                        showWarning(
+                                            "No Parents Found",
+                                            "No parent data available to send email."
+                                        );
                                     }
                                 }}
-                                className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl  text-[16px]"
+                                className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl text-[16px]"
                             >
                                 <img
                                     src="/images/icons/mail.png"
                                     className="w-4 h-4 sm:w-5 sm:h-5"
-                                    alt="mail"
+                                    alt=""
                                 />
                                 Send Email
                             </button>

@@ -8,6 +8,9 @@ import Events from "./Events";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAccountsInfo } from "../../contexts/AccountsInfoContext";
 import Loader from '../../contexts/Loader';
+import axios from "axios";
+import { showConfirm, showSuccess, showError } from "../../../../../utils/swalHelper";
+import { Trash2 } from "lucide-react";
 
 
 const Account = () => {
@@ -15,16 +18,16 @@ const Account = () => {
   const accountsInfo = useAccountsInfo();
   // const { serviceHistoryMembership, serviceHistory, error, loading } = useBookFreeTrial()
 
-  const { loading, setMainId, fetchMembers , data } = accountsInfo;
+  const { loading, setMainId, fetchMembers, data } = accountsInfo;
 
-const tabs = [
-  { name: "Parent Profile", component: <ParentProfile profile={data}  /> },
-  { name: "Student Profile", component: <StudentProfile profile={data} /> },
-  { name: "Service History", component: <ServiceHistory profile={data} /> },
-  { name: "Feedback", component: <Feedback profile={data}  /> },
-  { name: "Rewards", component: <Rewards profile={data}  /> },
-  { name: "Events", component: <Events  profile={data}  /> },
-];
+  const tabs = [
+    { name: "Parent Profile", component: <ParentProfile profile={data} /> },
+    { name: "Student Profile", component: <StudentProfile profile={data} /> },
+    { name: "Service History", component: <ServiceHistory profile={data} /> },
+    { name: "Feedback", component: <Feedback profile={data} /> },
+    { name: "Rewards", component: <Rewards profile={data} /> },
+    { name: "Events", component: <Events profile={data} /> },
+  ];
   const [activeTab, setActiveTab] = useState(tabs[0].name);
 
   const location = useLocation();
@@ -44,35 +47,80 @@ const tabs = [
     }
   }, []);
 
+  const handleDelete = async () => {
+    const result = await showConfirm(
+      "Are you sure?",
+      "Are you sure you want to remove this account from Synco?",
+      "Yes"
+    );
+
+    if (!result.isConfirmed) return;
+
+    const token = localStorage.getItem("adminToken");
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+    try {
+      await axios.delete(
+        `${API_BASE_URL}/api/admin/delete`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          data: {
+            bookingIds: [id],
+          },
+        }
+      );
+
+      showSuccess("Deleted!", "Account removed successfully.");
+      navigate('/weekly-classes/members-info');
+    } catch (err) {
+      console.error(err);
+      showError("Error", err?.response?.data?.message || "Failed to delete account");
+    }
+  };
+
   if (loading) return <Loader />;
   if (!accountsInfo) return <div>Loading...</div>; // or throw Error
   return (
     <div className="mt-8 relative">
 
-      <div className="flex w-max items-center bg-white p-3 gap-1 rounded-2xl p-1 ">
-        <h2
-          onClick={() => {
-            navigate('/weekly-classes/members-info');
-          }}>
-          <img
-            src="/images/icons/arrow-left.png"
-            alt="Back"
-            className="w-5 h-5 md:w-6 md:h-6"
-          />
-        </h2>
-        {tabs.map((tab) => (
-          <button
-            key={tab.name}
-            onClick={() => setActiveTab(tab.name)}
-            className={`w-max relative flex-1 whitespace-nowrap px-4 text-[16px] font-semibold py-3 rounded-xl transition-all ${activeTab === tab.name
-              ? "bg-[#237FEA] shadow text-white "
-              : "text-[#282829] hover:text-[#282829]"
-              }`}
+      <div className="flex justify-between items-center w-full bg-white p-3 rounded-2xl">
+        <div className="flex items-center gap-1">
+          <h2
+            onClick={() => {
+              navigate('/weekly-classes/members-info');
+            }}
+            className="cursor-pointer"
           >
-            {tab.name}
+            <img
+              src="/images/icons/arrow-left.png"
+              alt="Back"
+              className="w-5 h-5 md:w-6 md:h-6"
+            />
+          </h2>
+          {tabs.map((tab) => (
+            <button
+              key={tab.name}
+              onClick={() => setActiveTab(tab.name)}
+              className={`w-max relative flex-1 whitespace-nowrap px-4 text-[16px] font-semibold py-3 rounded-xl transition-all ${activeTab === tab.name
+                ? "bg-[#237FEA] shadow text-white "
+                : "text-[#282829] hover:text-[#282829]"
+                }`}
+            >
+              {tab.name}
+            </button>
+          ))}
+        </div>
 
-          </button>
-        ))}
+        <button
+          onClick={handleDelete}
+          className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl hover:bg-red-100 transition-colors font-semibold"
+        >
+          <Trash2 size={18} />
+          Delete Account
+        </button>
       </div>
 
       <div className="mt-6">

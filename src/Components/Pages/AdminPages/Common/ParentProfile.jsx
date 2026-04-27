@@ -703,7 +703,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                         {status === 'cancelled' && (
                                             <div className="flex gap-7">
                                                 <button className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium">
-                                                    No Membership
+                                                    Declined Membership
                                                 </button>
 
                                                 <button className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium">

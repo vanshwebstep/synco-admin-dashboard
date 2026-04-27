@@ -400,16 +400,22 @@ const StudentProfile = ({ profile }) => {
     const MembershipPlan = paymentPlan?.title;
     const MembershipPrice = paymentPlan?.price;
     const duration = paymentPlan?.duration ?? 0;
+    const MembershipTenure = profile?.membershipTenure || "";
+
     let interval = paymentPlan?.interval ?? "";
     if (duration > 1 && interval) {
         interval += "s";
     }
-    const MembershipTenure = duration && interval
-        ? `${duration} ${interval}`
-        : "";
+
 
     const dateBooked = profile?.startDate;
     const status = profile?.status;
+
+    const totalBars = profile?.progressBar?.totalBars || 0;
+    const filledBars = profile?.progressBar?.filledBars || 0;
+    console.log('filledBars', filledBars)
+    const progressPercent =
+        totalBars > 0 ? Math.round((filledBars / totalBars) * 100) : 0;
 
     // console.log('Venue Name:', profile.dateBooked);
 
@@ -734,7 +740,7 @@ const StudentProfile = ({ profile }) => {
 
                                 backgroundSize: "cover",
                             }}>
-                            <div>
+                            <div className="flex items-center justify-between w-full gap-4">
                                 <div className="text-[20px] font-bold text-[#1F2937]">Account Status</div>
                                 <div className="text-[16px] font-semibold capitalize text-[#1F2937]">      <span>
                                     {status ? status.replaceAll("_", " ") : "Unknown"}
@@ -820,10 +826,10 @@ const StudentProfile = ({ profile }) => {
                                         <div className="w-[90%] bg-[#fff] h-3 rounded-full overflow-hidden">
                                             <div
                                                 className="bg-green-500 h-4 rounded-full"
-                                                style={{ width: "78%" }}
+                                                style={{ width: `${progressPercent}%` }}
                                             ></div>
                                         </div>
-                                        <div className="text-white text-right mt-1 text-[14px]">78%</div>
+                                        <div className="text-white text-right mt-1 text-[14px]"> {progressPercent}%</div>
                                     </div>
                                 </div>
 
@@ -948,7 +954,7 @@ const StudentProfile = ({ profile }) => {
                                 {status === 'attended' && (
                                     <div className="flex gap-7">
                                         <button className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium">
-                                            No Membership
+                                           Declined Membership
                                         </button>
 
                                         <button className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium">
@@ -1551,7 +1557,7 @@ const StudentProfile = ({ profile }) => {
 
                                         className="w-1/2  bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
                                     >
-                                        Cancel Spot
+                                        Submit
                                     </button>
                                 </div>
                             </div>

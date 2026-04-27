@@ -82,28 +82,14 @@ const DynamicTable = ({
   const searchedData = useMemo(() => {
     if (!searchQuery) return finalData;
 
-    const query = searchQuery.toLowerCase();
+    const queryWords = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
 
     return finalData.filter((row) => {
-      const values = [
-        ...Object.values(row || {}),
-        ...Object.values(row?.student || {}),
-        ...(row?.parents?.length
-          ? Object.values(row.parents[0])
-          : []),
-      ];
+      const venueName = (row?.venue?.name || row?.address || row?.parent?.venue?.name || row?.parent?.address || "").toLowerCase();
+      
+      const searchString = `${row?.student?.studentFirstName || ""} ${row?.student?.studentLastName || ""} ${row?.student?.age || ""} ${venueName}`.toLowerCase();
 
-      const fullName =
-        `${row?.student?.studentFirstName || ""} ${row?.student?.studentLastName || ""}`.toLowerCase();
-
-      return (
-        fullName.includes(query) ||
-        values.some((val) =>
-          String(val || "")
-            .toLowerCase()
-            .includes(query)
-        )
-      );
+      return queryWords.every(word => searchString.includes(word));
     });
   }, [finalData, searchQuery]);
   /* =============================
