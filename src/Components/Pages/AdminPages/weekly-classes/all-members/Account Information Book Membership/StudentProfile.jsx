@@ -954,7 +954,7 @@ const StudentProfile = ({ profile }) => {
                                 {status === 'attended' && (
                                     <div className="flex gap-7">
                                         <button className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium">
-                                           Declined Membership
+                                            Declined Membership
                                         </button>
 
                                         <button className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium">
@@ -1633,21 +1633,22 @@ const StudentProfile = ({ profile }) => {
                                                     {/* Current Info */}
                                                     {/* Current Info */}
                                                     <div className="grid gap-4 text-sm text-gray-600">
-                                                        <div>
-                                                            <label className="block text-sm font-semibold mb-1">Current Class</label>
-                                                            <input
-                                                                type="text"
-                                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
-                                                                value={currentClass}
-                                                                readOnly
-                                                            />
-                                                        </div>
+
                                                         <div>
                                                             <label className="block text-sm font-semibold mb-1">Venue</label>
                                                             <input
                                                                 type="text"
                                                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
                                                                 value={profile?.venue?.name}
+                                                                readOnly
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-semibold mb-1">Current Class</label>
+                                                            <input
+                                                                type="text"
+                                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
+                                                                value={currentClass}
                                                                 readOnly
                                                             />
                                                         </div>

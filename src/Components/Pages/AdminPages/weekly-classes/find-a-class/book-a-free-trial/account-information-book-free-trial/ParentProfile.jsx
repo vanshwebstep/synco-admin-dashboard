@@ -764,7 +764,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                     {status === 'pending' && (
                                         <img src="/images/icons/loadingWhite.png" alt="Pending" />
                                     )}
-                                    {status === 'not attend' && (
+                                    {status === 'not attended' && (
                                         <img src="/images/icons/x-circle-contained.png" alt="Not Attended" />
                                     )}
                                     {status === 'attended' && (
@@ -905,7 +905,7 @@ const ParentProfile = ({ ParentProfile }) => {
 
 
                                 {status?.trim().toLowerCase() == "pending" ||
-                                    status?.trim().toLowerCase() == "not attend" ||
+                                    status?.trim().toLowerCase() == "not attended" ||
                                     status?.trim().toLowerCase() == "not attended" &&
                                     status?.trim().toLowerCase() !== "attended" &&
                                     status?.trim().toLowerCase() !== "no_membership" &&
@@ -962,24 +962,27 @@ const ParentProfile = ({ ParentProfile }) => {
                                     </button>
                                 )}
                                 {/* {(status === "attended" || (status === "request_to_cancel" && canCancelTrial)) && ( */}
-                                <button
+                                {/* <button
                                     onClick={() => setTransferVenue(true)}
                                     className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
                                 >
                                     Transfer Class
-                                </button>
+                                </button> */}
+                                {status === 'not attended' && (
+                                    <button
+                                        onClick={handleReBooktrial}
+                                        className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+                                    >
+                                        Rebook FREE Trial
+                                    </button>
+                                )}
                                 {/* )} */}
                             </div>
                         </>
                     )}
 
 
-                    <button
-                        onClick={handleReBooktrial}
-                        className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
-                    >
-                        Rebook FREE Trial
-                    </button>
+
 
 
                 </div>
@@ -1221,21 +1224,22 @@ const ParentProfile = ({ ParentProfile }) => {
                                                     {/* Current Info */}
                                                     {/* Current Info */}
                                                     <div className="grid gap-4 text-sm text-gray-600">
-                                                        <div>
-                                                            <label className="block text-sm font-semibold mb-1">Current Class</label>
-                                                            <input
-                                                                type="text"
-                                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
-                                                                value={currentClass}
-                                                                readOnly
-                                                            />
-                                                        </div>
+
                                                         <div>
                                                             <label className="block text-sm font-semibold mb-1">Venue</label>
                                                             <input
                                                                 type="text"
                                                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
                                                                 value={ParentProfile?.venue?.name}
+                                                                readOnly
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-semibold mb-1">Current Class</label>
+                                                            <input
+                                                                type="text"
+                                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
+                                                                value={currentClass}
                                                                 readOnly
                                                             />
                                                         </div>

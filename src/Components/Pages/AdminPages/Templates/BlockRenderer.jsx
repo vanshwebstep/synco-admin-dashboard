@@ -1805,32 +1805,32 @@ const STYLE_GROUPS = {
     ]
   }),
   // Specialized Groups
-  // image: (path = "style") => ({
-  //   id: `image-${path || 'root'}`, title: "Image Style", icon: <FaImage />,
-  //   fields: [
-  //     { label: "Fit", key: "objectFit", type: "select", path, options: [{ label: "Cover", value: "cover" }, { label: "Contain", value: "contain" }, { label: "Fill", value: "fill" }] },
-  //     { label: "Width", key: "width", type: "text", path, placeholder: "100% or 200px" },
-  //     { label: "Height", key: "height", type: "text", path, placeholder: "128px or auto" },
-  //     { label: "Radius", key: "borderRadius", type: "range", min: 0, max: 50, path, suffix: "px" },
-  //     { label: "Alignment", key: "margin", type: "align-margin", path },
-  //   ]
-  // }),
-  // grid: (path = "style") => ({
-  //   id: `grid-${path || 'root'}`, title: "Grid Settings", icon: <FaLayerGroup />,
-  //   fields: [
-  //     { label: "Columns", key: "columns", type: "select", path, options: [{ label: "Auto", value: "auto" }, { label: "1", value: "1" }, { label: "2", value: "2" }, { label: "3", value: "3" }, { label: "4", value: "4" }] },
-  //     { label: "Gap", key: "gap", type: "range", min: 0, max: 100, path, suffix: "px" },
-  //     { label: "Align Items", key: "alignItems", type: "select", path, options: [{ label: "Stretch", value: "stretch" }, { label: "Center", value: "center" }, { label: "Start", value: "flex-start" }, { label: "End", value: "flex-end" }] },
-  //     { label: "Justify Content", key: "justifyContent", type: "select", path, options: [{ label: "Start", value: "start" }, { label: "Center", value: "center" }, { label: "End", value: "end" }, { label: "Space Between", value: "space-between" }] },
-  //   ]
-  // }),
-  // link: (path = "style") => ({
-  //   id: `link-${path || 'root'}`, title: "Link / Action", icon: <FaMousePointer />,
-  //   fields: [
-  //     // { label: "Block Link", key: "link", type: "text", path, placeholder: "https://example.com" },
-  //     // { label: "Target", key: "linkTarget", type: "select", path, options: [{ label: "Same Tab", value: "_self" }, { label: "New Tab", value: "_blank" }] },
-  //   ]
-  // })
+  image: (path = "style") => ({
+    id: `image-${path || 'root'}`, title: "Image Style", icon: <FaImage />,
+    fields: [
+      { label: "Fit", key: "objectFit", type: "select", path, options: [{ label: "Cover", value: "cover" }, { label: "Contain", value: "contain" }, { label: "Fill", value: "fill" }] },
+      { label: "Width", key: "width", type: "text", path, placeholder: "100% or 200px" },
+      { label: "Height", key: "height", type: "text", path, placeholder: "128px or auto" },
+      { label: "Radius", key: "borderRadius", type: "range", min: 0, max: 50, path, suffix: "px" },
+      { label: "Alignment", key: "margin", type: "align-margin", path },
+    ]
+  }),
+  grid: (path = "style") => ({
+    id: `grid-${path || 'root'}`, title: "Grid Settings", icon: <FaLayerGroup />,
+    fields: [
+      { label: "Columns", key: "columns", type: "select", path, options: [{ label: "Auto", value: "auto" }, { label: "1", value: "1" }, { label: "2", value: "2" }, { label: "3", value: "3" }, { label: "4", value: "4" }] },
+      { label: "Gap", key: "gap", type: "range", min: 0, max: 100, path, suffix: "px" },
+      { label: "Align Items", key: "alignItems", type: "select", path, options: [{ label: "Stretch", value: "stretch" }, { label: "Center", value: "center" }, { label: "Start", value: "flex-start" }, { label: "End", value: "flex-end" }] },
+      { label: "Justify Content", key: "justifyContent", type: "select", path, options: [{ label: "Start", value: "start" }, { label: "Center", value: "center" }, { label: "End", value: "end" }, { label: "Space Between", value: "space-between" }] },
+    ]
+  }),
+  link: (path = "style") => ({
+    id: `link-${path || 'root'}`, title: "Link / Action", icon: <FaMousePointer />,
+    fields: [
+      { label: "Block Link", key: "link", type: "text", path, placeholder: "https://example.com" },
+      { label: "Target", key: "linkTarget", type: "select", path, options: [{ label: "Same Tab", value: "_self" }, { label: "New Tab", value: "_blank" }] },
+    ]
+  })
 };
 
 const getStyleConfig = (block) => {
@@ -1868,6 +1868,8 @@ const getStyleConfig = (block) => {
   }
 
   if (block.type === "cardRow") {
+
+    console.log("Adding grid config for cardRow:", STYLE_GROUPS);
     config.push(STYLE_GROUPS?.grid("style")); // Grid Layout
     const cardAppearance = STYLE_GROUPS.appearance("cardStyle", "Card Style");
     cardAppearance.fields.push({ label: "Alignment", key: "textAlign", type: "align", path: "cardStyle" });

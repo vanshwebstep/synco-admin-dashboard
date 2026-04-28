@@ -158,7 +158,7 @@ const ParentProfile = ({ ParentProfile }) => {
         preferredStartDate: null,
         notes: "",
     });
-        const MembershipTenure = ParentProfile?.membershipTenure || "";
+    const MembershipTenure = ParentProfile?.membershipTenure || "";
 
     const [commentsList, setCommentsList] = useState([]);
     const [loadingComment, setLoadingComment] = useState(false);
@@ -931,15 +931,6 @@ const ParentProfile = ({ ParentProfile }) => {
 
                             <div className="space-y-4 px-6 pb-6 pt-4">
                                 {/* Current Class */}
-                                <div>
-                                    <label className="block text-[16px] font-semibold">Current Class</label>
-                                    <input
-                                        type="text"
-                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                        value={classSchedule?.className || "-"}
-                                        readOnly
-                                    />
-                                </div>
 
                                 {/* Venue */}
                                 <div>
@@ -948,6 +939,15 @@ const ParentProfile = ({ ParentProfile }) => {
                                         type="text"
                                         className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                         value={classSchedule?.venue?.name || "-"}
+                                        readOnly
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[16px] font-semibold">Current Class</label>
+                                    <input
+                                        type="text"
+                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                        value={classSchedule?.className || "-"}
                                         readOnly
                                     />
                                 </div>

@@ -1455,6 +1455,16 @@ const ParentProfile = ({ profile }) => {
                             </div>
 
                             <div className="space-y-4 px-6 pb-6 pt-4">
+                                  {/* Venue */}
+                                <div>
+                                    <label className="block text-[16px] font-semibold">Venue</label>
+                                    <input
+                                        type="text"
+                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                        value={classSchedule?.venue?.name || "-"}
+                                        readOnly
+                                    />
+                                </div>
                                 {/* Current Class */}
                                 <div>
                                     <label className="block text-[16px] font-semibold">Current Class</label>
@@ -1466,16 +1476,7 @@ const ParentProfile = ({ profile }) => {
                                     />
                                 </div>
 
-                                {/* Venue */}
-                                <div>
-                                    <label className="block text-[16px] font-semibold">Venue</label>
-                                    <input
-                                        type="text"
-                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                        value={classSchedule?.venue?.name || "-"}
-                                        readOnly
-                                    />
-                                </div>
+                              
 
                                 {/* Select New Class */}
                                 <div>

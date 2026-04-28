@@ -47,7 +47,7 @@ const AddtoWaitingList = () => {
   const [comment, setComment] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const commentsPerPage = 5; // Number of comments per page
-
+  const [errors, setErrors] = useState({});
   // Pagination calculations
   const indexOfLastComment = currentPage * commentsPerPage;
   const indexOfFirstComment = indexOfLastComment - commentsPerPage;
@@ -729,6 +729,28 @@ const AddtoWaitingList = () => {
   }));
 
   const handleSubmit = async () => {
+    const { newErrors, firstErrorField } = validateForm();
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+
+      // 🔥 Scroll to first error field
+      const el = document.getElementById(firstErrorField);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.focus();
+      }
+
+      // 🔥 Prepare error message
+      const errorMessages = Object.values(newErrors);
+
+      showError(
+        "Error",
+        errorMessages[0] || "Please fill all required fields"
+      );
+
+      return;
+    }
 
     setIsSubmitting(true); // Start loading
 
@@ -908,50 +930,68 @@ const AddtoWaitingList = () => {
 
     hasInitialized.current = true; // ✅ mark as done
   }, [sessionDatesSet]);
-  const isFormValid = () => {
-    // Validate Students
-    for (const s of students) {
-      if (
-        !s.studentFirstName?.trim() ||
-        !s.studentLastName?.trim() ||
-        !s.dateOfBirth ||
-        !s.gender
-      ) {
-        return false;
-      }
-    }
+  const validateForm = () => {
+    let newErrors = {};
+    let firstErrorField = null;
 
-    // Validate Parents
-    for (const p of parents) {
-      if (
-        !p.parentFirstName?.trim() ||
-        !p.parentLastName?.trim() ||
-        !p.parentEmail?.trim() ||
-        !p.parentPhoneNumber?.trim()
-      ) {
-        return false;
+    // Students
+    students.forEach((s, index) => {
+      if (!s.studentFirstName?.trim()) {
+        newErrors[`studentFirstName-${index}`] = "First name required";
+        if (!firstErrorField) firstErrorField = `studentFirstName-${index}`;
       }
-    }
+      if (!s.studentLastName?.trim()) {
+        newErrors[`studentLastName-${index}`] = "Last name required";
+      }
+      if (!s.dateOfBirth) {
+        newErrors[`dob-${index}`] = "DOB required";
+      }
+      if (!s.gender) {
+        newErrors[`gender-${index}`] = "Gender required";
+      }
+    });
 
-    // Validate Level of Interest (you mentioned it but never checked)
+    // Parents
+    parents.forEach((p, index) => {
+      if (!p.parentFirstName?.trim()) {
+        newErrors[`parentFirstName-${index}`] = "Parent first name required";
+        if (!firstErrorField) firstErrorField = `parentFirstName-${index}`;
+      }
+
+      if (!p.parentLastName?.trim()) {
+        newErrors[`parentLastName-${index}`] = "Parent last name required";
+        if (!firstErrorField) firstErrorField = `parentLastName-${index}`;
+      }
+      if (!p.parentEmail?.trim()) {
+        newErrors[`parentEmail-${index}`] = "Parent email required";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.parentEmail)) {
+        newErrors[`parentEmail-${index}`] = "Enter a valid email address";
+      }
+    });
+
+    // Level
     if (!selectedLevelOfInterest) {
-      return false;
+      newErrors["level"] = "Select level of interest";
+      if (!firstErrorField) firstErrorField = "level";
     }
 
-    // Validate Emergency
+    // Emergency
     if (!emergency.sameAsAbove) {
-      if (
-        !emergency.emergencyFirstName?.trim() ||
-        !emergency.emergencyLastName?.trim() ||
-        !emergency.emergencyPhoneNumber?.trim()
-      ) {
-        return false;
+      if (!emergency.emergencyFirstName?.trim()) {
+        newErrors["emergencyFirstName"] = "Required";
+        if (!firstErrorField) firstErrorField = "emergencyFirstName";
       }
     }
 
-    return true;
+    return { newErrors, firstErrorField };
   };
-
+  const clearError = (field) => {
+    setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated[field];
+      return updated;
+    });
+  };
 
   if (loading) {
     return (
@@ -1170,23 +1210,30 @@ const AddtoWaitingList = () => {
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">First name</label>
                       <input
-                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                        id={`studentFirstName-${index}`}
+                        className={`w-full mt-2 px-4 py-3 rounded-xl border
+              ${errors[`studentFirstName-${index}`] ? "border-red-500" : "border-gray-300"}`}
                         placeholder="Enter first name"
                         value={student.studentFirstName}
-                        onChange={(e) =>
-                          handleInputChange(index, 'studentFirstName', e.target.value)
-                        }
+                        onChange={(e) => {
+                          handleInputChange(index, "studentFirstName", e.target.value);
+                          clearError(`studentFirstName-${index}`);
+                        }}
                       />
                     </div>
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">Last name</label>
                       <input
-                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                        id={`studentLastName-${index}`}
+                        onChange={(e) => {
+                          handleInputChange(index, "studentLastName", e.target.value);
+                          clearError(`studentLastName-${index}`);
+                        }}
+                        className={`w-full mt-2 px-4 py-3 rounded-xl border
+              ${errors[`studentLastName-${index}`] ? "border-red-500" : "border-gray-300"}`}
                         placeholder="Enter last name"
                         value={student.studentLastName}
-                        onChange={(e) =>
-                          handleInputChange(index, 'studentLastName', e.target.value)
-                        }
+
                       />
                     </div>
                   </div>
@@ -1199,11 +1246,18 @@ const AddtoWaitingList = () => {
                       </label>
                       <input
                         type="text"
+                        id={`dob-${index}`}
+
                         value={student.dateOfBirth || ""}
-                        onChange={(e) => handleDOBChange(index, e.target.value)}
+                        onChange={(e) => {
+                          handleDOBChange(index, e.target.value);
+                          clearError(`dob-${index}`);
+                        }}
+                        className={`w-full mt-2 px-4 py-3 rounded-xl border
+              ${errors[`dob-${index}`] ? "border-red-500" : "border-gray-300"}`}
                         placeholder="DD/MM/YYYY (e.g. 15/10/2026)"
                         maxLength={10}
-                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+
                       />
                     </div>
                     <div className="w-1/2">
@@ -1223,13 +1277,15 @@ const AddtoWaitingList = () => {
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">Gender</label>
                       <Select
+                        inputId={`gender-${index}`}
                         className="w-full mt-2 text-base"
                         classNamePrefix="react-select"
                         placeholder="Select gender"
                         value={genderOptions.find((option) => option.value === student.gender) || null}
-                        onChange={(selectedOption) =>
-                          handleInputChange(index, "gender", selectedOption ? selectedOption.value : "")
-                        }
+                        onChange={(opt) => {
+                          handleInputChange(index, "gender", opt?.value || "");
+                          clearError(`gender-${index}`);
+                        }}
                         options={genderOptions}
                       />
                     </div>
@@ -1347,13 +1403,16 @@ const AddtoWaitingList = () => {
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">First name</label>
                       <input
-                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                        id={`parentFirstName-${index}`}
+                        className={`w-full mt-2 px-4 py-3 rounded-xl border
+              ${errors[`parentFirstName-${index}`] ? "border-red-500" : "border-gray-300"}`}
                         placeholder="Enter first name"
                         value={parent.parentFirstName}
                         onChange={(e) => {
                           // Allow only alphabets and spaces
                           const value = e.target.value.replace(/[^A-Za-z\s]/g, "");
                           handleParentChange(index, "parentFirstName", value);
+                          clearError(`parentFirstName-${index}`);
                         }}
                         onKeyPress={(e) => {
                           if (!/[A-Za-z\s]/.test(e.key)) e.preventDefault();
@@ -1364,13 +1423,17 @@ const AddtoWaitingList = () => {
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">Last name</label>
                       <input
-                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                        id={`parentLastName-${index}`}
+                        className={`w-full mt-2 px-4 py-3 rounded-xl border
+              ${errors[`parentLastName-${index}`] ? "border-red-500" : "border-gray-300"}`}
                         placeholder="Enter last name"
                         value={parent.parentLastName}
                         onChange={(e) => {
                           // Allow only alphabets and spaces
                           const value = e.target.value.replace(/[^A-Za-z\s]/g, "");
                           handleParentChange(index, "parentLastName", value);
+                          clearError(`parentLastName-${index}`);
+
                         }}
                         onKeyPress={(e) => {
                           if (!/[A-Za-z\s]/.test(e.key)) e.preventDefault();
@@ -1386,10 +1449,16 @@ const AddtoWaitingList = () => {
                       <label className="block text-[16px] font-semibold">Email</label>
                       <input
                         type="email"
-                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                        id={`parentEmail-${index}`}
+                        className={`w-full mt-2 px-4 py-3 rounded-xl border
+              ${errors[`parentEmail-${index}`] ? "border-red-500" : "border-gray-300"}`}
                         placeholder="Enter email address"
                         value={parent.parentEmail}
-                        onChange={(e) => handleParentChange(index, "parentEmail", e.target.value)}
+                        onChange={(e) => {
+                          clearError(`parentEmail-${index}`);
+                          handleParentChange(index, "parentEmail", e.target.value)
+                        }
+                        }
                       />
                     </div>
                     <div className="w-1/2">
@@ -1681,10 +1750,10 @@ const AddtoWaitingList = () => {
               <button
                 type="submit"
                 onClick={handleSubmit}
-                disabled={isSubmitting || !isFormValid() || isBooked}
+                disabled={isSubmitting || isBooked}
                 className={`${isBooked
                   ? "bg-green-600 border-green-600 cursor-default"
-                  : isSubmitting || !isFormValid()
+                  : isSubmitting
                     ? "bg-gray-400 border-gray-400 cursor-not-allowed"
                     : "bg-[#237FEA] border-[#237FEA] hover:bg-[#1f6dc9] cursor-pointer"
                   } text-white text-[18px] font-semibold border px-6 py-3 rounded-lg transition`}

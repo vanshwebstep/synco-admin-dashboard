@@ -2472,21 +2472,22 @@ const ParentProfile = (stateData) => {
                                                     {/* Current Info */}
                                                     {/* Current Info */}
                                                     <div className="grid gap-4 text-sm text-gray-600">
-                                                        <div>
-                                                            <label className="block text-sm font-semibold mb-1">Current Class</label>
-                                                            <input
-                                                                type="text"
-                                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
-                                                                value={currentClass}
-                                                                readOnly
-                                                            />
-                                                        </div>
+
                                                         <div>
                                                             <label className="block text-sm font-semibold mb-1">Venue</label>
                                                             <input
                                                                 type="text"
                                                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
                                                                 value={profile?.venue?.name}
+                                                                readOnly
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-semibold mb-1">Current Class</label>
+                                                            <input
+                                                                type="text"
+                                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
+                                                                value={currentClass}
                                                                 readOnly
                                                             />
                                                         </div>

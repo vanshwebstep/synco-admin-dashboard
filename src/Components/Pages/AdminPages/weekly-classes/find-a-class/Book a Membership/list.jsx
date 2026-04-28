@@ -60,7 +60,9 @@ const List = () => {
         numberOfLessonsProRated: 0,
         costOfProRatedLessons: 0,
         starterPackPrice: 0,
-        totalAmount: 0
+        totalAmount: 0,
+        isFullMonthCharge: 0 // ✅ NEW
+
     });
     const DIAL_CODES = [
         { dialCode: "+1", countryCode: "us" },
@@ -1231,6 +1233,9 @@ const List = () => {
         }
         setIsSubmitting(true);
         const amountToSend = calculateAmount(selectedDate);
+        const proRataToSend = pricingBreakdown.isFullMonthCharge
+    ? 0
+    : pricingBreakdown.costOfProRatedLessons;
         const paymentData =
             Object.keys(filteredPayment).length > 0
                 ? isFranchisee
@@ -1244,7 +1249,7 @@ const List = () => {
                         account_holder_name: filteredPayment.account_holder_name,
                         authorise: filteredPayment.authorise,
                         price: pricingBreakdown.nextMonthPayment,
-                        proRataAmount: pricingBreakdown.costOfProRatedLessons,
+                        proRataAmount: proRataToSend,
                     }
                     : {
                         paymentType: "accesspaysuite",
@@ -1260,7 +1265,7 @@ const List = () => {
                         authorise: filteredPayment.authorise,
                         price: pricingBreakdown.nextMonthPayment,
                         calculateAmount: amountToSend,
-                        proRataAmount: pricingBreakdown.costOfProRatedLessons,
+                        proRataAmount: proRataToSend,
                     }
                 : null;
         const validStudentIds = students
@@ -1320,7 +1325,6 @@ const List = () => {
         console.log('amountToSend', amountToSend);
         console.log('payload', payload);
         // setIsSubmitting(false);
-
         // return;
         try {
             if (comesFrom === "trials") {
@@ -1688,6 +1692,7 @@ const List = () => {
         const starterPack = singleClassSchedulesOnly?.venue?.starterPack
             ? Number(membershipPlan?.starterPackPrice || 0)
             : 0;
+
         // ✅ DATE PARSER
         const parseLocalDate = (dateStr) => {
             const [y, m, d] = dateStr.split("-").map(Number);
@@ -1709,11 +1714,20 @@ const List = () => {
         const selectedMonth = selected.getMonth();
         const selectedYear = selected.getFullYear();
 
-        const sessionsInStartMonth = allSessions.filter(
-            (d) =>
-                d.getMonth() === selectedMonth &&
-                d.getFullYear() === selectedYear
-        );
+        const sessionsInStartMonth = allSessions
+            .filter(
+                (d) =>
+                    d.getMonth() === selectedMonth &&
+                    d.getFullYear() === selectedYear
+            )
+            .sort((a, b) => a - b);
+
+        // ✅ FIRST SESSION
+        const firstSessionDate = sessionsInStartMonth[0];
+
+        const isFirstSessionSelected =
+            firstSessionDate &&
+            selected.getTime() === firstSessionDate.getTime();
 
         // ── REMAINING SESSIONS ──
         const remainingSessions = sessionsInStartMonth.filter(
@@ -1723,23 +1737,36 @@ const List = () => {
         const proRataLessons = remainingSessions.length;
 
         // ── PRICE PER LESSON ──
-        // const rawPricePerLesson = (monthlyPrice * durationMonths) / totalLessons;
         const lessonsInThisMonth = sessionsInStartMonth.length || 1;
 
-        const pricePerLesson =
-            durationMonths === 1
-                ? monthlyPrice / lessonsInThisMonth
-                : (monthlyPrice * durationMonths) / totalLessons;
-        // const pricePerLesson = Math.floor(rawPricePerLesson * 100) / 100;
+        // const pricePerLesson =
+        //     durationMonths === 1
+        //         ? monthlyPrice / lessonsInThisMonth
+        //         : (monthlyPrice * durationMonths) / totalLessons;
 
+        const pricePerLesson =
+            membershipPlan?.all?.priceLesson;
         // ── PRO-RATA COST ──
         const pricePerLessonPence = Math.round(pricePerLesson * 100);
         const proRataCostPence = proRataLessons * pricePerLessonPence;
         const proRataCost = Number((proRataCostPence / 100).toFixed(2));
 
-        // ── TOTAL BEFORE DISCOUNT ──
-        const totalBeforeDiscount =
-            (proRataLessons > 0 ? proRataCost : monthlyPrice) + starterPack;
+        // ✅ PRO-RATA CAP (never exceed full month)
+        const safeProRataCost = Math.min(proRataCost, monthlyPrice);
+        const isFullMonth =
+            (isFirstSessionSelected && proRataLessons >= 3) ||
+            proRataCost >= monthlyPrice;
+        // ── FINAL CHARGE LOGIC ──
+        let lessonCharge = 0;
+
+        if (isFullMonth) {
+            lessonCharge = monthlyPrice;
+        } else if (proRataLessons > 0) {
+            lessonCharge = safeProRataCost;
+        } else {
+            lessonCharge = monthlyPrice;
+        }
+        const totalBeforeDiscount = lessonCharge + starterPack;
 
         // ── DISCOUNT ──
         let discountAmount = 0;
@@ -1749,16 +1776,15 @@ const List = () => {
                 discountAmount =
                     (totalBeforeDiscount * Number(appliedDiscount.data.value)) / 100;
             } else {
-                discountAmount = Number(appliedDiscount.data.discountAmount || 0);
+                discountAmount = Number(
+                    appliedDiscount.data.discountAmount || 0
+                );
             }
         }
 
-        // safety (never negative)
         const finalTotal = Math.max(totalBeforeDiscount - discountAmount, 0);
-
         const totalToday = Number(finalTotal.toFixed(2));
 
-        // ── NEXT MONTH PAYMENT ──
         const nextMonthPayment = Number(monthlyPrice.toFixed(2));
 
         // ── STATE ──
@@ -1768,12 +1794,13 @@ const List = () => {
         setPricingBreakdown({
             pricePerClassPerChild: pricePerLesson,
             numberOfLessonsProRated: proRataLessons,
-            costOfProRatedLessons: proRataCost,
+            costOfProRatedLessons: safeProRataCost, // ✅ capped value
             starterPack: starterPack,
-            discount: discountAmount, // ✅ important
-            totalBeforeDiscount: totalBeforeDiscount, // optional but useful
+            discount: discountAmount,
+            totalBeforeDiscount: totalBeforeDiscount,
             totalAmountToday: totalToday,
             nextMonthPayment: nextMonthPayment,
+            isFullMonthCharge: isFullMonth // ✅ correct flag
         });
 
         console.log("💸 TOTAL BEFORE DISCOUNT:", totalBeforeDiscount);
@@ -2168,10 +2195,10 @@ const List = () => {
                                         <button
                                             onClick={membershipPlan ? goToPreviousMonth : undefined}
                                             className={`w-8 h-8 rounded-full border border-black flex items-center justify-center
-      ${!membershipPlan
+        ${!membershipPlan
                                                     ? "bg-white text-black opacity-40 cursor-not-allowed"
                                                     : "bg-white text-black hover:bg-black hover:text-white"}
-      `}
+        `}
                                         >
                                             <ChevronLeft className="w-5 h-5" />
                                         </button>
@@ -2192,10 +2219,10 @@ const List = () => {
                                         <button
                                             onClick={membershipPlan ? goToNextMonth : undefined}
                                             className={`w-8 h-8 rounded-full border border-black flex items-center justify-center
-      ${!membershipPlan
+        ${!membershipPlan
                                                     ? "bg-white text-black opacity-40 cursor-not-allowed"
                                                     : "bg-white text-black hover:bg-black hover:text-white"}
-      `}
+        `}
                                         >
                                             <ChevronRight className="w-5 h-5" />
                                         </button>
@@ -2252,7 +2279,7 @@ const List = () => {
                                                             <div
                                                                 onClick={() => isAvailable && handleDateClick(date)}
                                                                 className={`w-8 h-8 flex text-[18px] items-center justify-center mx-auto text-base rounded-full
-    ${!membershipPlan
+        ${!membershipPlan
                                                                         ? "cursor-not-allowed opacity-40 bg-white"
                                                                         : isPastAvailable
                                                                             ? "bg-red-200 text-red-700 cursor-not-allowed"
@@ -2260,7 +2287,7 @@ const List = () => {
                                                                                 ? "cursor-pointer bg-sky-200"
                                                                                 : "cursor-not-allowed opacity-40 bg-white"
                                                                     }
-    ${isSelected ? "selectedDate text-white font-bold" : ""}`}
+        ${isSelected ? "selectedDate text-white font-bold" : ""}`}
                                                             >
                                                                 {date.getDate()}
                                                             </div>
@@ -2357,18 +2384,28 @@ const List = () => {
 
                                     <div className="flex justify-between text-[#333]">
                                         <span>Price Per Lesson</span>
-                                        <span>£{pricingBreakdown.pricePerClassPerChild?.toFixed(2)}</span>
+                                        <span>£{pricingBreakdown.pricePerClassPerChild}</span>
                                     </div>
+                                    {pricingBreakdown.isFullMonthCharge && (
+                                        <div className="flex justify-between text-[#000]">
+                                            <span>Full Monthly Charge</span>
+                                            <span>£{pricingBreakdown.nextMonthPayment?.toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    {!pricingBreakdown.isFullMonthCharge && (
+                                        <>
+                                            <div className="flex justify-between text-[#333]">
+                                                <span>Number of Pro-Rata Lessons</span>
+                                                <span>{pricingBreakdown.numberOfLessonsProRated}</span>
+                                            </div>
 
-                                    <div className="flex justify-between text-[#333]">
-                                        <span>Number of Pro-Rata Lessons</span>
-                                        <span>{pricingBreakdown.numberOfLessonsProRated}</span>
-                                    </div>
+                                            <div className="flex justify-between text-[#000]">
+                                                <span>Total Pro-Rata Cost</span>
+                                                <span>£{pricingBreakdown.costOfProRatedLessons?.toFixed(2)}</span>
+                                            </div>
+                                        </>
+                                    )}
 
-                                    <div className="flex justify-between text-[#000]">
-                                        <span>Total Pro-Rata Cost</span>
-                                        <span>£{pricingBreakdown.costOfProRatedLessons?.toFixed(2)}</span>
-                                    </div>
                                 </div>
 
                                 {/* ── TOTAL ── */}

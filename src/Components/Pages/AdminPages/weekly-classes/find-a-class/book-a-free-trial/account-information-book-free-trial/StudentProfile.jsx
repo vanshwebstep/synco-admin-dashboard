@@ -230,6 +230,20 @@ const StudentProfile = ({ StudentProfile }) => {
         cancelReason: "",
         additionalNote: "",
     });
+    const handleReBooktrial = () => {
+        showConfirm(
+            "Are you sure?",
+            "Do you want to re book the trial?",
+            "Yes, Book it!"
+        ).then((result) => {
+            if (result.isConfirmed) {
+                // Navigate to your component/route
+                navigate("/weekly-classes/find-a-class/book-a-free-trial", {
+                    state: { TrialData: StudentProfile, comesFrom: "trials", useofRebook: "useofRebook" },
+                });
+            }
+        });
+    };
     const [transferData, setTransferData] = useState({
         bookingId: bookingId || null,
         venueId: classSchedule?.venue?.id || null,
@@ -752,7 +766,7 @@ const StudentProfile = ({ StudentProfile }) => {
                                     {status === 'pending' && (
                                         <img src="/images/icons/loadingWhite.png" alt="Pending" />
                                     )}
-                                    {status === 'not attend' && (
+                                    {status === 'not attended' && (
                                         <img src="/images/icons/x-circle-contained.png" alt="Not Attended" />
                                     )}
                                     {status === 'attended' && (
@@ -888,26 +902,14 @@ const StudentProfile = ({ StudentProfile }) => {
                                 </div>
 
 
-                                {status?.trim().toLowerCase() == "pending" ||
-                                    status?.trim().toLowerCase() == "not attend" ||
-                                    status?.trim().toLowerCase() == "not attended" &&
-                                    status?.trim().toLowerCase() !== "attended" &&
-                                    status?.trim().toLowerCase() !== "no_membership" &&
-                                    status?.trim().toLowerCase() !== "rebooked" &&
-                                    canRebooking &&
-                                    (() => {
-                                        const today = new Date();
-                                        const trialDateObj = new Date(trialDate);
-                                        return trialDateObj <= today; // ✅ show only if date has passed
-                                    })() && (
-                                        <button
-                                            onClick={() => setshowRebookTrial(true)}
-                                            className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
-                                        >
-                                            Rebook FREE Trial
-                                        </button>
-                                    )}
-
+                                {status == 'not attended' && (
+                                    <button
+                                        onClick={handleReBooktrial}
+                                        className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+                                    >
+                                        Rebook FREE Trials
+                                    </button>
+                                )}
 
 
                                 {status !== 'pending' && status !== 'attended' && (
@@ -947,13 +949,14 @@ const StudentProfile = ({ StudentProfile }) => {
                                         Cancel Trial
                                     </button>
                                 )}
-
+                                {/* 
                                 <button
                                     onClick={() => setTransferVenue(true)}
                                     className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
                                 >
                                     Transfer Class
                                 </button>
+*/}
 
 
                             </div>
@@ -1191,21 +1194,22 @@ const StudentProfile = ({ StudentProfile }) => {
                                                     {/* Current Info */}
                                                     {/* Current Info */}
                                                     <div className="grid gap-4 text-sm text-gray-600">
-                                                        <div>
-                                                            <label className="block text-sm font-semibold mb-1">Current Class</label>
-                                                            <input
-                                                                type="text"
-                                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
-                                                                value={currentClass}
-                                                                readOnly
-                                                            />
-                                                        </div>
+
                                                         <div>
                                                             <label className="block text-sm font-semibold mb-1">Venue</label>
                                                             <input
                                                                 type="text"
                                                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
                                                                 value={StudentProfile?.venue?.name}
+                                                                readOnly
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-semibold mb-1">Current Class</label>
+                                                            <input
+                                                                type="text"
+                                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
+                                                                value={currentClass}
                                                                 readOnly
                                                             />
                                                         </div>

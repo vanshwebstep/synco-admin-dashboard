@@ -130,7 +130,7 @@ const StudentProfile = ({ profile }) => {
         }
     }, []);
 
-      // useEffect(() => {
+    // useEffect(() => {
     //     fetchComments();
     // }, [])
     const handleSubmitComment = async (e) => {
@@ -544,16 +544,16 @@ const StudentProfile = ({ profile }) => {
 
                     </div>
 
-                  <Comments
-        adminInfo={adminInfo}
-        comment={comment}
-        setComment={setComment}
-        handleSubmitComment={handleSubmitComment}
-        loadingComment={loadingComment}
-        commentsList={commentsList}
-        currentComments={currentComments}
-        formatTimeAgo={formatTimeAgo}
-      />
+                    <Comments
+                        adminInfo={adminInfo}
+                        comment={comment}
+                        setComment={setComment}
+                        handleSubmitComment={handleSubmitComment}
+                        loadingComment={loadingComment}
+                        commentsList={commentsList}
+                        currentComments={currentComments}
+                        formatTimeAgo={formatTimeAgo}
+                    />
                 </div>
                 <div className="max-h-fit rounded-full md:w-4/12 text-base space-y-5">
                     {/* Card Wrapper */}
@@ -1156,8 +1156,8 @@ const StudentProfile = ({ profile }) => {
                                         className="w-1/2 bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
                                     >
                                         {cancelData.cancellationType !== "immediate"
-                                        ? "Request to Cancel"
-                                        : "Cancel Membership"}
+                                            ? "Request to Cancel"
+                                            : "Cancel Membership"}
                                     </button>
                                 </div>
                             </div>
@@ -1227,7 +1227,7 @@ const StudentProfile = ({ profile }) => {
 
                                         className="w-1/2  bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
                                     >
-                                       Submit
+                                        Submit
                                     </button>
                                 </div>
                             </div>
@@ -1251,15 +1251,7 @@ const StudentProfile = ({ profile }) => {
 
                             <div className="space-y-4 px-6 pb-6 pt-4">
                                 {/* Current Class */}
-                                <div>
-                                    <label className="block text-[16px] font-semibold">Current Class</label>
-                                    <input
-                                        type="text"
-                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                        value={classSchedule?.className || "-"}
-                                        readOnly
-                                    />
-                                </div>
+
 
                                 {/* Venue */}
                                 <div>
@@ -1271,7 +1263,15 @@ const StudentProfile = ({ profile }) => {
                                         readOnly
                                     />
                                 </div>
-
+                                <div>
+                                    <label className="block text-[16px] font-semibold">Current Class</label>
+                                    <input
+                                        type="text"
+                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                        value={classSchedule?.className || "-"}
+                                        readOnly
+                                    />
+                                </div>
                                 {/* Select New Class */}
                                 <div>
 

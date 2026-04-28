@@ -2190,9 +2190,19 @@ export const BookFreeTrialProvider = ({ children }) => {
 
       const result = await response.json();
 
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to create Membership");
-      }
+    if (!response.ok) {
+  // Remove non-error keys like "status"
+  const errors = Object.entries(result)
+    .filter(([key]) => key !== "status")
+    .map(([, value]) => value);
+
+  const errorMessage =
+    errors.length > 0
+      ? errors.join(", ")
+      : result.message || "Failed to create Membership";
+
+  throw new Error(errorMessage);
+}
 
       await showSuccess("Success!", result.message || "Membership has been created successfully.");
       navigate(`/holiday-camp/members/list`)

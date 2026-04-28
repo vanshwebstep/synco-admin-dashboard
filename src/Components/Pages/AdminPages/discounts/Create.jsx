@@ -47,7 +47,7 @@ const Create = () => {
             const updated = prev.appliesTo.includes(value)
                 ? prev.appliesTo.filter((v) =>
                     value === "weekly_classes"
-                        ? !["weekly_classes", "joining_fee", "per_rate_lessons", "uniform_fee"].includes(v)
+                        ? !["weekly_classes", "joining_fee", "per_rate_lessons"].includes(v)
                         : v !== value
                 )
                 : [...prev.appliesTo, value];
@@ -60,7 +60,7 @@ const Create = () => {
         setFormData((prev) => {
             // Remove any existing weekly radio options
             const cleaned = prev.appliesTo.filter(
-                (v) => !["joining_fee", "per_rate_lessons", "uniform_fee"].includes(v)
+                (v) => !["joining_fee", "per_rate_lessons"].includes(v)
             );
             return {
                 ...prev,
@@ -318,7 +318,7 @@ const Create = () => {
                                             checked={formData.appliesTo.includes("joining_fee")}
                                             onChange={(e) => handleWeeklyRadioChange(e.target.value)}
                                         />
-                                        Joining Fee
+                                        Starter Pack
                                     </label>
                                     <label className="flex items-center gap-2">
                                         <input
@@ -330,16 +330,7 @@ const Create = () => {
                                         />
                                         Per Rate Lessons
                                     </label>
-                                    <label className="flex items-center gap-2">
-                                        <input
-                                            type="radio"
-                                            name="weeklyOption"
-                                            value="uniform_fee"
-                                            checked={formData.appliesTo.includes("uniform_fee")}
-                                            onChange={(e) => handleWeeklyRadioChange(e.target.value)}
-                                        />
-                                        Uniform Fee
-                                    </label>
+                                    
                                 </div>
                             )}
 

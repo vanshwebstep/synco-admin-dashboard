@@ -112,7 +112,7 @@ const StudentProfile = ({ StudentProfile }) => {
     const currentComments = commentsList.slice(indexOfFirstComment, indexOfLastComment);
     const totalPages = Math.ceil(commentsList.length / commentsPerPage);
 
-        const MembershipTenure = StudentProfile?.membershipTenure || "";
+    const MembershipTenure = StudentProfile?.membershipTenure || "";
 
     const formatTimeAgo = (timestamp) => {
         const now = new Date();
@@ -854,7 +854,7 @@ const StudentProfile = ({ StudentProfile }) => {
                                     {status === 'attended' && (
                                         <div className="flex gap-7">
                                             <button className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium">
-                                               Declined Membership
+                                                Declined Membership
                                             </button>
 
                                             <button className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium">
@@ -892,15 +892,7 @@ const StudentProfile = ({ StudentProfile }) => {
 
                             <div className="space-y-4 px-6 pb-6 pt-4">
                                 {/* Current Class */}
-                                <div>
-                                    <label className="block text-[16px] font-semibold">Current Class</label>
-                                    <input
-                                        type="text"
-                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                        value={classSchedule?.className || "-"}
-                                        readOnly
-                                    />
-                                </div>
+
 
                                 {/* Venue */}
                                 <div>
@@ -912,7 +904,15 @@ const StudentProfile = ({ StudentProfile }) => {
                                         readOnly
                                     />
                                 </div>
-
+                                <div>
+                                    <label className="block text-[16px] font-semibold">Current Class</label>
+                                    <input
+                                        type="text"
+                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                        value={classSchedule?.className || "-"}
+                                        readOnly
+                                    />
+                                </div>
                                 {/* Select New Class */}
                                 <div>
 

@@ -1654,7 +1654,7 @@ const ParentProfile = ({ profile }) => {
 
                                         className="w-1/2  bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
                                     >
-                                     Submit
+                                        Submit
                                     </button>
                                 </div>
                             </div>
@@ -1731,15 +1731,6 @@ const ParentProfile = ({ profile }) => {
                                                     {/* Current Info */}
                                                     <div className="grid gap-4 text-sm text-gray-600">
                                                         <div>
-                                                            <label className="block text-sm font-semibold mb-1">Current Class</label>
-                                                            <input
-                                                                type="text"
-                                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
-                                                                value={currentClass}
-                                                                readOnly
-                                                            />
-                                                        </div>
-                                                        <div>
                                                             <label className="block text-sm font-semibold mb-1">Venue</label>
                                                             <input
                                                                 type="text"
@@ -1748,6 +1739,16 @@ const ParentProfile = ({ profile }) => {
                                                                 readOnly
                                                             />
                                                         </div>
+                                                        <div>
+                                                            <label className="block text-sm font-semibold mb-1">Current Class</label>
+                                                            <input
+                                                                type="text"
+                                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
+                                                                value={currentClass}
+                                                                readOnly
+                                                            />
+                                                        </div>
+
                                                     </div>
 
                                                     {/* New Class Select */}
