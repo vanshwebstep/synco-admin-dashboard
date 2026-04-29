@@ -13,11 +13,13 @@ import { saveAs } from 'file-saver';
 import StatsGrid from '../../Common/StatsGrid';
 import DynamicTable from '../../Common/DynamicTable';
 import { useEmail } from '../../contexts/messages/SendEmailContext';
+import { useTextPopup } from '../../contexts/messages/SendTextContext';
 const trialLists = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [fromDate, setFromDate] = useState(null);
     const [toDate, setToDate] = useState(null);
     const { openEmailPopup } = useEmail();
+    const { openTextPopup } = useTextPopup();
 
     const [selectedDate, setSelectedDate] = useState(null);
     const navigate = useNavigate();
@@ -979,12 +981,40 @@ const trialLists = () => {
                                 </button>
                                 <button
                                     onClick={() => {
-                                        if (!selectedStudents || selectedStudents.length === 0) {
-                                            showWarning("No students selected", "Please select at least one student before sending an email.");
-                                            return;
-                                        }
+                                        if (bookMembership && bookMembership.length > 0) {
 
-                                        sendText(selectedStudents);
+                                            const filteredBookings = bookMembership.filter(b =>
+                                                selectedStudents.includes(b.bookingId)
+                                            );
+
+                                            const parents = filteredBookings.flatMap(b =>
+                                                (b.parents || [])
+                                                    .filter(p => p.parentPhoneNumber)
+                                                    .map(p => ({
+                                                        name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
+                                                        phone: p.parentPhoneNumber
+                                                    }))
+                                            );
+
+                                            if (parents.length > 0) {
+                                                openTextPopup(
+                                                    parents,
+                                                    "/api/admin/send-manual-text",
+                                                    { token, showError, showSuccess }
+                                                );
+                                            } else {
+                                                showWarning(
+                                                    "No Phone Numbers",
+                                                    "Selected parents do not have valid phone numbers."
+                                                );
+                                            }
+
+                                        } else {
+                                            showWarning(
+                                                "No Parents Found",
+                                                "No parent data available to send text."
+                                            );
+                                        }
                                     }}
                                     className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-3 py-2 rounded-xl  text-[16px]">
                                     <img src='/images/icons/sendText.png' className='w-4 h-4 sm:w-5 sm:h-5' alt="" />

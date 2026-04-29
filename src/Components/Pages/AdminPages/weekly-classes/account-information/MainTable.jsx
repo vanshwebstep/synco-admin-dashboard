@@ -67,21 +67,56 @@ const MainTable = () => {
   };
   const activeMembers = members?.[activeTab] ?? [];
 
-  const filteredMembers = useMemo(() => {
-    if (!searchQuery) return activeMembers;
+const filteredMembers = useMemo(() => {
+  if (!searchQuery) return activeMembers;
 
-    const queryWords = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
+  const queryWords = searchQuery.toLowerCase().trim().split(/\s+/);
 
-    return activeMembers.filter((main) => {
-      const user = main?.booking || main;
-      const venueName = (user?.venue?.name || user?.address || "").toLowerCase();
+  return activeMembers.filter((main) => {
+    const user = main?.booking || main;
 
-      return (user?.students || []).some(s => {
-        const searchString = `${s.studentFirstName || ""} ${s.studentLastName || ""} ${s.age || ""} ${venueName}`.toLowerCase();
-        return queryWords.every(word => searchString.includes(word));
+    const venueName = (
+      user?.venue?.name ||
+      user?.venue?.address ||
+      user?.address ||
+      ""
+    ).toLowerCase();
+
+    // ✅ Parent full info
+    const parentInfo = (user?.parents || [])
+      .map(p =>
+        `${p?.parentFirstName || ""} ${p?.parentLastName || ""} ${p?.parentEmail || ""} ${p?.parentPhoneNumber || ""}`
+      )
+      .join(" ")
+      .toLowerCase();
+
+    // ✅ Normalize phone (important)
+    const normalizedParentPhones = parentInfo.replace(/[^\d]/g, "");
+
+    return (user?.students || []).some((s) => {
+      const studentInfo = `
+        ${s?.studentFirstName || ""}
+        ${s?.studentLastName || ""}
+        ${s?.age || ""}
+      `.toLowerCase();
+
+      const searchString = `
+        ${studentInfo}
+        ${parentInfo}
+        ${normalizedParentPhones}
+        ${venueName}
+      `;
+
+      return queryWords.every((word) => {
+        const cleanWord = word.replace(/[^\d]/g, "");
+        return (
+          searchString.includes(word) ||
+          (cleanWord && searchString.includes(cleanWord))
+        );
       });
     });
-  }, [activeMembers, searchQuery]);
+  });
+}, [activeMembers, searchQuery]);
 
   const isAllSelected =
     filteredMembers.length > 0 &&

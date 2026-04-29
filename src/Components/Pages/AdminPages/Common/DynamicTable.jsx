@@ -79,19 +79,52 @@ const DynamicTable = ({
   const finalData = useGrouped ? groupedData : flattenedData;
   const searchableKeys = ["name", "email", "phone"]; // customize
 
-  const searchedData = useMemo(() => {
-    if (!searchQuery) return finalData;
+ const searchedData = useMemo(() => {
+  if (!searchQuery) return finalData;
 
-    const queryWords = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
+  const queryWords = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
 
-    return finalData.filter((row) => {
-      const venueName = (row?.venue?.name || row?.address || row?.parent?.venue?.name || row?.parent?.address || "").toLowerCase();
-      
-      const searchString = `${row?.student?.studentFirstName || ""} ${row?.student?.studentLastName || ""} ${row?.student?.age || ""} ${venueName}`.toLowerCase();
+  return finalData.filter((row) => {
+    const venueName = (
+      row?.venue?.name ||
+      row?.address ||
+      row?.parent?.venue?.name ||
+      row?.parent?.address ||
+      ""
+    ).toLowerCase();
 
-      return queryWords.every(word => searchString.includes(word));
-    });
-  }, [finalData, searchQuery]);
+    // ✅ Parent phones
+    const parentPhones = (row?.parents || [])
+      .map(p => p?.parentPhoneNumber || "")
+      .join(" ")
+      .toLowerCase();
+
+    // ✅ Normalize phones (remove +, spaces, etc.)
+    const normalizedPhones = parentPhones.replace(/[^\d]/g, "");
+
+    // ✅ Parent names + emails
+    const parentInfo = (row?.parents || [])
+      .map(p =>
+        `${p?.parentFirstName || ""} ${p?.parentLastName || ""} ${p?.parentEmail || ""}`
+      )
+      .join(" ")
+      .toLowerCase();
+
+    const searchString = `
+      ${row?.student?.studentFirstName || ""}
+      ${row?.student?.studentLastName || ""}
+      ${row?.student?.age || ""}
+      ${parentInfo}
+      ${parentPhones}
+      ${normalizedPhones}
+      ${venueName}
+    `.toLowerCase();
+
+    return queryWords.every(word =>
+      searchString.includes(word.replace(/[^\d]/g, ""))
+    );
+  });
+}, [finalData, searchQuery]);
   /* =============================
      Pagination
   ============================== */

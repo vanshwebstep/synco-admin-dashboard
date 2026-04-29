@@ -23,6 +23,7 @@ import { useRevertMembership } from '../../../contexts/RevertMembershipContext';
 import RevertMembershipPopup from '../../../Common/RevertMembershipPoppup';
 import PhoneNumberInput from '../../../Common/PhoneNumberInput';
 import { useCancelMembership } from '../../../contexts/messages/CancelMembershipContext';
+import { useTextPopup } from '../../../contexts/messages/SendTextContext';
 
 const ParentProfile = ({ ParentProfile }) => {
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -36,6 +37,7 @@ const ParentProfile = ({ ParentProfile }) => {
     const { openEmailPopup } = useEmail();
     const navigate = useNavigate();
     const { openRevertPopup } = useRevertMembership();
+    const { openTextPopup } = useTextPopup();
 
     const [revertPopup, setRevertPopup] = useState(false);
     const [selectedStudents, setSelectedStudents] = useState([]);
@@ -142,6 +144,7 @@ const ParentProfile = ({ ParentProfile }) => {
         venue,
         paymentPlan,
         paymentPlans,
+        lifeCycle,
     } = ParentProfile;
 
     const [rebookFreeTrial, setRebookFreeTrial] = useState({
@@ -222,11 +225,7 @@ const ParentProfile = ({ ParentProfile }) => {
     const handleReinstateMembership = () => {
         showConfirm(
             "Reinstate Membership?",
-            `You are about to reinstate:
-  
-  Venue: ${ParentProfile?.venue?.name}
-  Class: ${ParentProfile?.students?.[0]?.classSchedule?.className}  
-  Continue?`,
+            `Are you sure you want to reinstate this customer's membership?`,
             "Yes, Reinstate"
         ).then((result) => {
             if (result.isConfirmed) {
@@ -639,7 +638,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                 backgroundSize: "cover",
                             }}
                         >
-                            <div>
+                            <div className="flex items-center w-full justify-between gap-3">
                                 <div className="text-[20px] font-bold text-[#1F2937]">Account Status</div>
                                 <div className="text-[16px] font-semibold text-[#1F2937] capitalize">
                                     {status ? status.replaceAll("_", " ") : "Unknown"}
@@ -741,10 +740,20 @@ const ParentProfile = ({ ParentProfile }) => {
                                     )}
 
                                 </div>
-                                {ParentProfile?.cancelData?.cancelDate && (
+                                {ParentProfile?.cancelData?.cancelDate && status !== "cancelled" && (
                                     <div className="border-t border-[#495362] py-5">
                                         <div className=" text-[20px] text-white">Request to Cancel Date </div>
                                         <div className="text-[16px]  mt-1 text-gray-400">{formatDate(ParentProfile.cancelData.cancelDate)}</div>
+                                    </div>
+                                )}
+                                {(status === "cancelled") && (
+                                    <div className="border-t border-[#495362] py-5">
+                                        <div className="text-[20px] text-white">
+                                            Cancelled Date
+                                        </div>
+                                        <div className="text-[16px] mt-1 text-gray-400">
+                                            {formatDate(ParentProfile?.cancelData?.updatedAt)}
+                                        </div>
                                     </div>
                                 )}
                                 <div className="border-t border-[#495362] py-5">
@@ -761,7 +770,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                         <div className="border-t border-[#495362] py-5">
                                             <div className="  text-[20px] text-white">Lifecycle</div>
                                             <div className="text-[16px] mt-1 text-gray-400">
-                                                {paymentPlan?.duration} {paymentPlan?.interval}{paymentPlan?.duration > 1 ? "s" : ""}
+                                                {lifeCycle}
                                             </div>
                                         </div>
                                     </>
@@ -776,16 +785,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                         </div>
                                     </div>
                                 )}
-                                {ParentProfile?.cancelData?.updatedAt && (
-                                    <div className="border-t border-[#495362] py-5">
-                                        <div className="text-[20px] text-white">
-                                            Cancelled Date
-                                        </div>
-                                        <div className="text-[16px] mt-1 text-gray-400">
-                                            {formatDate(ParentProfile?.cancelData?.updatedAt)}
-                                        </div>
-                                    </div>
-                                )}
+
 
                             </div>
                         </div>
@@ -808,7 +808,29 @@ const ParentProfile = ({ ParentProfile }) => {
 
 
 
-                            <button disabled={textloading} onClick={() => sendText([id])} className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
+                            <button disabled={textloading}
+                                onClick={() => {
+                                    const formattedParents = parents
+                                        .filter(p => p.parentPhoneNumber)
+                                        .map(p => ({
+                                            name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
+                                            phone: p.parentPhoneNumber
+                                        }));
+
+                                    if (formattedParents.length > 0) {
+                                        openTextPopup(
+                                            formattedParents,
+                                            "/api/admin/send-manual-text",
+                                            { token, showError, showSuccess }
+                                        );
+                                    } else {
+                                        showWarning(
+                                            "No Phone Numbers",
+                                            "Selected parents do not have valid phone numbers."
+                                        );
+                                    }
+                                }}
+                                className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
                                 <img src="/images/icons/sendText.png" alt="" />  {textloading ? (
                                     <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
                                 ) : (

@@ -11,10 +11,11 @@ import {
 import { useLeads } from "../../contexts/LeadsContext";
 import Select from "react-select";
 import * as XLSX from "xlsx";
-import { showError, showWarning ,showSuccess} from "../../../../../utils/swalHelper";
+import { showError, showWarning, showSuccess } from "../../../../../utils/swalHelper";
 import { useEmail } from '../../contexts/messages/SendEmailContext';
 
 import { saveAs } from "file-saver";
+import { useTextPopup } from "../../contexts/messages/SendTextContext";
 function exportDataToExcel(data) {
     // Prepare flat data for excel rows
     const flattenedData = data.map((lead) => {
@@ -59,8 +60,9 @@ function exportDataToExcel(data) {
 const Filters = () => {
 
     const { fetchData, activeTabm, setActiveTab, data, setSelectedVenue, selectedVenue, selectedUserIds, sendleadsMail, setCurrentPage, setSearchTerm, searchTerm } = useLeads()
-    const { openEmailPopup  } = useEmail();
+    const { openEmailPopup } = useEmail();
     const token = localStorage.getItem("adminToken");
+    const { openTextPopup } = useTextPopup();
 
     const today = new Date();
     const [noLoaderShow, setNoLoaderShow] = useState(false);
@@ -476,7 +478,7 @@ const Filters = () => {
                             console.log('filteredBookings', filteredBookings)
                             // Step 2: Extract emails from filtered bookings
                             const parentEmails = filteredBookings.map(p => p.email)
-                                    .filter(email => email)
+                                .filter(email => email)
                             if (parentEmails.length > 0) {
                                 openEmailPopup(
                                     parentEmails,
@@ -507,7 +509,48 @@ const Filters = () => {
                     Send Email
                 </button>
 
-                <button className="flex-1 flex items-center justify-center gap-1 border text-[#717073] border-[#717073] rounded-lg py-2 text-sm hover:bg-gray-50">
+                <button
+                    onClick={() => {
+                        if (data && data.length > 0) {
+
+                            const filteredBookings = data.filter(b =>
+                                selectedUserIds.includes(b.id || b.bookingId)
+                            );
+
+                            const phones = Array.from(
+                                new Map(
+                                    filteredBookings
+                                        .filter(b => b.phone)
+                                        .map(b => [
+                                            b.phone,
+                                            {
+                                                name: `${b.firstName || ""} ${b.lastName || ""}`.trim(),
+                                                phone: b.phone
+                                            }
+                                        ])
+                                ).values()
+                            );
+
+                            if (phones.length > 0) {
+                                openTextPopup(
+                                    phones,
+                                    "/api/admin/send-manual-text",
+                                    { token, showError, showSuccess }
+                                );
+                            } else {
+                                showWarning(
+                                    "No Phone Numbers",
+                                    "Selected users do not have valid phone numbers."
+                                );
+                            }
+
+                        } else {
+                            showWarning(
+                                "No Data Found",
+                                "No user data available to send text."
+                            );
+                        }
+                    }} className="flex-1 flex items-center justify-center gap-1 border text-[#717073] border-[#717073] rounded-lg py-2 text-sm hover:bg-gray-50">
                     <MessageSquare size={16} className="text-[#717073]" /> Send Text
                 </button>
                 <button onClick={() => exportDataToExcel(data)} className="flex items-center justify-center gap-1 bg-[#237FEA] text-white text-sm py-2 rounded-lg hover:bg-blue-700 transition">

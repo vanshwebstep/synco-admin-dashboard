@@ -38,7 +38,10 @@ const List = () => {
     const [expiryDate, setExpiryDate] = useState("");
     const [cvc, setCvc] = useState("");
     const [errors, setErrors] = useState({});
-
+    const [proRataCode, setProRataCode] = useState("");
+    const [proRataDiscountData, setProRataDiscountData] = useState(null);
+    const [isProRataApplied, setIsProRataApplied] = useState(false);
+    const [isProRataChecked, setIsProRataChecked] = useState(false);
     const [checkoutCountry, setCheckoutCountry] = useState("United States");
     const [zipCode, setZipCode] = useState("");
     const [step, setStep] = useState(1);
@@ -47,7 +50,7 @@ const List = () => {
     const [isDiscountLoading, setIsDiscountLoading] = useState(false);
     const { adminInfo, setAdminInfo } = useNotification();
     const [country, setCountry] = useState("uk"); // default country
-
+    const [isProRataLoading, setIsProRataLoading] = useState(false);
     const [dialCode, setDialCode] = useState("+44"); // store selected code silently
     const [dialCode2, setDialCode2] = useState("+44");
     const [country2, setCountry2] = useState("gb");
@@ -250,8 +253,13 @@ const List = () => {
 
     const handleDiscountChange = (e) => {
         setDiscountCode(e.target.value);
+
+        // reset both
         setIsChecked(false);
         setIsApplied(false);
+
+        setIsProRataChecked(false);
+        setIsProRataApplied(false);
     };
 
     const handleCountryChange = (countryData) => {
@@ -1234,8 +1242,8 @@ const List = () => {
         setIsSubmitting(true);
         const amountToSend = calculateAmount(selectedDate);
         const proRataToSend = pricingBreakdown.isFullMonthCharge
-    ? 0
-    : pricingBreakdown.costOfProRatedLessons;
+            ? 0
+            : pricingBreakdown.finalProRataCost;
         const paymentData =
             Object.keys(filteredPayment).length > 0
                 ? isFranchisee
@@ -1300,9 +1308,11 @@ const List = () => {
             parents: parents.map(({ id, ...rest }) =>
                 studentRemoved ? rest : { id, ...rest }  // ✅
             ),
-            starterPack: singleClassSchedulesOnly?.venue?.starterPack
-                ? membershipPlan?.starterPackPrice || 0
-                : 0,
+            starterPack:
+                singleClassSchedulesOnly?.venue?.starterPack &&
+                    comesFrom !== "cancellation"
+                    ? Number(membershipPlan?.starterPackPrice || 0)
+                    : 0,
             discountId: appliedDiscount?.data?.discountId || null,
             emergency: studentRemoved
                 ? (({ id, ...rest }) => rest)(emergency)
@@ -1678,20 +1688,15 @@ const List = () => {
     }, [sessionDatesSet]);
     console.log('membershipPlan', membershipPlan);
     const calculateAmount = (startDate) => {
-        console.log("🚀 ===== CALCULATION START =====");
+        if (!membershipPlan || !startDate) return;
 
-        if (!membershipPlan || !startDate) {
-            console.log("❌ Missing membershipPlan or startDate");
-            return;
-        }
-
-        const durationMonths = membershipPlan?.all?.duration || 1;
         const monthlyPrice = Number(membershipPlan?.all?.price ?? 0);
-        const totalLessons = membershipPlan?.all?.totalLessons || 40;
 
-        const starterPack = singleClassSchedulesOnly?.venue?.starterPack
-            ? Number(membershipPlan?.starterPackPrice || 0)
-            : 0;
+        const starterPack =
+            comesFrom !== "cancellation" &&
+                singleClassSchedulesOnly?.venue?.starterPack
+                ? Number(membershipPlan?.starterPackPrice || 0)
+                : 0;
 
         // ✅ DATE PARSER
         const parseLocalDate = (dateStr) => {
@@ -1701,7 +1706,6 @@ const List = () => {
 
         const selected = parseLocalDate(startDate);
         selected.setHours(0, 0, 0, 0);
-        const selectedTime = selected.getTime();
 
         // ── ALL SESSIONS ──
         const allSessions = Array.from(sessionDatesSet).map((d) => {
@@ -1710,7 +1714,6 @@ const List = () => {
             return date;
         });
 
-        // ── CURRENT MONTH SESSIONS ──
         const selectedMonth = selected.getMonth();
         const selectedYear = selected.getFullYear();
 
@@ -1722,69 +1725,69 @@ const List = () => {
             )
             .sort((a, b) => a - b);
 
-        // ✅ FIRST SESSION
         const firstSessionDate = sessionsInStartMonth[0];
 
         const isFirstSessionSelected =
             firstSessionDate &&
             selected.getTime() === firstSessionDate.getTime();
 
-        // ── REMAINING SESSIONS ──
         const remainingSessions = sessionsInStartMonth.filter(
-            (d) => d.getTime() >= selectedTime
+            (d) => d.getTime() >= selected.getTime()
         );
 
         const proRataLessons = remainingSessions.length;
 
-        // ── PRICE PER LESSON ──
-        const lessonsInThisMonth = sessionsInStartMonth.length || 1;
+        const pricePerLesson = membershipPlan?.all?.priceLesson || 0;
 
-        // const pricePerLesson =
-        //     durationMonths === 1
-        //         ? monthlyPrice / lessonsInThisMonth
-        //         : (monthlyPrice * durationMonths) / totalLessons;
-
-        const pricePerLesson =
-            membershipPlan?.all?.priceLesson;
         // ── PRO-RATA COST ──
-        const pricePerLessonPence = Math.round(pricePerLesson * 100);
-        const proRataCostPence = proRataLessons * pricePerLessonPence;
-        const proRataCost = Number((proRataCostPence / 100).toFixed(2));
+        const proRataCost = Number(
+            (proRataLessons * pricePerLesson).toFixed(2)
+        );
 
-        // ✅ PRO-RATA CAP (never exceed full month)
         const safeProRataCost = Math.min(proRataCost, monthlyPrice);
+
         const isFullMonth =
             (isFirstSessionSelected && proRataLessons >= 3) ||
-            proRataCost >= monthlyPrice;
-        // ── FINAL CHARGE LOGIC ──
-        let lessonCharge = 0;
+            safeProRataCost >= monthlyPrice;
 
-        if (isFullMonth) {
-            lessonCharge = monthlyPrice;
-        } else if (proRataLessons > 0) {
-            lessonCharge = safeProRataCost;
-        } else {
-            lessonCharge = monthlyPrice;
+        // 🔥 FINAL PRO-RATA (single source)
+        let finalProRata = safeProRataCost;
+
+        if (
+            !isFullMonth &&
+            proRataDiscountData?.finalProRata != null
+        ) {
+            finalProRata = proRataDiscountData.finalProRata;
         }
-        const totalBeforeDiscount = lessonCharge + starterPack;
 
-        // ── DISCOUNT ──
-        let discountAmount = 0;
+        // ✅ FINAL LESSON CHARGE
+        const effectiveLessonCharge = isFullMonth
+            ? monthlyPrice
+            : finalProRata;
+
+        // ── STARTER DISCOUNT ──
+        let starterDiscountAmount = 0;
 
         if (isApplied && appliedDiscount?.data) {
             if (appliedDiscount.data.type === "percentage") {
-                discountAmount =
-                    (totalBeforeDiscount * Number(appliedDiscount.data.value)) / 100;
+                starterDiscountAmount =
+                    (starterPack * Number(appliedDiscount.data.value)) / 100;
             } else {
-                discountAmount = Number(
+                starterDiscountAmount = Number(
                     appliedDiscount.data.discountAmount || 0
                 );
             }
         }
 
-        const finalTotal = Math.max(totalBeforeDiscount - discountAmount, 0);
-        const totalToday = Number(finalTotal.toFixed(2));
+        // ✅ TOTAL
+        const totalBeforeDiscount = effectiveLessonCharge + starterPack;
 
+        const finalTotal = Math.max(
+            totalBeforeDiscount - starterDiscountAmount,
+            0
+        );
+
+        const totalToday = Number(finalTotal.toFixed(2));
         const nextMonthPayment = Number(monthlyPrice.toFixed(2));
 
         // ── STATE ──
@@ -1794,20 +1797,21 @@ const List = () => {
         setPricingBreakdown({
             pricePerClassPerChild: pricePerLesson,
             numberOfLessonsProRated: proRataLessons,
-            costOfProRatedLessons: safeProRataCost, // ✅ capped value
-            starterPack: starterPack,
-            discount: discountAmount,
-            totalBeforeDiscount: totalBeforeDiscount,
+
+            // original
+            costOfProRatedLessons: safeProRataCost,
+
+            // ✅ FINAL VALUE (use in UI)
+            finalProRataCost: finalProRata,
+
+            starterPack,
+            starterDiscount: starterDiscountAmount,
+
+            totalBeforeDiscount,
             totalAmountToday: totalToday,
-            nextMonthPayment: nextMonthPayment,
-            isFullMonthCharge: isFullMonth // ✅ correct flag
+            nextMonthPayment,
+            isFullMonthCharge: isFullMonth,
         });
-
-        console.log("💸 TOTAL BEFORE DISCOUNT:", totalBeforeDiscount);
-        console.log("🏷️ DISCOUNT:", discountAmount);
-        console.log("✅ FINAL TOTAL:", totalToday);
-
-        console.log("🏁 ===== CALCULATION END =====");
 
         return totalToday;
     };
@@ -1858,6 +1862,58 @@ const List = () => {
             setIsDiscountLoading(false);
         }
     };
+    const handleApplyProRataDiscount = async () => {
+        const proRataCost = pricingBreakdown?.costOfProRatedLessons || 0;
+
+        if (!proRataCode.trim()) {
+            setIsProRataChecked(true);
+            setIsProRataApplied(false);
+            return;
+        }
+
+        setIsProRataLoading(true);
+
+        const payload = {
+            proRata: proRataCost,
+            code: proRataCode
+        };
+
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/api/admin/book-membership/apply-discount`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(payload),
+                }
+            );
+
+            const result = await response.json();
+
+            // ✅ SET AFTER RESPONSE
+            setIsProRataChecked(true);
+
+            if (response.ok && result?.status) {
+                setProRataDiscountData({
+                    ...result,
+                    finalProRata: result?.data?.finalPrice ?? proRataCost,
+                });
+                setIsProRataApplied(true);
+            } else {
+                setProRataDiscountData(null);
+                setIsProRataApplied(false);
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            setIsProRataApplied(false);
+            setIsProRataChecked(true);
+        } finally {
+            setIsProRataLoading(false);
+        }
+    };
     const handleRemoveStudent = (indexToRemove) => {
         setStudents((prevStudents) => {
             const updatedStudents = prevStudents.filter((_, i) => i !== indexToRemove);
@@ -1869,6 +1925,18 @@ const List = () => {
         });
         setStudentRemoved(true);
     };
+    const handleResetDiscount = () => {
+        setDiscountCode("");
+        setIsApplied(false);
+        setAppliedDiscount(null);
+    };
+
+    const handleResetProRataDiscount = () => {
+        setProRataCode("");
+        setIsProRataChecked(false);
+        setIsProRataApplied(false);
+        setProRataDiscountData(null);
+    };
     const renderContent = (content) => {
         return (
             <div
@@ -1878,6 +1946,14 @@ const List = () => {
         );
     };
     console.log('appliedDiscount', appliedDiscount)
+    useEffect(() => {
+        if (selectedDate) {
+            calculateAmount(selectedDate);
+        }
+    }, [selectedDate, isApplied, proRataDiscountData]);
+
+    console.log("PR DATA:", proRataDiscountData);
+    // console.log("FINAL PRORATA USED:", finalProRata);
     const finalAmount =
         appliedDiscount?.data?.finalPrice ??
         singleClassSchedulesOnly?.starterPack?.[0]?.price;
@@ -2081,7 +2157,7 @@ const List = () => {
 
                             </div>
                         </div>
-                        {singleClassSchedulesOnly?.venue?.starterPack && (
+                        {singleClassSchedulesOnly?.venue?.starterPack && comesFrom !== 'cancellation' && (
                             <div className="mb-5">
                                 <label className="text-base font-semibold poppins">Starter Pack</label>
                                 <div className="relative mt-2">
@@ -2095,63 +2171,47 @@ const List = () => {
                                 </div>
                             </div>
                         )}
-                        <div className="mb-5">
-                            <label className="text-base font-semibold">Discount Code</label>
+                        {singleClassSchedulesOnly?.venue?.starterPack && comesFrom !== 'cancellation' && (
+                            <div className="mb-5">
+                                <label className="text-base font-semibold">Discount Code</label>
 
-                            <div className="relative mt-2">
-                                <input
-                                    type="text"
-                                    placeholder="Enter Discount Code"
-                                    value={discountCode}
-                                    onChange={handleDiscountChange}
-                                    className="w-full border border-gray-300 rounded-xl px-3 text-[16px] py-3 focus:outline-none"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        value={discountCode}
+                                        onChange={(e) => {
+                                            setDiscountCode(e.target.value);
+                                            setIsApplied(false);
+                                            setAppliedDiscount(null);
+                                        }}
+                                        placeholder="Enter Discount Code"
+                                        className="w-full border border-gray-300 rounded-xl px-3 py-3 pr-20"
+                                    />
 
-                                {/* Loading */}
+                                    {/* ❌ Clear Button */}
+                                    {discountCode && (
+                                        <button
+                                            onClick={handleResetDiscount}
+                                            className="absolute top-1/2 right-[90px] -translate-y-1/2 text-gray-400 hover:text-red-500"
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
 
-                                <div className="absolute top-[4px]       right-1">
-                                    <button
-                                        onClick={handleApplyDiscount}
-                                        disabled={isDiscountLoading}
-                                        className={`
-    px-5 py-2 
-    rounded-xl 
-    font-medium 
-    transition-all duration-200 ease-in-out
-    shadow-sm
-    ${isDiscountLoading
-                                                ? "bg-[#0098d9] text-white cursor-not-allowed"
-                                                : "bg-[#003997] text-white hover:bg-gray-900 active:scale-95 hover:shadow-md"
-                                            }
-  `}
-                                    >
-                                        {isDiscountLoading ? (
-                                            <span className="flex items-center gap-2">
-                                                <svg
-                                                    className="w-4 h-4 animate-spin"
-                                                    viewBox="0 0 24 24"
-                                                    fill="none"
-                                                >
-                                                    <circle
-                                                        className="opacity-25"
-                                                        cx="12"
-                                                        cy="12"
-                                                        r="10"
-                                                        stroke="currentColor"
-                                                        strokeWidth="4"
-                                                    />
-                                                    <path
-                                                        className="opacity-75"
-                                                        fill="currentColor"
-                                                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                                                    />
-                                                </svg>
-                                                Applying...
-                                            </span>
-                                        ) : (
-                                            "Apply"
-                                        )}
-                                    </button>
+                                    {/* Apply Button */}
+                                    <div className="absolute top-[4px] right-1">
+                                        <button
+                                            onClick={handleApplyDiscount}
+                                            disabled={isDiscountLoading}
+                                            className={`px-5 py-2 rounded-xl font-medium transition-all duration-200 ease-in-out shadow-sm
+            ${isDiscountLoading
+                                                    ? "bg-[#0098d9] text-white cursor-not-allowed"
+                                                    : "bg-[#003997] text-white hover:bg-gray-900 active:scale-95 hover:shadow-md"
+                                                }`}
+                                        >
+                                            {isDiscountLoading ? "Applying..." : "Apply"}
+                                        </button>
+                                    </div>
                                 </div>
                                 <div>
                                     {isDiscountLoading && (
@@ -2177,9 +2237,7 @@ const List = () => {
                                     )}
                                 </div>
                             </div>
-
-                        </div>
-
+                        )}
 
                     </div>
 
@@ -2359,7 +2417,7 @@ const List = () => {
                                 )}
 
                                 {/* ── Starter Pack ── */}
-                                {singleClassSchedulesOnly?.venue?.starterPack && (
+                                {singleClassSchedulesOnly?.venue?.starterPack && comesFrom !== 'cancellation' && (
                                     <div className="flex justify-between text-[#333]">
                                         <span>Starter Pack</span>
                                         <span className="text-right">
@@ -2394,6 +2452,54 @@ const List = () => {
                                     )}
                                     {!pricingBreakdown.isFullMonthCharge && (
                                         <>
+                                            {!pricingBreakdown.isFullMonthCharge && (
+                                                <div className="mb-5">
+                                                    <label className="text-base font-semibold">Pro-Rata Discount Code</label>
+
+                                                    <div className="relative mt-2">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Enter Pro-Rata Code"
+                                                            value={proRataCode}
+                                                            onChange={(e) => {
+                                                                setProRataCode(e.target.value);
+                                                                setIsProRataChecked(false);
+                                                                setIsProRataApplied(false);
+                                                                setProRataDiscountData(null);
+                                                            }}
+                                                            className="w-full border border-gray-300 rounded-xl px-3 py-3 pr-20"
+                                                        />
+
+                                                        {/* ❌ Clear Button */}
+                                                        {proRataCode && (
+                                                            <button
+                                                                onClick={handleResetProRataDiscount}
+                                                                className="absolute top-1/2 right-[90px] -translate-y-1/2 text-gray-400 hover:text-red-500"
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        )}
+
+                                                        {/* Apply Button */}
+                                                        <button
+                                                            onClick={handleApplyProRataDiscount}
+                                                            disabled={isProRataLoading}
+                                                            className={`absolute top-1 right-1 px-4 py-2 rounded-xl text-white 
+        ${isProRataLoading ? "bg-green-400" : "bg-green-600"}`}
+                                                        >
+                                                            {isProRataLoading ? "Applying..." : "Apply"}
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Messages */}
+                                                    {isProRataChecked && isProRataApplied && (
+                                                        <p className="text-green-600">✅ Applied</p>
+                                                    )}
+                                                    {isProRataChecked && !isProRataApplied && (
+                                                        <p className="text-red-600">❌ Invalid</p>
+                                                    )}
+                                                </div>
+                                            )}
                                             <div className="flex justify-between text-[#333]">
                                                 <span>Number of Pro-Rata Lessons</span>
                                                 <span>{pricingBreakdown.numberOfLessonsProRated}</span>
@@ -2401,7 +2507,8 @@ const List = () => {
 
                                             <div className="flex justify-between text-[#000]">
                                                 <span>Total Pro-Rata Cost</span>
-                                                <span>£{pricingBreakdown.costOfProRatedLessons?.toFixed(2)}</span>
+                                                <span>
+                                                    £{pricingBreakdown.finalProRataCost?.toFixed(2)}</span>
                                             </div>
                                         </>
                                     )}
@@ -3026,9 +3133,9 @@ const List = () => {
                                                 </p>
                                             </div>
 
-                                            {singleClassSchedulesOnly?.venue?.starterPack && (<hr className="my-4 border-gray-300 poppins" />)}
+                                            {singleClassSchedulesOnly?.venue?.starterPack && comesFrom !== 'cancellation' && (<hr className="my-4 border-gray-300 poppins" />)}
 
-                                            {singleClassSchedulesOnly?.venue?.starterPack && (
+                                            {singleClassSchedulesOnly?.venue?.starterPack && comesFrom !== 'cancellation' && (
                                                 <div className="mb-4">
                                                     <p>
                                                         <span className="font-semibold  poppinstext-[#042C89]"
@@ -3079,7 +3186,7 @@ const List = () => {
                                                     <p className="poppins">
                                                         Fee
                                                         <span className="poppins float-right">
-                                                            £{pricingBreakdown.costOfProRatedLessons}
+                                                            £{pricingBreakdown.finalProRataCost}
                                                         </span>
                                                     </p>
                                                 </div>
@@ -3332,7 +3439,7 @@ const List = () => {
                                                         (isFranchisee ? isBankInvalid : isCardInvalid)
                                                     }
                                                     onClick={() => {
-                                                        const hasStarterPack = singleClassSchedulesOnly?.venue?.starterPack;
+                                                        const hasStarterPack = singleClassSchedulesOnly?.venue?.starterPack && comesFrom !== 'cancellation';
                                                         const hasProrata = pricingBreakdown?.numberOfLessonsProRated !== 0;
 
                                                         if (hasStarterPack || hasProrata) {

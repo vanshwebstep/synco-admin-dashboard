@@ -179,6 +179,7 @@ import { CancelMembershipProvider } from './Components/Pages/AdminPages/contexts
 import { PhoneInputProvider } from './Components/Pages/AdminPages/contexts/PhoneInputContext.jsx';
 import { RevertMembershipProvider } from './Components/Pages/AdminPages/contexts/RevertMembershipContext.jsx';
 import { WaitingListProvider } from './Components/Pages/AdminPages/contexts/messages/WaitingListContext.jsx';
+import { TextProvider } from './Components/Pages/AdminPages/contexts/messages/SendTextContext.jsx';
 
 const commonRole = ['Admin', 'user', 'Member', 'Agent', 'Super Admin'];
 
@@ -1332,15 +1333,17 @@ function App() {
                                                     <CoachProProvider>
                                                       <StarterPackProvider>
                                                         <EmailProvider>
-                                                          <CancelMembershipProvider>
-                                                            <PhoneInputProvider>
-                                                              <RevertMembershipProvider>
-                                                                <WaitingListProvider>
-                                                                <AppRoutes />
-                                                                </WaitingListProvider>
-                                                              </RevertMembershipProvider>
-                                                            </PhoneInputProvider>
-                                                          </CancelMembershipProvider>
+                                                          <TextProvider>
+                                                            <CancelMembershipProvider>
+                                                              <PhoneInputProvider>
+                                                                <RevertMembershipProvider>
+                                                                  <WaitingListProvider>
+                                                                    <AppRoutes />
+                                                                  </WaitingListProvider>
+                                                                </RevertMembershipProvider>
+                                                              </PhoneInputProvider>
+                                                            </CancelMembershipProvider>
+                                                          </TextProvider>
                                                         </EmailProvider>
                                                       </StarterPackProvider>
                                                     </CoachProProvider>

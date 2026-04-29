@@ -393,7 +393,7 @@ export const BookFreeTrialProvider = ({ children }) => {
       setLoading(false);
     }
   };
-    const createReBookFreeTrials = async (bookFreeTrialData, islead) => {
+  const createReBookFreeTrials = async (bookFreeTrialData, islead) => {
     setLoading(true);
     console.log('bookFreeTrialData', bookFreeTrialData)
     console.log('islead', islead)
@@ -1845,11 +1845,11 @@ export const BookFreeTrialProvider = ({ children }) => {
 
 
       // ✅ Navigate safely based on source
-      if (comesfrom === "allMembers") {
-        navigate("/weekly-classes/all-members/list");
-      } else {
-        navigate("/weekly-classes/all-members/membership-sales");
-      }
+      // if (comesfrom === "allMembers") {
+      navigate("/weekly-classes/find-a-class/add-to-waiting-list/list");
+      // } else {
+      //   navigate("/weekly-classes/all-members/membership-sales");
+      // }
       setaddToWaitingList(false)
 
       return result;
@@ -2190,19 +2190,19 @@ export const BookFreeTrialProvider = ({ children }) => {
 
       const result = await response.json();
 
-    if (!response.ok) {
-  // Remove non-error keys like "status"
-  const errors = Object.entries(result)
-    .filter(([key]) => key !== "status")
-    .map(([, value]) => value);
+      if (!response.ok) {
+        // Remove non-error keys like "status"
+        const errors = Object.entries(result)
+          .filter(([key]) => key !== "status")
+          .map(([, value]) => value);
 
-  const errorMessage =
-    errors.length > 0
-      ? errors.join(", ")
-      : result.message || "Failed to create Membership";
+        const errorMessage =
+          errors.length > 0
+            ? errors.join(", ")
+            : result.message || "Failed to create Membership";
 
-  throw new Error(errorMessage);
-}
+        throw new Error(errorMessage);
+      }
 
       await showSuccess("Success!", result.message || "Membership has been created successfully.");
       navigate(`/holiday-camp/members/list`)

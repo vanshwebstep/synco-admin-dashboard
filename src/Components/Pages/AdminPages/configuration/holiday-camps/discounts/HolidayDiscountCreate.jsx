@@ -136,16 +136,17 @@ const HolidayDiscountCreate = () => {
             limitTotalUses: formData.limitTotalUses || "",
             limitPerCustomer: formData.limitPerCustomer || "",
             code: formData.code?.trim() || "",
+            appliesTo: (formData.appliesTo || []).filter(
+                (item) => item !== "weekly_classes"
+            ),
             // any other cleanup/formatting logic
         };
 
         try {
-            await createDiscount(payload); // ✅ send to server
-            showSuccess("Discount Created", "Discount code has been created successfully!");
+            await createDiscount(payload); // ✅ let this handle everything
         } catch (err) {
+            // ❌ no popup here (already handled inside createDiscount)
             console.error("Submit error:", err);
-            // Optionally show an error message here
-            showError("Creation Failed", err.message || "Something went wrong.");
         }
     };
     const combineDateTime = (date, time) => {
@@ -345,7 +346,7 @@ const HolidayDiscountCreate = () => {
                                         />
                                         Per Rate Lessons
                                     </label>
-                                   
+
                                 </div>
                             )}
 

@@ -15,16 +15,18 @@ import axios from 'axios';
 import StatsGrid from '../../../Common/StatsGrid';
 import DynamicTable from '../../../Common/DynamicTable';
 import { useEmail } from '../../../contexts/messages/SendEmailContext';
+import { useTextPopup } from '../../../contexts/messages/SendTextContext';
 
 const WaitingList = () => {
     const [textloading, setTextLoading] = useState(null);
+    const { openTextPopup } = useTextPopup();
 
     const [currentDate, setCurrentDate] = useState(new Date());
     const [fromDate, setFromDate] = useState(null);
     const [toDate, setToDate] = useState(null);
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-        const { openEmailPopup } = useEmail();
-    
+    const { openEmailPopup } = useEmail();
+
     // const [selectedDate, setSelectedDate] = useState(null);
     const { fetchAddtoWaitingList, statsFreeTrial, bookFreeTrials, setSearchTerm, bookedByAdmin, searchTerm, loading, selectedVenue, setStatus, status, setSelectedVenue, myVenues, setMyVenues, sendWaitingListMail, setLoading } = useBookFreeTrial() || {};
     const [isFilterApplied, setIsFilterApplied] = useState(false);
@@ -1034,17 +1036,44 @@ const WaitingList = () => {
                                     Send Email
                                 </button>
 
-                                <button onClick={() => {
-                                    if (!selectedStudents || selectedStudents.length === 0) {
-                                        showWarning(
-                                            "No students selected",
-                                            "Please select at least one student before sending an email."
-                                        );
-                                        return;
-                                    }
+                                <button
+                                    onClick={() => {
+                                        if (bookFreeTrials && bookFreeTrials.length > 0) {
 
-                                    sendText(selectedStudents);
-                                }} className="flex gap-2 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl  text-[16px]">
+                                            const filteredBookings = bookFreeTrials.filter(b =>
+                                                selectedStudents.includes(b.id || b.bookingId)
+                                            );
+
+                                            const parents = filteredBookings.flatMap(b =>
+                                                (b.parents || [])
+                                                    .filter(p => p.parentPhoneNumber)
+                                                    .map(p => ({
+                                                        name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
+                                                        phone: p.parentPhoneNumber
+                                                    }))
+                                            );
+
+                                            if (parents.length > 0) {
+                                                openTextPopup(
+                                                    parents,
+                                                    "/api/admin/send-manual-text",
+                                                    { token, showError, showSuccess }
+                                                );
+                                            } else {
+                                                showWarning(
+                                                    "No Phone Numbers",
+                                                    "Selected parents do not have valid phone numbers."
+                                                );
+                                            }
+
+                                        } else {
+                                            showWarning(
+                                                "No Parents Found",
+                                                "No parent data available to send text."
+                                            );
+                                        }
+                                    }}
+                                    className="flex gap-2 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl  text-[16px]">
                                     <img src='/images/icons/sendText.png' className='w-4 h-4 sm:w-5 sm:h-5' alt="" />
                                     {textloading ? (
                                         <Loader2 className="animate-spin w-5 h-5 text-blue-500" />

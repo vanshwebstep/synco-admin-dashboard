@@ -21,6 +21,7 @@ import Comments from '../../../Common/Comments';
 import { useEmail } from '../../../contexts/messages/SendEmailContext';
 import { usePhoneInput } from "../../../contexts/PhoneInputContext";
 import PhoneNumberInput from '../../../Common/PhoneNumberInput';
+import { useTextPopup } from '../../../contexts/messages/SendTextContext';
 const ParentProfile = ({ profile }) => {
     const navigate = useNavigate();
     const { serviceHistoryMembership } = useBookFreeTrial();
@@ -28,6 +29,7 @@ const ParentProfile = ({ profile }) => {
     const [selectedStudents, setSelectedStudents] = useState([]);
     const [textloading, setTextLoading] = useState(null);
     const { prefillFromPhone } = usePhoneInput();
+    const { openTextPopup } = useTextPopup();
 
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const {
@@ -209,8 +211,8 @@ const ParentProfile = ({ profile }) => {
         notes: "",
         selectedStudents: [],
         studentConfigs: {},
+        interest: "" // ✅ NEW
     });
-
     const handleWaitingListConfigChange = (studentId, field, value) => {
         setWaitingListData(prev => ({
             ...prev,
@@ -257,6 +259,7 @@ const ParentProfile = ({ profile }) => {
     const [transferData, setTransferData] = useState({
         bookingId: bookingId || null,
         venueId: classSchedule?.venue?.id || null,
+        selectedVenue: null,
         transferReasonClass: "", // optional notes
         classScheduleId: null,
         selectedStudents: [],
@@ -274,6 +277,22 @@ const ParentProfile = ({ profile }) => {
             }
         }));
     };
+    const venueClasses = profile?.venueClasses || [];
+    const noCapacityClass = profile?.noCapacityClass || profile?.noCapacityClasses|| [];
+
+    const venueOptions = venueClasses.map(v => ({
+        value: v.venueId,
+        label: v.venueName,
+        classes: v.classes
+    }));
+
+    const venueOptionsnoCapacity = noCapacityClass.map(v => ({
+        value: v.venueId,
+        label: v.venueName,
+        classes: v.classes
+    }));
+
+
     const [freezeData, setFreezeData] = useState({
         bookingId: bookingId || null,
         freezeStartDate: null,
@@ -521,7 +540,9 @@ const ParentProfile = ({ profile }) => {
         value: cls.id,
         label: `${cls.className} - ${cls.day} (${cls.startTime} - ${cls.endTime})`,
     }));
-    const newClassesForWaitingList = profile?.noCapacityClass?.map((cls) => ({
+    const noCapacityClassesss = profile?.noCapacityClass || profile?.noCapacityClasses || [];
+
+    const newClassesForWaitingList = noCapacityClassesss?.map((cls) => ({
         value: cls.id,
         label: `${cls.className} - ${cls.day} (${cls.startTime} - ${cls.endTime})`,
     }));
@@ -906,7 +927,29 @@ const ParentProfile = ({ profile }) => {
                                         Send Email
                                     </button>
 
-                                    <button disabled={textloading} onClick={() => sendText([bookingId])} className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
+                                    <button disabled={textloading} 
+                                    onClick={() => {
+                                        const formattedParents = parents
+                                            .filter(p => p.parentPhoneNumber)
+                                            .map(p => ({
+                                                name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
+                                                phone: p.parentPhoneNumber
+                                            }));
+
+                                        if (formattedParents.length > 0) {
+                                            openTextPopup(
+                                                formattedParents,
+                                                "/api/admin/send-manual-text",
+                                                { token, showError, showSuccess }
+                                            );
+                                        } else {
+                                            showWarning(
+                                                "No Phone Numbers",
+                                                "Selected parents do not have valid phone numbers."
+                                            );
+                                        }
+                                    }} 
+                                    className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
                                         <img src="/images/icons/sendText.png" alt="" />  {textloading ? (
                                             <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
                                         ) : (
@@ -1121,7 +1164,13 @@ const ParentProfile = ({ profile }) => {
                                             const config = waitingListData.studentConfigs?.[studentId] || {};
                                             const currentClass = studentOption.classSchedule?.className || "-";
                                             const currentVenue = studentOption.classSchedule?.venue?.name || "-";
-
+                                            const selectedVenue = venueOptionsnoCapacity.find(v => v.value === config.venueId);
+                                            const classOptions = selectedVenue
+                                                ? selectedVenue.classes.map(cls => ({
+                                                    value: cls.id,
+                                                    label: `${cls.className} (${cls.startTime} - ${cls.endTime})`
+                                                }))
+                                                : [];
                                             return (
                                                 <div key={studentId} className="bg-gray-50 p-4 rounded-xl space-y-3 border border-gray-200">
                                                     <h3 className="font-semibold capitalize text-lg text-gray-800 pb-2">
@@ -1131,15 +1180,6 @@ const ParentProfile = ({ profile }) => {
                                                     {/* Current Info */}
                                                     <div className="grid gap-4 text-sm text-gray-600">
                                                         <div>
-                                                            <label className="block text-sm font-semibold mb-1">Current Class</label>
-                                                            <input
-                                                                type="text"
-                                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
-                                                                value={currentClass}
-                                                                readOnly
-                                                            />
-                                                        </div>
-                                                        <div>
                                                             <label className="block text-sm font-semibold mb-1">Venue</label>
                                                             <input
                                                                 type="text"
@@ -1148,19 +1188,45 @@ const ParentProfile = ({ profile }) => {
                                                                 readOnly
                                                             />
                                                         </div>
-                                                    </div>
+                                                        <div>
+                                                            <label className="block text-sm font-semibold mb-1">Current Class</label>
+                                                            <input
+                                                                type="text"
+                                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
+                                                                value={currentClass}
+                                                                readOnly
+                                                            />
+                                                        </div>
 
+                                                    </div>
+                                                    <label className="block text-[16px] font-semibold">Select New Venue</label>
+                                                    <Select
+                                                        value={
+                                                            config.venueId
+                                                                ? venueOptionsnoCapacity.find(v => v.value === config.venueId)
+                                                                : null
+                                                        }
+                                                        onChange={(selected) => {
+                                                            handleWaitingListConfigChange(studentId, "venueId", selected?.value);
+                                                            handleWaitingListConfigChange(studentId, "classScheduleId", null); // reset class
+                                                        }}
+                                                        options={venueOptionsnoCapacity}
+                                                        placeholder="Select Venue"
+                                                    />
                                                     {/* Select New Class */}
                                                     <div>
                                                         <label className="block text-[16px] font-semibold">Select New Class</label>
                                                         <Select
                                                             value={
                                                                 config.classScheduleId
-                                                                    ? newClassesForWaitingList.find((cls) => cls.value === config.classScheduleId) || null
+                                                                    ? classOptions.find(c => c.value === config.classScheduleId)
                                                                     : null
                                                             }
-                                                            onChange={(selected) => handleWaitingListConfigChange(studentId, "classScheduleId", selected?.value)}
-                                                            options={newClassesForWaitingList}
+                                                            onChange={(selected) =>
+                                                                handleWaitingListConfigChange(studentId, "classScheduleId", selected?.value)
+                                                            }
+                                                            options={classOptions}
+
                                                             placeholder="Select Class"
                                                             className="rounded-lg mt-2"
                                                             styles={{
@@ -1176,6 +1242,31 @@ const ParentProfile = ({ profile }) => {
                                                                 indicatorSeparator: () => ({ display: "none" }),
                                                             }}
                                                         />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[16px] font-semibold mb-2">
+                                                            Interest Level
+                                                        </label>
+
+                                                        <div className="flex gap-6">
+                                                            {["Low", "Medium", "High"].map((level) => (
+                                                                <label key={level} className="flex items-center gap-2 cursor-pointer">
+                                                                    <input
+                                                                        type="radio"
+                                                                        name="interest"
+                                                                        value={level}
+                                                                        checked={waitingListData.interest === level}
+                                                                        onChange={(e) =>
+                                                                            setWaitingListData((prev) => ({
+                                                                                ...prev,
+                                                                                interest: e.target.value
+                                                                            }))
+                                                                        }
+                                                                    />
+                                                                    {level}
+                                                                </label>
+                                                            ))}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             );
@@ -1222,30 +1313,84 @@ const ParentProfile = ({ profile }) => {
                                                 showWarning("Missing Information", "Please select at least one student.");
                                                 return;
                                             }
-
+                                            if (!waitingListData.interest) {
+                                                showWarning("Missing Information", "Please select interest level.");
+                                                return;
+                                            }
                                             // Construct Payload
                                             const studentsPayload = waitingListData.selectedStudents.map(studentOption => {
                                                 const config = waitingListData.studentConfigs?.[studentOption.value] || {};
+
                                                 return {
                                                     studentId: studentOption.value,
+                                                    classScheduleId: config.classScheduleId,
+                                                    venueId: config.venueId // ✅ ADD THIS
+                                                };
+                                            });
+                                            const selectedConfigs = waitingListData.selectedStudents.map((studentOption) => {
+                                                const config = waitingListData.studentConfigs?.[studentOption.value] || {};
+
+                                                // find full student data from API response
+                                                const fullStudent = profile.students.find(
+                                                    (s) => s.id === studentOption.value
+                                                );
+
+                                                return {
+                                                    studentFirstName: fullStudent.studentFirstName,
+                                                    studentLastName: fullStudent.studentLastName,
+                                                    dateOfBirth: fullStudent.dateOfBirth,
+                                                    age: fullStudent.age,
+                                                    gender: fullStudent.gender,
+                                                    medicalInformation: fullStudent.medicalInformation,
                                                     classScheduleId: config.classScheduleId
                                                 };
                                             });
+                                            const firstStudentConfig =
+                                                waitingListData.studentConfigs?.[
+                                                waitingListData.selectedStudents[0]?.value
+                                                ];
+
+                                            const venueId = firstStudentConfig?.venueId;
 
                                             // Validation: all students must have a class
-                                            const incomplete = studentsPayload.some(s => !s.classScheduleId);
+                                            const incomplete = studentsPayload.some(
+                                                s => !s.classScheduleId || !s.venueId
+                                            );
                                             if (incomplete) {
                                                 showWarning("Missing Information", "Please select a new class for all selected students.");
                                                 return;
                                             }
 
                                             const payload = {
-                                                bookingId: waitingListData.bookingId,
+                                                existingBookingId: waitingListData.bookingId,
+                                                interest: waitingListData.interest, // static ya dynamic kar sakte ho
+                                                venueId: venueId,
+                                                totalStudents: selectedConfigs.length,
+                                                preferredStartDate: waitingListData.startDate,
                                                 additionalNote: waitingListData.notes,
-                                                startDate: waitingListData.startDate,
-                                                students: studentsPayload
-                                            };
 
+                                                students: selectedConfigs,
+
+                                                parents: profile.parents.map((p) => ({
+                                                    parentFirstName: p.parentFirstName,
+                                                    parentLastName: p.parentLastName,
+                                                    parentEmail: p.parentEmail,
+                                                    parentPhoneNumber: p.parentPhoneNumber,
+                                                    relationToChild: p.relationToChild,
+                                                    interestReason: p.interestReason,
+                                                    interestReasonOther: p.interestReasonOther,
+                                                    howDidYouHear: p.howDidYouHear,
+                                                    isCustomReason: false
+                                                })),
+
+                                                emergency: {
+                                                    sameAsAbove: true,
+                                                    emergencyFirstName: profile.emergency?.[0]?.emergencyFirstName,
+                                                    emergencyLastName: profile.emergency?.[0]?.emergencyLastName,
+                                                    emergencyPhoneNumber: profile.emergency?.[0]?.emergencyPhoneNumber,
+                                                    emergencyRelation: profile.emergency?.[0]?.emergencyRelation
+                                                }
+                                            };
                                             setaddToWaitingList(false);
                                             addtoWaitingListSubmit(payload, "allMembers");
                                         }}
@@ -1721,6 +1866,11 @@ const ParentProfile = ({ profile }) => {
                                             const currentClass = studentOption.classSchedule?.className || "-";
                                             const currentVenue = studentOption.classSchedule?.venue?.name || "-";
 
+                                            const filteredClasses =
+                                                transferData.selectedVenue?.classes?.map(cls => ({
+                                                    value: cls.id,
+                                                    label: `${cls.className} (${cls.startTime} - ${cls.endTime})`
+                                                })) || [];
                                             return (
                                                 <div key={studentId} className="bg-gray-50 p-4 rounded-xl space-y-3 border border-gray-200">
                                                     <h3 className="font-semibold capitalize text-lg text-gray-800  pb-2">
@@ -1750,29 +1900,44 @@ const ParentProfile = ({ profile }) => {
                                                         </div>
 
                                                     </div>
+                                                    <div>
+                                                        <label className="block text-[16px] font-semibold">
+                                                            Select Venue
+                                                        </label>
 
+                                                        <Select
+                                                            value={transferData.selectedVenue}
+                                                            onChange={(selected) =>
+                                                                setTransferData(prev => ({
+                                                                    ...prev,
+                                                                    selectedVenue: selected
+                                                                }))
+                                                            }
+                                                            options={venueOptions}
+                                                            placeholder="Select Venue"
+                                                            isSearchable
+                                                            className="rounded-lg mt-2"
+                                                        />
+                                                    </div>
                                                     {/* New Class Select */}
                                                     <div>
                                                         <label className="block text-sm font-semibold mb-1">New Class</label>
                                                         <Select
                                                             value={
                                                                 studentConfig.classScheduleId
-                                                                    ? newClasses.find((cls) => cls.value === studentConfig.classScheduleId) || null
+                                                                    ? filteredClasses.find(c => c.value === studentConfig.classScheduleId)
                                                                     : null
                                                             }
                                                             onChange={(selected) =>
                                                                 handleTransferConfigChange(studentId, "classScheduleId", selected?.value)
                                                             }
-                                                            options={newClasses}
-                                                            placeholder="Select New Class"
-                                                            className="rounded-lg"
-                                                            styles={{
-                                                                control: (base) => ({
-                                                                    ...base,
-                                                                    borderRadius: "0.5rem",
-                                                                    minHeight: "40px",
-                                                                }),
-                                                            }}
+                                                            options={filteredClasses}
+                                                            placeholder={
+                                                                transferData.selectedVenue
+                                                                    ? "Select New Class"
+                                                                    : "Select venue first"
+                                                            }
+                                                            isDisabled={!transferData.selectedVenue}
                                                         />
                                                     </div>
 
@@ -1807,6 +1972,10 @@ const ParentProfile = ({ profile }) => {
                                                 showWarning("Missing Information", "Please select at least one student.");
                                                 return;
                                             }
+                                            if (!transferData.selectedVenue) {
+                                                showWarning("Missing Information", "Please select a venue.");
+                                                return;
+                                            }
 
 
                                             // Construct Payload
@@ -1832,7 +2001,8 @@ const ParentProfile = ({ profile }) => {
                                             };
 
                                             transferMembershipSubmit(payload, 'allMembers');
-                                        }}
+                                        }
+                                        }
                                     >
                                         Submit Transfer
                                     </button>

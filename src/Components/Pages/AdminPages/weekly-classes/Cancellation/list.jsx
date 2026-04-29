@@ -15,6 +15,7 @@ import { saveAs } from "file-saver";
 import StatsGrid from '../../Common/StatsGrid';
 import DynamicTable from '../../Common/DynamicTable';
 import { useEmail } from '../../contexts/messages/SendEmailContext';
+import { useTextPopup } from '../../contexts/messages/SendTextContext';
 const CancellationList = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [fromDate, setFromDate] = useState(null);
@@ -27,6 +28,7 @@ const CancellationList = () => {
     const token = localStorage.getItem("adminToken");
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const { openEmailPopup } = useEmail();
+    const { openTextPopup } = useTextPopup();
 
     const [active, setActive] = useState("request"); // default selected
     const [showFilter, setShowFilter] = useState(false);
@@ -1010,19 +1012,39 @@ const CancellationList = () => {
                             </button>
 
                             <button onClick={() => {
-                                if (!selectedStudents || selectedStudents.length === 0) {
-                                    showWarning("No students selected", "Please select at least one student before sending an email.");
-                                    return;
-                                }
-                                if (active === "full") {
-                                    sendText(selectedStudents);
-                                    setSelectedStudents([]);
-                                } else if (active === "request") {
-                                    sendText(selectedStudents);
-                                    setSelectedStudents([]);
-                                } else if (active === "all") {
-                                    sendText(selectedStudents);
-                                    setSelectedStudents([]);
+                                if (bookFreeTrials && bookFreeTrials.length > 0) {
+
+                                    const filteredBookings = bookFreeTrials.filter(b =>
+                                        selectedStudents.includes(b.id || b.bookingId)
+                                    );
+
+                                    const parents = filteredBookings.flatMap(b =>
+                                        (b.parents || [])
+                                            .filter(p => p.parentPhoneNumber)
+                                            .map(p => ({
+                                                name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
+                                                phone: p.parentPhoneNumber
+                                            }))
+                                    );
+
+                                    if (parents.length > 0) {
+                                        openTextPopup(
+                                            parents,
+                                            "/api/admin/send-manual-text",
+                                            { token, showError, showSuccess }
+                                        );
+                                    } else {
+                                        showWarning(
+                                            "No Phone Numbers",
+                                            "Selected parents do not have valid phone numbers."
+                                        );
+                                    }
+
+                                } else {
+                                    showWarning(
+                                        "No Parents Found",
+                                        "No parent data available to send text."
+                                    );
                                 }
                             }} className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl  text-[16px]">
                                 <img src='/images/icons/sendText.png' className='w-4 h-4 sm:w-5 sm:h-5' alt="" />

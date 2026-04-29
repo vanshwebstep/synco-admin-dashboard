@@ -15,6 +15,7 @@ export const RevertMembershipProvider = ({ children }) => {
     const navigate = useNavigate();
 
     const openRevertPopup = (bookingId) => {
+        console.log("Opening revert popup for booking ID:", bookingId);
         setCurrentBookingId(bookingId);
         setRevertPopup(true);
     };

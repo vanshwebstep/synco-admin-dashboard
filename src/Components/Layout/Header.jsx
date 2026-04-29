@@ -7,13 +7,14 @@ import { usePermission } from '../Pages/AdminPages/Common/permission';
 import { useAccountsInfo } from '../Pages/AdminPages/contexts/AccountsInfoContext';
 import { showConfirm } from '../../utils/swalHelper';
 import { useGlobalSearch } from '../Pages/AdminPages/contexts/GlobalSearchContext';
+import { verifyTokenAndSyncState } from '../verifyToken';
 
 const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpen }) => {
   const isFetchingRef = useRef(false);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const { searchQuery, setSearchQuery } = useGlobalSearch();
   const [showNotificationPopup, setShowNotificationPopup] = useState(null);
-  const { notification, customnotificationAll, setNotification, stopFetching, fetchNotification, adminInfo, setAdminInfo } = useNotification();
+  const { notification, customnotificationAll, setNotification, stopFetching, fetchNotification, adminInfo, setAdminInfo, franchisesInfo, setFranchisesInfo, activeAccount, setActiveAccount } = useNotification();
   const currentDate = new Date();
 
   const month = currentDate.toLocaleString("default", { month: "long" }); // e.g., January
@@ -26,6 +27,11 @@ const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpe
     .replace(/\/+$/, '')
     .toLowerCase();
   const storedAdmin = localStorage.getItem("adminInfo");
+  const storedFranchises = localStorage.getItem("franchisesInfo");
+  const storedActiveAccount = localStorage.getItem("activeAccount");
+  console.log('storedFranchises', storedFranchises)
+  console.log('storedActiveAccount', storedActiveAccount)
+
   // console.log('localStorage',localStorage)
   useEffect(() => {
     // ✅ Load adminInfo from localStorage
@@ -37,7 +43,30 @@ const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpe
         console.error("Invalid adminInfo JSON in localStorage:", e);
       }
     }
-  }, []); const mergedNotifications = [
+
+    // ✅ Load franchisesInfo from localStorage
+    if (storedFranchises) {
+      try {
+        const parsedFranchises = JSON.parse(storedFranchises);
+        setFranchisesInfo(parsedFranchises);
+        console.log('parsedFranchises', parsedFranchises)
+      } catch (e) {
+        console.error("Invalid franchisesInfo JSON in localStorage:", e);
+      }
+    }
+    if (storedActiveAccount) {
+      try {
+        const parsedActiveAccount = JSON.parse(storedActiveAccount);
+        setActiveAccount(parsedActiveAccount);
+      } catch (e) {
+        console.error("Invalid activeAccount JSON in localStorage:", e);
+      }
+    }
+  }, []);
+
+
+
+  const mergedNotifications = [
     ...(Array.isArray(notification?.notifications) ? notification.notifications : []),
     ...(Array.isArray(customnotificationAll) ? customnotificationAll : [])
   ].map(n => {
@@ -162,7 +191,7 @@ const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpe
   };
   // Extract the part after `/`
   const subPath = location.pathname.split('/')[1] || '';
-
+  console.log('franchisesInfo', franchisesInfo)
   // Match the longest route
   const routeInfo =
     Object.entries(routeTitleMap)
@@ -206,6 +235,54 @@ const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpe
       }
     });
 
+  };
+  const handleSwitchAccount = async (account) => {
+    try {
+      const token = localStorage.getItem("adminToken");
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/admin/auth/switch`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            email: account.email,
+            status: account.status,
+            token: token
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!result?.status) return;
+
+      const newToken = result?.data?.token;
+
+      // 🔥 IMPORTANT: replace token
+      localStorage.setItem("adminToken", newToken);
+
+      // update active account
+      setActiveAccount(result.data.admin);
+      localStorage.setItem("activeAccount", JSON.stringify(result.data.admin));
+
+      setProfileOpen(false);
+
+      // ✅ verify using NEW token
+      // 🔥 call NEW function (not old verifyToken)
+      await verifyTokenAndSyncState(newToken, {
+        setAdminInfo,
+        setActiveAccount,
+        setFranchisesInfo,
+      });
+
+
+    } catch (error) {
+      console.error("Switch error:", error);
+    }
   };
   const handleNotificationClick = () => {
     if (notificationCount > 0) {
@@ -311,14 +388,64 @@ const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpe
 
             {/* Profile Dropdown */}
             {profileOpen && (
-              <div className="absolute right-0 mt-2 w-44 bg-white shadow-md rounded-md border z-20">
-                <ul className="text-sm text-gray-700 divide-y divide-gray-100">
-                  <li className="px-4 py-2 hover:bg-gray-50 cursor-pointer">My Profile</li>
-                  <li className="px-4 py-2 hover:bg-gray-50 cursor-pointer">Settings</li>
-                  <li onClick={handleLogout} className="px-4 py-2 hover:bg-gray-50 cursor-pointer">
+              <div
+                ref={dropdownRef}
+                className="absolute right-0 mt-2 w-64 bg-white shadow-lg rounded-xl border z-10 overflow-hidden"
+              >
+                {/* Current User */}
+                <div className="px-4 py-3 border-b">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={adminInfo?.profile || "/members/dummyuser.png"}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                    <div>
+                      <p className="text-sm font-semibold">
+                        {adminInfo?.firstName}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {adminInfo?.email}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Franchise Accounts */}
+                <div className="max-h-48 overflow-y-auto">
+                  {franchisesInfo?.map((item) => (
+                    <div
+                      key={item.id}
+                      // onClick={() => handleSwitchAccount(item)}
+                      className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer"
+                    >
+                      <img
+                        src={item.profile || "/members/dummyuser.png"}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                      <div>
+                        <p className="text-sm font-medium">
+                          {item.firstName} {item.lastName}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {item.email}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Actions */}
+                <div className="border-t">
+                  <div className="px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                    + Add Account
+                  </div>
+                  <div
+                    onClick={handleLogout}
+                    className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-red-500"
+                  >
                     Logout
-                  </li>
-                </ul>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -433,15 +560,74 @@ const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpe
               {profileOpen && (
                 <div
                   ref={dropdownRef}
-                  className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-md border z-10"
+                  className="absolute right-0 mt-3 w-72 bg-white rounded-2xl shadow-xl border border-gray-100 z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
                 >
-                  <ul className="text-sm text-gray-700 divide-y divide-gray-100">
-                    <li className="px-4 py-2 hover:bg-gray-50 cursor-pointer">My Profile</li>
-                    <li className="px-4 py-2 hover:bg-gray-50 cursor-pointer">Settings</li>
-                    <li onClick={handleLogout} className="px-4 py-2 hover:bg-gray-50 cursor-pointer">
-                      Logout
-                    </li>
-                  </ul>
+                  {/* Current User */}
+                  <div className="px-5 py-4 border-b bg-gradient-to-r from-gray-50 to-white">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={adminInfo?.profile || "/members/dummyuser.png"}
+                        className="w-11 h-11 rounded-full object-cover ring-2 ring-white shadow-sm"
+                      />
+                      <div className="leading-tight">
+                        <p className="text-sm font-semibold text-gray-800">
+                          {adminInfo?.firstName}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate max-w-[160px]">
+                          {adminInfo?.email}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Franchise Accounts */}
+                  <div className="max-h-56 overflow-y-auto py-2">
+                    {franchisesInfo?.map((item) => {
+                      const isActive = activeAccount?.id === item.id;
+
+                      return (
+                        <div
+                          key={item.id}
+                          onClick={() => handleSwitchAccount(item)}
+                          className={`flex items-center gap-3 px-4 py-2 cursor-pointer
+        ${isActive ? "bg-blue-50 border-l-4 border-blue-500" : "hover:bg-gray-50"}
+      `}
+                        >
+                          <img
+                            src={item.profile || "/members/dummyuser.png"}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                          <div>
+                            <p className="text-sm font-medium">
+                              {item.firstName} {item.lastName}
+                            </p>
+                            <p className="text-xs text-gray-500">{item.email}</p>
+                          </div>
+
+                          {isActive && (
+                            <span className="ml-auto text-xs text-blue-600">Active</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="border-t bg-gray-50">
+                    <div
+                      className="px-5 py-2.5 hover:bg-gray-100 cursor-pointer text-sm font-medium flex items-center gap-2"
+                    >
+                      <span className="text-lg">＋</span>
+                      Add Account
+                    </div>
+
+                    <div
+                      onClick={handleLogout}
+                      className="px-5 py-2.5 hover:bg-red-50 cursor-pointer text-sm font-medium text-red-500 flex items-center gap-2"
+                    >
+                      ⏻ Logout
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

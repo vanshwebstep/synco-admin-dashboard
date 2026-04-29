@@ -18,9 +18,11 @@ import { showSuccess, showError, showConfirm } from '../../../../../../../utils/
 import { useNavigate } from 'react-router-dom';
 import Comments from '../../../../Common/Comments';
 import { useEmail } from '../../../../contexts/messages/SendEmailContext';
+import { useTextPopup } from '../../../../contexts/messages/SendTextContext';
 const StudentProfile = ({ profile }) => {
     const [textloading, setTextLoading] = useState(null);
     const { openEmailPopup } = useEmail();
+    const { openTextPopup } = useTextPopup();
 
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const {
@@ -747,7 +749,29 @@ const StudentProfile = ({ profile }) => {
                                         Send Email
                                     </button>
 
-                                    <button disabled={textloading} onClick={() => sendText([id])} className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
+                                    <button disabled={textloading}
+                                        onClick={() => {
+                                            const formattedParents = parents
+                                                .filter(p => p.parentPhoneNumber)
+                                                .map(p => ({
+                                                    name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
+                                                    phone: p.parentPhoneNumber
+                                                }));
+
+                                            if (formattedParents.length > 0) {
+                                                openTextPopup(
+                                                    formattedParents,
+                                                    "/api/admin/send-manual-text",
+                                                    { token, showError, showSuccess }
+                                                );
+                                            } else {
+                                                showWarning(
+                                                    "No Phone Numbers",
+                                                    "Selected parents do not have valid phone numbers."
+                                                );
+                                            }
+                                        }}
+                                        className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
                                         <img src="/images/icons/sendText.png" alt="" />  {textloading ? (
                                             <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
                                         ) : (

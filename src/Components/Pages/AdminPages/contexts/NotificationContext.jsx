@@ -11,7 +11,8 @@ export const NotificationProvider = ({ children }) => {
   const navigate = useNavigate();
   const [stopFetching, setStopFetching] = useState(false);
   const [adminInfo, setAdminInfo] = useState({ firstName: "", lastName: "", role: "", profile: "" });
-
+  const [franchisesInfo, setFranchisesInfo] = useState([]);
+  const [activeAccount, setActiveAccount] = useState(null); // jo UI me dikhega
   const [loadingNotification, setLoadingNotification] = useState(null);
   const [loadingCustomNotification, setLoadingCustomNotification] = useState(null);
   const fetchNotification = useCallback(async () => {
@@ -107,7 +108,7 @@ export const NotificationProvider = ({ children }) => {
   }, []);
 
   return (
-    <NotificationContext.Provider value={{ stopFetching, fetchCustomNotification, fetchMarkAsRead, loadingCustomNotification, setLoadingCustomNotification, notification, setNotification, fetchNotification, loadingNotification, customnotificationAll, customNotification, setCustomnotificationAll, setCustomNotification, setAdminInfo, adminInfo }}>
+    <NotificationContext.Provider value={{ stopFetching, fetchCustomNotification, fetchMarkAsRead, loadingCustomNotification, setLoadingCustomNotification, notification, setNotification, fetchNotification, loadingNotification, customnotificationAll, customNotification, setCustomnotificationAll, setCustomNotification, setAdminInfo, adminInfo, franchisesInfo, setFranchisesInfo,activeAccount, setActiveAccount }}>
       {children}
     </NotificationContext.Provider>
   );

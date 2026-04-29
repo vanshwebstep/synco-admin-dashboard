@@ -20,6 +20,7 @@ import { useRevertMembership } from '../../../contexts/RevertMembershipContext';
 import RevertMembershipPopup from '../../../Common/RevertMembershipPoppup';
 import { useCancelMembership } from '../../../contexts/messages/CancelMembershipContext';
 import { useNavigate } from 'react-router-dom';
+import { useTextPopup } from '../../../contexts/messages/SendTextContext';
 
 const StudentProfile = ({ StudentProfile }) => {
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -27,6 +28,7 @@ const StudentProfile = ({ StudentProfile }) => {
     console.log('StudentProfile', StudentProfile)
     const { openCancelPopup } = useCancelMembership();
     const navigate = useNavigate();
+    const { openTextPopup } = useTextPopup();
 
     const [transferVenue, setTransferVenue] = useState(false);
     const [textloading, setTextLoading] = useState(null)
@@ -90,6 +92,7 @@ const StudentProfile = ({ StudentProfile }) => {
         venue,
         paymentPlan,
         paymentPlans,
+        lifeCycle
     } = StudentProfile;
     const token = localStorage.getItem("adminToken");
 
@@ -263,11 +266,7 @@ const StudentProfile = ({ StudentProfile }) => {
     const handleReinstateMembership = () => {
         showConfirm(
             "Reinstate Membership?",
-            `You are about to reinstate:
-         
-         Venue: ${StudentProfile?.venue?.name}
-         Class: ${StudentProfile?.students?.[0]?.classSchedule?.className}  
-         Continue?`,
+            `Are you sure you want to reinstate this customer's membership?`,
             "Yes, Reinstate"
         ).then((result) => {
             if (result.isConfirmed) {
@@ -591,14 +590,13 @@ const StudentProfile = ({ StudentProfile }) => {
                                 backgroundSize: "cover",
                             }}
                         >
-                            <div>
+                            <div className="flex items-center w-full justify-between gap-3">
                                 <div className="text-[20px] font-bold text-[#1F2937]">Account Status</div>
                                 <div className="text-[16px] font-semibold text-[#1F2937] capitalize">
                                     {status ? status.replaceAll("_", " ") : "Unknown"}
                                 </div>
                             </div>
                         </div>
-
 
 
                         <div className="bg-[#2E2F3E] text-white px-6 py-6 space-y-6">
@@ -694,14 +692,22 @@ const StudentProfile = ({ StudentProfile }) => {
                                     )}
 
                                 </div>
-                                {StudentProfile.cancelData.cancelDate && (
+                                {StudentProfile?.cancelData?.cancelDate && status !== "cancelled" && (
                                     <div className="border-t border-[#495362] py-5">
                                         <div className=" text-[20px] text-white">Request to Cancel Date </div>
                                         <div className="text-[16px]  mt-1 text-gray-400">{formatDate(StudentProfile.cancelData.cancelDate)}</div>
                                     </div>
                                 )}
-
-
+                                {(status === "cancelled") && (
+                                    <div className="border-t border-[#495362] py-5">
+                                        <div className="text-[20px] text-white">
+                                            Cancelled Date
+                                        </div>
+                                        <div className="text-[16px] mt-1 text-gray-400">
+                                            {formatDate(StudentProfile?.cancelData?.updatedAt)}
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="border-t border-[#495362] py-5">
                                     <div className=" text-[20px] text-white">ID </div>
                                     <div className="text-[16px]  mt-1 text-gray-400">{bookingId}</div>
@@ -714,167 +720,172 @@ const StudentProfile = ({ StudentProfile }) => {
                                 ) : (
                                     <>
                                         <div className="border-t border-[#495362] py-5">
-                                            <div className=" text-[20px] text-white">Lifecycle</div>
+                                            <div className="  text-[20px] text-white">Lifecycle</div>
                                             <div className="text-[16px] mt-1 text-gray-400">
-                                                {paymentPlan?.duration} {paymentPlan?.interval}{paymentPlan?.duration > 1 ? "s" : ""}
+                                                {lifeCycle}
                                             </div>
                                         </div>
                                     </>
                                 )}
-                                {StudentProfile.cancelData.cancelReason && (
-                                    <div className="border-t border-[#495362] py-5">
-                                        <div className=" text-[20px] text-white">Cancellation Reason</div>
-                                        <div className="text-[16px]  mt-1 text-gray-400">{StudentProfile?.cancelData.cancelReason}</div>
-                                    </div>
-                                )}
-                                {StudentProfile?.cancelData?.updatedAt && (
+                                {StudentProfile?.cancelData?.cancelReason && (
                                     <div className="border-t border-[#495362] py-5">
                                         <div className="text-[20px] text-white">
-                                            Cancelled Date
+                                            Cancellation Reason
                                         </div>
                                         <div className="text-[16px] mt-1 text-gray-400">
-                                            {formatDate(StudentProfile?.cancelData?.updatedAt)}
+                                            {StudentProfile?.cancelData?.cancelReason}
                                         </div>
                                     </div>
                                 )}
+
+
                             </div>
                         </div>
 
 
 
                     </div>
-                    {status !== 'casdsncelled' && (
+
+                    <div className="bg-white rounded-3xl p-6  space-y-4 mt-4">
+
+                        {/* Top Row: Email + Text */}
+                        <div className="flex gap-7">
+
+                            <button className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-[#717073] font-medium" onClick={() => {
+                                const parentEmails = parents.map(p => p.parentEmail).filter(Boolean);
+                                openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
+                            }}>
+                                Send Email
+                            </button>
+
+
+
+                            <button disabled={textloading} onClick={() => {
+                                const formattedParents = parents
+                                    .filter(p => p.parentPhoneNumber)
+                                    .map(p => ({
+                                        name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
+                                        phone: p.parentPhoneNumber
+                                    }));
+
+                                if (formattedParents.length > 0) {
+                                    openTextPopup(
+                                        formattedParents,
+                                        "/api/admin/send-manual-text",
+                                        { token, showError, showSuccess }
+                                    );
+                                } else {
+                                    showWarning(
+                                        "No Phone Numbers",
+                                        "Selected parents do not have valid phone numbers."
+                                    );
+                                }
+                            }} className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
+                                <img src="/images/icons/sendText.png" alt="" />  {textloading ? (
+                                    <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
+                                ) : (
+                                    <>
+                                        Send Text
+                                    </>
+                                )}
+                            </button>
+                        </div>
                         <>
-                            <div className="bg-white rounded-3xl p-6  space-y-4 mt-4">
+                            <div className="bg-white rounded-3xl   space-y-4">
 
                                 {/* Top Row: Email + Text */}
-                                <div className="flex gap-7">
 
-                                    <button className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-[#717073] font-medium" onClick={() => {
-                                        const parentEmails = parents.map(p => p.parentEmail).filter(Boolean);
-                                        openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
-                                    }}>
-                                        Send Email
+                                {(status === "frozen" || status === "cancelled") &&
+                                    classSchedule?.capacity > 0 &&
+                                    canRebooking && (
+                                        <button
+                                            onClick={() => setReactivateMembership(true)}
+                                            className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+                                        >
+                                            Reactivate Membership
+                                        </button>
+                                    )}
+
+
+
+                                {(status === "cancelled") && (
+                                    <button
+                                        onClick={handleReinstateMembership}
+                                        className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
+                         ${addToWaitingList
+                                                ? "bg-[#237FEA] text-white shadow-md"   // Active state
+                                                : "bg-white  border border-gray-300  hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"
+                                            }`}
+                                    >
+                                        Reinstate Membership
+
+                                    </button>
+                                )}
+
+                                {(status === "active" || status === "request_to_cancel") && canCancelTrial && (
+                                    <button
+                                        onClick={() => openRevertPopup(id)}
+
+                                        // onClick={() => handleRevertMembership(id)}
+                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                    >
+                                        Revert Membership
+                                    </button>
+                                )}
+                                {(status === "active" || status === "request_to_cancel") && canCancelTrial && classSchedule?.venue?.name && (
+                                    <button
+                                        onClick={() => setTransferVenue(true)}
+                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                    >
+                                        Transfer Class
+                                    </button>
+                                )}
+                                {status == 'waiting list' && canCancelTrial && (
+                                    <button
+                                        onClick={() => setRemoveWaiting(true)}
+                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                    >
+                                        Remove Waiting List
+                                    </button>
+                                )}
+                                {(status === "active" || status === "frozen" || status === "request_to_cancel") && canCancelTrial && (
+                                    <button
+                                        onClick={() =>
+                                            openCancelPopup(id, StudentProfile?.students, {
+                                                showError,
+                                                showWarning,
+                                                onSubmit: cancelMembershipSubmit,
+                                                alreadyrequestToCancel: true
+                                            })
+                                        }
+                                        className={`w-full border text-[18px] rounded-xl py-3 font-medium transition-shadow duration-300
+                                                    ${showCancelTrial
+                                                ? "bg-[#FF6C6C] text-white shadow-md border-transparent"
+                                                : "border-gray-300 text-[#717073] hover:bg-[#FF6C6C] hover:text-white hover:shadow-md"
+                                            }`}
+                                    >
+                                        Cancel Membership
                                     </button>
 
+                                )}
 
-                                    <button disabled={textloading} onClick={() => sendText([id])} className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
-                                        <img src="/images/icons/sendText.png" alt="" />  {textloading ? (
-                                            <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
-                                        ) : (
-                                            <>
-                                                Send Text
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
-
-                                <div className="bg-white rounded-3xl   space-y-4">
-
-                                    {/* Top Row: Email + Text */}
-
-                                    {(status === "frozen" || status === "cancelled") &&
-                                        classSchedule?.capacity > 0 &&
-                                        canRebooking && (
-                                            <button
-                                                onClick={() => setReactivateMembership(true)}
-                                                className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
-                                            >
-                                                Reactivate Membership
-                                            </button>
-                                        )}
-
-
-                                    {(status === "cancelled") && (
-                                        <button
-                                            onClick={handleReinstateMembership}
-                                            className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
-            ${addToWaitingList
-                                                    ? "bg-[#237FEA] text-white shadow-md"   // Active state
-                                                    : "bg-white  border border-gray-300  hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"
-                                                }`}
-                                        >
-                                            Reinstate Membership
-
-                                        </button>
-                                    )}
-
-
-                                    {(status === "active" || status === "request_to_cancel") && canCancelTrial && (
-                                        <button
-                                            onClick={() => openRevertPopup(id)}
-                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
-                                        >
-                                            Revert Membership
-                                        </button>
-                                    )}
-                                    {(status === "active" || status === "request_to_cancel") && canCancelTrial && classSchedule?.venue?.name && (
-                                        <button
-                                            onClick={() => setTransferVenue(true)}
-                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
-                                        >
-                                            Transfer Class
-                                        </button>
-                                    )}
-                                    {status == 'waiting list' && canCancelTrial && (
-                                        <button
-                                            onClick={() => setRemoveWaiting(true)}
-                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
-                                        >
-                                            Remove Waiting List
-                                        </button>
-                                    )}
-                                    {(status === "active" || status === "frozen" || status === "request_to_cancel") && canCancelTrial && (
-                                        <button
-                                            onClick={() =>
-                                                openCancelPopup(id, StudentProfile?.students, {
-                                                    showError,
-                                                    showWarning,
-                                                    onSubmit: cancelMembershipSubmit,
-                                                    alreadyrequestToCancel: true
-                                                })
-                                            }
-                                            className={`w-full border text-[18px] rounded-xl py-3 font-medium transition-shadow duration-300
-                                                                         ${showCancelTrial
-                                                    ? "bg-[#FF6C6C] text-white shadow-md border-transparent"
-                                                    : "border-gray-300 text-[#717073] hover:bg-[#FF6C6C] hover:text-white hover:shadow-md"
-                                                }`}
-                                        >
-                                            Cancel Membership
-                                        </button>
-
-                                    )}
-
-                                    {/* {status !== 'pending' && status !== 'attended' && (
-                                    <button className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium">
-                                        Book a Membership
-                                    </button>
-                                )} */}
-
-                                    {status === 'attended' && (
-                                        <div className="flex gap-7">
-                                            <button className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium">
-                                                Declined Membership
-                                            </button>
-
-                                            <button className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium">
-                                                Book a Membership
-                                            </button>
-                                        </div>
-                                    )}
-
-
-                                </div>
-
-
-
-
+                                {/* {status !== 'pending' && status !== 'attended' && (
+                                                 <button className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium">
+                                                     Book a Membership
+                                                 </button>
+                                             )} */}
 
 
 
                             </div>
                         </>
-                    )}
+
+
+
+
+
+                    </div>
+
                 </div>
                 {transferVenue && (
                     <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">

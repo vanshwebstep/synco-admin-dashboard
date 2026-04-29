@@ -18,6 +18,7 @@ import { FaEdit, FaSave } from "react-icons/fa";
 import { useNotification } from '../../../../contexts/NotificationContext';
 import Comments from '../../../../Common/Comments';
 import { useEmail } from '../../../../contexts/messages/SendEmailContext';
+import { useTextPopup } from '../../../../contexts/messages/SendTextContext';
 
 const StudentProfile = ({ StudentProfile }) => {
     const { serviceHistoryFetchById, transferTrialSubmit } = useBookFreeTrial();
@@ -27,6 +28,7 @@ const StudentProfile = ({ StudentProfile }) => {
     const [selectedDate, setSelectedDate] = useState(null);
     const [transferVenue, setTransferVenue] = useState(false);
     const [selectedStudents, setSelectedStudents] = useState([]);
+    const { openTextPopup } = useTextPopup();
 
     const navigate = useNavigate();
     const [commentsList, setCommentsList] = useState([]);
@@ -890,7 +892,29 @@ const StudentProfile = ({ StudentProfile }) => {
                                         Send Email
                                     </button>
 
-                                    <button disabled={textloading} onClick={() => sendText([id])} className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
+                                    <button disabled={textloading}
+                                        onClick={() => {
+                                            const formattedParents = parents
+                                                .filter(p => p.parentPhoneNumber)
+                                                .map(p => ({
+                                                    name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
+                                                    phone: p.parentPhoneNumber
+                                                }));
+
+                                            if (formattedParents.length > 0) {
+                                                openTextPopup(
+                                                    formattedParents,
+                                                    "/api/admin/send-manual-text",
+                                                    { token, showError, showSuccess }
+                                                );
+                                            } else {
+                                                showWarning(
+                                                    "No Phone Numbers",
+                                                    "Selected parents do not have valid phone numbers."
+                                                );
+                                            }
+                                        }}
+                                        className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
                                         <img src="/images/icons/sendText.png" alt="" />  {textloading ? (
                                             <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
                                         ) : (
@@ -912,28 +936,29 @@ const StudentProfile = ({ StudentProfile }) => {
                                 )}
 
 
-                                {status !== 'pending' && status !== 'attended' && (
+                                {status !== 'attended' && canCancelTrial && (
                                     <button
-                                        onClick={handleBookMembership}
-                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                        onClick={() => setshowCancelTrial(true)}
+                                        className="w-full border bg-red-500 border-red-500  text-[#fff]  hover:bg-gray-100  text-[18px] hover:bg-red-600 rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
                                     >
-                                        Start Membership
+                                        Cancel Trial
                                     </button>
                                 )}
                                 {/* 
                                 {hasAnyAttended && (
                                     <> */}
                                 <div className="flex gap-7">
+                                  {status !== 'not attended' && (
                                     <button
                                         onClick={() => setNoMembershipSelect(true)}
-                                        className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium"
+                                        className="flex-1 border bg-red-500 border-red-500 hover:bg-red-600 rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium"
                                     >
                                         Declined Membership
                                     </button>
-
+                                  )}
                                     <button
                                         onClick={handleBookMembership}
-                                        className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium"
+                                        className="flex-1 border bg-green-500 border-green-500 rounded-xl py-3 flex text-[18px] hover:bg-green-600 items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium"
                                     >
                                         Start Membership
                                     </button>
@@ -941,14 +966,7 @@ const StudentProfile = ({ StudentProfile }) => {
                                 {/* 
                                     </>
                                 )} */}
-                                {status !== 'attended' && canCancelTrial && (
-                                    <button
-                                        onClick={() => setshowCancelTrial(true)}
-                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
-                                    >
-                                        Cancel Trial
-                                    </button>
-                                )}
+                               
                                 {/* 
                                 <button
                                     onClick={() => setTransferVenue(true)}

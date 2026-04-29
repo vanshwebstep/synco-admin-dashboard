@@ -19,10 +19,12 @@ import { useNavigate } from 'react-router-dom';
 import Comments from '../../Common/Comments';
 import { useEmail } from '../../contexts/messages/SendEmailContext';
 import { useCancelMembership } from '../../contexts/messages/CancelMembershipContext';
+import { useTextPopup } from '../../contexts/messages/SendTextContext';
 
 const StudentProfile = ({ profile }) => {
   const navigate = useNavigate();
   const { openCancelPopup } = useCancelMembership();
+  const { openTextPopup } = useTextPopup();
 
   const { serviceHistoryMembership } = useBookFreeTrial();
   const [textloading, setTextLoading] = useState(null);
@@ -42,7 +44,21 @@ const StudentProfile = ({ profile }) => {
     message: ""
   });
   const serviceType = profile?.serviceType || "membership";
+  const studentsList = profile?.students || [];
+  const requestToCancelStudents = studentsList.filter(
+    (s) => s.studentStatus === "request_to_cancel"
+  );
 
+  // cancelled wale
+  const cancelledStudents = studentsList.filter(
+    (s) => s.studentStatus === "cancelled"
+  );
+  const lifeCycle = profile?.lifeCycle || "";
+
+  // active (agar chahiye ho)
+  const activeStudents = studentsList.filter(
+    (s) => s.studentStatus === "active"
+  );
   const isTrials = serviceType === "weekly class trial";
   console.log('isTrials', profile)
   const [commentsList, setCommentsList] = useState([]);
@@ -260,6 +276,20 @@ const StudentProfile = ({ profile }) => {
       }
     });
   };
+      const handleReinstateMembership = () => {
+          showConfirm(
+              "Reinstate Membership?",
+              `Are you sure you want to reinstate this customer's membership?`,
+              "Yes, Reinstate"
+          ).then((result) => {
+              if (result.isConfirmed) {
+                  // Navigate to your component/route
+                  navigate("/weekly-classes/find-a-class/book-a-membership", {
+                      state: { TrialData: profile, comesFrom: "cancellation" },
+                  });
+              }
+          });
+      };
   const canCancelTrial =
     checkPermission({ module: 'cancel-free-trial', action: 'create' })
   const canRebooking =
@@ -320,29 +350,23 @@ const StudentProfile = ({ profile }) => {
   const [transferData, setTransferData] = useState({
     bookingId: bookingId || null,
     venueId: classSchedule?.venue?.id || null,
-    selectedStudents: [],               // selected student options
-    studentTransfers: {},               // map studentId -> { classScheduleId, transferReasonClass }
+    transferReasonClass: "",
+    classScheduleId: null,
+    selectedStudents: [],
+    studentTransfers: {},
   });
+  const venueClasses = profile?.venueClasses || [];
+  const venueOptions = venueClasses.map(v => ({
+    value: v.venueId,
+    label: v.venueName,
+    classes: v.classes
+  }));
 
   const handleStudentSelectChange = (selectedOptions) => {
     setTransferData((prev) => {
       const newTransfers = { ...prev.studentTransfers };
-      // Initialize config for new selections if not exists
-      selectedOptions?.forEach(opt => {
-        if (!newTransfers[opt.value]) {
-          newTransfers[opt.value] = {
-            classScheduleId: null,
-            transferReasonClass: ""
-          };
-        }
-      });
-      // Optional: clean up removed students? Keeping them is safer for now or we can delete.
-      // Let's keep it simple.
-      return {
-        ...prev,
-        selectedStudents: selectedOptions || [],
-        studentTransfers: newTransfers
-      };
+      selectedOptions?.forEach(opt => { if (!newTransfers[opt.value]) newTransfers[opt.value] = { classScheduleId: null, transferReasonClass: "" }; });
+      return { ...prev, selectedStudents: selectedOptions || [], studentTransfers: newTransfers };
     });
   };
 
@@ -358,7 +382,6 @@ const StudentProfile = ({ profile }) => {
       }
     }));
   };
-
   console.log('transferData', transferData)
   const [freezeData, setFreezeData] = useState({
     bookingId: bookingId || null,
@@ -558,6 +581,13 @@ const StudentProfile = ({ profile }) => {
     { value: 6, label: "6 Months" },
     { value: 12, label: "12 Months" },
   ];
+  const noCapacityClass = profile?.noCapacityClass || profile?.noCapacityClasses || [];
+
+  const venueOptionsnoCapacity = noCapacityClass.map(v => ({
+    value: v.venueId,
+    label: v.venueName,
+    classes: v.classes
+  }));
 
   // console.log('waitingListData', waitingListData)
   // console.log('transferData', transferData)
@@ -569,7 +599,9 @@ const StudentProfile = ({ profile }) => {
     value: cls.id,
     label: `${cls.className} - ${cls.day} (${cls.startTime} - ${cls.endTime})`,
   }));
-  const newClassesForWaitingList = profile?.noCapacityClass?.map((cls) => ({
+  const noCapacityClassesss = profile?.noCapacityClass || profile?.noCapacityClasses || [];
+
+  const newClassesForWaitingList = noCapacityClassesss?.map((cls) => ({
     value: cls.id,
     label: `${cls.className} - ${cls.day} (${cls.startTime} - ${cls.endTime})`,
   }));
@@ -843,6 +875,16 @@ const StudentProfile = ({ profile }) => {
                   </div>
 
                 </div>
+                {cancelledStudents?.length > 0 && (
+
+                  <div className="border-t border-[#495362] pt-5">
+                    <div className="text-[20px] text-white">
+                      <div className=" text-[20px] text-white"> Cancelled Date </div>
+
+                    </div>
+                    <div className="text-[16px] mt-1 text-gray-400">{formatISODate(profile?.updatedAt)}</div>
+                  </div>
+                )}
                 <div className="border-t border-[#495362] pt-5">
 
                   <div className="text-[20px] text-white">Membership Start Date</div>
@@ -853,14 +895,21 @@ const StudentProfile = ({ profile }) => {
 
                 </div>
 
-                <div className="border-t border-[#495362] pt-5">
-
-                  <div className="text-[20px] text-white">Membership Tenure</div>
-                  <div className="text-[1s6px] mt-1 text-gray-400">
-                    {MembershipTenure || 'N/A'}
+                {status === 'request_to_cancel' ? (
+                  <div className="border-t border-[#495362] py-5">
+                    <div className=" text-[20px] text-white">Membership Tenure </div>
+                    <div className="text-[16px]  mt-1 text-gray-400">{MembershipTenure}</div>
                   </div>
-
-                </div>
+                ) : (
+                  <>
+                    <div className="border-t border-[#495362] py-5">
+                      <div className="  text-[20px] text-white">Lifecycle</div>
+                      <div className="text-[16px] mt-1 text-gray-400">
+                        {lifeCycle}
+                      </div>
+                    </div>
+                  </>
+                )}
                 <div className="border-t border-[#495362] pt-5">
 
                   <div className="text-[20px] text-white">ID</div>
@@ -869,20 +918,22 @@ const StudentProfile = ({ profile }) => {
                   </div>
 
                 </div>
-                <div className="border-t border-[#495362] py-5">
-                  <div className="text-[20px] text-white mb-3">Progress</div>
-                  <div className="flex items-center justify-between">
-                    <div className="w-[90%] bg-[#fff] h-3 rounded-full overflow-hidden">
-                      <div
-                        className="bg-green-500 h-4 rounded-full"
-                        style={{ width: `${progressPercent}%` }}
-                      ></div>
-                    </div>
-                    <div className="text-white text-right mt-1 text-[14px]">
-                      {progressPercent}%
+                {status !== 'cancelled' ? (
+                  <div className="border-t border-[#495362] py-5">
+                    <div className="text-[20px] text-white mb-3">Progress</div>
+                    <div className="flex items-center justify-between">
+                      <div className="w-[90%] bg-[#fff] h-3 rounded-full overflow-hidden">
+                        <div
+                          className="bg-green-500 h-4 rounded-full"
+                          style={{ width: `${progressPercent}%` }}
+                        ></div>
+                      </div>
+                      <div className="text-white text-right mt-1 text-[14px]">
+                        {progressPercent}%
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : null}
 
                 <div className="border-t border-[#495362] py-5">
                   <div className=" text-[20px] text-white">Price</div>
@@ -912,7 +963,28 @@ const StudentProfile = ({ profile }) => {
                   }}>
                     Send Email
                   </button>
-                  <button disabled={textloading} onClick={() => sendText([bookingId])} className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
+                  <button disabled={textloading} onClick={() => {
+                    const formattedParents = parents
+                      .filter(p => p.parentPhoneNumber)
+                      .map(p => ({
+                        name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
+                        phone: p.parentPhoneNumber
+                      }));
+
+                    if (formattedParents.length > 0) {
+                      openTextPopup(
+                        formattedParents,
+                        "/api/admin/send-manual-text",
+                        { token, showError, showSuccess }
+                      );
+                    } else {
+                      showWarning(
+                        "No Phone Numbers",
+                        "Selected parents do not have valid phone numbers."
+                      );
+                    }
+                  }}
+                    className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
                     <img src="/images/icons/sendText.png" alt="" />  {textloading ? (
                       <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
                     ) : (
@@ -1064,18 +1136,23 @@ const StudentProfile = ({ profile }) => {
                   )}
 
 
-                {(status === "active" || status === "frozen" || status === "cancelled" || status === "request_to_cancel") && (
+
+
+                {cancelledStudents?.length > 0 && canCancelTrial && (
+
                   <button
-                    onClick={() => setaddToWaitingList(true)}
+                    onClick={handleReinstateMembership}
                     className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
             ${addToWaitingList
                         ? "bg-[#237FEA] text-white shadow-md"   // Active state
                         : "bg-white  border border-gray-300  hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"
                       }`}
                   >
-                    Add to the waiting list
+                    Reinstate Membership
+
                   </button>
                 )}
+
 
 
               </div>
@@ -1103,7 +1180,7 @@ const StudentProfile = ({ profile }) => {
                   <Select
                     value={waitingListData.selectedStudents}
                     onChange={handleWaitingListStudentSelect}
-                    options={students?.map((student) => ({
+                    options={studentsList?.map((student) => ({
                       value: student.id,
                       label: student.studentFirstName + " " + student.studentLastName,
                       classSchedule: student.classSchedule
@@ -1134,7 +1211,13 @@ const StudentProfile = ({ profile }) => {
                       const config = waitingListData.studentConfigs?.[studentId] || {};
                       const currentClass = studentOption.classSchedule?.className || "-";
                       const currentVenue = studentOption.classSchedule?.venue?.name || "-";
-
+                      const selectedVenue = venueOptionsnoCapacity.find(v => v.value === config.venueId);
+                      const classOptions = selectedVenue
+                        ? selectedVenue.classes.map(cls => ({
+                          value: cls.id,
+                          label: `${cls.className} (${cls.startTime} - ${cls.endTime})`
+                        }))
+                        : [];
                       return (
                         <div key={studentId} className="bg-gray-50 p-4 rounded-xl space-y-3 border border-gray-200">
                           <h3 className="font-semibold capitalize text-lg text-gray-800 pb-2">
@@ -1144,15 +1227,6 @@ const StudentProfile = ({ profile }) => {
                           {/* Current Info */}
                           <div className="grid gap-4 text-sm text-gray-600">
                             <div>
-                              <label className="block text-sm font-semibold mb-1">Current Class</label>
-                              <input
-                                type="text"
-                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
-                                value={currentClass}
-                                readOnly
-                              />
-                            </div>
-                            <div>
                               <label className="block text-sm font-semibold mb-1">Venue</label>
                               <input
                                 type="text"
@@ -1161,19 +1235,45 @@ const StudentProfile = ({ profile }) => {
                                 readOnly
                               />
                             </div>
-                          </div>
+                            <div>
+                              <label className="block text-sm font-semibold mb-1">Current Class</label>
+                              <input
+                                type="text"
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
+                                value={currentClass}
+                                readOnly
+                              />
+                            </div>
 
+                          </div>
+                          <label className="block text-[16px] font-semibold">Select New Venue</label>
+                          <Select
+                            value={
+                              config.venueId
+                                ? venueOptionsnoCapacity.find(v => v.value === config.venueId)
+                                : null
+                            }
+                            onChange={(selected) => {
+                              handleWaitingListConfigChange(studentId, "venueId", selected?.value);
+                              handleWaitingListConfigChange(studentId, "classScheduleId", null); // reset class
+                            }}
+                            options={venueOptionsnoCapacity}
+                            placeholder="Select Venue"
+                          />
                           {/* Select New Class */}
                           <div>
                             <label className="block text-[16px] font-semibold">Select New Class</label>
                             <Select
                               value={
                                 config.classScheduleId
-                                  ? newClassesForWaitingList.find((cls) => cls.value === config.classScheduleId) || null
+                                  ? classOptions.find(c => c.value === config.classScheduleId)
                                   : null
                               }
-                              onChange={(selected) => handleWaitingListConfigChange(studentId, "classScheduleId", selected?.value)}
-                              options={newClassesForWaitingList}
+                              onChange={(selected) =>
+                                handleWaitingListConfigChange(studentId, "classScheduleId", selected?.value)
+                              }
+                              options={classOptions}
+
                               placeholder="Select Class"
                               className="rounded-lg mt-2"
                               styles={{
@@ -1189,6 +1289,31 @@ const StudentProfile = ({ profile }) => {
                                 indicatorSeparator: () => ({ display: "none" }),
                               }}
                             />
+                          </div>
+                          <div>
+                            <label className="block text-[16px] font-semibold mb-2">
+                              Interest Level
+                            </label>
+
+                            <div className="flex gap-6">
+                              {["Low", "Medium", "High"].map((level) => (
+                                <label key={level} className="flex items-center gap-2 cursor-pointer">
+                                  <input
+                                    type="radio"
+                                    name="interest"
+                                    value={level}
+                                    checked={waitingListData.interest === level}
+                                    onChange={(e) =>
+                                      setWaitingListData((prev) => ({
+                                        ...prev,
+                                        interest: e.target.value
+                                      }))
+                                    }
+                                  />
+                                  {level}
+                                </label>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       );
@@ -1225,7 +1350,7 @@ const StudentProfile = ({ profile }) => {
                 </div>
 
                 {/* Button */}
-                <div className="flex gap-4 pt-4 justify-end">
+                <div className="justify-end flex gap-4 pt-4">
                   <button
                     className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={waitingListData.selectedStudents.length === 0}
@@ -1235,30 +1360,84 @@ const StudentProfile = ({ profile }) => {
                         showWarning("Missing Information", "Please select at least one student.");
                         return;
                       }
-
+                      if (!waitingListData.interest) {
+                        showWarning("Missing Information", "Please select interest level.");
+                        return;
+                      }
                       // Construct Payload
                       const studentsPayload = waitingListData.selectedStudents.map(studentOption => {
                         const config = waitingListData.studentConfigs?.[studentOption.value] || {};
+
                         return {
                           studentId: studentOption.value,
+                          classScheduleId: config.classScheduleId,
+                          venueId: config.venueId // ✅ ADD THIS
+                        };
+                      });
+                      const selectedConfigs = waitingListData.selectedStudents.map((studentOption) => {
+                        const config = waitingListData.studentConfigs?.[studentOption.value] || {};
+
+                        // find full student data from API response
+                        const fullStudent = profile.students.find(
+                          (s) => s.id === studentOption.value
+                        );
+
+                        return {
+                          studentFirstName: fullStudent.studentFirstName,
+                          studentLastName: fullStudent.studentLastName,
+                          dateOfBirth: fullStudent.dateOfBirth,
+                          age: fullStudent.age,
+                          gender: fullStudent.gender,
+                          medicalInformation: fullStudent.medicalInformation,
                           classScheduleId: config.classScheduleId
                         };
                       });
+                      const firstStudentConfig =
+                        waitingListData.studentConfigs?.[
+                        waitingListData.selectedStudents[0]?.value
+                        ];
+
+                      const venueId = firstStudentConfig?.venueId;
 
                       // Validation: all students must have a class
-                      const incomplete = studentsPayload.some(s => !s.classScheduleId);
+                      const incomplete = studentsPayload.some(
+                        s => !s.classScheduleId || !s.venueId
+                      );
                       if (incomplete) {
                         showWarning("Missing Information", "Please select a new class for all selected students.");
                         return;
                       }
 
                       const payload = {
-                        bookingId: waitingListData.bookingId,
+                        existingBookingId: waitingListData.bookingId,
+                        interest: waitingListData.interest, // static ya dynamic kar sakte ho
+                        venueId: venueId,
+                        totalStudents: selectedConfigs.length,
+                        preferredStartDate: waitingListData.startDate,
                         additionalNote: waitingListData.notes,
-                        startDate: waitingListData.startDate,
-                        students: studentsPayload
-                      };
 
+                        students: selectedConfigs,
+
+                        parents: profile.parents.map((p) => ({
+                          parentFirstName: p.parentFirstName,
+                          parentLastName: p.parentLastName,
+                          parentEmail: p.parentEmail,
+                          parentPhoneNumber: p.parentPhoneNumber,
+                          relationToChild: p.relationToChild,
+                          interestReason: p.interestReason,
+                          interestReasonOther: p.interestReasonOther,
+                          howDidYouHear: p.howDidYouHear,
+                          isCustomReason: false
+                        })),
+
+                        emergency: {
+                          sameAsAbove: true,
+                          emergencyFirstName: profile.emergency?.[0]?.emergencyFirstName,
+                          emergencyLastName: profile.emergency?.[0]?.emergencyLastName,
+                          emergencyPhoneNumber: profile.emergency?.[0]?.emergencyPhoneNumber,
+                          emergencyRelation: profile.emergency?.[0]?.emergencyRelation
+                        }
+                      };
                       setaddToWaitingList(false);
                       addtoWaitingListSubmit(payload, "allMembers");
                     }}
@@ -1643,7 +1822,7 @@ const StudentProfile = ({ profile }) => {
                   <Select
                     value={transferData.selectedStudents}
                     onChange={handleStudentSelectChange}
-                    options={students?.map((student) => ({
+                    options={studentsList?.map((student) => ({
                       value: student.id,
                       label: student.studentFirstName + " " + student.studentLastName,
                       classSchedule: student.classSchedule
@@ -1675,6 +1854,11 @@ const StudentProfile = ({ profile }) => {
                       const currentClass = studentOption.classSchedule?.className || "-";
                       const currentVenue = studentOption.classSchedule?.venue?.name || "-";
 
+                      const filteredClasses =
+                        transferData.selectedVenue?.classes?.map(cls => ({
+                          value: cls.id,
+                          label: `${cls.className} (${cls.startTime} - ${cls.endTime})`
+                        })) || [];
                       return (
                         <div key={studentId} className="bg-gray-50 p-4 rounded-xl space-y-3 border border-gray-200">
                           <h3 className="font-semibold capitalize text-lg text-gray-800  pb-2">
@@ -1684,7 +1868,6 @@ const StudentProfile = ({ profile }) => {
                           {/* Current Info */}
                           {/* Current Info */}
                           <div className="grid gap-4 text-sm text-gray-600">
-
                             <div>
                               <label className="block text-sm font-semibold mb-1">Venue</label>
                               <input
@@ -1703,30 +1886,46 @@ const StudentProfile = ({ profile }) => {
                                 readOnly
                               />
                             </div>
-                          </div>
 
+                          </div>
+                          <div>
+                            <label className="block text-[16px] font-semibold">
+                              Select Venue
+                            </label>
+
+                            <Select
+                              value={transferData.selectedVenue}
+                              onChange={(selected) =>
+                                setTransferData(prev => ({
+                                  ...prev,
+                                  selectedVenue: selected
+                                }))
+                              }
+                              options={venueOptions}
+                              placeholder="Select Venue"
+                              isSearchable
+                              className="rounded-lg mt-2"
+                            />
+                          </div>
                           {/* New Class Select */}
                           <div>
                             <label className="block text-sm font-semibold mb-1">New Class</label>
                             <Select
                               value={
                                 studentConfig.classScheduleId
-                                  ? newClasses.find((cls) => cls.value === studentConfig.classScheduleId) || null
+                                  ? filteredClasses.find(c => c.value === studentConfig.classScheduleId)
                                   : null
                               }
                               onChange={(selected) =>
                                 handleTransferConfigChange(studentId, "classScheduleId", selected?.value)
                               }
-                              options={newClasses}
-                              placeholder="Select New Class"
-                              className="rounded-lg"
-                              styles={{
-                                control: (base) => ({
-                                  ...base,
-                                  borderRadius: "0.5rem",
-                                  minHeight: "40px",
-                                }),
-                              }}
+                              options={filteredClasses}
+                              placeholder={
+                                transferData.selectedVenue
+                                  ? "Select New Class"
+                                  : "Select venue first"
+                              }
+                              isDisabled={!transferData.selectedVenue}
                             />
                           </div>
 
@@ -1761,6 +1960,10 @@ const StudentProfile = ({ profile }) => {
                         showWarning("Missing Information", "Please select at least one student.");
                         return;
                       }
+                      if (!transferData.selectedVenue) {
+                        showWarning("Missing Information", "Please select a venue.");
+                        return;
+                      }
 
 
                       // Construct Payload
@@ -1781,12 +1984,13 @@ const StudentProfile = ({ profile }) => {
                       }
 
                       const payload = {
-                        bookingId: profile?.bookingId,
+                        bookingId: profile?.id,
                         transfers: transfers
                       };
 
                       transferMembershipSubmit(payload, 'allMembers');
-                    }}
+                    }
+                    }
                   >
                     Submit Transfer
                   </button>

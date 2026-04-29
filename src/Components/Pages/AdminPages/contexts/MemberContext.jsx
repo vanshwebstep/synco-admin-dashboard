@@ -43,9 +43,12 @@ export const MemberProvider = ({ children }) => {
 
             if (response.ok && result.status === true) {
                 setAuthStatus("allowed");
-
+console.log('result',result);
                 // Optional: Save admin info to localStorage
                 localStorage.setItem("adminInfo", JSON.stringify(result.admin));
+               localStorage.setItem("franchisesInfo", JSON.stringify(result.franchises));
+               localStorage.setItem("activeAccount", JSON.stringify(result.admin));
+
                 localStorage.setItem("role", result.admin.role);
                 localStorage.setItem(
                     "hasPermission",

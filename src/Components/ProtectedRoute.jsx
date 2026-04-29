@@ -35,6 +35,10 @@ const ProtectedRoute = ({ children }) => {
           setAuthStatus('allowed');
           // Optional: Save admin info to localStorage
           localStorage.setItem('adminInfo', JSON.stringify(result.admin));
+          localStorage.setItem("activeAccount", JSON.stringify(result.admin));
+
+               localStorage.setItem("franchisesInfo", JSON.stringify(result.franchises));
+
           localStorage.setItem('role', (result.admin.role.role));
           localStorage.setItem(
             "hasPermission",

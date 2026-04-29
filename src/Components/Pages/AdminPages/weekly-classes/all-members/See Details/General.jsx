@@ -21,6 +21,7 @@ import Comments from '../../../Common/Comments';
 import { useEmail } from '../../../contexts/messages/SendEmailContext';
 import { useCancelMembership } from '../../../contexts/messages/CancelMembershipContext';
 import PhoneNumberInput from '../../../Common/PhoneNumberInput';
+import { useTextPopup } from '../../../contexts/messages/SendTextContext';
 
 const ParentProfile = (stateData) => {
     const profile = stateData?.stateData || {};
@@ -29,6 +30,8 @@ const ParentProfile = (stateData) => {
     const { serviceHistoryMembership } = useBookFreeTrial();
     const [textloading, setTextLoading] = useState(null);
     const { openEmailPopup } = useEmail();
+    const { openTextPopup } = useTextPopup();
+
     const { openCancelPopup } = useCancelMembership();
 
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -620,7 +623,8 @@ const ParentProfile = (stateData) => {
         value: cls.id,
         label: `${cls.className} - ${cls.day} (${cls.startTime} - ${cls.endTime})`,
     }));
-    const newClassesForWaitingList = profile?.noCapacityClass?.map((cls) => ({
+    const noCapacityClasses = profile?.noCapacityClass || profile?.noCapacityClasses || [];
+    const newClassesForWaitingList = noCapacityClasses?.map((cls) => ({
         value: cls.id,
         label: `${cls.className} - ${cls.day} (${cls.startTime} - ${cls.endTime})`,
     }));
@@ -1722,7 +1726,27 @@ const ParentProfile = (stateData) => {
                                                 </button>
                                                 <button
                                                     disabled={textloading}
-                                                    onClick={() => sendText([bookingId])}
+                                                    onClick={() => {
+                                                        const formattedParents = parents
+                                                            .filter(p => p.parentPhoneNumber)
+                                                            .map(p => ({
+                                                                name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
+                                                                phone: p.parentPhoneNumber
+                                                            }));
+
+                                                        if (formattedParents.length > 0) {
+                                                            openTextPopup(
+                                                                formattedParents,
+                                                                "/api/admin/send-manual-text",
+                                                                { token, showError, showSuccess }
+                                                            );
+                                                        } else {
+                                                            showWarning(
+                                                                "No Phone Numbers",
+                                                                "Selected parents do not have valid phone numbers."
+                                                            );
+                                                        }
+                                                    }}
                                                     className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium"
                                                 >
                                                     <img src="/images/icons/sendText.png" alt="" />
@@ -1825,7 +1849,27 @@ const ParentProfile = (stateData) => {
                                                 </button>
                                                 <button
                                                     disabled={textloading}
-                                                    onClick={() => sendText([bookingId])}
+                                                    onClick={() => {
+                                                        const formattedParents = parents
+                                                            .filter(p => p.parentPhoneNumber)
+                                                            .map(p => ({
+                                                                name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
+                                                                phone: p.parentPhoneNumber
+                                                            }));
+
+                                                        if (formattedParents.length > 0) {
+                                                            openTextPopup(
+                                                                formattedParents,
+                                                                "/api/admin/send-manual-text",
+                                                                { token, showError, showSuccess }
+                                                            );
+                                                        } else {
+                                                            showWarning(
+                                                                "No Phone Numbers",
+                                                                "Selected parents do not have valid phone numbers."
+                                                            );
+                                                        }
+                                                    }}
                                                     className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium"
                                                 >
                                                     <img src="/images/icons/sendText.png" alt="" />

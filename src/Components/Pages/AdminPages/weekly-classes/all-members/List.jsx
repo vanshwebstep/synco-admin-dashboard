@@ -16,9 +16,11 @@ import debounce from "lodash.debounce";
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import { useEmail } from '../../contexts/messages/SendEmailContext';
+import { useTextPopup } from '../../contexts/messages/SendTextContext';
 
 const trialLists = () => {
     const { openEmailPopup } = useEmail();
+    const { openTextPopup } = useTextPopup();
 
     const [currentDate, setCurrentDate] = useState(new Date());
     const [fromDate, setFromDate] = useState(null);
@@ -964,7 +966,7 @@ const trialLists = () => {
                                         const filteredBookings = bookMembership.filter(b =>
                                             selectedStudents.includes(b.id)
                                         );
-
+                                        console.log('filteredBookings', filteredBookings);
                                         // Step 2: Extract emails from filtered bookings
                                         const parentEmails = filteredBookings.flatMap(b =>
                                             (b.parents || [])
@@ -1003,10 +1005,39 @@ const trialLists = () => {
                             </button>
                             <button
                                 onClick={() => {
-                                    if (selectedStudents && selectedStudents.length > 0) {
-                                        sendText(selectedStudents);
+                                    if (bookMembership && bookMembership.length > 0) {
+
+                                        const filteredBookings = bookMembership.filter(b =>
+                                            selectedStudents.includes(b.id)
+                                        );
+
+                                        const parents = filteredBookings.flatMap(b =>
+                                            (b.parents || [])
+                                                .filter(p => p.parentPhoneNumber)
+                                                .map(p => ({
+                                                    name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
+                                                    phone: p.parentPhoneNumber
+                                                }))
+                                        );
+
+                                        if (parents.length > 0) {
+                                            openTextPopup(
+                                                parents,
+                                                "/api/admin/send-manual-text",
+                                                { token, showError, showSuccess }
+                                            );
+                                        } else {
+                                            showWarning(
+                                                "No Phone Numbers",
+                                                "Selected parents do not have valid phone numbers."
+                                            );
+                                        }
+
                                     } else {
-                                        showWarning("No Students Selected", "Please select at least one student before sending an email.");
+                                        showWarning(
+                                            "No Parents Found",
+                                            "No parent data available to send text."
+                                        );
                                     }
                                 }}
                                 className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl  text-[16px]">

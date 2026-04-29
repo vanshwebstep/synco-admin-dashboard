@@ -6,8 +6,10 @@ import "react-phone-input-2/lib/style.css";
 import { useNotification } from "../../../contexts/NotificationContext";
 import { useNavigate } from "react-router-dom";
 import { Mail, MessageSquare, Loader2 } from "lucide-react";
-import { showSuccess, showError } from "../../../../../../utils/swalHelper";
+import { showSuccess, showError, showWarning } from "../../../../../../utils/swalHelper";
 import Comments from "../../../Common/Comments";
+import { useEmail } from "../../../contexts/messages/SendEmailContext";
+import { useTextPopup } from "../../../contexts/messages/SendTextContext";
 const ParentProfile = (fetchedData) => {
   const { adminInfo } = useNotification();
   const location = useLocation();
@@ -20,7 +22,9 @@ const ParentProfile = (fetchedData) => {
   const [loadingComment, setLoadingComment] = useState(false);
   const [showEmailPopup, setShowEmailPopup] = useState(false);
   const [studentsData, setStudentsData] = useState([]);
-        const [textloading, setTextLoading] = useState(null);
+  const [textloading, setTextLoading] = useState(null);
+  const { openEmailPopup } = useEmail();
+  const { openTextPopup } = useTextPopup();
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const queryParams = new URLSearchParams(location.search);
@@ -41,23 +45,35 @@ const ParentProfile = (fetchedData) => {
     if (fetchedData?.fetchedformData) {
       setFormData(fetchedData.fetchedformData);
     }
+
     const bookings = fetchedData?.leadData?.bookings;
+    console.log("bookings", bookings);
 
     if (Array.isArray(bookings)) {
       const allStudents = bookings.flatMap(b =>
-        (b?.students || []).map(student => ({
-          ...student,
-          bookingType: b?.bookingType || "unknown", // attach paid/free
-          bookingVenue: b?.venue.name || "Venue", // attach paid/free
-          bookingId: b?.bookingId,
-          bookingScheduleId: b?.classScheduleId
-        }))
+        (b?.students || []).map(student => {
+          const parents = (student?.parents || []).map(parent => ({
+            parentFirstName: parent.parentFirstName,
+            parentLastName: parent.parentLastName,
+            parentEmail: parent.parentEmail,
+            parentPhoneNumber: parent.parentPhoneNumber,
+            relationToChild: parent.relationToChild
+          }));
+
+          return {
+            ...student,
+            parents, // 👈 attach parents array
+            bookingType: b?.bookingType || "unknown",
+            bookingVenue: b?.venue?.name || "Venue",
+            bookingId: b?.bookingId,
+            bookingScheduleId: b?.classScheduleId
+          };
+        })
       );
 
       setStudents(allStudents);
     }
   }, [fetchedData]);
-
   const navigate = useNavigate();
   const [country, setCountry] = useState("uk");
   const [commentsList, setCommentsList] = useState([]);
@@ -90,45 +106,45 @@ const ParentProfile = (fetchedData) => {
       },
     });
   };
-    const sendText = async (id) => {
-          setTextLoading(true);
-  
-          const headers = {
-              "Content-Type": "application/json",
-          };
-          // console.log('bookingIds', bookingIds)
-          if (token) {
-              headers["Authorization"] = `Bearer ${token}`;
-          }
-          try {
-              const response = await fetch(`${API_BASE_URL}/api/admin/book/free-trials/send-text`, {
-                  method: "POST",
-                  headers,
-                  body: JSON.stringify({
-                      bookingId: id, // make sure bookingIds is an array like [96, 97]
-                  }),
-              });
-  
-              const result = await response.json();
-  
-              if (!response.ok) {
-                  throw new Error(result.message || "Failed to send text");
-              }
-  
-              await showSuccess("Success!", result.message || "Text has been sent successfully.");
-  
-              return result;
-  
-          } catch (error) {
-              console.error("Error sending Text:", error);
-              await showError("Error", error.message || "Something went wrong while sending text.");
-              throw error;
-          } finally {
-              // navigate(`/weekly-classes/all-members/list`);
-              // await serviceHistoryWaitingList(id);
-              setTextLoading(false);
-          }
-      };
+  const sendText = async (id) => {
+    setTextLoading(true);
+
+    const headers = {
+      "Content-Type": "application/json",
+    };
+    // console.log('bookingIds', bookingIds)
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/book/free-trials/send-text`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          bookingId: id, // make sure bookingIds is an array like [96, 97]
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to send text");
+      }
+
+      await showSuccess("Success!", result.message || "Text has been sent successfully.");
+
+      return result;
+
+    } catch (error) {
+      console.error("Error sending Text:", error);
+      await showError("Error", error.message || "Something went wrong while sending text.");
+      throw error;
+    } finally {
+      // navigate(`/weekly-classes/all-members/list`);
+      // await serviceHistoryWaitingList(id);
+      setTextLoading(false);
+    }
+  };
 
   const handleBookMembership = (classId, leadId) => {
     // Adjust this route if needed
@@ -269,7 +285,7 @@ const ParentProfile = (fetchedData) => {
     }
   }, [token, API_BASE_URL]);
 
-    // useEffect(() => {
+  // useEffect(() => {
   //   fetchComments();
   // }, [fetchComments]);
 
@@ -626,16 +642,16 @@ const ParentProfile = (fetchedData) => {
             </div>
           </div>
 
-     <Comments
-             adminInfo={adminInfo}
-             comment={comment}
-             setComment={setComment}
-             handleSubmitComment={handleSubmitComment}
-             loadingComment={loadingComment}
-             commentsList={commentsList}
-             currentComments={currentComments}
-             formatTimeAgo={formatTimeAgo}
-           />
+          <Comments
+            adminInfo={adminInfo}
+            comment={comment}
+            setComment={setComment}
+            handleSubmitComment={handleSubmitComment}
+            loadingComment={loadingComment}
+            commentsList={commentsList}
+            currentComments={currentComments}
+            formatTimeAgo={formatTimeAgo}
+          />
 
         </div>
         <div className="md:w-[34%]">
@@ -732,22 +748,41 @@ const ParentProfile = (fetchedData) => {
                   type="button"
                   className="flex-1 flex items-center gap-2 justify-center border border-[#717073] text-[#717073] rounded-xl font-semibold py-3 text-[18px] hover:bg-gray-50 transition"
                   onClick={() => {
-                    setStudentsData(students);   // your array
-                    setShowEmailPopup(true);
-                  }}
-                >
+                    const parentEmails = students.flatMap(s => s.parents.map(p => p.parentEmail)).filter(Boolean);
+                    openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
+                  }}>
                   <Mail className="w-4 h-4 mr-1" /> Send Email
                 </button>
-                <button disabled={textloading} onClick={() => sendText([fetchedData?.leadData?.id])} className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
-                                                       <img src="/images/icons/sendText.png" alt="" /> 
-                                                        {textloading ? (
-                                                           <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
-                                                       ) : (
-                                                           <>
-                                                               Send Text
-                                                           </>
-                                                       )}
-                                                   </button>
+                <button disabled={textloading} onClick={() => {
+                  const formattedParents = students.flatMap(s => s.parents)
+                    .filter(p => p.parentPhoneNumber)
+                    .map(p => ({
+                      name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
+                      phone: p.parentPhoneNumber
+                    }));
+
+                  if (formattedParents.length > 0) {
+                    openTextPopup(
+                      formattedParents,
+                      "/api/admin/send-manual-text",
+                      { token, showError, showSuccess }
+                    );
+                  } else {
+                    showWarning(
+                      "No Phone Numbers",
+                      "Selected parents do not have valid phone numbers."
+                    );
+                  }
+                }} className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
+                  <img src="/images/icons/sendText.png" alt="" />
+                  {textloading ? (
+                    <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
+                  ) : (
+                    <>
+                      Send Text
+                    </>
+                  )}
+                </button>
               </div>
 
               <button
