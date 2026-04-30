@@ -7,7 +7,7 @@ const ProtectedRoute = ({ children }) => {
   const [authStatus, setAuthStatus] = useState('checking'); // 'checking' | 'allowed' | 'denied'
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const navigate = useNavigate();
- 
+
   useEffect(() => {
     const verifyToken = async () => {
       const token = localStorage.getItem('adminToken');
@@ -37,7 +37,8 @@ const ProtectedRoute = ({ children }) => {
           localStorage.setItem('adminInfo', JSON.stringify(result.admin));
           localStorage.setItem("activeAccount", JSON.stringify(result.admin));
 
-               localStorage.setItem("franchisesInfo", JSON.stringify(result.franchises));
+          localStorage.setItem("franchisesInfo", JSON.stringify(result.franchises));
+          localStorage.setItem("superAdminbyFranchises", JSON.stringify(result.superAdmin));
 
           localStorage.setItem('role', (result.admin.role.role));
           localStorage.setItem(

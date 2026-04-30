@@ -18,6 +18,7 @@ export const verifyToken = async (token) => {
       localStorage.setItem("activeAccount", JSON.stringify(result.admin));
 
       localStorage.setItem("franchisesInfo", JSON.stringify(result.franchises));
+          localStorage.setItem("superAdminbyFranchises", JSON.stringify(result.superAdmin));
 
       localStorage.setItem('role', (result.admin.role));
       localStorage.setItem(
@@ -63,6 +64,7 @@ export const verifyTokenAndSyncState = async (
       localStorage.setItem("adminInfo", JSON.stringify(result.admin));
       localStorage.setItem("activeAccount", JSON.stringify(result.admin));
       localStorage.setItem("franchisesInfo", JSON.stringify(result.franchises));
+          localStorage.setItem("superAdminbyFranchises", JSON.stringify(result.superAdmin));
 
       // 🔥 UI update (THIS WAS MISSING)
       setAdminInfo(result.admin);

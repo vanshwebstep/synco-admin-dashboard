@@ -1,4 +1,4 @@
-import React, { useEffect, useState , useMemo} from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Create from './Create';
 import { useNavigate } from 'react-router-dom';
 import { Check } from "lucide-react";
@@ -7,11 +7,17 @@ import Loader from '../contexts/Loader';
 import { formatDistanceToNow } from 'date-fns';
 import { usePermission } from "../Common/permission";
 import { useGlobalSearch } from '../contexts/GlobalSearchContext';
+import { useLocation } from "react-router-dom";
 
 const List = () => {
-      const { checkPermission } = usePermission();
-  
-    const { searchQuery } = useGlobalSearch();
+  const { checkPermission } = usePermission();
+  const location = useLocation();
+
+  const isOpenForm = location.state?.openForm;
+  const { searchQuery } = useGlobalSearch();
+console.log('isOpenForm', isOpenForm)
+
+
 
   const { members, fetchMembers, loading } = useMembers();
   const [selectedUserIds, setSelectedUserIds] = useState([]);
@@ -37,31 +43,34 @@ const List = () => {
   const navigate = useNavigate();
   const [openForm, setOpenForm] = useState(false);
   const filteredMembers = useMemo(() => {
-  if (!searchQuery) return members || [];
+    if (!searchQuery) return members || [];
 
-  const q = searchQuery.toLowerCase();
+    const q = searchQuery.toLowerCase();
 
-  return (members || []).filter((user) => {
-    const values = [
-      user?.firstName,
-      user?.lastName,
-      user?.role?.role,
-      user?.phoneNumber,
-      user?.email,
-      user?.position,
-    ];
+    return (members || []).filter((user) => {
+      const values = [
+        user?.firstName,
+        user?.lastName,
+        user?.role?.role,
+        user?.phoneNumber,
+        user?.email,
+        user?.position,
+      ];
 
-    const fullName = `${user?.firstName || ""} ${user?.lastName || ""}`.toLowerCase();
+      const fullName = `${user?.firstName || ""} ${user?.lastName || ""}`.toLowerCase();
 
-    return (
-      fullName.includes(q) ||
-      values.some((val) =>
-        String(val || "").toLowerCase().includes(q)
-      )
-    );
-  });
-}, [members, searchQuery]);
+      return (
+        fullName.includes(q) ||
+        values.some((val) =>
+          String(val || "").toLowerCase().includes(q)
+        )
+      );
+    });
+  }, [members, searchQuery]);
   useEffect(() => {
+     if (isOpenForm) {
+      setOpenForm(true);
+    }
     fetchMembers();
   }, [fetchMembers]);
 
@@ -83,12 +92,12 @@ const List = () => {
         <h2 className="text-2xl md:text-[28px] font-semibold">Admin panel</h2>
 
         {checkPermission(
-          { module: "member", action: "create" } ) && (
+          { module: "member", action: "create" }) && (
             <button
               onClick={() => setOpenForm(true)}
               className="bg-[#237FEA] flex items-center gap-2 cursor-pointer text-white px-4 py-2 rounded-xl hover:bg-blue-700 text-sm md:text-base font-semibold"
             >
-              <img src="/members/add.png" className="w-5" alt=""  />
+              <img src="/members/add.png" className="w-5" alt="" />
               Add Member
             </button>
           )}
@@ -142,10 +151,10 @@ const List = () => {
                                 alt={user.firstName || 'Profile Image'}
                                 onClick={() => navigate(`/members/update?id=${user.id}`)}
                                 className="w-10 h-10  rounded-full object-cover"
-                                 onError={(e) => {
-                      e.currentTarget.onerror = null; // prevent infinite loop
-                      e.currentTarget.src = '/members/dummyuser.png';
-                    }}
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null; // prevent infinite loop
+                                  e.currentTarget.src = '/members/dummyuser.png';
+                                }}
                               />
                               <span onClick={() => navigate(`/members/update?id=${user.id}`)}>{user.firstName || '-'} {user.lastName || ''}</span>
                             </div>

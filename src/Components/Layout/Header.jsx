@@ -28,38 +28,54 @@ const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpe
     .toLowerCase();
   const storedAdmin = localStorage.getItem("adminInfo");
   const storedFranchises = localStorage.getItem("franchisesInfo");
+  const storedSuperAdmin = localStorage.getItem("superAdminbyFranchises");
+
   const storedActiveAccount = localStorage.getItem("activeAccount");
-  console.log('storedFranchises', storedFranchises)
-  console.log('storedActiveAccount', storedActiveAccount)
+  // console.log('storedFranchises', storedFranchises)
+  // console.log('storedSuperAdmin', storedSuperAdmin)
+  // console.log('storedActiveAccount', storedActiveAccount)
 
   // console.log('localStorage',localStorage)
   useEffect(() => {
-    // ✅ Load adminInfo from localStorage
     if (storedAdmin) {
       try {
-        const parsedAdmin = JSON.parse(storedAdmin);
-        setAdminInfo(parsedAdmin);
+        setAdminInfo(JSON.parse(storedAdmin));
       } catch (e) {
-        console.error("Invalid adminInfo JSON in localStorage:", e);
+        console.error("Invalid adminInfo JSON:", e);
       }
     }
 
-    // ✅ Load franchisesInfo from localStorage
-    if (storedFranchises) {
+    if (storedFranchises && storedFranchises !== "undefined") {
       try {
         const parsedFranchises = JSON.parse(storedFranchises);
-        setFranchisesInfo(parsedFranchises);
-        console.log('parsedFranchises', parsedFranchises)
+
+        let mergedData = [...parsedFranchises];
+
+        if (storedSuperAdmin && storedSuperAdmin !== "undefined") {
+          const parsedSuperAdmin = JSON.parse(storedSuperAdmin);
+
+          mergedData = [
+            {
+              ...parsedSuperAdmin,
+              role: "Super Admin",
+            },
+            ...parsedFranchises,
+          ];
+        }
+
+        console.log("✅ FINAL mergedData", mergedData);
+        setFranchisesInfo(mergedData);
+
       } catch (e) {
-        console.error("Invalid franchisesInfo JSON in localStorage:", e);
+        console.error("Invalid JSON in localStorage:", e);
       }
     }
+
     if (storedActiveAccount) {
       try {
-        const parsedActiveAccount = JSON.parse(storedActiveAccount);
-        setActiveAccount(parsedActiveAccount);
+        setActiveAccount(JSON.parse(storedActiveAccount));
       } catch (e) {
-        console.error("Invalid activeAccount JSON in localStorage:", e);
+        console.error("Invalid activeAccount JSON:", e);
       }
     }
   }, []);
@@ -278,6 +294,7 @@ const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpe
         setActiveAccount,
         setFranchisesInfo,
       });
+      window.location.reload();
 
 
     } catch (error) {
@@ -339,7 +356,7 @@ const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpe
 
 
 
-
+  console.log('adminInfo in header', adminInfo.role.role)
   return (
     <>
       {/* HEADER */}
@@ -436,9 +453,15 @@ const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpe
 
                 {/* Actions */}
                 <div className="border-t">
-                  <div className="px-4 py-2 hover:bg-gray-50 cursor-pointer">
-                    + Add Account
-                  </div>
+                  {adminInfo.role.role === "Super Admin" && (
+                    <div onClick={() =>
+                      navigate("/members/list", {
+                        state: { openForm: true }
+                      })
+                    } className="px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                      + Add Account
+                    </div>
+                  )}
                   <div
                     onClick={handleLogout}
                     className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-red-500"
@@ -614,12 +637,19 @@ const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpe
 
                   {/* Actions */}
                   <div className="border-t bg-gray-50">
-                    <div
-                      className="px-5 py-2.5 hover:bg-gray-100 cursor-pointer text-sm font-medium flex items-center gap-2"
-                    >
-                      <span className="text-lg">＋</span>
-                      Add Account
-                    </div>
+                    {adminInfo.role.role === "Super Admin" && (
+                      <div
+                        onClick={() =>
+                          navigate("/members/list", {
+                            state: { openForm: true }
+                          })
+                        }
+                        className="px-5 py-2.5 hover:bg-gray-100 cursor-pointer text-sm font-medium flex items-center gap-2"
+                      >
+                        <span className="text-lg">＋</span>
+                        Add Account
+                      </div>
+                    )}
 
                     <div
                       onClick={handleLogout}
