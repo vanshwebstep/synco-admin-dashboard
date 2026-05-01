@@ -10,6 +10,8 @@ const Attendance = ({ stateData }) => {
     return isNaN(d) ? "-" : d.toLocaleDateString("en-GB");
   };
   const activeStudent = students[activeIndex];
+  console.log("Attendance data:", stateData);
+  console.log("Attendance activeStudent:", activeStudent);
   return (
     <div className="p-6 bg-white rounded-xl shadow-sm">
 
@@ -22,8 +24,8 @@ const Attendance = ({ stateData }) => {
           <button
             key={student.id}
             className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${activeIndex === index
-                ? "bg-blue-500 text-white"
-                : "bg-gray-100 text-gray-600"
+              ? "bg-blue-500 text-white"
+              : "bg-gray-100 text-gray-600"
               }`}
             onClick={() => setActiveIndex(index)}
           >
@@ -39,7 +41,8 @@ const Attendance = ({ stateData }) => {
           {/* Header */}
           <thead className="bg-gray-100 text-gray-500 text-left">
             <tr>
-              <th className="py-3 px-4 font-medium">Class Venue</th>
+              <th className="py-3 px-4 font-medium">Venue</th>
+              <th className="py-3 px-4 font-medium">Class</th>
               <th className="py-3 px-4 font-medium">Date</th>
               <th className="py-3 px-4 font-medium">Attendance</th>
             </tr>
@@ -52,6 +55,10 @@ const Attendance = ({ stateData }) => {
 
                 {/* Venue */}
                 <td className="py-3 px-4">
+                  {stateData.venue?.name || "Acton"}
+                </td>
+
+                <td className="py-3 px-4">
                   {activeStudent.classSchedule?.className || "Acton"}
                 </td>
 
@@ -63,12 +70,15 @@ const Attendance = ({ stateData }) => {
 
                 {/* Attendance */}
                 <td className="py-3 px-4">
-                  <span
-                    className={`px-3 py-1 capitalize rounded-md text-xs font-medium ${activeStudent.attendance?.toLowerCase() === "attended"
-                        ? "bg-green-100 text-green-600"
-                        : "bg-red-100 text-red-500"
-                      }`}
-                  >
+<span
+  className={`px-3 py-1 capitalize rounded-md text-xs font-medium ${
+    activeStudent.attendance?.toLowerCase() === "attended"
+      ? "bg-green-100 text-green-600"
+      : activeStudent.attendance?.toLowerCase() === "pending"
+      ? "bg-orange-100 text-orange-600"
+      : "bg-red-100 text-red-500"
+  }`}
+>
                     {activeStudent.attendance || "Not Recorded"}
                   </span>
                 </td>

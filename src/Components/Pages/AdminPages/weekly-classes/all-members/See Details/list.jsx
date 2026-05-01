@@ -2,13 +2,15 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useLocation } from "react-router-dom";
 
-
+import FailedPayments from "./FailedPayments";
 // import ServiceHistory from "./serviceHistory";
 // import ParentProfile from "../ParentProfile";
 import { useBookFreeTrial } from '../../../contexts/BookAFreeTrialContext';
 import HistoryOfPayments from "./HistoryOfPayments";
 import Attendance from "./Attendance";
+import FailedPayment from "./FailedPayments";
 import General from "./General";
+import Credits from "./Credits";
 
 const SeeDetails = () => {
     const { serviceHistoryMembership, serviceHistory, serviceHistoryFetchById } = useBookFreeTrial()
@@ -17,7 +19,7 @@ const SeeDetails = () => {
     const location = useLocation();
     const [itemId, setItemId] = useState(null);
     const [memberInfo, setMemberInfo] = useState(null);
-    console.log('location.state', location.state)
+    console.log('itemId', itemId);
     useEffect(() => {
         if (location.state?.itemId) {
             setItemId(location.state.itemId);
@@ -45,17 +47,17 @@ const SeeDetails = () => {
         fetchData();
     }, [itemId, memberInfo]); // ✅ correct dependency
     const [activeTab, setActiveTab] = useState("General");
-    const tabs = [
-        "General",
-        "History of Payments",
-        "Credits",
-        "Attendance",
-    ].filter(tab => {
-        if (memberInfo === 'freeTrial' && tab === "History of Payments") {
-            return false;
-        }
-        return true;
-    });
+   const tabs = [
+    "General",
+    "History of Payments",
+    "Credits",
+    "Attendance",
+].filter(tab => {
+    if (memberInfo === 'freeTrial' && tab === "History of Payments") {
+        return false;
+    }
+    return true;
+});
     const navigateTo =
         memberInfo === "allMembers" || memberInfo === "freeTrial"
             ? {
@@ -111,11 +113,12 @@ const SeeDetails = () => {
 
                 {memberInfo !== 'freeTrial' &&
                     <div className=" flex items-start  gap-2 md:gap-3">
-                        <button
+                        <button  onClick={() => setActiveTab("Failed Payments")}
                             className=" border border-black flex items-center gap-2 text-black px-8 py-8 md:py-[12px] rounded-xl hover:bg-gray-200 text-[18px]  "
                         >
                             See Failed Payments
-                        </button><button
+                        </button>
+                        <button
                             className="border border-[#237FEA]  flex items-center gap-2 text-[#237FEA] px-8 py-8 md:py-[12px] rounded-xl hover:bg-[#237FEA] hover:text-white text-[18px]  "
                         >
                             Add a subscription
@@ -127,19 +130,34 @@ const SeeDetails = () => {
                         </button>
                     </div>
                 }
-            </div >
-            {/* {/* {activeTab === "Service History" && (
+        </div >
+        {/* {/* {activeTab === "Service History" && (
         <ServiceHistory serviceHistory={serviceHistory} />
       )} */}
-            {activeTab === "History of Payments" && (
-                <HistoryOfPayments stateData={serviceHistory} />
-            )}
-            {activeTab === "Attendance" && (
-                <Attendance stateData={serviceHistory} />
-            )}
-            {activeTab === "General" && (
-                <General stateData={serviceHistory} />
-            )}
+    {
+        activeTab === "History of Payments" && (
+            <HistoryOfPayments stateData={serviceHistory} />
+        )
+    }
+    {activeTab === "Failed Payments" && (
+  <FailedPayments itemId={itemId} memberInfo={memberInfo} />
+)}
+    {
+        activeTab === "Attendance" && (
+            <Attendance stateData={serviceHistory} />
+        )
+    }
+
+    {
+        activeTab === "Credits" && (
+            <Credits itemId={itemId} />
+        )
+    }
+    {
+        activeTab === "General" && (
+            <General stateData={serviceHistory} />
+        )
+    }
         </>
     )
 }

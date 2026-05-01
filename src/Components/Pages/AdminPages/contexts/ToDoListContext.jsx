@@ -126,7 +126,7 @@ export const ToDoListProvider = ({ children }) => {
                 //   .filter(Boolean)
                 //   .forEach(d => queryParams.append("trialDate", d));
 
-                const url = `${API_BASE_URL}/api/admin/holiday/to-do-list/list${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+                const url = `${API_BASE_URL}/api/admin/to-do-list/list${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
                 const response = await fetch(url, {
                     method: "GET",
                     headers: {
@@ -135,12 +135,12 @@ export const ToDoListProvider = ({ children }) => {
                 });
 
                 const resultRaw = await response.json();
-                const result = resultRaw.data || [];
+                const result = resultRaw.data || {};
                 const venues = resultRaw.data || [];
-                const bookedByAdmin = resultRaw || []
+                const bookedByAdmin = resultRaw || [];
                 setBookedByAdmin(bookedByAdmin);
                 setMyVenues(Array.isArray(venues) ? venues : []);
-                setStatsFreeTrial(resultRaw.data)
+                setStatsFreeTrial(resultRaw.data);
                 setToDoList(result);
             } catch (error) {
                 console.error("Failed to fetch bookFreeTrials:", error);
@@ -1890,9 +1890,9 @@ export const ToDoListProvider = ({ children }) => {
 
         } catch (error) {
             console.error("Error creating class schedule:", error);
-            await 
-            showError("Error", error.message || "Something went wrong while creating class schedule.");
-           
+            await
+                showError("Error", error.message || "Something went wrong while creating class schedule.");
+
             throw error;
         } finally {
             await fetchMembershipSales();

@@ -465,7 +465,7 @@ const HistoryOfPayments = ({ stateData }) => {
                       {/* Description */}
                       <td className="py-3 px-6 font-medium relative">
                         <div
-                          className={`flex gap-2 items-center ${isFailed ? "cursor-pointer" : ""
+                          className={`flex gap-2 text-left w-40 bg-gray-100 px-2 py-1 rounded-xl shadow-sm whitespace-nowrap items-center ${isFailed ? "cursor-pointer" : ""
                             }`}
                           onClick={() =>
                             isFailed &&
@@ -473,7 +473,27 @@ const HistoryOfPayments = ({ stateData }) => {
                           }
                         >
                           <div className={isFailed ? "text-red-500" : "text-green-500"}>●</div>
-                          <span>{safeValue(payment.description, "Membership Fee")}</span>
+                          {/* <span>{safeValue(payment.description, "Membership Fee")}</span> */}
+                          <div className="">
+                            {payment.paymentStatus === "failed" ? (
+                              <button className="text-red-500 text-sm font-medium ">
+                                Retry Payment
+                              </button>
+                            ) : payment.paymentStatus === "pending" ? (
+                              <span className="text-yellow-500 text-sm font-semibold">
+                                Payment Pending
+                              </span>
+                            ) :
+                              payment.paymentStatus === "cancelled" ? (
+                                <span className="text-red-500 whitespace-nowrap text-sm font-semibold">
+                                  Payment Cancelled
+                                </span>
+                              ) : (
+                                <span className="text-green-600 text-sm font-semibold">
+                                  Paid Successfully
+                                </span>
+                              )}
+                          </div>
                         </div>
 
                         {/* Popup */}
@@ -507,26 +527,7 @@ const HistoryOfPayments = ({ stateData }) => {
                         {safeValue(payment.price)} {safeValue(payment.currency, "GBP")}
                       </td>
 
-                      <td className="text-left w-30">
-                        {payment.paymentStatus === "failed" ? (
-                          <button className="text-blue-500 text-sm font-medium hover:underline">
-                            Retry Payment
-                          </button>
-                        ) : payment.paymentStatus === "pending" ? (
-                          <span className="text-yellow-500 text-sm font-semibold">
-                            Payment Pending
-                          </span>
-                        ) :
-                          payment.paymentStatus === "cancelled" ? (
-                            <span className="text-red-500 whitespace-nowrap text-sm font-semibold">
-                              Payment Cancelled
-                            </span>
-                          ) : (
-                            <span className="text-green-600 text-sm font-semibold">
-                              Paid Successfully
-                            </span>
-                          )}
-                      </td>
+
                     </tr>
                   );
                 })

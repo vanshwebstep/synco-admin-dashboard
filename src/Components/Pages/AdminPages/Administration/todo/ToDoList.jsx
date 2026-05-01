@@ -78,13 +78,25 @@ export default function TodoList() {
     useEffect(() => {
         fetchToDoList();
     }, [fetchToDoList]);
+    const formatTasks = (data) => {
+        return Object.values(data || {}).flat().map(item => ({
+            ...item,
+            type: item.feedbackType ? 'feedback' : (item.type || 'task'),
+            title: item.category || item.title || "Feedback",
+            description: item.notes || item.description || "",
+            assignedAdmins: item.assignedAgents || item.assignedAdmins || [],
+            attachments: item.attachments || [],
+            status: item.status === "not_resolved" ? "to_do" : (item.status === "resolved" ? "completed" : (item.status || "to_do")),
+            parentAccount: item.creator ? { id: item.creator.id, name: `${item.creator.firstName || ''} ${item.creator.lastName || ''}`.trim() } : null,
+            priority: item.priority || "high"
+        }));
+    };
+
     useEffect(() => {
-        const newTasks = Object.values(toDoList).flat();
-        setTaskData(newTasks);
+        setTaskData(formatTasks(toDoList));
     }, [toDoList]);
-    const tasks = Object.values(toDoList).flat();
-    console.log("TASKS FROM CONTEXT:", tasks);
-    console.log("TODOLIST FROM CONTEXT:", toDoList);
+
+    const tasks = formatTasks(toDoList);
     const [selectedAdmins, setSelectedAdmins] = useState([]);
     const [selectedPriority, setSelectedPriority] = useState([]);
 
@@ -95,12 +107,14 @@ export default function TodoList() {
     const [loading, setLoading] = useState(null);
     const [taskData, setTaskData] = useState(tasks);
     const [Members, setMembers] = useState([]);
+    const [activeTab, setActiveTab] = useState("tasks");
     const handleOpenNewTask = () => setOpenNewTask(true);
     const handleCloseNewTask = () => setOpenNewTask(false);
     const [showFilter, setShowFilter] = useState(false);
     // Collect all unique toDoList
-    const allAdmins = Object.values(toDoList)
-        .flat() // flatten columns
+
+    console.log('toDoList', toDoList)
+    const allAdmins = tasks
         .flatMap(task => {
             // Handle assignedAdmins (sometimes string)
             if (typeof task.assignedAdmins === "string") {
@@ -122,6 +136,10 @@ export default function TodoList() {
 
 
     const [admins, setAdmins] = useState(allAdmins);
+
+    useEffect(() => {
+        setAdmins(allAdmins);
+    }, [toDoList]);
 
 
     console.log("ALL ADMINS:", allAdmins);
@@ -165,14 +183,20 @@ export default function TodoList() {
     }
     const updateTaskStatus = async (id, status) => {
         const token = localStorage.getItem("adminToken");
+        let mappedStatus = status;
+        if (status === 'in_progress') {
+            mappedStatus = 'in-progress';
+        } else if (status === 'to_do') {
+            mappedStatus = 'to-do';
+        }
         try {
-            await fetch(`${API_BASE_URL}/api/admin/holiday/to-do-list/update-status`, {
+            await fetch(`${API_BASE_URL}/api/admin/to-do-list/update-status`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify({ id, status }),
+                body: JSON.stringify({ id, status: mappedStatus }),
             });
             await fetchToDoList();
         } catch (err) {
@@ -183,7 +207,7 @@ export default function TodoList() {
     const updateSortOrder = async (sortOrder) => {
         const token = localStorage.getItem("adminToken");
         try {
-            await fetch(`${API_BASE_URL}/api/admin/holiday/to-do-list/update-sort-order`, {
+            await fetch(`${API_BASE_URL}/api/admin/to-do-list/update-sort-order`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -199,6 +223,8 @@ export default function TodoList() {
     const mapTaskForModal = (task) => {
         if (!task) return null;
 
+        console.log('task', task)
+
         return {
             title: task.title,
             description: task.description,
@@ -207,19 +233,23 @@ export default function TodoList() {
             assigned: (task.assignedAdmins || []).map(a => ({
                 id: a.id,
                 avatar: a.profile || "/defaultAvatar.png",
-                name: a.name
+                name: a.firstName + " " + a.lastName
             })),
+            creator: {
+                id: task.creator?.id,
+                name: task.creator?.firstName + " " + task.creator?.lastName
+            },
 
-            createdBy: {
-                name: task.createdByDetails?.name || "Unknown",
-                avatar: task.createdByDetails?.profile || "/defaultAvatar.png"
+            assignedAdmins: {
+                name: task.creator?.firstName + " " + task.creator?.lastName || "Unknown",
+                avatar: task.creator?.profile || "/defaultAvatar.png"
             },
 
             status: task.status,
             priority: task.priority,
 
-            createdAt: new Date(task.created_at).toLocaleString(),
-            updatedAt: new Date(task.updated_at).toLocaleString()
+            createdAt: new Date(task.createdAt).toLocaleString(),
+            updatedAt: new Date(task.updatedAt).toLocaleString()
         };
     };
     const handleOpenViewTask = (rawTask) => {
@@ -336,18 +366,41 @@ export default function TodoList() {
                 </div>
             </div>
 
+            <div className="flex gap-4 mb-6 border-b border-[#E2E1E5]">
+                <button
+                    onClick={() => setActiveTab("tasks")}
+                    className={`pb-2 px-2 text-sm font-medium transition-colors ${activeTab === "tasks" ? "border-b-2 border-[#237FEA] text-[#237FEA]" : "text-gray-500 hover:text-gray-700"
+                        }`}
+                >
+                    To Do Tasks
+                </button>
+                <button
+                    onClick={() => setActiveTab("feedback")}
+                    className={`pb-2 px-2 text-sm font-medium transition-colors ${activeTab === "feedback" ? "border-b-2 border-[#237FEA] text-[#237FEA]" : "text-gray-500 hover:text-gray-700"
+                        }`}
+                >
+                    Parent Feedback
+                </button>
+            </div>
+
             <DragDropContext onDragEnd={handleDragEnd}>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {columns.map((col) => (
-                        <TaskColumn
-                            key={col.id}
-                            column={col}
-                            tasks={taskData.filter((t) => t.status === col.id)}
-                            onAddTask={handleOpenNewTask}
-                            onTaskClick={handleOpenViewTask}
-                        />
-                    ))}
+                    {columns.map((col) => {
+                        const filteredTasks = taskData.filter((t) => {
+                            const isFeedback = t.type === 'feedback' || t.category === 'Parent Feedback' || t.isFeedback;
+                            return t.status === col.id && (activeTab === "feedback" ? isFeedback : !isFeedback);
+                        });
+                        return (
+                            <TaskColumn
+                                key={col.id}
+                                column={col}
+                                tasks={filteredTasks}
+                                onAddTask={handleOpenNewTask}
+                                onTaskClick={handleOpenViewTask}
+                            />
+                        )
+                    })}
                 </div>
             </DragDropContext>
 
@@ -406,7 +459,7 @@ function FilterModal({
                             onChange={() => toggleAdmin(a.id)}
                             checked={selectedAdmins.includes(a.id)} // ✅ now works
                         />
-                        {a.name}
+                        {a.firstName + " " + a.lastName}
                     </label>
                 ))}
             </div>
@@ -508,6 +561,7 @@ function TaskColumn({ column, tasks, onAddTask, onTaskClick }) {
 
 
 function TaskCard({ task, onClick }) {
+    const isFeedback = task.type === 'feedback' || task.category === 'Parent Feedback' || task.isFeedback;
     const priorityStyles = {
         low: "bg-green-100 text-green-700",
         medium: "bg-yellow-100 text-yellow-700",
@@ -528,17 +582,20 @@ function TaskCard({ task, onClick }) {
                     <MoreVertical size={18} />
                 </div>
 
-                <h2 className="mt-3 font-semibold text-[18px]">{task.title}</h2>
+                <h2 className="mt-3 font-semibold capitalize text-[18px]">{task.title}</h2>
+                {isFeedback && <p className="text-sm text-gray-600 capitalize mt-1 line-clamp-2">{task.description}</p>}
+
+
 
                 <div className="flex items-center gap-2 mt-3">
                     {task.assignedAdmins.map((u, index) => (
-                        <div className="flex gap-1 items-center">
+                        <div key={index} className="flex gap-1 items-center">
                             <img
                                 key={index}
                                 src={u.profile}
-                                className="min-w-9 max-w-9 min-h-9 max-h-9 rounded-full border-2 border-white"
+                                className="h-9 w-9 rounded-full border-2 border-white"
                             />
-                            {u.name}
+                            {u.firstName + " " + u.lastName}
                         </div>
                     ))}
                 </div>
@@ -546,8 +603,17 @@ function TaskCard({ task, onClick }) {
 
             <div className="flex justify-between items-center border-t border-[#E2E1E5] text-[16px] p-4 font-semibold text-gray-500 mt-4">
                 <div className="flex items-center gap-1">
-                    <img src="/reportsIcons/share.png" className="w-4" />
-                    {task.attachments.length}
+                    {isFeedback && task.parentAccount && (
+                        <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+                            <a
+                                href={`/admin/parent-profile/${task.parentAccount.id || task.parentAccount}`}
+                                className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                            >
+                                <img src="/reportsIcons/share.png" className="w-4" /> Parent: {task.parentAccount.name || task.parentAccount}
+                            </a>
+                        </div>
+                    )}
+
                 </div>
                 <div>{task.daysLeft} 3 days left</div>
             </div>
@@ -1049,9 +1115,15 @@ function ViewTaskModal({ task, open, setOpen, onClose }) {
         setComment("");
     };
 
+    const formatDate = (dateString) => {
+        if (!dateString) return "N/A";
+        const d = new Date(dateString);
+        return isNaN(d.getTime()) ? dateString : d.toLocaleDateString("en-US", { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+    };
+
     return (
         <div className="fixed inset-0 flex justify-center items-center bg-black/50 z-50">
-            <div className="bg-white rounded-2xl md:w-5/12 max-h-[90vh] overflow-hidden">
+            <div className="bg-white rounded-2xl md:w-5/12 max-h-[90vh] overflow-auto">
                 {/* HEADER */}
                 <div className="flex p-6 justify-center relative items-center border-b border-[#E2E1E5]">
                     <h2 className="text-xl font-semibold">Task</h2>
@@ -1137,8 +1209,8 @@ function ViewTaskModal({ task, open, setOpen, onClose }) {
                         <div className="border-b border-[#E2E1E5] pb-6 px-6">
                             <p className="text-[17px] font-semibold">Created by</p>
                             <div className="flex items-center gap-3 mt-4">
-                                <img src={task.createdBy?.profile || "/members/dummyuser.png"} className="w-10 h-10 rounded-full" />
-                                <p className="font-medium">{task.createdBy?.name}</p>
+                                <img src={task.creator?.profile || task.createdBy?.profile || "/members/dummyuser.png"} className="w-10 h-10 rounded-full" />
+                                <p className="font-medium">{task.creator?.name || "Unknown"}</p>
                             </div>
                         </div>
 
@@ -1146,10 +1218,11 @@ function ViewTaskModal({ task, open, setOpen, onClose }) {
                         <div className="border-b border-[#E2E1E5] pb-6 px-6">
                             <p className="text-[17px] font-semibold">Assign</p>
                             <div className="flex gap-2 mt-2 items-center flex-wrap">
-                                {task.assigned?.map((m, i) => (
-                                    <>    <img key={i} src={m.avatar} className="w-8 h-8 rounded-full" />
-                                        <p> {m.name}</p>
-                                    </>
+                                {(task.assigned || []).map((m, i) => (
+                                    <div key={i} className="flex items-center gap-2 mr-3">
+                                        <img src={m.profile || m.avatar || "/members/dummyuser.png"} className="w-8 h-8 rounded-full" />
+                                        <p>{m.name}</p>
+                                    </div>
                                 ))}
 
                             </div>
@@ -1178,13 +1251,13 @@ function ViewTaskModal({ task, open, setOpen, onClose }) {
                         {/* Created Date */}
                         <div className="border-b border-[#E2E1E5] pb-6 px-6">
                             <p className="text-[17px] font-semibold">Created</p>
-                            <p className="text-sm mt-1">{task.createdAt}</p>
+                            <p className="text-sm mt-1">{formatDate(task.createdAt)}</p>
                         </div>
 
                         {/* Updated Date */}
                         <div className="pb-6 px-6">
                             <p className="text-[17px] font-semibold">Last Update</p>
-                            <p className="text-sm mt-1">{task.updatedAt}</p>
+                            <p className="text-sm mt-1">{formatDate(task.updatedAt)}</p>
                         </div>
                     </div>
                 </div>

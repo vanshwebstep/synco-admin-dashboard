@@ -1716,7 +1716,7 @@ const ParentProfile = (stateData) => {
                                             {/* Membership-only actions */}
                                             {isMembership && (
                                                 <>
-                                                    {(status === "active" || status === "frozen" || status === "cancelled" || status === "request_to_cancel") && (
+                                                    {(status === "active" || status === "frozen"  || status === "request_to_cancel") && (
                                                         <button
                                                             onClick={() => setaddToWaitingList(true)}
                                                             className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
@@ -1849,13 +1849,7 @@ const ParentProfile = (stateData) => {
                                                             Reactivate Membership
                                                         </button>
                                                     )}
-                                                    <button
-                                                        onClick={() => setaddToWaitingList(true)}
-                                                        className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
-                                                            ${addToWaitingList ? "bg-[#237FEA] text-white shadow-md" : "bg-white border border-gray-300 hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"}`}
-                                                    >
-                                                        Add to the waiting list
-                                                    </button>
+                                                
                                                 </>
                                             )}
 
