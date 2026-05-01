@@ -948,14 +948,14 @@ const StudentProfile = ({ StudentProfile }) => {
                                 {hasAnyAttended && (
                                     <> */}
                                 <div className="flex gap-7">
-                                  {status !== 'not attended' && (
-                                    <button
-                                        onClick={() => setNoMembershipSelect(true)}
-                                        className="flex-1 border bg-red-500 border-red-500 hover:bg-red-600 rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium"
-                                    >
-                                        Declined Membership
-                                    </button>
-                                  )}
+                                    {status !== 'not attended' && (
+                                        <button
+                                            onClick={() => setNoMembershipSelect(true)}
+                                            className="flex-1 border bg-red-500 border-red-500 hover:bg-red-600 rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium"
+                                        >
+                                            Declined Membership
+                                        </button>
+                                    )}
                                     <button
                                         onClick={handleBookMembership}
                                         className="flex-1 border bg-green-500 border-green-500 rounded-xl py-3 flex text-[18px] hover:bg-green-600 items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium"
@@ -966,7 +966,7 @@ const StudentProfile = ({ StudentProfile }) => {
                                 {/* 
                                     </>
                                 )} */}
-                               
+
                                 {/* 
                                 <button
                                     onClick={() => setTransferVenue(true)}
@@ -1260,7 +1260,7 @@ const StudentProfile = ({ StudentProfile }) => {
 
                                                     {/* Reason */}
                                                     <div>
-                                                        <label className="block text-sm font-semibold mb-1">Reason (Optional)</label>
+                                                        <label className="block text-sm font-semibold mb-1">Reason for Transfer</label>
                                                         <textarea
                                                             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                                                             rows={2}

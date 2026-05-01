@@ -31,6 +31,11 @@ const Comments = ({
           name="comment"
           value={comment}
           onChange={(e) => setComment(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSubmitComment(e);
+            }
+          }}
           placeholder="Add a Note"
           className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-[14px] outline-none"
         />

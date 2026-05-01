@@ -33,7 +33,7 @@ const ServiceHistory = ({ serviceHistory }) => {
     paymentData,
     bookedByAdmin,
   } = serviceHistory;
-   console.log('status', status)
+  console.log('status', status)
   // pick first payment if exists
   const payment = paymentData;
   const navigate = useNavigate();
@@ -49,7 +49,7 @@ const ServiceHistory = ({ serviceHistory }) => {
     <div className="transition-all duration-300 flex-1  bg-white space-y-6">
       <div className="rounded-3xl relative p-2 border border-[#D9D9D9] shadow-sm bg-white">
         {/* Header */}
-        <div className="bg-[#2E2F3E] text-white p-4 rounded-2xl flex items-center justify-between text-sm">
+        <div className="bg-[#3D444F] text-white p-4 rounded-[22px] flex items-center justify-between text-sm">
           <div className="flex items-center gap-2">
             <img src="/images/icons/crown.png" alt="" />
             <span className="font-medium text-[20px]">Weekly Classes Membership</span>
@@ -67,10 +67,10 @@ const ServiceHistory = ({ serviceHistory }) => {
             {/* Status */}
             <div
               className={`flex gap-2 items-center p-2 rounded-xl flex-wrap ${status === "active"
-                  ? "bg-green-500"
-                  : status === "pending"
-                    ? "bg-yellow-500"
-                    : "bg-red-500"
+                ? "bg-green-500"
+                : status === "pending"
+                  ? "bg-yellow-500"
+                  : "bg-red-500"
                 }`}
             >
               <div className="block">
@@ -83,69 +83,69 @@ const ServiceHistory = ({ serviceHistory }) => {
         </div>
 
         {/* Venue Content */}
-        <div className="flex items-center bg-[#FCF9F6] flex-col lg:flex-row">
-          <div className="px-4 w-full py-2 flex-1 space-y-6">
-            <div className="md:flex gap-6 justify-between items-center ">
+        <div className="flex items-center bg-[#FCF9F6] flex-col lg:flex-row mt-2.5 rounded-[22px]">
+          <div className="px-4 w-full py-4 flex-1 space-y-6 rounded-[22px] ">
+            <div className="md:flex gap-6 justify-between items-center  mt-2">
               {/* Membership Plan */}
               <div>
-                <div className="whitespace-nowrap font-semibold text-[14px]">
+                <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                   Membership Plan
                 </div>
-                <div className="font-semibold text-[16px] text-black">
+                <div className="font-semibold text-[16px]  text-[#282829]">
                   {paymentPlan?.title}
                 </div>
               </div>
 
               {/* Students */}
               <div className="block pr-3">
-                <div className="whitespace-nowrap font-semibold text-[14px]">
+                <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                   Students
                 </div>
-                <div className="text-[16px] font-semibold text-[#384455]">
+                <div className="font-semibold text-[16px]  text-[#282829]">
                   {students?.length || 0}
                 </div>
               </div>
 
               {/* Venue */}
               <div className="block pr-3">
-                <div className="whitespace-nowrap font-semibold text-[14px]">
+                <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                   Venue
                 </div>
-                <div className="text-[16px] font-semibold text-[#384455]">
+                <div className="font-semibold text-[16px]  text-[#282829]">
                   {serviceHistory?.venue?.name || "-"}
                 </div>
               </div>
 
               {/* Booking ID */}
               <div className="block pr-3">
-                <div className="whitespace-nowrap font-semibold text-[14px]">
+                <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                   {payment?.paymentType === "card"
                     ? "KGoCardless ID"
                     : payment?.paymentType === "rrn"
                       ? "Stripe Transaction Id"
                       : "Booking ID"}
                 </div>
-                <div className="text-[16px] font-semibold text-[#384455]">
+                <div className="font-semibold text-[16px]  text-[#282829]">
                   {transactionId}
                 </div>
               </div>
 
               {/* Date of Booking */}
               <div className="block pr-3">
-                <div className="whitespace-nowrap font-semibold text-[14px]">
+                <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                   Date of Booking
                 </div>
-                <div className="text-[16px] font-semibold text-[#384455]">
+                <div className="font-semibold text-[16px]  text-[#282829]">
                   {formatDate(dateBooked, true)}
                 </div>
               </div>
 
               {/* Date of Party */}
               <div className="block pr-3">
-                <div className="whitespace-nowrap font-semibold text-[14px]">
+                <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                   Date of Party
                 </div>
-                <div className="text-[16px] font-semibold text-[#384455]">
+                <div className="font-semibold text-[16px]  text-[#282829]">
                   {formatDate(trialDate)}
                 </div>
               </div>
@@ -153,10 +153,10 @@ const ServiceHistory = ({ serviceHistory }) => {
               {/* Coach */}
               <div className="block flex items-center">
                 <div>
-                  <div className="whitespace-nowrap font-semibold text-[14px]">
+                  <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                     Coach
                   </div>
-                  <div className="text-[16px] font-semibold text-[#384455]">
+                  <div className="font-semibold text-[16px]  text-[#282829]">
                     {bookedByAdmin?.firstName} {bookedByAdmin?.lastName}
                   </div>
                 </div>
@@ -172,10 +172,10 @@ const ServiceHistory = ({ serviceHistory }) => {
               {/* Booking Source */}
               <div className="block flex items-center">
                 <div>
-                  <div className="whitespace-nowrap font-semibold text-[14px]">
+                  <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                     Booking Source
                   </div>
-                  <div className="text-[16px] font-semibold text-[#384455]">
+                  <div className="font-semibold text-[16px]  text-[#282829]">
                     {paymentData?.firstName} {paymentData?.lastName}
                   </div>
                 </div>

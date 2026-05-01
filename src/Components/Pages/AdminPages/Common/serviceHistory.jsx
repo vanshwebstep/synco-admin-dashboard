@@ -77,7 +77,7 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
           <div className="rounded-3xl relative p-2 border border-[#D9D9D9] shadow-sm bg-white">
 
             {/* Header */}
-            <div className="bg-[#2E2F3E] text-white p-4 rounded-2xl flex items-center justify-between text-sm">
+            <div className="bg-[#3D444F] text-white p-4 rounded-[22px] flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
                 {(comesFrom === "cancellation" || comesFrom === "freeTrial" || comesFrom === "membership") && (
                   <img src={icon || "/images/icons/crown.png"} alt="icon" />
@@ -120,27 +120,27 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
             </div>
 
             {/* Content */}
-            <div className="flex items-center bg-[#FCF9F6] flex-col lg:flex-row">
-              <div className="px-4 w-full py-2 flex-1 space-y-6">
-                <div className="md:flex gap-6 justify-between items-center ">
+            <div className="flex items-center bg-[#FCF9F6] flex-col lg:flex-row mt-2.5 rounded-[22px]">
+              <div className="px-4 w-full py-4 flex-1 space-y-6 rounded-[22px] ">
+                <div className="md:flex gap-6 justify-between items-center  mt-2">
 
                   {/* Membership Plan */}
                   {(comesFrom === "cancellation" || comesFrom === "membership") && (
                     <div>
-                      <div className="whitespace-nowrap font-semibold text-[14px]">
+                      <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                         {labels.membershipPlan || "Membership Plan"}
                       </div>
-                      <div className="font-semibold text-[16px] text-black">
+                      <div className="font-semibold text-[16px]  text-[#282829]">
                         {paymentPlan?.title || "-"}
                       </div>
                     </div>
                   )}
                   {comesFrom === "freeTrial" && (
                     <div>
-                      <div className="whitespace-nowrap font-semibold text-[14px]">
+                      <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                         {labels.dateOfTrial || "Date of "}
                       </div>
-                      <div className="font-semibold text-[16px] text-black">
+                      <div className="font-semibold text-[16px]  text-[#282829]">
                         {formatDate(serviceHistory?.trialDate) || "-"}
                       </div>
                     </div>
@@ -148,10 +148,10 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
                   {/* Students */}
                   {(comesFrom === "cancellation" || comesFrom === "freeTrial" || comesFrom === "membership") && (
                     <div className="block pr-3">
-                      <div className="whitespace-nowrap font-semibold text-[14px]">
+                      <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                         {labels.students || "Students"}
                       </div>
-                      <div className="text-[16px] font-semibold text-[#384455]">
+                      <div className="font-semibold text-[16px]  text-[#282829]">
                         {students?.length || 0}
                       </div>
                     </div>
@@ -162,40 +162,40 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
                   {/* Venue */}
                   {(comesFrom === "cancellation" || comesFrom === "freeTrial" || comesFrom === "membership") && (
                     <div className="block pr-3">
-                      <div className="whitespace-nowrap font-semibold text-[14px]">
+                      <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                         {labels.venue || "Venue"}
                       </div>
-                      <div className="text-[16px] font-semibold text-[#384455]">
+                      <div className="font-semibold text-[16px]  text-[#282829]">
                         {serviceHistory?.venue?.name || "-"}
                       </div>
                     </div>
                   )}
                   {(comesFrom === "cancellation") && (
                     <div className="block pr-3">
-                      <div className="whitespace-nowrap font-semibold text-[14px]">
+                      <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                         {labels.membershipStartDate || "Membership Start Date"}
                       </div>
-                      <div className="text-[16px] font-semibold text-[#384455]">
+                      <div className="font-semibold text-[16px]  text-[#282829]">
                         {serviceHistory?.startDate || "-"}
                       </div>
                     </div>
                   )}
                   {(comesFrom === "cancellation") && (
                     <div className="block pr-3">
-                      <div className="whitespace-nowrap font-semibold text-[14px]">
+                      <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                         {labels.cancellationReason || "Membership Start Date"}
                       </div>
-                      <div className="text-[16px] font-semibold text-[#384455]">
+                      <div className="font-semibold text-[16px]  text-[#282829]">
                         {serviceHistory?.cancelData?.cancelReason || serviceHistory?.cancelData?.reasonForCancelling || "-"}
                       </div>
                     </div>
                   )}
                   {(comesFrom === "cancellation") && (
                     <div className="block pr-3">
-                      <div className="whitespace-nowrap font-semibold text-[14px]">
+                      <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                         {labels.cancellationDate || "Membership Start Date"}
                       </div>
-                      <div className="text-[16px] font-semibold text-[#384455]">
+                      <div className="font-semibold text-[16px]  text-[#282829]">
                         {formatDate(serviceHistory?.cancelData?.cancelDate) || "-"}
                       </div>
                     </div>
@@ -203,33 +203,33 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
 
 
                   {/* Booking ID */}
-                  {( comesFrom === "freeTrial" || comesFrom === "membership") && (
+                  {(comesFrom === "freeTrial" || comesFrom === "membership") && (
                     <div className="block pr-3">
-                      <div className="whitespace-nowrap font-semibold text-[14px]">
+                      <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                         {labels.bookingId || "Booking ID"}
                       </div>
-                      <div className="text-[16px] font-semibold text-[#384455]">
+                      <div className="font-semibold text-[16px]  text-[#282829]">
                         {bookedId || bookingId || "-"}
                       </div>
                     </div>
                   )}
                   {(comesFrom === "freeTrial") && (
                     <div className="block pr-3">
-                      <div className="whitespace-nowrap font-semibold text-[14px]">
+                      <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                         {labels.trialAttempt || "Trial Attempt"}
                       </div>
-                      <div className="text-[16px] font-semibold text-[#384455]">
+                      <div className="font-semibold text-[16px]  text-[#282829]">
                         {attempt || "-"}
                       </div>
                     </div>
                   )}
 
-                  {( comesFrom === "membership") && (
+                  {(comesFrom === "membership") && (
                     <div className="block pr-3">
-                      <div className="whitespace-nowrap font-semibold text-[14px]">
+                      <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                         {labels.price || "Price"}
                       </div>
-                      <div className="text-[16px] font-semibold text-[#384455]">
+                      <div className="font-semibold text-[16px]  text-[#282829]">
                         {recurringPayment?.price ? (
                           <>£{recurringPayment.price}</>
                         ) : paymentPlan?.price ? (
@@ -243,10 +243,10 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
 
                   {(comesFrom === "cancellation" || comesFrom === "freeTrial" || comesFrom === "membership") && (
                     <div className="block pr-3">
-                      <div className="whitespace-nowrap font-semibold text-[14px]">
+                      <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                         {labels.dateOfBooking || "Date of Booking"}
                       </div>
-                      <div className="text-[16px] font-semibold text-[#384455]">
+                      <div className="font-semibold text-[16px]  text-[#282829]">
                         {serviceHistory?.startDate
                           ? formatDate(serviceHistory.startDate, true)
                           : dateBooked
@@ -267,13 +267,13 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
 
 
                   {/* Progress */}
-               
+
                   {/* {(comesFrom === "membership") && (
                     <div>
-                      <div className="whitespace-nowrap font-semibold text-[14px]">
+                      <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                         {labels.coach || "Coach"}
                       </div>
-                      <div className="text-[16px] font-semibold text-[#384455]">
+                      <div className="font-semibold text-[16px]  text-[#282829]">
                         {bookedByAdmin?.firstName} {bookedByAdmin?.lastName}
                       </div>
                     </div>
@@ -284,10 +284,10 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
                   {(comesFrom === "cancellation" || comesFrom === "freeTrial" || comesFrom === "membership") && (
                     <div className="block flex items-center">
                       <div>
-                        <div className="whitespace-nowrap font-semibold text-[14px]">
+                        <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                           {labels.bookingSource || "Booking Source"}
                         </div>
-                        <div className="text-[16px] font-semibold text-[#384455]">
+                        <div className="font-semibold text-[16px]  text-[#282829]">
                           {
                             bookedBy?.firstName
                               ? `${bookedBy.firstName} ${bookedBy?.lastName || ""}`

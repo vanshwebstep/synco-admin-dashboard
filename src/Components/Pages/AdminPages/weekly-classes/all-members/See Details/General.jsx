@@ -651,6 +651,21 @@ const ParentProfile = (stateData) => {
             }
         });
     };
+
+    const handleReinstateMembership = () => {
+        showConfirm(
+            "Reinstate Membership?",
+            `Are you sure you want to reinstate this customer's membership?`,
+            "Yes, Reinstate"
+        ).then((result) => {
+            if (result.isConfirmed) {
+                // Navigate to your component/route
+                navigate("/weekly-classes/find-a-class/book-a-membership", {
+                    state: { TrialData: profile, comesFrom: "cancellation" },
+                });
+            }
+        });
+    };
     const sendText = async (bookingIds) => {
         setTextLoading(true);
 
@@ -1822,6 +1837,9 @@ const ParentProfile = (stateData) => {
                                                 </>
                                             )}
 
+
+
+
                                             {/* Birthday party / one-to-one — simple cancel only */}
                                             {(isBirthdayParty || isOneToOne) && canCancelTrial && (
                                                 <button
@@ -1896,8 +1914,23 @@ const ParentProfile = (stateData) => {
                                                     </button>
                                                 </>
                                             )}
+
+
+                                            <button
+                                                onClick={handleReinstateMembership}
+                                                className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
+            ${addToWaitingList
+                                                        ? "bg-[#237FEA] text-white shadow-md"   // Active state
+                                                        : "bg-white  border border-gray-300  hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"
+                                                    }`}
+                                            >
+                                                Reinstate Membership
+
+                                            </button>
                                         </div>
                                     )}
+
+
                                 </div>
                             </>
                 }
@@ -2564,7 +2597,7 @@ const ParentProfile = (stateData) => {
 
                                                     {/* Reason */}
                                                     <div>
-                                                        <label className="block text-sm font-semibold mb-1">Reason (Optional)</label>
+                                                        <label className="block text-sm font-semibold mb-1">Reason for transfer</label>
                                                         <textarea
                                                             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                                                             rows={2}

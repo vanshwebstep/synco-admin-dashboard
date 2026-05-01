@@ -74,7 +74,7 @@ const StudentProfile = ({ profile }) => {
     const [editingIndex, setEditingIndex] = useState(null);
     const bookedBy = profile?.bookedByAdmin || profile?.bookedBy;
 
-    const noCapacityClass = profile?.noCapacityClass || profile?.noCapacityClasses|| [];
+    const noCapacityClass = profile?.noCapacityClass || profile?.noCapacityClasses || [];
 
     const venueOptionsnoCapacity = noCapacityClass.map(v => ({
         value: v.venueId,
@@ -1845,7 +1845,7 @@ const StudentProfile = ({ profile }) => {
 
                                                     {/* Reason */}
                                                     <div>
-                                                        <label className="block text-sm font-semibold mb-1">Reason (Optional)</label>
+                                                        <label className="block text-sm font-semibold mb-1">Reason for Transfer</label>
                                                         <textarea
                                                             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                                                             rows={2}

@@ -276,20 +276,20 @@ const StudentProfile = ({ profile }) => {
       }
     });
   };
-      const handleReinstateMembership = () => {
-          showConfirm(
-              "Reinstate Membership?",
-              `Are you sure you want to reinstate this customer's membership?`,
-              "Yes, Reinstate"
-          ).then((result) => {
-              if (result.isConfirmed) {
-                  // Navigate to your component/route
-                  navigate("/weekly-classes/find-a-class/book-a-membership", {
-                      state: { TrialData: profile, comesFrom: "cancellation" },
-                  });
-              }
-          });
-      };
+  const handleReinstateMembership = () => {
+    showConfirm(
+      "Reinstate Membership?",
+      `Are you sure you want to reinstate this customer's membership?`,
+      "Yes, Reinstate"
+    ).then((result) => {
+      if (result.isConfirmed) {
+        // Navigate to your component/route
+        navigate("/weekly-classes/find-a-class/book-a-membership", {
+          state: { TrialData: profile, comesFrom: "cancellation" },
+        });
+      }
+    });
+  };
   const canCancelTrial =
     checkPermission({ module: 'cancel-free-trial', action: 'create' })
   const canRebooking =
@@ -1931,7 +1931,7 @@ const StudentProfile = ({ profile }) => {
 
                           {/* Reason */}
                           <div>
-                            <label className="block text-sm font-semibold mb-1">Reason (Optional)</label>
+                            <label className="block text-sm font-semibold mb-1">Reason for Transfer</label>
                             <textarea
                               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                               rows={2}

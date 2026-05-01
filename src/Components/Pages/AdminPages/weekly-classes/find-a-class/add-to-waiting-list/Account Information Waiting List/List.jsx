@@ -25,6 +25,8 @@ const AccountInfoWaitingList = () => {
   const [itemId, setItemId] = useState(null);
   const [memberInfo, setMemberInfo] = useState(null);
 
+  const [activeTab, setActiveTab] = useState(location.state?.defaultTab || "Parent Profile");
+
   useEffect(() => {
     if (location.state?.itemId) {
       setItemId(location.state.itemId);
@@ -33,8 +35,11 @@ const AccountInfoWaitingList = () => {
     if (location.state?.memberInfo) {
       setMemberInfo(location.state.memberInfo);
     }
-  }, [location.state]);
 
+    if (location.state?.defaultTab) {
+      setActiveTab(location.state.defaultTab);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,7 +49,6 @@ const AccountInfoWaitingList = () => {
     };
     fetchData();
   }, [itemId, serviceHistoryWaitingList]);
-  const [activeTab, setActiveTab] = useState("Parent Profile");
 
   if (loading) {
     return (

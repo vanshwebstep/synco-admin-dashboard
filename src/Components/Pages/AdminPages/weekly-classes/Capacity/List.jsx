@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState,useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { FiSearch } from "react-icons/fi";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Select, { components } from "react-select";
@@ -446,7 +446,7 @@ const Capacity = () => {
                                         className="rounded-3xl relative p-2 border border-[#D9D9D9] shadow-sm bg-white"
                                     >
                                         {/* Header */}
-                                        <div className="bg-[#2E2F3E] text-white p-4 rounded-2xl flex items-center justify-between text-sm">
+                                        <div className="bg-[#3D444F] text-white p-4 rounded-[22px] flex items-center justify-between text-sm">
                                             <div className="flex items-center gap-2">
                                                 <img src="/images/icons/Location.png" alt="" />
                                                 <span className="font-medium text-[20px]">
@@ -456,11 +456,11 @@ const Capacity = () => {
                                         </div>
 
                                         <div className="flex items-center flex-col lg:flex-row">
-                                            <div className="px-4 w-full py-2 flex-1 space-y-6">
+                                            <div className="px-4 w-full py-4 flex-1 space-y-6 rounded-[22px] ">
                                                 <div className=" grid md:grid-cols-[0.5fr_3.5fr_1fr] gap-4 items-center">
                                                     {/* Venue Info */}
                                                     <div className=''>
-                                                        <div className="font-semibold text-[16px] text-black">
+                                                        <div className="font-semibold text-[16px]  text-[#282829]">
                                                             {venue.name}
                                                         </div>
                                                         <div className="whitespace-nowrap text-[#717073] capitalize  font-semibold text-[14px]">

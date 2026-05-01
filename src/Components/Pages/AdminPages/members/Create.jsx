@@ -37,16 +37,18 @@ const Create = () => {
     password: "",
     role: null,
     photo: null,
-    gcFranchiseToken: "",   // 👈 ADD THIS
-
+    gcFranchiseToken: "",
+    stripeKey: "",
   });
   const isCoach =
     formData?.role?.label === "Coach" ||
     formData?.role?.value === "Coach";
 
   const isFranchisee =
-    formData?.role?.label === "Franchisee" ||
-    formData?.role?.value === "Franchisee";
+    formData?.role?.label?.toLowerCase() === "franchisee" ||
+    formData?.role?.value?.toLowerCase() === "franchisee" ||
+    formData?.role?.label?.toLowerCase() === "franchise" ||
+    formData?.role?.value?.toLowerCase() === "franchise";
   const token = localStorage.getItem("adminToken");
 
   useEffect(() => {
@@ -105,8 +107,8 @@ const Create = () => {
       showError("Invalid Email", "Please enter a valid email address.");
       return;
     }
-    if (isFranchisee && !formData.gcFranchiseToken?.trim()) {
-      showWarning("Missing API Key", "API Key is required for Franchisee role.");
+    if (isFranchisee && (!formData.gcFranchiseToken?.trim() || !formData.stripeKey?.trim())) {
+      showWarning("Missing Information", "Both API Key and Stripe Key are required for Franchisee role.");
       return;
     }
     // console.log("❌ Misdss:", formData);
@@ -150,6 +152,7 @@ const Create = () => {
       data.append("email", formData.email);
       if (isFranchisee) {
         data.append("gcFranchiseToken", formData.gcFranchiseToken);
+        data.append("stripekey", formData.stripeKey);
       }
       data.append("password", formData.password);
       data.append("role", formData.role?.value);
@@ -201,6 +204,7 @@ const Create = () => {
           role: null,
           photo: null,
           gcFranchiseToken: "",
+          stripeKey: "",
         });
         setPhotoPreview(null);
       } catch (error) {
@@ -343,21 +347,39 @@ const Create = () => {
 
           </div>
           {isFranchisee && (
-            <div>
-              <label>API Key</label>
-              <input
-                type="text"
-                name="gcFranchiseToken"
-                value={formData.gcFranchiseToken}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    gcFranchiseToken: e.target.value,
-                  }))
-                }
-                className="w-full border border-[#E2E1E5] rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter API Key"
-              />
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-[#282829]">GC Franchise Token</label>
+                <input
+                  type="text"
+                  name="gcFranchiseToken"
+                  value={formData.gcFranchiseToken}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      gcFranchiseToken: e.target.value,
+                    }))
+                  }
+                  className="w-full border border-[#E2E1E5] rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter GC Franchise Token"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-[#282829]">Stripe Key</label>
+                <input
+                  type="text"
+                  name="stripeKey"
+                  value={formData.stripeKey}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      stripeKey: e.target.value,
+                    }))
+                  }
+                  className="w-full border border-[#E2E1E5] rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter Stripe Key"
+                />
+              </div>
             </div>
           )}
           {isCoach && (

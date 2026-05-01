@@ -60,21 +60,21 @@ const SeeDetails = () => {
         memberInfo === "allMembers" || memberInfo === "freeTrial"
             ? {
                 pathname: "/weekly-classes/trial/find-a-class/book-a-free-trial/account-info/list",
-                state: { itemId: itemId }
+                state: { itemId: itemId, defaultTab: "Service History", memberInfo: memberInfo }
             }
             : memberInfo === "cancellation"
                 ? {
                     pathname: "/weekly-classes/cancellation/account-info/list",
-                    state: { itemId: itemId }
+                    state: { itemId: itemId, defaultTab: "Service History", memberInfo: memberInfo }
                 }
                 : memberInfo === "waitingList"
                     ? {
                         pathname: "/weekly-classes/add-to-waiting-list/account-info",
-                        state: { itemId: itemId }
+                        state: { itemId: itemId, defaultTab: "Service History", memberInfo: memberInfo }
                     }
                     : {
                         pathname: "/weekly-classes/all-members/account-info",
-                        state: { itemId: itemId }
+                        state: { itemId: itemId, defaultTab: "Service History", memberInfo: memberInfo }
                     };
     return (
         <>

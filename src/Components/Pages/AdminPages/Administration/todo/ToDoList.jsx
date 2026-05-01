@@ -9,7 +9,6 @@ import { useNotification } from "../../contexts/NotificationContext";
 const columns = [
     { id: "to_do", label: "To Do (My Tasks)", color: "bg-[#237FEA]", bgColor: "bg-[#237FEA]" },
     { id: "in_progress", label: "In Progress", color: "bg-[#EDA600]", bgColor: "bg-[#EDA600]" },
-    { id: "in_review", label: "In Review", color: "bg-[#E58D25]", bgColor: "bg-[#E58D25]" },
     { id: "completed", label: "Completed", color: "bg-[#1CB72B]", bgColor: "bg-[#1CB72B]" },
 ];
 
@@ -339,7 +338,7 @@ export default function TodoList() {
 
             <DragDropContext onDragEnd={handleDragEnd}>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {columns.map((col) => (
                         <TaskColumn
                             key={col.id}

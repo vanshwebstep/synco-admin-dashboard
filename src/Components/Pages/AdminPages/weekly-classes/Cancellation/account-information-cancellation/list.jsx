@@ -23,12 +23,16 @@ const AccountInfoCancellation = (from) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [itemId, setItemId] = useState(null);
+  const [activeTab, setActiveTab] = useState(location.state?.defaultTab || "Parent Profile");
 
   const myCancelType = location.state?.cancelType;
   console.log('cancelType', location.state?.cancelType)
   useEffect(() => {
     if (location.state?.itemId) {
       setItemId(location.state.itemId);
+    }
+    if (location.state?.defaultTab) {
+      setActiveTab(location.state.defaultTab);
     }
   }, [location.state]);
 
@@ -51,8 +55,6 @@ const AccountInfoCancellation = (from) => {
 
     fetchData();
   }, [itemId, myCancelType, ServiceHistoryFulltto, ServiceHistoryAlltto, ServiceHistoryRequestto]);
-
-  const [activeTab, setActiveTab] = useState("Parent Profile");
   console.log('serviceHistory', serviceHistory)
   if (loading) return <Loader />;
 

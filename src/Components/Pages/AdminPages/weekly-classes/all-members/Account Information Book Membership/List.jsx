@@ -28,16 +28,21 @@ const AccountInfoBookMembership = () => {
   const location = useLocation();
   const [itemId, setItemId] = useState(null);
   const [memberInfo, setMemberInfo] = useState(null);
+  const [activeTab, setActiveTab] = useState(location.state?.defaultTab || "Parent Profile");
 
-  useEffect(() => {
-    if (location.state?.itemId) {
-      setItemId(location.state.itemId);
-    }
+    useEffect(() => {
+      if (location.state?.itemId) {
+        setItemId(location.state.itemId);
+      }
+  
+      if (location.state?.memberInfo) {
+        setMemberInfo(location.state.memberInfo);
+      }
 
-    if (location.state?.memberInfo) {
-      setMemberInfo(location.state.memberInfo);
-    }
-  }, [location.state]);
+      if (location.state?.defaultTab) {
+        setActiveTab(location.state.defaultTab);
+      }
+    }, [location.state]);
 
   console.log('serviceHistory', serviceHistory);
 const selectedParentId = serviceHistory?.parents?.[0]?.id ?? null; 
@@ -49,8 +54,6 @@ const selectedParentId = serviceHistory?.parents?.[0]?.id ?? null;
     };
     fetchData();
   }, [itemId, serviceHistoryMembership]);
-
-  const [activeTab, setActiveTab] = useState("Parent Profile");
 
   const handleDelete = async () => {
     const result = await showConfirm(

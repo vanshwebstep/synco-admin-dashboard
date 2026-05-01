@@ -19,10 +19,10 @@ const tabs = [
 ];
 
 const AccountMain = () => {
-  const [activeTab, setActiveTab] = useState(tabs[0].name);
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(location.state?.defaultTab || tabs[0].name);
   const navigate = useNavigate();
   const { loading, setMainId ,fetchOneToOneMembers } = useAccountsInfo();
-  const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const id = queryParams.get("id"); // <-- this will be "9"  console.log('id',id)
 
@@ -32,6 +32,12 @@ const AccountMain = () => {
       setMainId(id);
     }
   }, [])
+
+  useEffect(() => {
+    if (location.state?.defaultTab) {
+      setActiveTab(location.state.defaultTab);
+    }
+  }, [location.state]);
 
   if (loading) return <Loader />;
 

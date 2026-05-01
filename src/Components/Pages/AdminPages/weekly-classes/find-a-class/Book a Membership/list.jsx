@@ -67,6 +67,9 @@ const List = () => {
         isFullMonthCharge: 0 // ✅ NEW
 
     });
+
+    const [tempComments, setTempComments] = useState([]);
+
     const DIAL_CODES = [
         { dialCode: "+1", countryCode: "us" },
         { dialCode: "+7", countryCode: "ru" },
@@ -209,7 +212,7 @@ const List = () => {
             case "country":
                 return value.trim() ? "" : "Country is required";
             case "zipCode":
-                return value.trim() ? "" : "ZipCode is required";
+                return value.trim() ? "" : "Postal Code is required";
             default:
                 return "";
         }
@@ -1198,7 +1201,7 @@ const List = () => {
     };
     const handleSubmit = async (finalpayload) => {
         if (!selectedDate) {
-            showWarning("Trial Date Required", "Please select a trial date before submitting.");
+            showWarning("Membership Date Required", "Please select a membership date before submitting.");
             return;
         }
         console.log('finalpayload', finalpayload)
@@ -1538,52 +1541,25 @@ const List = () => {
             // setLoading(false);
         }
     };
-    const handleSubmitComment = async (e) => {
-
+    const handleSubmitComment = (e) => {
         e.preventDefault();
 
-        const myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-        myHeaders.append("Authorization", `Bearer ${token}`);
+        if (!comment.trim()) return;
 
-        const raw = JSON.stringify({
-            "comment": comment
-        });
-
-        const requestOptions = {
-            method: "POST",
-            headers: myHeaders,
-            body: raw,
-            redirect: "follow"
+        const newComment = {
+            comment: comment,
+            createdAt: new Date().toISOString(),
+            bookedByAdmin: {
+                firstName: adminInfo?.firstName || "Admin",
+                lastName: adminInfo?.lastName || "",
+                profile: adminInfo?.profile || "/members/dummyuser.png"
+            }
         };
 
-        try {
-            setLoadingComment(true);
+        setTempComments((prev) => [newComment, ...prev]);
 
-
-            const response = await fetch(`${API_BASE_URL}/api/admin/book-membership/comment/create`, requestOptions);
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                showError("Failed to Add Comment", result.message || "Something went wrong.");
-                return;
-            }
-
-
-            // showSuccess("Comment Created", result.message || " Comment has been  added successfully!");
-
-
-
-            setComment('');
-            fetchComments();
-        } catch (error) {
-            console.error("Error creating member:", error);
-            showError("Network Error", error.message || "An error occurred while submitting the form.");
-        } finally {
-            setLoadingComment(false);
-        }
-    }
+        setComment('');
+    };
     function stripHtml(html) {
         if (!html) return "";
         const tempDiv = document.createElement("div");
@@ -3041,7 +3017,7 @@ const List = () => {
                             handleSubmitComment={handleSubmitComment}
                             loadingComment={loadingComment}
                             commentsList={commentsList}
-                            currentComments={currentComments}
+                            currentComments={[...tempComments, ...(currentComments || [])]}
                             formatTimeAgo={formatTimeAgo}
                         />
 
@@ -3570,13 +3546,13 @@ const List = () => {
 
                                                 <div className="flex-1">
                                                     <label className="block text-gray-700 poppins text-[14px] font-medium mb-1">
-                                                        Zip<span className="text-red-500 ml-0.5">*</span>
+                                                        Postal Code<span className="text-red-500 ml-0.5">*</span>
                                                     </label>
                                                     <input
                                                         type="text"
                                                         value={zipCode}
                                                         onChange={(e) => handleCheckoutChange("zipCode", e.target.value)}
-                                                        placeholder="Enter zip"
+                                                        placeholder="Enter Postal Code"
                                                         className={inputClass("zipCode")}
                                                     />
                                                     {errors.zipCode && <span className="text-red-500 text-[12px] mt-1 block">{errors.zipCode}</span>}

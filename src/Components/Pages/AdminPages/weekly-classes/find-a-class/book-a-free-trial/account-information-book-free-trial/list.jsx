@@ -29,9 +29,13 @@ const list = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [itemId, setItemId] = useState(null);
+  const [activeTab, setActiveTab] = useState(location.state?.defaultTab || "Parent Profile");
   useEffect(() => {
     if (location.state?.itemId) {
       setItemId(location.state.itemId);
+    }
+    if (location.state?.defaultTab) {
+      setActiveTab(location.state.defaultTab);
     }
   }, [location.state]);
 
@@ -43,7 +47,6 @@ const list = () => {
     };
     fetchData();
   }, [itemId, serviceHistoryFetchById]);
-  const [activeTab, setActiveTab] = useState("Parent Profile");
   console.log('serviceHistory', serviceHistory)
 
   const handleDelete = async () => {

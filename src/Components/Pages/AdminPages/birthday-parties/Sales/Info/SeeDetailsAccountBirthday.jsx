@@ -35,8 +35,10 @@ const SeeDetailsAccountBirthday = () => {
       <div className="flex  items-center w-[max-content] bg-white p-3 gap-1 rounded-2xl p-1 space-x-2">
         <h2
           onClick={() => {
-            navigate(`/birthday-party/sales/account-information?id=${data.booking.leadId}`);
-            setHistoryActiveTab('General');
+            navigate(`/birthday-party/sales/account-information?id=${data?.booking?.leadId}`, {
+              state: { defaultTab: "Service History" }
+            });
+            // setHistoryActiveTab('General');
           }}>
           <img
             src="/images/icons/arrow-left.png"

@@ -35,8 +35,10 @@ const SeeDetailsAccountHoliday = () => {
       <div className="flex  items-center w-[max-content] bg-white p-3 gap-1 rounded-2xl p-1 space-x-2">
         <h2 className="cursor-pointer"
           onClick={() => {
-            navigate(`/holiday-camp/members/account-information?id=${data?.id}`);
-            setHistoryActiveTab('General');
+            navigate(`/holiday-camp/members/account-information?id=${data?.id}`, {
+              state: { defaultTab: "Service History" }
+            });
+            // setHistoryActiveTab('General');
           }}>
           <img
             src="/images/icons/arrow-left.png"

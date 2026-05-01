@@ -36,7 +36,7 @@ const ServiceHistory = ({ serviceHistory }) => {
     bookedBy,
     bookedByAdmin,
   } = serviceHistory;
-   console.log('status', status)
+  console.log('status', status)
   // pick first payment if exists
   const payment = payments?.[0];
   const navigate = useNavigate();
@@ -52,7 +52,7 @@ const ServiceHistory = ({ serviceHistory }) => {
     <div className="transition-all duration-300 flex-1  bg-white space-y-6">
       <div className="rounded-3xl relative p-2 border border-[#D9D9D9] shadow-sm bg-white">
         {/* Header */}
-        <div className="bg-[#2E2F3E] text-white p-4 rounded-2xl flex items-center justify-between text-sm">
+        <div className="bg-[#3D444F] text-white p-4 rounded-[22px] flex items-center justify-between text-sm">
           <div className="flex items-center gap-2">
             <img src="/images/icons/crown.png" alt="" />
             <span className="font-medium text-[20px] capitalize">{serviceHistory.serviceType}</span>
@@ -70,10 +70,10 @@ const ServiceHistory = ({ serviceHistory }) => {
             {/* Status */}
             <div
               className={`flex gap-2 items-center p-2 rounded-xl flex-wrap  ${status === "active"
-                ? "bg-green-500 text-white " :  status === 'waiting list' ? "bg-gray-300 text-black"
-                : status === "pending"
-                  ? "bg-yellow-500 text-white  "
-                  : "bg-red-500 text-white  "
+                ? "bg-green-500 text-white " : status === 'waiting list' ? "bg-gray-300 text-black"
+                  : status === "pending"
+                    ? "bg-yellow-500 text-white  "
+                    : "bg-red-500 text-white  "
                 }`}
             >
               <div className="block">
@@ -86,55 +86,55 @@ const ServiceHistory = ({ serviceHistory }) => {
         </div>
 
         {/* Venue Content */}
-        <div className="flex items-center bg-[#FCF9F6] flex-col lg:flex-row">
-          <div className="px-4 w-full py-2 flex-1 space-y-6">
-            <div className="md:flex gap-6 justify-between items-center ">
+        <div className="flex items-center bg-[#FCF9F6] flex-col lg:flex-row mt-2.5 rounded-[22px]">
+          <div className="px-4 w-full py-4 flex-1 space-y-6 rounded-[22px] ">
+            <div className="md:flex gap-6 justify-between items-center  mt-2">
               {/* Membership Plan */}
               <div>
-                <div className="whitespace-nowrap font-semibold text-[14px]">
+                <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                   Date Of Trial
                 </div>
-                <div className="font-semibold text-[16px] text-black">
+                <div className="font-semibold text-[16px]  text-[#282829]">
                   {startDate || '-'}
                 </div>
               </div>
 
               {/* Students */}
               <div className="block pr-3">
-                <div className="whitespace-nowrap font-semibold text-[14px]">
+                <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                   Students
                 </div>
-                <div className="text-[16px] font-semibold text-[#384455]">
+                <div className="font-semibold text-[16px]  text-[#282829]">
                   {students?.length || 0}
                 </div>
               </div>
 
               {/* Venue */}
               <div className="block pr-3">
-                <div className="whitespace-nowrap font-semibold text-[14px]">
+                <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                   Venue
                 </div>
-                <div className="text-[16px] font-semibold text-[#384455]">
+                <div className="font-semibold text-[16px]  text-[#282829]">
                   {venue?.name || "-"}
                 </div>
               </div>
 
               {/* Booking ID */}
               <div className="block pr-3">
-                <div className="whitespace-nowrap font-semibold text-[14px]">
+                <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                   ID
                 </div>
-                <div className="text-[16px] font-semibold text-[#384455]">
+                <div className="font-semibold text-[16px]  text-[#282829]">
                   {bookingId}
                 </div>
               </div>
 
               {/* Date of Booking */}
               <div className="block pr-3">
-                <div className="whitespace-nowrap font-semibold text-[14px]">
+                <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                   Date of Booking
                 </div>
-                <div className="text-[16px] font-semibold text-[#384455]">
+                <div className="font-semibold text-[16px]  text-[#282829]">
                   {formatDate(createdAt, true)}
                 </div>
               </div>
@@ -145,10 +145,10 @@ const ServiceHistory = ({ serviceHistory }) => {
               {/* Booking Source */}
               <div className="block flex items-center">
                 <div>
-                  <div className="whitespace-nowrap font-semibold text-[14px]">
+                  <div className="whitespace-nowrap font-semibold text-[14px] text-[#717073] mb-1">
                     Booking Source
                   </div>
-                  <div className="text-[16px] font-semibold text-[#384455]">
+                  <div className="font-semibold text-[16px]  text-[#282829]">
                     {(bookedBy?.firstName || bookedBy?.lastName)
                       ? `${bookedBy?.firstName ?? ''} ${bookedBy?.lastName ?? ''}`
                       : '-'}

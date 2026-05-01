@@ -1061,6 +1061,50 @@ export const BookFreeTrialProvider = ({ children }) => {
       setLoading(false);
     }
   };
+  const updateBookMembership = async (bookFreeMembershipData, leadId) => {
+    setLoading(true);
+
+    const headers = {
+      "Content-Type": "application/json",
+    };
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    let url = `${API_BASE_URL}/api/admin/book-membership/${leadId}/change-plan`;
+
+
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(bookFreeMembershipData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to create Membership");
+      }
+
+      await showSuccess("Success!", result.message || "Membership has been updated successfully.");
+      setIsBooked(true);
+      setTimeout(() => {
+        navigate(`/weekly-classes/all-members/list`)
+      }, 1000);
+      return result;
+
+    } catch (error) {
+      console.error("Error creating class schedule:", error);
+      await showError("Error", error.message || "Booking submitted. Confirmation may be delayed due to network issues. Check your email shortly");
+      throw error;
+    } finally {
+      await fetchBookMemberships();
+      setLoading(false);
+    }
+  };
   const createBookLeads = async (bookFreeMembershipData) => {
     setLoading(true);
 
@@ -2815,6 +2859,7 @@ export const BookFreeTrialProvider = ({ children }) => {
         // Membership
         bookMembership,
         createBookMembership,
+        updateBookMembership,
         createBookMembershipByfreeTrial,
         createBookMembershipByWaitingList,
         createBookMembershipbyCancellation,
