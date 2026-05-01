@@ -35,7 +35,7 @@ const StudentProfile = ({ profile }) => {
         loading,
         addtoWaitingListSubmit, cancelMembershipSubmit,
         sendBookMembershipMail, transferMembershipSubmit,
-        freezerMembershipSubmit, reactivateDataSubmit, cancelWaitingListSpot, updateBookMembershipFamily, removeWaiting, setRemoveWaiting, addToWaitingList, setaddToWaitingList, showCancelTrial, setshowCancelTrial
+        freezerMembershipSubmit, reactivateDataSubmit, cancelWaitingListSpot, fetchComments, commentsList,setComment, comment,  handleSubmitComment, loadingComment, updateBookMembershipFamily, removeWaiting, setRemoveWaiting, addToWaitingList, setaddToWaitingList, showCancelTrial, setshowCancelTrial
     } = useBookFreeTrial() || {};
     const { openTextPopup } = useTextPopup();
 
@@ -44,9 +44,6 @@ const StudentProfile = ({ profile }) => {
         subject: "",
         message: ""
     });
-    const [commentsList, setCommentsList] = useState([]);
-    const [loadingComment, setLoadingComment] = useState(false);
-    const [comment, setComment] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const commentsPerPage = 5; // Number of comments per page
 
@@ -118,78 +115,22 @@ const StudentProfile = ({ profile }) => {
             year: "numeric",
         });
     };
-    const fetchComments = useCallback(async () => {
-        const token = localStorage.getItem("adminToken");
-        if (!token) return;
 
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/book-membership/comment/list`, {
-                method: "GET",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            const resultRaw = await response.json();
-            const result = resultRaw.data || [];
-            setCommentsList(result);
-        } catch (error) {
-            console.error("Failed to fetch comments:", error);
-
-            showError("Error", error.message || error.error || "Failed to fetch comments. Please try again later.");
-        }
-    }, []);
-
-    // useEffect(() => {
-    //     fetchComments();
-    // }, [])
-    const handleSubmitComment = async (e) => {
-
-        e.preventDefault();
-
-        const myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-        myHeaders.append("Authorization", `Bearer ${token}`);
-
-        const raw = JSON.stringify({
-            "comment": comment
-        });
-
-        const requestOptions = {
-            method: "POST",
-            headers: myHeaders,
-            body: raw,
-            redirect: "follow"
-        };
-
-        try {
-            // Loader skipped
-
-            setLoadingComment(true)
-            const response = await fetch(`${API_BASE_URL}/api/admin/book-membership/comment/create`, requestOptions);
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                showError("Failed to Add Comment", result.message || "Something went wrong.");
-                return;
-            }
-
-
-            // showSuccess("Comment Created", result.message || " Comment has been  added successfully!");
-
-
-            setComment('');
-            fetchComments();
-        } catch (error) {
-            console.error("Error creating member:", error);
-            setLoadingComment(false)
-            showError("Network Error", error.message || "An error occurred while submitting the form.");
-        } finally {
-            setLoadingComment(false)
-        }
+    const commentData = {
+        commentBy: profile?.parentAdminId,
+        commentType: "paid",
+        serviceType: "weekly class",
     }
-
+    const payload = {
+        comment: comment,
+        commentType: "paid",
+        serviceType: "weekly class",
+        commentBy: profile?.parentAdminId, // ensure correct ID
+    };
+    useEffect(() => {
+        fetchComments(commentData);
+    }, [])
+   
     const sendText = async (bookingIds) => {
         setTextLoading(true);
 
@@ -732,7 +673,7 @@ const StudentProfile = ({ profile }) => {
                         adminInfo={adminInfo}
                         comment={comment}
                         setComment={setComment}
-                        handleSubmitComment={handleSubmitComment}
+                        handleSubmitComment={() => handleSubmitComment(payload, commentData)}
                         loadingComment={loadingComment}
                         commentsList={commentsList}
                         currentComments={currentComments}

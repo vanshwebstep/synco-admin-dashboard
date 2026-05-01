@@ -29,7 +29,7 @@ const StudentProfile = ({ profile }) => {
         loading, serviceHistoryWaitingList,
         addtoWaitingListSubmit, cancelMembershipSubmit,
         sendWaitingListMail, transferMembershipSubmit,
-        freezerMembershipSubmit, reactivateDataSubmit, cancelWaitingListSpot, updateWaitingListFamily
+        freezerMembershipSubmit, reactivateDataSubmit, cancelWaitingListSpot, updateWaitingListFamily, setComment, comment, fetchComments, commentsList, handleSubmitComment, loadingComment
     } = useBookFreeTrial() || {};
     const classSchedule = profile?.classSchedule;
     const bookingId = profile?.id;
@@ -40,9 +40,7 @@ const StudentProfile = ({ profile }) => {
     const [editingIndex, setEditingIndex] = useState(null);
     const navigate = useNavigate();
     const [students, setStudents] = useState(profile?.students || []);
-    const [commentsList, setCommentsList] = useState([]);
-    const [loadingComment, setLoadingComment] = useState(false);
-    const [comment, setComment] = useState('');
+    
     const [currentPage, setCurrentPage] = useState(1);
     const commentsPerPage = 5; // Number of comments per page
     const sendText = async (id) => {
@@ -151,27 +149,7 @@ const StudentProfile = ({ profile }) => {
             year: "numeric",
         });
     };
-    const fetchComments = useCallback(async () => {
-        const token = localStorage.getItem("adminToken");
-        if (!token) return;
 
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/waiting-list/comment/list`, {
-                method: "GET",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            const resultRaw = await response.json();
-            const result = resultRaw.data || [];
-            setCommentsList(result);
-        } catch (error) {
-            console.error("Failed to fetch comments:", error);
-
-            showError("Error", error.message || error.error || "Failed to fetch comments. Please try again later.");
-        }
-    }, []);
     const handleBookFreeTrial = () => {
         showConfirm(
             "Are you sure?",
@@ -186,55 +164,20 @@ const StudentProfile = ({ profile }) => {
             }
         });
     };
-    // useEffect(() => {
-    //     fetchComments();
-    // }, [])
-    const handleSubmitComment = async (e) => {
-
-        e.preventDefault();
-
-        const myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-        myHeaders.append("Authorization", `Bearer ${token}`);
-
-        const raw = JSON.stringify({
-            "comment": comment
-        });
-
-        const requestOptions = {
-            method: "POST",
-            headers: myHeaders,
-            body: raw,
-            redirect: "follow"
-        };
-
-        try {
-            // Loader skipped
-            setLoadingComment(true)
-
-            const response = await fetch(`${API_BASE_URL}/api/admin/waiting-list/comment/create`, requestOptions);
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                showError("Failed to Add Comment", result.message || "Something went wrong.");
-                return;
-            }
-
-
-            // showSuccess("Comment Created", result.message || " Comment has been  added successfully!");
-
-
-            setComment('');
-            fetchComments();
-        } catch (error) {
-            console.error("Error creating member:", error);
-            showError("Network Error", error.message || "An error occurred while submitting the form.");
-            setLoadingComment(false)
-        } finally {
-            setLoadingComment(false)
-        }
+    const commentData = {
+        commentBy: profile?.parentAdminId,
+        commentType: "waiting list",
+        serviceType: "weekly class",
     }
+    const payload = {
+        comment: comment,
+        commentType: "waiting list",
+        serviceType: "weekly class",
+        commentBy: profile?.parentAdminId, // ensure correct ID
+    };
+    useEffect(() => {
+        fetchComments(commentData);
+    }, [])
 
     // console.log('loading', loading)
 
@@ -625,7 +568,8 @@ const StudentProfile = ({ profile }) => {
                         adminInfo={adminInfo}
                         comment={comment}
                         setComment={setComment}
-                        handleSubmitComment={handleSubmitComment}
+                        handleSubmitComment={() => handleSubmitComment(payload, commentData)}
+
                         loadingComment={loadingComment}
                         commentsList={commentsList}
                         currentComments={currentComments}
@@ -1396,7 +1340,7 @@ const StudentProfile = ({ profile }) => {
                                 {/* Additional Notes */}
                                 <div>
                                     <label className="block text-[16px] font-semibold">
-                                        Reason for Transfer (Optional)
+                                        Reason for Transfer
                                     </label>
                                     <textarea
                                         name="transferReasonClass"

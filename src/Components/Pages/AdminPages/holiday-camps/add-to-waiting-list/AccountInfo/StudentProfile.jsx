@@ -1311,7 +1311,7 @@ const StudentProfile = ({ profile }) => {
                                 {/* Additional Notes */}
                                 <div>
                                     <label className="block text-[16px] font-semibold">
-                                        Reason for Transfer (Optional)
+                                        Reason for Transfer
                                     </label>
                                     <textarea
                                         name="transferReasonClass"

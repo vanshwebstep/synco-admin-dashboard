@@ -23,6 +23,7 @@ import { useAccountsInfo } from '../../contexts/AccountsInfoContext';
 import { useTextPopup } from '../../contexts/messages/SendTextContext';
 import { useRevertMembership } from '../../contexts/RevertMembershipContext';
 import RevertMembershipPopup from '../../Common/RevertMembershipPoppup';
+import { useLocation } from "react-router-dom";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: Normalize profile data so the component works for all service types:
@@ -33,6 +34,7 @@ import RevertMembershipPopup from '../../Common/RevertMembershipPoppup';
 const normalizeProfile = (profile) => {
     const booking = profile?.booking || profile;
     const serviceType = booking?.serviceType || profile?.serviceType || "weekly class membership";
+
 
     // ── Parents ──────────────────────────────────────────────────────────────
     // Membership : profile.parents  → { parentFirstName, parentLastName, parentEmail, parentPhoneNumber, ... }
@@ -145,10 +147,13 @@ const ParentProfile = ({ profile: rawProfile }) => {
     const profile = React.useMemo(() => normalizeProfile(rawProfile), [rawProfile]);
     const { sendBirthdayMail, fetchBirthdyPartiesMembers, fetchOneToOneMembers } = useAccountsInfo();
     const { openRevertPopup } = useRevertMembership();
+    const location = useLocation();
+    const queryParams = new URLSearchParams(location.search);
 
+    const serviceTypemain = queryParams.get("serviceType");
 
     const navigate = useNavigate();
-    const { serviceHistoryMembership } = useBookFreeTrial();
+    const { serviceHistoryMembership, setComment, comment, fetchComments, commentsList, handleSubmitComment, loadingComment, } = useBookFreeTrial();
     const { openEmailPopup } = useEmail();
     const [selectedStudents, setSelectedStudents] = useState([]);
     const [textloading, setTextLoading] = useState(null);
@@ -179,9 +184,8 @@ const ParentProfile = ({ profile: rawProfile }) => {
     const isOneToOne = profile?.booking?.serviceType === "one to one";
 
     const [editingIndex, setEditingIndex] = useState(null);
-    const [commentsList, setCommentsList] = useState([]);
-    const [loadingComment, setLoadingComment] = useState(false);
-    const [comment, setComment] = useState('');
+
+
     const [currentPage, setCurrentPage] = useState(1);
     const commentsPerPage = 5;
 
@@ -271,44 +275,41 @@ const ParentProfile = ({ profile: rawProfile }) => {
         }
         return null;
     };
-    const fetchComments = useCallback(async () => {
-        const token = localStorage.getItem("adminToken");
-        if (!token) return;
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/book-membership/comment/list`, {
-                method: "GET",
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            const resultRaw = await response.json();
-            setCommentsList(resultRaw.data || []);
-        } catch (error) {
-            showError("Error", error.message || "Failed to fetch comments.");
-        }
-    }, []);
 
-    const handleSubmitComment = async (e) => {
-        e.preventDefault();
-        const myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-        myHeaders.append("Authorization", `Bearer ${token}`);
-        try {
-            setLoadingComment(true);
-            const response = await fetch(`${API_BASE_URL}/api/admin/book-membership/comment/create`, {
-                method: "POST",
-                headers: myHeaders,
-                body: JSON.stringify({ comment }),
-                redirect: "follow",
-            });
-            const result = await response.json();
-            if (!response.ok) { showError("Failed to Add Comment", result.message || "Something went wrong."); return; }
-            setComment('');
-            fetchComments();
-        } catch (error) {
-            showError("Network Error", error.message || "An error occurred.");
-        } finally {
-            setLoadingComment(false);
-        }
+    const commentData = {
+        commentBy: profile?.parentAdminId,
+        commentType:
+            serviceTypemain === "membership"
+                ? "paid"
+                : serviceTypemain === "trials"
+                    ? "free"
+                    : serviceTypemain === "waitinglist"
+                        ? "waiting list"
+                        : serviceTypemain === "birthdayParty"
+                            ? "birthday party"
+                            : "",
+        serviceType: "weekly class",
+    }
+    const payload = {
+        comment: comment,
+        commentType:
+            serviceTypemain === "membership"
+                ? "paid"
+                : serviceTypemain === "trials"
+                    ? "free"
+                    : serviceTypemain === "waitinglist"
+                        ? "waiting list"
+                        : serviceTypemain === "birthdayParty"
+                            ? "birthday party"
+                            : "",
+        serviceType: "weekly class",
+        commentBy: profile?.parentAdminId, // ensure correct ID
     };
+    useEffect(() => {
+        fetchComments(commentData);
+        // handleSubmitComment(commentData, payload,);
+    }, [])
+
     const handleCancelBirthdayPackage = () => {
         showConfirm("Are you sure?", "This package will be cancelled. This action cannot be undone.", "warning").then((result) => {
             if (!result.isConfirmed) return;
@@ -1178,7 +1179,8 @@ const ParentProfile = ({ profile: rawProfile }) => {
                         adminInfo={adminInfo}
                         comment={comment}
                         setComment={setComment}
-                        handleSubmitComment={handleSubmitComment}
+                        handleSubmitComment={() => handleSubmitComment(payload, commentData)}
+
                         loadingComment={loadingComment}
                         commentsList={commentsList}
                         currentComments={currentComments}

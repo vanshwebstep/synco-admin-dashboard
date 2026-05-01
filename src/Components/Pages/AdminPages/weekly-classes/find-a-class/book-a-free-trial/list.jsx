@@ -60,7 +60,7 @@ const List = () => {
     console.log('classId', classId)
     console.log('useofRebook', useofRebook)
     const { fetchFindClassID, singleClassSchedulesOnly, loading } = useClassSchedule() || {};
-    const { createBookFreeTrials, isBooked, setIsBooked, fetchMembershipByParent, parentData, createBookFreeTrialsByWaitingList, createReBookFreeTrials } = useBookFreeTrial()
+    const { createBookFreeTrials, isBooked, setIsBooked, fetchMembershipByParent, parentData, submitAllComments, createBookFreeTrialsByWaitingList, createReBookFreeTrials } = useBookFreeTrial()
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { keyInfoData, fetchKeyInfo } = useMembers();
     const { adminInfo, setAdminInfo } = useNotification();
@@ -102,6 +102,8 @@ const List = () => {
     const togglePopup = (id) => {
         setActivePopup((prev) => (prev === id ? null : id));
     };
+    const [tempComments, setTempComments] = useState([]);
+
     const [showModal, setShowModal] = useState(false);
     const [selectedPlans, setSelectedPlans] = useState([]);
     const [commentsList, setCommentsList] = useState([]);
@@ -775,51 +777,25 @@ const List = () => {
             showError("Error", error.message || error.error || "Failed to fetch comments. Please try again later.");
         }
     }, []);
-    const handleSubmitComment = async (e) => {
-
+    const handleSubmitComment = (e) => {
         e.preventDefault();
 
-        const myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-        myHeaders.append("Authorization", `Bearer ${token}`);
+        if (!comment.trim()) return;
 
-        const raw = JSON.stringify({
-            "comment": comment
-        });
-
-        const requestOptions = {
-            method: "POST",
-            headers: myHeaders,
-            body: raw,
-            redirect: "follow"
+        const newComment = {
+            comment: comment,
+            createdAt: new Date().toISOString(),
+            bookedByAdmin: {
+                firstName: adminInfo?.firstName || "Admin",
+                lastName: adminInfo?.lastName || "",
+                profile: adminInfo?.profile || "/members/dummyuser.png"
+            }
         };
 
-        try {
-            // Loader skipped
-            setLoadingComment(true)
+        setTempComments((prev) => [newComment, ...prev]);
 
-            const response = await fetch(`${API_BASE_URL}/api/admin/book/free-trials/comment/create`, requestOptions);
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                showError("Failed to Add Comment", result.message || "Something went wrong.");
-                return;
-            }
-
-
-            // showSuccess("Comment Created", result.message || " Comment has been  added successfully!");
-
-
-            setComment('');
-            fetchComments();
-        } catch (error) {
-            console.error("Error creating member:", error);
-            showError("Network Error", error.message || "An error occurred while submitting the form.");
-        } finally {
-            setLoadingComment(false)
-        }
-    }
+        setComment('');
+    };
 
     const handleSameAsAbove = (studentIndex) => {
         const updated = [...students];
@@ -892,6 +868,27 @@ const List = () => {
     };
     const firstStudentId =
         students[0]?.id || TrialData?.students?.[0]?.id || null;
+
+    const handleAfterBooking = async (result) => {
+        console.log("Booking successful, now submitting comments if any...", result);
+        const types = {
+            commentType: "free",
+            serviceType: "weekly class"
+        };
+
+        try {
+            console.log("Submitting comments tempComments:", tempComments);
+            console.log("Submitting comments parentAdminId:", result?.data);
+            if (tempComments.length > 0 && result?.data?.parentAdminId) {
+
+                await submitAllComments(tempComments, result.data.parentAdminId, types);
+                setTempComments([]);
+            }
+        } catch (err) {
+            console.error("Comment submit failed:", err);
+        }
+    };
+
     const handleSubmit = async () => {
         if (!selectedDate) {
             showWarning("Trial Date Required", "Please select a trial date before submitting.");
@@ -963,20 +960,24 @@ const List = () => {
 
 
         try {
+            let res;
+
             if (from_lead) {
-                await createBookFreeTrials(payload, leadId); // assume it's a promise
+                res = await createBookFreeTrials(payload, leadId); // assume it's a promise
             }
             else if (comesFrom === "waitingList") {
-                await createReBookFreeTrials(payloadwaitinglist, TrialData.id);
+                res = await createReBookFreeTrials(payloadwaitinglist, TrialData.id);
             }
             else if (useofRebook == "useofRebook") {
-                await createReBookFreeTrials(payload, TrialData.id);
+                res = await createReBookFreeTrials(payload, TrialData.id);
             }
             else {
-                await createBookFreeTrials(payload); // assume it's a promise
+                res = await createBookFreeTrials(payload); // assume it's a promise
 
             }
             setIsBooked(true);
+            await handleAfterBooking(res);
+            navigate(`/weekly-classes/trial/list`)
             // console.log("Final Payload:", JSON.stringify(payload, null, 2));
             // Optionally show success alert or reset form
         } catch (error) {
@@ -2016,7 +2017,7 @@ const List = () => {
                             handleSubmitComment={handleSubmitComment}
                             loadingComment={loadingComment}
                             commentsList={commentsList}
-                            currentComments={currentComments}
+                            currentComments={[...tempComments, ...(currentComments || [])]}
                             formatTimeAgo={formatTimeAgo}
                         />
                         <div className="flex justify-end  pb-10 gap-4">

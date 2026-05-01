@@ -7,6 +7,10 @@ export const BookFreeTrialProvider = ({ children }) => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [bookFreeTrials, setBookFreeTrials] = useState([]);
   const [bookMembership, setBookMembership] = useState([]);
+  const [commentsList, setCommentsList] = useState([]);
+  const [loadingComment, setLoadingComment] = useState(false);
+  const [comment, setComment] = useState('');
+
   const token = localStorage.getItem("adminToken");
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -330,9 +334,7 @@ export const BookFreeTrialProvider = ({ children }) => {
 
       await showSuccess("Success!", result.message || "Free Trial has been created successfully.");
 
-      setTimeout(() => {
-        navigate(`/weekly-classes/trial/list`)
-      }, 1000);
+    
       return result;
 
     } catch (error) {
@@ -428,9 +430,6 @@ export const BookFreeTrialProvider = ({ children }) => {
 
       await showSuccess("Success!", result.message || "Free Trial has been created successfully.");
 
-      setTimeout(() => {
-        navigate(`/weekly-classes/trial/list`)
-      }, 1000);
       return result;
 
     } catch (error) {
@@ -1047,9 +1046,7 @@ export const BookFreeTrialProvider = ({ children }) => {
 
       await showSuccess("Success!", result.message || "Membership has been created successfully.");
       setIsBooked(true);
-      setTimeout(() => {
-        navigate(`/weekly-classes/all-members/list`)
-      }, 1000);
+
       return result;
 
     } catch (error) {
@@ -1103,6 +1100,94 @@ export const BookFreeTrialProvider = ({ children }) => {
     } finally {
       await fetchBookMemberships();
       setLoading(false);
+    }
+  };
+  const submitAllComments = async (comments, parentAdminId, types) => {
+    const headers = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+    console.log('Submitting comments:', comments, 'for parentAdminId:', parentAdminId);
+    try {
+      await Promise.all(
+        comments.map((c) =>
+          fetch(`${API_BASE_URL}/api/admin/comment/create`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              comment: c.comment,
+              commentType: types.commentType,
+              serviceType: types.serviceType,
+              commentBy: parentAdminId,
+            }),
+          })
+        )
+      );
+    } catch (err) {
+      console.error("Error submitting comments:", err);
+    }
+  };
+  const fetchComments = useCallback(async (commentData) => {
+    const token = localStorage.getItem("adminToken");
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/comment/list?commentType=${commentData.commentType}&serviceType=${commentData.serviceType}&commentBy=${commentData.commentBy}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const resultRaw = await response.json();
+      const result = resultRaw.data || [];
+      setCommentsList(result);
+    } catch (error) {
+      console.error("Failed to fetch comments:", error);
+
+      showError("Error", error.message || error.error || "Failed to fetch comments. Please try again later.");
+    }
+  }, []);
+  const handleSubmitComment = async (payload, commentData) => {
+    // ✅ Validate from payload instead of external state
+    if (!payload?.comment?.trim()) return;
+
+    setLoadingComment(true);
+
+    const headers = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/admin/comment/create`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify(payload),
+        }
+      );
+
+      // ✅ Handle API failure properly
+      if (!response.ok) {
+        throw new Error(`Failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // ✅ Clear only if you're using state-based input
+      setComment("");
+
+      // ✅ Refresh comments list
+      if (commentData) {
+        fetchComments(commentData);
+      }
+
+    } catch (err) {
+      console.error("Error submitting comment:", err);
+    } finally {
+      setLoadingComment(false);
     }
   };
   const createBookLeads = async (bookFreeMembershipData) => {
@@ -1207,9 +1292,7 @@ export const BookFreeTrialProvider = ({ children }) => {
 
       setIsBooked(true);
 
-      setTimeout(() => {
-        navigate(`/weekly-classes/all-members/list`)
-      }, 1000);
+
 
       return result;
 
@@ -1248,9 +1331,7 @@ export const BookFreeTrialProvider = ({ children }) => {
 
       await showSuccess("Success!", result.message || "Membership has been created successfully.");
       setIsBooked(true);
-      setTimeout(() => {
-        navigate(`/weekly-classes/all-members/list`)
-      }, 1000);
+
       return result;
 
     } catch (error) {
@@ -1289,9 +1370,7 @@ export const BookFreeTrialProvider = ({ children }) => {
 
       await showSuccess("Success!", result.message || "Membership has been created successfully.");
       setIsBooked(true);
-      setTimeout(() => {
-        navigate(`/weekly-classes/all-members/list`)
-      }, 1000);
+
       return result;
 
     } catch (error) {
@@ -2194,9 +2273,7 @@ export const BookFreeTrialProvider = ({ children }) => {
 
       await showSuccess("Success!", result.message || "Customer successfully added to the waiting list. Confirmation email has been sent");
       setIsBooked(true);
-      setTimeout(() => {
-        navigate(`/weekly-classes/find-a-class/add-to-waiting-list/list`)
-      }, 1000);
+    
       return result;
 
     } catch (error) {
@@ -2860,6 +2937,8 @@ export const BookFreeTrialProvider = ({ children }) => {
         bookMembership,
         createBookMembership,
         updateBookMembership,
+        submitAllComments,
+        fetchComments,
         createBookMembershipByfreeTrial,
         createBookMembershipByWaitingList,
         createBookMembershipbyCancellation,
@@ -2941,7 +3020,7 @@ export const BookFreeTrialProvider = ({ children }) => {
         ServiceHistoryFulltto,
         ServiceHistoryAlltto,
         setIsBooked, isBooked,
-        fetchMembershipSalesLoading, parentData, setParentData, createBookLeads, createBookBirthday, addToWaitingList, setaddToWaitingList, showCancelTrial, setshowCancelTrial
+        fetchMembershipSalesLoading, parentData, setLoadingComment, loadingComment, handleSubmitComment, setParentData, setComment, comment, setCommentsList, commentsList, createBookLeads, createBookBirthday, addToWaitingList, setaddToWaitingList, showCancelTrial, setshowCancelTrial
 
         , fetchMembershipByParent
       }}>

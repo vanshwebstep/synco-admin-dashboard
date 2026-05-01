@@ -43,6 +43,8 @@ const AddtoWaitingList = () => {
   const popup2Ref = useRef(null);
   const popup3Ref = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [tempComments, setTempComments] = useState([]);
+
   const [commentsList, setCommentsList] = useState([]);
   const [comment, setComment] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -61,7 +63,7 @@ const AddtoWaitingList = () => {
   };
   // console.log('classId', classId)
   const { fetchFindClassID, singleClassSchedulesOnly, loading } = useClassSchedule() || {};
-  const { createWaitinglist, isBooked, setIsBooked } = useBookFreeTrial()
+  const { createWaitinglist, isBooked, setIsBooked,submitAllComments } = useBookFreeTrial()
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { keyInfoData, fetchKeyInfo } = useMembers();
 
@@ -594,52 +596,25 @@ const AddtoWaitingList = () => {
   }, []);
 
 
-  const handleSubmitComment = async (e) => {
-
+  const handleSubmitComment = (e) => {
     e.preventDefault();
 
-    const myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
-    myHeaders.append("Authorization", `Bearer ${token}`);
+    if (!comment.trim()) return;
 
-    const raw = JSON.stringify({
-      "comment": comment
-    });
-
-    const requestOptions = {
-      method: "POST",
-      headers: myHeaders,
-      body: raw,
-      redirect: "follow"
+    const newComment = {
+      comment: comment,
+      createdAt: new Date().toISOString(),
+      bookedByAdmin: {
+        firstName: adminInfo?.firstName || "Admin",
+        lastName: adminInfo?.lastName || "",
+        profile: adminInfo?.profile || "/members/dummyuser.png"
+      }
     };
 
-    try {
-      // Loader skipped
-      setLoadingComment(true)
+    setTempComments((prev) => [newComment, ...prev]);
 
-      const response = await fetch(`${API_BASE_URL}/api/admin/waiting-list/comment/create`, requestOptions);
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        showError("Failed to Add Comment", result.message || "Something went wrong.");
-        return;
-      }
-
-
-      // showSuccess("Comment Created", result.message || " Comment has been  added successfully!");
-
-
-      setComment('');
-      fetchComments();
-    } catch (error) {
-      console.error("Error creating member:", error);
-      setLoadingComment(false)
-      showError("Network Error", error.message || "An error occurred while submitting the form.");
-    } finally {
-      setLoadingComment(false)
-    }
-  }
+    setComment('');
+  };
   const token = localStorage.getItem("adminToken");
 
   const handleSameAsAbove = (studentIndex) => {
@@ -727,7 +702,25 @@ const AddtoWaitingList = () => {
     value: cls.id,
     label: cls.className
   }));
+  const handleAfterBooking = async (result) => {
+    console.log("Booking successful, now submitting comments if any...", result);
+    const types = {
+      commentType: "waiting list",
+      serviceType: "weekly class"
+    };
 
+    try {
+      console.log("Submitting comments tempComments:", tempComments);
+      console.log("Submitting comments parentAdminId:", result?.data);
+      if (tempComments.length > 0 && result?.data?.parentAdminId) {
+
+        await submitAllComments(tempComments, result.data.parentAdminId, types);
+        setTempComments([]);
+      }
+    } catch (err) {
+      console.error("Comment submit failed:", err);
+    }
+  };
   const handleSubmit = async () => {
     const { newErrors, firstErrorField } = validateForm();
 
@@ -775,13 +768,18 @@ const AddtoWaitingList = () => {
     console.log('payload', payload)
     // return
     try {
+      let res;
+
       if (leadId) {
-        await createWaitinglist(payload, leadId);
+        res = await createWaitinglist(payload, leadId);
       }
       else {
-        await createWaitinglist(payload);
+        res = await createWaitinglist(payload);
       } // assume it's a promise
       setIsBooked(true);
+
+      await handleAfterBooking(res);
+      navigate(`/weekly-classes/find-a-class/add-to-waiting-list/list`)
       // console.log("Final Payload:", JSON.stringify(payload, null, 2));
       // Optionally show success alert or reset form
     } catch (error) {
@@ -1771,7 +1769,8 @@ const AddtoWaitingList = () => {
               handleSubmitComment={handleSubmitComment}
               loadingComment={loadingComment}
               commentsList={commentsList}
-              currentComments={currentComments}
+              currentComments={[...tempComments, ...(currentComments || [])]}
+
               formatTimeAgo={formatTimeAgo}
             />
 
