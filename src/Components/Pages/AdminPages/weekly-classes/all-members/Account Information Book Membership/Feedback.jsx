@@ -17,11 +17,13 @@ const Feedback = ({ profile }) => {
   const SERVICE_TYPE = "birthdayParty";
   const DISPLAY_SERVICE_TYPE = "weekly class membership";
 
-  // const bookingId = searchParams.get("id");
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const token = localStorage.getItem("adminToken");
-  const bookingId = profile?.id;
-  // const bookingId = profile?.id;
+  const bookingId = profile?.id || profile?.bookingId;
+
+  // ✅ Pull parentAdminId from profile
+  const parentAdminId = profile?.parentAdminId || null;
+
   const { fetchMembers, loading } = useMembers();
   const formatDate = (dateString, withTime = false) => {
     if (!dateString) return "-";
@@ -40,33 +42,42 @@ const Feedback = ({ profile }) => {
     }
     return date.toLocaleDateString("en-US", options);
   };
+
+  console.log('profile', profile);
+
   // ---------------- STATES ----------------
   const [feedbackData, setFeedbackData] = useState([]);
   const [agentAndClassesData, setAgentAndClassesData] = useState({});
   const [createLoading, setCreateLoading] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [resolveData, setResolveData] = useState('');
-
-  const [selectedAgent, setSelectedAgent] = useState({
-    id: resolveData?.assignedAgent?.id || null,
-    name: resolveData?.assignedAgent
-      ? `${resolveData.assignedAgent.firstName} ${resolveData.assignedAgent.lastName}`
-      : "",
-  }); const [showAgentModal, setShowAgentModal] = useState(false);
+  console.log('resolveData', resolveData);
+  const [selectedAgentIds, setSelectedAgentIds] = useState([]);
+  const [showAgentModal, setShowAgentModal] = useState(false);
   const [openResolve, setOpenResolve] = useState(false);
 
   const [formData, setFormData] = useState({
-    classScheduleId: null,
-    agentId: null,
+    // ✅ classScheduleId removed — now handled per-student (array of ids)
+    classScheduleIds: [],
+    agentIds: [],
     feedbackType: "",
     category: "",
     notes: "",
   });
 
+  const [categories, setCategories] = useState([
+    { value: "Behavior", label: "Behavior" },
+    { value: "Attendance", label: "Attendance" },
+  ]);
+
+  const categoryOptions = useMemo(() => [
+    ...categories,
+    { value: "add_new", label: "+ Add Category" }
+  ], [categories]);
+
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
   const [selectedUserIds, setSelectedUserIds] = useState([]);
-
-
-
 
   // ---------------- FETCH FEEDBACK ----------------
   const fetchFeedback = useCallback(async () => {
@@ -74,7 +85,7 @@ const Feedback = ({ profile }) => {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/admin/feedback/list`,
+        `${API_BASE_URL}/api/admin/feedback/parent/${parentAdminId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -87,7 +98,6 @@ const Feedback = ({ profile }) => {
         return;
       }
 
-      // 🎯 ONLY BIRTHDAY PARTY DATA
       setFeedbackData(result.data?.[DISPLAY_SERVICE_TYPE] || []);
     } catch (err) {
       showError("Error", err.message);
@@ -129,13 +139,35 @@ const Feedback = ({ profile }) => {
     load();
   }, [fetchMembers, fetchFeedback, fetchAgentAndClasses]);
 
-  // ---------------- OPTIONS ----------------
-  const classOptions = useMemo(() => {
-    return (agentAndClassesData?.classSchedules || []).map((cls) => ({
-      value: cls.id,
-      label: `${cls.className} (${cls.day} • ${cls.startTime} - ${cls.endTime})`,
-    }));
-  }, [agentAndClassesData]);
+  // ✅ Build per-student class options (disabled, prefilled from profile.students)
+  const studentClassOptions = useMemo(() => {
+    if (!profile?.students?.length) return [];
+
+    return profile.students.map((student) => {
+      const cls = student.classSchedule;
+      const clsId = student.classScheduleId || cls?.id;
+      return {
+        studentId: student.id,
+        studentName: `${student.studentFirstName} ${student.studentLastName}`,
+        classScheduleId: clsId,
+        label: cls
+          ? `${cls.className} (${cls.startTime} - ${cls.endTime})`
+          : clsId
+            ? `Class ID: ${clsId}`
+            : "No class assigned",
+      };
+    });
+  }, [profile]);
+
+  // ✅ On form open, prefill classScheduleIds from ALL students
+  useEffect(() => {
+    if (openForm) {
+      const ids = studentClassOptions
+        .map((s) => s.classScheduleId)
+        .filter(Boolean);
+      setFormData((prev) => ({ ...prev, classScheduleIds: ids }));
+    }
+  }, [openForm, studentClassOptions]);
 
   const agentOptions = useMemo(() => {
     return (agentAndClassesData?.agents || []).map((agent) => ({
@@ -143,20 +175,25 @@ const Feedback = ({ profile }) => {
       label: `${agent.firstName} ${agent.lastName}`,
     }));
   }, [agentAndClassesData]);
+
   const feedbackTypeOptions = [
     { value: "Positive", label: "Positive" },
     { value: "Negative", label: "Negative" },
   ];
 
-  const categoryOptions = [
-    { value: "Behavior", label: "Behavior" },
-    { value: "Attendance", label: "Attendance" },
-  ];
+  useEffect(() => {
+    if (!openForm) {
+      setIsAddingCategory(false);
+      setNewCategoryName("");
+    }
+  }, [openForm]);
+
   // ---------------- HANDLERS ----------------
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
   const toggleCheckbox = (userId) => {
     setSelectedUserIds((prev) =>
       prev.includes(userId)
@@ -164,7 +201,9 @@ const Feedback = ({ profile }) => {
         : [...prev, userId]
     );
   };
-  const isAllSelected = feedbackData.length > 0 && selectedUserIds.length === feedbackData.length;
+
+  const isAllSelected =
+    feedbackData.length > 0 && selectedUserIds.length === feedbackData.length;
 
   const toggleSelectAll = () => {
     if (isAllSelected) {
@@ -174,25 +213,35 @@ const Feedback = ({ profile }) => {
       setSelectedUserIds(allIds);
     }
   };
+
   // ---------------- CREATE FEEDBACK ----------------
   const handleSubmit = async () => {
-    const { classScheduleId, agentId, feedbackType, category, notes } = formData;
+    const { classScheduleIds, agentIds, feedbackType, category, notes } = formData;
 
-    if (!classScheduleId || !agentId || !feedbackType || !category || !notes) {
+    if (
+      !classScheduleIds?.length ||
+      !agentIds ||
+      agentIds.length === 0 ||
+      !feedbackType ||
+      !category ||
+      !notes
+    ) {
       return showError("Error", "All fields are required");
     }
-    // classScheduleId
+
+    // ✅ Use first classScheduleId for payload (or send all if API supports array)
+    const classScheduleId = classScheduleIds[0];
+
     const payload = {
       bookingId,
+      parentAdminId: profile?.parentAdminId,           // ✅ parentAdminId from profile.parents[0].id
       classScheduleId,
       serviceType: DISPLAY_SERVICE_TYPE,
       feedbackType,
       category,
       notes,
-      agentAssigned: agentId,
+      agentAssigned: agentIds,
     };
-
-    // Loader skipped
 
     try {
       const response = await fetch(
@@ -213,8 +262,8 @@ const Feedback = ({ profile }) => {
       showSuccess("Success", result.message);
       setOpenForm(false);
       setFormData({
-        classScheduleId: null,
-        agentId: null,
+        classScheduleIds: [],
+        agentIds: [],
         feedbackType: "",
         category: "",
         notes: "",
@@ -225,21 +274,23 @@ const Feedback = ({ profile }) => {
       showError("Error", err.message);
     }
   };
+
   const handleSave = async (id, successCallback) => {
-    if (!token) return showError("Error", "Token not found. Please login again.");
-    if (!selectedAgent?.id) {
+    if (!token)
+      return showError("Error", "Token not found. Please login again.");
+    if (selectedAgentIds.length === 0) {
       return showWarning(
         "Agent Required",
-        "Please select an agent before saving."
+        "Please select at least one agent before saving."
       );
     }
     const myHeaders = new Headers({
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
     });
 
     const payload = {
-      agentAssigned: selectedAgent?.id,
+      agentAssigned: selectedAgentIds,
     };
 
     const requestOptions = {
@@ -250,10 +301,10 @@ const Feedback = ({ profile }) => {
     };
 
     try {
-      // Show loading
-      // Loader skipped
-
-      const response = await fetch(`${API_BASE_URL}/api/admin/feedback/resolve/${id}`, requestOptions);
+      const response = await fetch(
+        `${API_BASE_URL}/api/admin/feedback/resolve/${id}`,
+        requestOptions
+      );
 
       const result = await response.json();
 
@@ -261,62 +312,70 @@ const Feedback = ({ profile }) => {
         throw new Error(result?.message || "Something went wrong");
       }
 
-      // Swal.close();
-      showSuccess("Updated!", result?.message || "Information updated successfully.");
+      showSuccess(
+        "Updated!",
+        result?.message || "Information updated successfully."
+      );
       fetchFeedback();
-      setShowAgentModal(false)
+      setShowAgentModal(false);
       setOpenResolve(false);
-      setSelectedAgent(null)
+      setSelectedAgentIds([]);
       setResolveData('');
-      // Dynamic callback after success (e.g., refetch data)
+
       if (typeof successCallback === "function") {
         successCallback(result);
       }
 
       return result;
     } catch (error) {
-      // Swal.close();
       console.error(error);
-      showError("Failed!", error.message || "Something went wrong while updating.");
+      showError(
+        "Failed!",
+        error.message || "Something went wrong while updating."
+      );
     }
   };
 
   useEffect(() => {
-    if (openResolve && resolveData?.assignedAgent) {
-      setSelectedAgent({
-        id: resolveData.assignedAgent.id,
-        name: `${resolveData.assignedAgent.firstName} ${resolveData.assignedAgent.lastName}`,
-      });
+    if (openResolve && resolveData?.assignedAgents) {
+      // ✅ Use assignedAgents array from API response
+      if (Array.isArray(resolveData.assignedAgents)) {
+        setSelectedAgentIds(resolveData.assignedAgents.map((a) => a.id));
+      } else if (resolveData.assignedAgent) {
+        // fallback for single agent
+        if (Array.isArray(resolveData.assignedAgent)) {
+          setSelectedAgentIds(resolveData.assignedAgent.map((a) => a.id));
+        } else {
+          setSelectedAgentIds([resolveData.assignedAgent.id]);
+        }
+      }
     }
   }, [openResolve, resolveData]);
 
-
-
   if (loading) {
-    return (
-      <>
-        <Loader />
-      </>
-    )
+    return <Loader />;
   }
 
   return (
     <>
-      <div className={`pt-1 bg-gray-50 min-h-screen md:px-4 ${openResolve ? 'hidden' : 'block'}`}>
-
+      <div
+        className={`pt-1 bg-gray-50 min-h-screen md:px-4 ${openResolve ? 'hidden' : 'block'
+          }`}
+      >
         <button
           onClick={() => setOpenForm(true)}
-          className="bg-[#237FEA] md:absolute right-0 top-5 flex items-center gap-2 cursor-pointer text-white px-4 py-2 rounded-xl hover:bg-blue-700 text-sm md:text-base font-semibold"
+          className="bg-[#237FEA] md:absolute right-50 top-2 flex items-center gap-2 cursor-pointer text-white px-4 py-2 rounded-xl hover:bg-blue-700 text-sm md:text-base font-semibold"
         >
           <img src="/members/add.png" className="w-5" alt="" />
           Add Feedback
         </button>
 
-        {checkPermission({ module: "account-information", action: "view-listing" }) ? (
+        {checkPermission({
+          module: "account-information",
+          action: "view-listing",
+        }) ? (
           <div className="md:flex md:gap-6 md:mt-0 mt-5">
-
-            <div className={`transition-all duration-300 w-full`}>
-
+            <div className="transition-all duration-300 w-full">
               {feedbackData.length > 0 ? (
                 <div className="overflow-auto rounded-2xl bg-white shadow-sm">
                   <table className="min-w-full text-sm">
@@ -328,9 +387,15 @@ const Feedback = ({ profile }) => {
                               onClick={toggleSelectAll}
                               className="w-5 h-5 flex items-center justify-center rounded-md border-2 border-gray-500"
                             >
-                              {isAllSelected && <Check size={16} strokeWidth={3} className="text-gray-500" />}
+                              {isAllSelected && (
+                                <Check
+                                  size={16}
+                                  strokeWidth={3}
+                                  className="text-gray-500"
+                                />
+                              )}
                             </button>
-                            Date Submmited
+                            Date Submitted
                           </div>
                         </th>
                         <th className="p-4">Type of Feedback</th>
@@ -346,42 +411,81 @@ const Feedback = ({ profile }) => {
                       {feedbackData.map((user, idx) => {
                         const isChecked = selectedUserIds.includes(user.id);
                         return (
-                          <tr key={idx} className="border-t font-semibold text-[#282829] border-[#EFEEF2] hover:bg-gray-50">
+                          <tr
+                            key={idx}
+                            className="border-t font-semibold text-[#282829] border-[#EFEEF2] hover:bg-gray-50"
+                          >
                             <td className="p-4 cursor-pointer">
                               <div className="flex items-center gap-3">
                                 <button
                                   onClick={() => toggleCheckbox(user.id)}
-                                  className={`w-5 h-5 flex items-center justify-center rounded-md border-2 ${isChecked ? 'border-gray-500' : 'border-gray-300'}`}
+                                  className={`w-5 h-5 flex items-center justify-center rounded-md border-2 ${isChecked
+                                    ? 'border-gray-500'
+                                    : 'border-gray-300'
+                                    }`}
                                 >
-                                  {isChecked && <Check size={16} strokeWidth={3} className="text-gray-500" />}
+                                  {isChecked && (
+                                    <Check
+                                      size={16}
+                                      strokeWidth={3}
+                                      className="text-gray-500"
+                                    />
+                                  )}
                                 </button>
-
                                 {formatDate(user.createdAt, false)}
                               </div>
                             </td>
-                            <td className="p-4" >{user?.feedbackType || '-'}</td>
-                            <td className="p-4" >{user?.venue?.name || '-'}</td>
-                            <td className="p-4" >{user?.category || '-'}</td>
-                            <td className="p-4" >{user?.notes || '-'}
+                            <td className="p-4 capitalize">
+                              {user?.feedbackType || '-'}
                             </td>
-                            <td className="p-4" >{user?.assignedAgent
-                              ? `${user.assignedAgent.firstName} ${user.assignedAgent.lastName}`
-                              : "-"}</td>
+                            <td className="p-4">{user?.venue?.name || '-'}</td>
+                            <td className="p-4 capitalize">
+                              {user?.category || '-'}
+                            </td>
+                            <td className="p-4">{user?.notes || '-'}</td>
+                            <td className="p-4">
+                              {/* ✅ Read from assignedAgents array */}
+                              {Array.isArray(user?.assignedAgents) &&
+                                user.assignedAgents.length > 0
+                                ? user.assignedAgents
+                                  .map(
+                                    (a) => `${a.firstName} ${a.lastName}`
+                                  )
+                                  .join(", ")
+                                : Array.isArray(user?.assignedAgent) &&
+                                  user.assignedAgent.length > 0
+                                  ? user.assignedAgent
+                                    .map(
+                                      (a) => `${a.firstName} ${a.lastName}`
+                                    )
+                                    .join(", ")
+                                  : user?.assignedAgent
+                                    ? `${user.assignedAgent.firstName} ${user.assignedAgent.lastName}`
+                                    : "-"}
+                            </td>
                             <td className="p-4">
                               <div className="flex items-center gap-3">
                                 <button className="text-[#EDA600] bg-[#FDF6E5] px-5 rounded-xl p-2">
                                   {user.status
                                     ?.replace(/_/g, " ")
                                     ?.toLowerCase()
-                                    ?.replace(/\b\w/g, (char) => char.toUpperCase())}
+                                    ?.replace(/\b\w/g, (char) =>
+                                      char.toUpperCase()
+                                    )}
                                 </button>
 
-                                <button onClick={() => {
-                                  setOpenResolve(true);
-                                  setResolveData(user)
-                                }} className='bg-[#237FEA] rounded-xl p-2 px-5  text-white'>
-                                  Resolve
-                                </button>
+                                {/* ✅ Only show Resolve button when status is "not_resolved" */}
+                                {user.status === "not_resolved" && (
+                                  <button
+                                    onClick={() => {
+                                      setOpenResolve(true);
+                                      setResolveData(user);
+                                    }}
+                                    className="bg-[#237FEA] rounded-xl p-2 px-5 text-white"
+                                  >
+                                    Resolve
+                                  </button>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -391,11 +495,11 @@ const Feedback = ({ profile }) => {
                   </table>
                 </div>
               ) : (
-                <p className="text-center p-4 border-dotted border rounded-md bg-white">No Data Found</p>
+                <p className="text-center p-4 border-dotted border rounded-md bg-white">
+                  No Data Found
+                </p>
               )}
             </div>
-
-
           </div>
         ) : (
           <p className="text-center p-6 text-red-500 font-semibold">
@@ -407,42 +511,45 @@ const Feedback = ({ profile }) => {
           <div className="fixed inset-0 bg-[#00000047] bg-opacity-40 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl w-[95%] md:w-[420px] md:max-h-[90vh] overflow-auto shadow-lg relative">
               <div className="flex relative justify-center items-center border-b border-[#E2E1E5] px-6 py-4">
-                <h2 className="text-lg font-semibold text-gray-800">Add Feedback</h2>
+                <h2 className="text-lg font-semibold text-gray-800">
+                  Add Feedback
+                </h2>
                 <button
                   onClick={() => setOpenForm(false)}
-                  className="text-gray-500 absolute left-5 top-4  hover:text-gray-800 text-xl"
+                  className="text-gray-500 absolute left-5 top-4 hover:text-gray-800 text-xl"
                 >
                   ×
                 </button>
               </div>
 
               <div className="p-6 space-y-4">
-                {/* Select Class */}
+                {/* ✅ Show ALL students' classes — each prefilled and disabled */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Please select the classes you wish to add feedback for
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Classes (prefilled from enrolled students)
                   </label>
-
-                  <Select
-                    options={classOptions}
-                    placeholder="Select Class"
-                    isSearchable
-                    isClearable
-                    value={
-                      classOptions.find(
-                        (opt) => opt.value === formData.classScheduleId
-                      ) || null
-                    }
-                    onChange={(selected) => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        classScheduleId: selected?.value || null,
-                      }));
-                    }}
-                    className="w-full"
-                    classNamePrefix="react-select"
-                  />
-
+                  {studentClassOptions.length > 0 ? (
+                    <div className="space-y-2">
+                      {studentClassOptions.map((sc, idx) => (
+                        <div key={sc.studentId || idx}>
+                          <p className="text-xs text-gray-500 mb-1">
+                            {sc.studentName}
+                          </p>
+                          <Select
+                            options={[{ value: sc.classScheduleId, label: sc.label }]}
+                            value={{ value: sc.classScheduleId, label: sc.label }}
+                            isDisabled={true}
+                            className="w-full"
+                            classNamePrefix="react-select"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-400 italic">
+                      No students found on this booking.
+                    </p>
+                  )}
                 </div>
 
                 {/* Feedback Type */}
@@ -477,26 +584,72 @@ const Feedback = ({ profile }) => {
                   <label className="block text-sm font-semibold text-[#282829] mb-1">
                     Category
                   </label>
-                  <Select
-                    name="category"
-                    options={categoryOptions}
-                    placeholder="Select Category"
-                    isClearable
-                    isSearchable
-                    value={
-                      categoryOptions.find(
-                        (opt) => opt.value === formData.category
-                      ) || null
-                    }
-                    onChange={(selected) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        category: selected?.value || "",
-                      }))
-                    }
-                    className="w-full"
-                    classNamePrefix="react-select"
-                  />
+                  {!isAddingCategory ? (
+                    <Select
+                      name="category"
+                      options={categoryOptions}
+                      placeholder="Select Category"
+                      isClearable
+                      isSearchable
+                      value={
+                        categoryOptions.find(
+                          (opt) => opt.value === formData.category
+                        ) || null
+                      }
+                      onChange={(selected) => {
+                        if (selected?.value === "add_new") {
+                          setIsAddingCategory(true);
+                        } else {
+                          setFormData((prev) => ({
+                            ...prev,
+                            category: selected?.value || "",
+                          }));
+                        }
+                      }}
+                      className="w-full"
+                      classNamePrefix="react-select"
+                    />
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        autoFocus
+                        className="w-full border border-[#E2E1E5] rounded-xl p-2 px-3 text-sm h-[38px]"
+                        placeholder="Enter category name"
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                      />
+                      <button
+                        onClick={() => {
+                          if (newCategoryName.trim()) {
+                            const newOpt = {
+                              value: newCategoryName,
+                              label: newCategoryName,
+                            };
+                            setCategories((prev) => [...prev, newOpt]);
+                            setFormData((prev) => ({
+                              ...prev,
+                              category: newCategoryName,
+                            }));
+                            setNewCategoryName("");
+                            setIsAddingCategory(false);
+                          }
+                        }}
+                        className="bg-[#237FEA] text-white px-3 rounded-xl text-xs font-semibold"
+                      >
+                        Add
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsAddingCategory(false);
+                          setNewCategoryName("");
+                        }}
+                        className="bg-gray-100 px-3 rounded-xl text-xs font-semibold"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Notes */}
@@ -513,7 +666,7 @@ const Feedback = ({ profile }) => {
                   />
                 </div>
 
-                {/* Assign Agent */}
+                {/* Assign Agent — multi-select */}
                 <div>
                   <label className="block text-sm font-semibold text-[#282829] mb-1">
                     Assign agent
@@ -521,19 +674,17 @@ const Feedback = ({ profile }) => {
                   <Select
                     name="agent"
                     options={agentOptions}
-                    placeholder="Select Agent"
+                    placeholder="Select Agent(s)"
                     isClearable
                     isSearchable
-                    value={
-                      agentOptions.find(
-                        (opt) => opt.value === formData.agentId
-                      ) || null
-                    }
+                    isMulti
+                    value={agentOptions.filter((opt) =>
+                      formData.agentIds.includes(opt.value)
+                    )}
                     onChange={(selected) => {
                       setFormData((prev) => ({
                         ...prev,
-                        agentId: selected?.value || null,
-                        agentName: selected?.label || "",
+                        agentIds: selected ? selected.map((s) => s.value) : [],
                       }));
                     }}
                     className="w-full"
@@ -546,13 +697,11 @@ const Feedback = ({ profile }) => {
                   <button
                     onClick={() => {
                       setFormData({
-                        className: "",
-                        agentId: null,
-                        classScheduleId: null,
+                        classScheduleIds: [],
+                        agentIds: [],
                         feedbackType: "",
                         category: "",
                         notes: "",
-                        agent: "",
                       });
                       setOpenForm(false);
                     }}
@@ -560,8 +709,6 @@ const Feedback = ({ profile }) => {
                   >
                     Cancel
                   </button>
-
-
                   <button
                     onClick={handleSubmit}
                     className="px-6 py-2 bg-[#237FEA] text-white rounded-xl"
@@ -570,25 +717,26 @@ const Feedback = ({ profile }) => {
                   </button>
                 </div>
               </div>
-
             </div>
           </div>
         )}
-
       </div>
-      <div className={`min-h-screen bg-[#F9F9FB] flex flex-col  p-4 md:p-8 ${openResolve ? 'flex' : 'hidden'}`}>
+
+      {/* Resolve Detail View */}
+      <div
+        className={`min-h-screen bg-[#F9F9FB] flex flex-col p-4 md:p-8 ${openResolve ? 'flex' : 'hidden'
+          }`}
+      >
         {/* Main Card */}
         <div className="bg-white rounded-2xl w-full max-w-4xl shadow-sm p-6 md:p-8">
-          {/* Header */}
           <div className="flex items-center gap-2 mb-6">
-
-
             <h2
-              className='text-lg font-semibold text-gray-800 flex items-center gap-2 '
+              className="text-lg font-semibold text-gray-800 flex items-center gap-2 cursor-pointer"
               onClick={() => {
                 setOpenResolve(false);
                 setResolveData('');
-              }}>
+              }}
+            >
               <img
                 src="/images/icons/arrow-left.png"
                 alt="Back"
@@ -598,19 +746,37 @@ const Feedback = ({ profile }) => {
             </h2>
           </div>
 
-          {/* Feedback Info Table */}
           <div className="divide-y divide-gray-200">
             <div className="flex justify-between py-3 text-sm md:text-base">
-              <span className="text-gray-500">Agent</span>
-              <span className="text-gray-800 font-semibold">{`${resolveData?.assignedAgent?.firstName} ${resolveData?.assignedAgent?.lastName}`}</span>
+              <span className="text-gray-500">Agent(s)</span>
+              <span className="text-gray-800 font-semibold text-right max-w-[60%]">
+                {Array.isArray(resolveData?.assignedAgents) &&
+                  resolveData.assignedAgents.length > 0
+                  ? resolveData.assignedAgents
+                    .map((a) => `${a.firstName} ${a.lastName}`)
+                    .join(", ")
+                  : Array.isArray(resolveData?.assignedAgent) &&
+                    resolveData.assignedAgent.length > 0
+                    ? resolveData.assignedAgent
+                      .map((a) => `${a.firstName} ${a.lastName}`)
+                      .join(", ")
+                    : resolveData?.assignedAgent
+                      ? `${resolveData.assignedAgent.firstName || '-'} ${resolveData.assignedAgent.lastName || '-'
+                      }`
+                      : "-"}
+              </span>
             </div>
             <div className="flex justify-between py-3 text-sm md:text-base">
               <span className="text-gray-500">Date submitted</span>
-              <span className="text-gray-800 font-semibold">{formatDate(resolveData?.createdAt, true)}</span>
+              <span className="text-gray-800 font-semibold">
+                {formatDate(resolveData?.createdAt, true)}
+              </span>
             </div>
             <div className="flex justify-between py-3 text-sm md:text-base">
               <span className="text-gray-500">Venue</span>
-              <span className="text-gray-800 font-semibold">{resolveData?.venue?.name}</span>
+              <span className="text-gray-800 font-semibold">
+                {resolveData?.venue?.name}
+              </span>
             </div>
             <div className="flex justify-between py-3 text-sm md:text-base">
               <span className="text-gray-500">Class details</span>
@@ -618,11 +784,15 @@ const Feedback = ({ profile }) => {
             </div>
             <div className="flex justify-between py-3 text-sm md:text-base">
               <span className="text-gray-500">Feedback type</span>
-              <span className="text-gray-800 font-semibold capitalize">{resolveData?.feedbackType}</span>
+              <span className="text-gray-800 font-semibold capitalize">
+                {resolveData?.feedbackType}
+              </span>
             </div>
             <div className="flex justify-between py-3 text-sm md:text-base">
               <span className="text-gray-500">Category</span>
-              <span className="text-gray-800 font-semibold capitalize">{resolveData?.category}</span>
+              <span className="text-gray-800 font-semibold capitalize">
+                {resolveData?.category}
+              </span>
             </div>
             <div className="flex justify-between py-3 text-sm md:text-base">
               <span className="text-gray-500">Notes</span>
@@ -637,34 +807,63 @@ const Feedback = ({ profile }) => {
         <div className="bg-white rounded-2xl w-full max-w-4xl shadow-sm mt-6 p-6 flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
             <h3 className="text-gray-800 font-semibold mb-3">Assigned to</h3>
-            <div className="flex items-center gap-3">
-              <img
-                src={resolveData?.assignedAgent?.profile || '/members/dummyuser.png'}
-                alt="Ethan"
-                className="w-10 h-10 rounded-full"
-              />
-              <span className="text-gray-800 font-semibold">{`${resolveData?.assignedAgent?.firstName} ${resolveData?.assignedAgent?.lastName}`}</span>
+            <div className="flex flex-wrap gap-4">
+              {/* ✅ Support both assignedAgents array and legacy assignedAgent */}
+              {(() => {
+                const agents = Array.isArray(resolveData?.assignedAgents) &&
+                  resolveData.assignedAgents.length > 0
+                  ? resolveData.assignedAgents
+                  : Array.isArray(resolveData?.assignedAgent) &&
+                    resolveData.assignedAgent.length > 0
+                    ? resolveData.assignedAgent
+                    : resolveData?.assignedAgent
+                      ? [resolveData.assignedAgent]
+                      : [];
+
+                return agents.length > 0 ? (
+                  agents.map((agent, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <img
+                        src={agent?.profile || '/members/dummyuser.png'}
+                        alt="Agent"
+                        className="w-10 h-10 rounded-full"
+                      />
+                      <span className="text-gray-800 font-semibold">{`${agent?.firstName} ${agent?.lastName}`}</span>
+                    </div>
+                  ))
+                ) : (
+                  <span className="text-gray-500">-</span>
+                );
+              })()}
             </div>
           </div>
-          <button onClick={() => setShowAgentModal(true)} className="text-[#237FEA] font-semibold mt-3 md:mt-0 hover:underline">
+          <button
+            onClick={() => setShowAgentModal(true)}
+            className="text-[#237FEA] font-semibold mt-3 md:mt-0 hover:underline"
+          >
             Change
           </button>
         </div>
+
         {showAgentModal && (
           <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-              <h3 className="text-gray-800 font-semibold mb-4">Assign Agent</h3>
+              <h3 className="text-gray-800 font-semibold mb-4">
+                Assign Agent
+              </h3>
               <Select
                 options={agentOptions}
-                placeholder="Select Agent"
+                placeholder="Select Agent(s)"
                 isClearable
                 isSearchable
-                value={agentOptions.find((opt) => opt.value === selectedAgent?.id) || null}
+                isMulti
+                value={agentOptions.filter((opt) =>
+                  selectedAgentIds.includes(opt.value)
+                )}
                 onChange={(selected) => {
-                  setSelectedAgent({
-                    id: selected?.value || null,
-                    name: selected?.label || "",
-                  });
+                  setSelectedAgentIds(
+                    selected ? selected.map((s) => s.value) : []
+                  );
                 }}
                 className="w-full"
                 classNamePrefix="react-select"
@@ -678,23 +877,26 @@ const Feedback = ({ profile }) => {
                 </button>
                 <button
                   className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
-                  onClick={() => handleSave(resolveData.id)}                >
+                  onClick={() => handleSave(resolveData.id)}
+                >
                   Save
                 </button>
               </div>
             </div>
           </div>
         )}
-        {/* Resolve Button */}
+
+        {/* ✅ Resolve button always visible in detail view (status already filtered in list) */}
         <div className="w-full max-w-4xl flex justify-end mt-6">
-          <button onClick={() => handleSave(resolveData.id)} className="bg-[#237FEA] hover:bg-blue-700 text-white font-semibold px-8 py-2 rounded-xl">
+          <button
+            onClick={() => handleSave(resolveData.id)}
+            className="bg-[#237FEA] hover:bg-blue-700 text-white font-semibold px-8 py-2 rounded-xl"
+          >
             Resolve
           </button>
         </div>
       </div>
-
     </>
-
   );
 };
 

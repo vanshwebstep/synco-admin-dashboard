@@ -49,13 +49,13 @@ const StudentProfile = (fetchedData) => {
         }));
 
       if (bookingType === "free") {
-        await updateBookFreeTrialsFamily(currentEditId, filtered ,'leadsbooking');
+        await updateBookFreeTrialsFamily(currentEditId, filtered, 'leadsbooking');
       } else if (bookingType === "waiting list") {
-        await updateWaitingListFamily(currentEditId, filtered,'leadsbooking');
+        await updateWaitingListFamily(currentEditId, filtered, 'leadsbooking');
       } else if (bookingType === "membership") {
-        await updateBookMembershipFamily(currentEditId, filtered ,'leadsbooking');
+        await updateBookMembershipFamily(currentEditId, filtered, 'leadsbooking');
       } else {
-        await updateBookFreeTrialsFamily(currentEditId, filtered,'leadsbooking');
+        await updateBookFreeTrialsFamily(currentEditId, filtered, 'leadsbooking');
       }
 
       // Optional: close edit mode
@@ -175,7 +175,7 @@ const StudentProfile = (fetchedData) => {
     )
   }
   return (
-    <div className="space-y-10 p-6">
+    <div className="space-y-10">
       {/* Add Student */}
       <div className="flex justify-end mb-6">
         {students.length < 3 && (

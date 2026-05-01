@@ -1,23 +1,138 @@
-import { useState } from "react";
+import { useState ,useMemo} from "react";
+import { useClassSchedule } from "../../../contexts/ClassScheduleContent";
+import Select from "react-select";
+import { Check, X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { motion, AnimatePresence, px } from "framer-motion";
 
 const HistoryOfPayments = ({ stateData }) => {
+      const { fetchFindClassID, singleClassSchedulesOnly, loading } = useClassSchedule() || {};
+  
   const [showPopup, setShowPopup] = useState(null);
-  console.log("stateData", stateData);
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [membershipPlan, setMembershipPlan] = useState(null);
+  const [selectedPlanData, setSelectedPlanData] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [isOpenMembership, setIsOpenMembership] = useState(false);
 
+  const [currentDate, setCurrentDate] = useState(new Date());
+  console.log("stateData", stateData);
   // ✅ Safe value helper
+
+  // ✅ Date formatting helper
+
+
+
+
+
+
+  
+
+
+  const singleclassschedule = singleClassSchedulesOnly;
+console.log("singleclassschedule", singleclassschedule);
+  // ✅ HELPERS
   const safeValue = (val, fallback = "-") =>
     val !== null && val !== undefined && val !== "" ? val : fallback;
 
-  // ✅ Date formatting helper
   const formatDate = (dateStr) => {
     if (!dateStr) return "-";
     const date = new Date(dateStr);
-    return isNaN(date.getTime()) ? "-" : date.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    return isNaN(date.getTime())
+      ? "-"
+      : date.toLocaleDateString("en-GB");
   };
+
+  const formatLocalDate = (date) => {
+    return date.toISOString().split("T")[0];
+  };
+
+  const isSameDate = (d1, d2) =>
+    d1 && d2 && formatLocalDate(d1) === formatLocalDate(d2);
+
+  // ✅ PAYMENT PLANS
+
+  const paymentPlanOptions = useMemo(() => {
+    return (
+      singleclassschedule?.venue?.paymentGroups?.[0]?.paymentPlans?.map(plan => ({
+        label: `${plan.title} - ₹${plan.price}`,
+        value: plan.id,
+        all: plan,
+      })) || []
+    );
+  }, [singleclassschedule]);
+
+  // ✅ SESSION DATES
+  const sessionDates = useMemo(() => {
+    return (
+      singleclassschedule?.venue?.termGroups?.flatMap(group =>
+        group.terms.flatMap(term =>
+          term.sessionsMap.map(s => s.sessionDate)
+        )
+      ) || []
+    );
+  }, [singleclassschedule]);
+const sessionDatesSet = new Set(sessionDates);
+
+
+  // ✅ EXCLUSION DATES
+  const exclusionDates = useMemo(() => {
+    return (
+      singleclassschedule?.venue?.termGroups?.flatMap(group =>
+        group.terms.flatMap(term => term.exclusionDates || [])
+      ) || []
+    );
+  }, [singleclassschedule]);
+
+  const exclusionDatesSet = new Set(exclusionDates);
+
+  // 🔥 HANDLERS
+  const handleChangeClick = async () => {
+    const finalClassId = stateData?.students[0]?.classScheduleId;
+    if (!finalClassId) return;
+
+    await fetchFindClassID(finalClassId);
+
+    setMembershipPlan(null);
+    setSelectedDate(null);
+    setIsOpenMembership(false);
+
+    setIsPopupOpen(true);
+  };
+
+  const handlePlanChange = (selected) => {
+    setMembershipPlan(selected);
+    setSelectedPlanData(selected?.all || null);
+    setSelectedDate(null);
+    setIsOpenMembership(false);
+  };
+
+  const handleDateClick = (date) => {
+    setSelectedDate(date);
+    setIsOpenMembership(true);
+  };
+
+  // ✅ CALENDAR LOGIC
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const calendarDays = [];
+
+  for (let i = 0; i < (firstDay === 0 ? 6 : firstDay - 1); i++) {
+    calendarDays.push(null);
+  }
+
+  for (let i = 1; i <= daysInMonth; i++) {
+    calendarDays.push(new Date(year, month, i));
+  }
+
+  const goToPreviousMonth = () =>
+    setCurrentDate(new Date(year, month - 1));
+
+  const goToNextMonth = () =>
+    setCurrentDate(new Date(year, month + 1));
 
   return (
     <div className="p-6 space-y-6">
@@ -68,7 +183,8 @@ const HistoryOfPayments = ({ stateData }) => {
           <span className="font-semibold">
             {safeValue(stateData?.paymentPlan?.price)} GBP
           </span>
-          <button className="text-blue-500 font-medium hover:underline">Change</button>
+          <button   onClick={handleChangeClick}
+ className="text-blue-500 font-medium hover:underline">Change</button>
         </div>
       </div>
 
@@ -175,6 +291,109 @@ const HistoryOfPayments = ({ stateData }) => {
           </tbody>
         </table>
       </div>
+   {isPopupOpen && (
+  <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+    <div className="bg-white w-[95%] max-w-4xl h-full overflow-y-auto p-6 rounded-2xl">
+
+      {/* CLOSE BUTTON */}
+      <div className="flex justify-end">
+        <button onClick={() => setIsPopupOpen(false)}>✕</button>
+      </div>
+
+      {/* 🔥 STEP 1: Membership Plan */}
+      <div className="mb-5">
+        <label className="text-base font-semibold">Membership Plan</label>
+        <div className="relative mt-2">
+          <Select
+            options={paymentPlanOptions}
+            value={membershipPlan}
+            onChange={handlePlanChange}
+            placeholder="Choose Plan"
+            classNamePrefix="react-select"
+            isClearable
+          />
+        </div>
+      </div>
+
+      {/* 🔥 STEP 2: Calendar */}
+      {membershipPlan && (
+        <div className="space-y-3 bg-white p-6 rounded-3xl shadow-sm">
+          {/* 👉 YOUR CALENDAR CODE SAME */}
+        </div>
+      )}{membershipPlan && (
+              <div className="bg-white p-6 rounded-3xl shadow-sm">
+
+                {/* HEADER */}
+                <div className="flex justify-center items-center gap-5 mb-4">
+                  <button onClick={goToPreviousMonth}>
+                    <ChevronLeft />
+                  </button>
+
+                  <h2 className="text-xl font-semibold">
+                    {currentDate.toLocaleString("default", { month: "long" })} {year}
+                  </h2>
+
+                  <button onClick={goToNextMonth}>
+                    <ChevronRight />
+                  </button>
+                </div>
+
+                {/* DAYS */}
+                <div className="grid grid-cols-7 text-center text-gray-500 mb-2">
+                  {["M","T","W","T","F","S","S"].map(d => <div key={d}>{d}</div>)}
+                </div>
+
+                {/* DATES */}
+                <div className="grid grid-cols-7 gap-2">
+                  {calendarDays.map((date, i) => {
+                    if (!date) return <div key={i}></div>;
+
+                    const formattedDate = formatLocalDate(date);
+
+                    const isAvailable =
+                      membershipPlan &&
+                      sessionDatesSet.has(formattedDate) &&
+                      !exclusionDatesSet.has(formattedDate);
+
+                    const isSelected = isSameDate(date, selectedDate);
+
+                    return (
+                      <div
+                        key={i}
+                        onClick={() => isAvailable && handleDateClick(date)}
+                        className={`p-2 text-center rounded-full cursor-pointer
+                        ${isAvailable ? "bg-sky-200" : "opacity-30"}
+                        ${isSelected ? "bg-blue-500 text-white" : ""}
+                        `}
+                      >
+                        {date.getDate()}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+
+      {/* 🔥 STEP 3: Pricing Breakdown */}
+      {membershipPlan && selectedDate && (
+        <div className="mt-4">
+          {isOpenMembership && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-white rounded-2xl shadow p-6 space-y-4"
+            >
+              {/* 👉 YOUR FULL PRICING CODE SAME */}
+            </motion.div>
+          )}
+        </div>
+      )}
+
+    </div>
+  </div>
+)}
     </div>
   );
 };

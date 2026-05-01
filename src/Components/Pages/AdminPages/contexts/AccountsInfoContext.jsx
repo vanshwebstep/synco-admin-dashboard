@@ -24,7 +24,7 @@ export const AccountsInfoProvider = ({ children }) => {
     }
 
     try {
-      
+
 
       const headers = {
         "Content-Type": "application/json",
@@ -168,7 +168,7 @@ export const AccountsInfoProvider = ({ children }) => {
     };
 
     try {
-     
+
 
       const response = await fetch(`${API_BASE_URL}/api/admin/birthday-party/booking/update/${data.id}`, requestOptions);
 
@@ -226,7 +226,7 @@ export const AccountsInfoProvider = ({ children }) => {
     };
 
     try {
-    
+
 
       const response = await fetch(`${API_BASE_URL}/api/admin/holiday/booking/update/${data.id}`, requestOptions);
 
@@ -555,7 +555,7 @@ export const AccountsInfoProvider = ({ children }) => {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/feedback/list`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/feedback/parent`, {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });

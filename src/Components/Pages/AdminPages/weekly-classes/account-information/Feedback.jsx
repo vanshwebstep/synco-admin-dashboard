@@ -10,31 +10,39 @@ import Select from "react-select";
 import { showSuccess, showError, showWarning } from '../../../../../utils/swalHelper';
 
 import { useMemo } from "react";
-const Feedback = () => {
+const Feedback = ({ profile }) => {
   const { checkPermission } = usePermission();
   const [openResolve, setOpenResolve] = useState(null);
   const [resolveData, setResolveData] = useState('');
   const [agentAndClassesData, setAgentAndClassesData] = useState('');
   const token = localStorage.getItem("adminToken");
   const [showAgentModal, setShowAgentModal] = useState(false);
-  const [selectedAgent, setSelectedAgent] = useState({
-    id: resolveData?.assignedAgent?.id || null,
-    name: resolveData?.assignedAgent
-      ? `${resolveData.assignedAgent.firstName} ${resolveData.assignedAgent.lastName}`
-      : "",
-  });
+  const [selectedAgentIds, setSelectedAgentIds] = useState([]);
   const [feedbackData, setFeedbackData] = useState([]);
   const [createLoading, setCreateLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     className: "",
-    agentId: null,
+    agentIds: [],
     classScheduleId: null,
     feedbackType: "",
     category: "",
     notes: "",
     agent: "",
   });
+
+  const [categories, setCategories] = useState([
+    { value: "Behavior", label: "Behavior" },
+    { value: "Attendance", label: "Attendance" },
+  ]);
+
+  const categoryOptions = useMemo(() => [
+    ...categories,
+    { value: "add_new", label: "+ Add Category" }
+  ], [categories]);
+
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
   const [searchParams] = useSearchParams();
   const serviceType = searchParams.get("serviceType");
   const bookingId = searchParams.get("id");
@@ -70,7 +78,7 @@ const Feedback = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/feedback/list`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/feedback/parent/${profile?.parentAdminId || profile?.booking?.id}`, {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -167,7 +175,7 @@ const Feedback = () => {
         ? agentAndClassesData?.holidayClassSchedules
         : agentAndClassesData?.classSchedules;
 
-    return (schedules || []).map((cls) => {
+    const options = (schedules || []).map((cls) => {
       // 🔹 Holiday Camp label
       if (serviceType === "holidayCamps") {
         return {
@@ -184,7 +192,62 @@ const Feedback = () => {
         className: cls.className,
       };
     });
-  }, [agentAndClassesData, serviceType]);
+
+    if (profile?.students) {
+      profile.students.forEach((student) => {
+        const clsId = student.classScheduleId || student.classSchedule?.id;
+        const cls = student.classSchedule;
+        if (clsId && !options.some((opt) => opt.value === clsId)) {
+          options.push({
+            value: clsId,
+            label: cls
+              ? `${cls.className} (${cls.startTime} - ${cls.endTime})`
+              : `Class ID: ${clsId}`,
+          });
+        }
+      });
+    }
+
+    const rootClsId = profile?.classScheduleId || profile?.classSchedule?.id;
+    const rootCls = profile?.classSchedule;
+    if (rootClsId && !options.some(opt => opt.value === rootClsId)) {
+      options.push({
+        value: rootClsId,
+        label: rootCls
+          ? `${rootCls.className} (${rootCls.startTime} - ${rootCls.endTime})`
+          : `Class ID: ${rootClsId}`,
+      });
+    }
+
+    return options;
+  }, [agentAndClassesData, serviceType, profile]);
+
+  const studentClassOptions = useMemo(() => {
+    if (!profile?.students) return [];
+    return profile.students.map((student) => {
+      const clsId = student.classScheduleId || student.classSchedule?.id;
+      const cls = student.classSchedule;
+      return {
+        studentId: student.id,
+        studentName: `${student.studentFirstName} ${student.studentLastName}`,
+        classScheduleId: clsId,
+        label: cls
+          ? `${cls.className} (${cls.startTime} - ${cls.endTime})`
+          : `Class ID: ${clsId}`,
+      };
+    }).filter(s => s.classScheduleId);
+  }, [profile]);
+
+  useEffect(() => {
+    if (openForm) {
+      const ids = studentClassOptions.map((s) => s.classScheduleId).filter(Boolean);
+      setFormData((prev) => ({
+        ...prev,
+        classScheduleIds: [...new Set(ids)], // Use array for consistency
+        classScheduleId: ids[0] || null,    // Keep for legacy if needed
+      }));
+    }
+  }, [openForm, studentClassOptions]);
 
 
   const agentOptions = useMemo(() => {
@@ -199,10 +262,12 @@ const Feedback = () => {
     { value: "Negative", label: "Negative" },
   ];
 
-  const categoryOptions = [
-    { value: "Behavior", label: "Behavior" },
-    { value: "Attendance", label: "Attendance" },
-  ];
+  useEffect(() => {
+    if (!openForm) {
+      setIsAddingCategory(false);
+      setNewCategoryName("");
+    }
+  }, [openForm]);
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -212,10 +277,14 @@ const Feedback = () => {
     }));
   };
   const handleSubmit = async () => {
-    const { classScheduleId, feedbackType, category, notes, agentId } = formData;
+    const { classScheduleId, agentIds, feedbackType, category, notes } = formData;
+
+    console.log('serviceType', serviceType)
+
+    const isClassRequired = serviceParam !== "oneToOne" && serviceParam !== "birthdayParty";
 
     // Check for required fields
-    if (!classScheduleId || !feedbackType || !category || !notes || !agentId || !displayServiceType) {
+    if ((isClassRequired && !classScheduleId) || !agentIds || agentIds.length === 0 || !feedbackType || !category || !notes) {
       return showError("Error", "Please fill in all required fields.");
     }
     setCreateLoading(true);
@@ -223,15 +292,16 @@ const Feedback = () => {
     console.log('displayServiceType', displayServiceType);
 
     const payload = {
-      [BOOKING_ID_KEY_MAP[serviceType]]: bookingId,
-      [CLASSSCHEDULE_ID_KEY_MAP[serviceType]]: formData.classScheduleId,
+      [BOOKING_ID_KEY_MAP[serviceParam]]: bookingId,
+      [CLASSSCHEDULE_ID_KEY_MAP[serviceParam]]: formData.classScheduleId,
       serviceType: displayServiceType,
+      classScheduleId: classScheduleId,
       feedbackType: formData.feedbackType,
       category: formData.category,
+      parentAdminId: profile?.parentAdminId || profile?.booking?.id,
       notes: formData.notes,
-      agentAssigned: formData.agentId,
+      agentAssigned: agentIds,
     };
-
     const headers = {
       "Content-Type": "application/json",
     };
@@ -268,7 +338,7 @@ const Feedback = () => {
       await showSuccess("Success!", result.message || "Feedback has been created successfully.");
       setFormData({
         className: "",
-        agentId: null,
+        agentIds: [],
         classScheduleId: null,
         feedbackType: "",
         category: "",
@@ -290,37 +360,14 @@ const Feedback = () => {
       setCreateLoading(false);
     }
   };
-  const handleSaves = async (id) => {
-    if (!selectedAgent.id) {
-      showError("Error", "Please select an agent!");
-      return;
-    }
-
-    const payload = {
-      id: id,
-      agentAssigned: selectedAgent.id,
-    };
-
-    try {
-      // Call your API here
-      // await updateAgent(payload);
-
-      showSuccess("Success", "Agent updated successfully");
-      console.log('payload', payload)
-      // onAgentChange(selectedAgent); // update parent card if needed
-      // setShowAgentModal(false); // close modal
-    } catch (err) {
-      showError("Error", "Something went wrong");
-    }
-  };
   console.log('feedbackData', feedbackData)
 
   const handleSave = async (id, successCallback) => {
     if (!token) return showError("Error", "Token not found. Please login again.");
-    if (!selectedAgent?.id) {
+    if (selectedAgentIds.length === 0) {
       return showWarning(
         "Agent Required",
-        "Please select an agent before saving."
+        "Please select at least one agent before saving."
       );
     }
     const myHeaders = new Headers({
@@ -329,7 +376,7 @@ const Feedback = () => {
     });
 
     const payload = {
-      agentAssigned: selectedAgent?.id,
+      agentAssigned: selectedAgentIds,
     };
 
     const requestOptions = {
@@ -364,6 +411,7 @@ const Feedback = () => {
       fetchFeedback();
       setShowAgentModal(false)
       setOpenResolve(false);
+      setSelectedAgentIds([]);
       setResolveData('');
       // Dynamic callback after success (e.g., refetch data)
       if (typeof successCallback === "function") {
@@ -381,10 +429,11 @@ const Feedback = () => {
 
   useEffect(() => {
     if (openResolve && resolveData?.assignedAgent) {
-      setSelectedAgent({
-        id: resolveData.assignedAgent.id,
-        name: `${resolveData.assignedAgent.firstName} ${resolveData.assignedAgent.lastName}`,
-      });
+      if (Array.isArray(resolveData.assignedAgent)) {
+        setSelectedAgentIds(resolveData.assignedAgent.map(a => a.id));
+      } else {
+        setSelectedAgentIds([resolveData.assignedAgent.id]);
+      }
     }
   }, [openResolve, resolveData]);
   const formatDate = (dateString, withTime = false) => {
@@ -421,7 +470,7 @@ const Feedback = () => {
           { module: "member", action: "create" }) && (
             <button
               onClick={() => setOpenForm(true)}
-              className="bg-[#237FEA] md:absolute right-0 -top-0 flex items-center gap-2 cursor-pointer text-white px-4 py-2 rounded-xl hover:bg-blue-700 text-sm md:text-base font-semibold"
+              className="bg-[#237FEA] md:absolute right-50 top-3 flex items-center gap-2 cursor-pointer text-white px-4 py-2 rounded-xl hover:bg-blue-700 text-sm md:text-base font-semibold"
             >
               <img src="/members/add.png" className="w-5" alt="" />
               Add Feedback
@@ -475,16 +524,20 @@ const Feedback = () => {
                                 {formatDate(user.createdAt, false)}
                               </div>
                             </td>
-                            <td className="p-4" >{user?.feedbackType || '-'}</td>
+                            <td className="p-4 capitalize" >{user?.feedbackType || '-'}</td>
                             <td className="p-4" > {serviceParam === "holidayCamps"
                               ? user?.holidayVenue?.name || "-"
                               : user?.venue?.name || "-"}</td>
-                            <td className="p-4" >{user?.category || '-'}</td>
+                            <td className="p-4 capitalize" >{user?.category || '-'}</td>
                             <td className="p-4" >{user?.notes || '-'}
                             </td>
-                            <td className="p-4" >{user?.assignedAgent
-                              ? `${user.assignedAgent.firstName} ${user.assignedAgent.lastName}`
-                              : "-"}</td>
+                            <td className="p-4" >
+                              {Array.isArray(user?.assignedAgents) && user.assignedAgents.length > 0
+                                ? user.assignedAgents.map(a => `${a.firstName} ${a.lastName}`).join(", ")
+                                : user?.assignedAgent
+                                  ? `${user.assignedAgent.firstName} ${user.assignedAgent.lastName}`
+                                  : "-"}
+                            </td>
                             <td className="p-4">
                               <div className="flex items-center gap-3">
                                 <button className="text-[#EDA600] bg-[#FDF6E5] px-5 rounded-xl p-2">
@@ -494,12 +547,14 @@ const Feedback = () => {
                                     ?.replace(/\b\w/g, (char) => char.toUpperCase())}
                                 </button>
 
-                                <button onClick={() => {
-                                  setOpenResolve(true);
-                                  setResolveData(user)
-                                }} className='bg-[#237FEA] rounded-xl p-2 px-5  text-white'>
-                                  Resolve
-                                </button>
+                                {user.status === "not_resolved" && (
+                                  <button onClick={() => {
+                                    setOpenResolve(true);
+                                    setResolveData(user)
+                                  }} className='bg-[#237FEA] rounded-xl p-2 px-5  text-white'>
+                                    Resolve
+                                  </button>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -536,34 +591,40 @@ const Feedback = () => {
 
               <div className="p-6 space-y-4">
                 {/* Select Class */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Please select the classes you wish to add feedback for
-                  </label>
-
-                  <Select
-                    name="className"
-                    options={classOptions}
-                    placeholder="Select Class"
-                    isSearchable
-                    isClearable
-                    value={
-                      classOptions.find(
-                        (opt) => opt.className === formData.className
-                      ) || null
-                    }
-                    onChange={(selected) => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        className: selected?.className || "",
-                        classScheduleId: selected?.value || null, // optional but useful
-                      }));
-                    }}
-                    className="w-full"
-                    classNamePrefix="react-select"
-                  />
-
-                </div>
+                {serviceParam !== "oneToOne" && serviceParam !== "birthdayParty" && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Classes (prefilled from enrolled students)
+                    </label>
+                    {studentClassOptions.length > 0 ? (
+                      <div className="space-y-2">
+                        {studentClassOptions.map((sc, idx) => (
+                          <div key={sc.studentId || idx}>
+                            <p className="text-xs text-gray-500 mb-1">{sc.studentName}</p>
+                            <Select
+                              options={[{ value: sc.classScheduleId, label: sc.label }]}
+                              value={{ value: sc.classScheduleId, label: sc.label }}
+                              isDisabled={true}
+                              className="w-full"
+                              classNamePrefix="react-select"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <Select
+                        options={classOptions}
+                        placeholder="Select Class"
+                        isSearchable
+                        isClearable
+                        value={classOptions.find(opt => opt.value === formData.classScheduleId) || null}
+                        onChange={(selected) => setFormData(prev => ({ ...prev, classScheduleId: selected?.value || null }))}
+                        className="w-full"
+                        classNamePrefix="react-select"
+                      />
+                    )}
+                  </div>
+                )}
 
                 {/* Feedback Type */}
                 <div>
@@ -597,26 +658,66 @@ const Feedback = () => {
                   <label className="block text-sm font-semibold text-[#282829] mb-1">
                     Category
                   </label>
-                  <Select
-                    name="category"
-                    options={categoryOptions}
-                    placeholder="Select Category"
-                    isClearable
-                    isSearchable
-                    value={
-                      categoryOptions.find(
-                        (opt) => opt.value === formData.category
-                      ) || null
-                    }
-                    onChange={(selected) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        category: selected?.value || "",
-                      }))
-                    }
-                    className="w-full"
-                    classNamePrefix="react-select"
-                  />
+                  {!isAddingCategory ? (
+                    <Select
+                      name="category"
+                      options={categoryOptions}
+                      placeholder="Select Category"
+                      isClearable
+                      isSearchable
+                      value={
+                        categoryOptions.find(
+                          (opt) => opt.value === formData.category
+                        ) || null
+                      }
+                      onChange={(selected) => {
+                        if (selected?.value === "add_new") {
+                          setIsAddingCategory(true);
+                        } else {
+                          setFormData((prev) => ({
+                            ...prev,
+                            category: selected?.value || "",
+                          }));
+                        }
+                      }}
+                      className="w-full"
+                      classNamePrefix="react-select"
+                    />
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        autoFocus
+                        className="w-full border border-[#E2E1E5] rounded-xl p-2 px-3 text-sm h-[38px]"
+                        placeholder="Enter category"
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                      />
+                      <button
+                        onClick={() => {
+                          if (newCategoryName.trim()) {
+                            const newOpt = { value: newCategoryName, label: newCategoryName };
+                            setCategories(prev => [...prev, newOpt]);
+                            setFormData(prev => ({ ...prev, category: newCategoryName }));
+                            setNewCategoryName("");
+                            setIsAddingCategory(false);
+                          }
+                        }}
+                        className="bg-[#237FEA] text-white px-3 rounded-xl text-xs font-semibold"
+                      >
+                        Add
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsAddingCategory(false);
+                          setNewCategoryName("");
+                        }}
+                        className="bg-gray-100 px-3 rounded-xl text-xs font-semibold"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Notes */}
@@ -641,19 +742,15 @@ const Feedback = () => {
                   <Select
                     name="agent"
                     options={agentOptions}
-                    placeholder="Select Agent"
+                    placeholder="Select Agent(s)"
                     isClearable
                     isSearchable
-                    value={
-                      agentOptions.find(
-                        (opt) => opt.value === formData.agentId
-                      ) || null
-                    }
+                    isMulti
+                    value={agentOptions.filter(opt => formData.agentIds.includes(opt.value))}
                     onChange={(selected) => {
                       setFormData((prev) => ({
                         ...prev,
-                        agentId: selected?.value || null,
-                        agentName: selected?.label || "",
+                        agentIds: selected ? selected.map(s => s.value) : [],
                       }));
                     }}
                     className="w-full"
@@ -667,7 +764,7 @@ const Feedback = () => {
                     onClick={() => {
                       setFormData({
                         className: "",
-                        agentId: null,
+                        agentIds: [],
                         classScheduleId: null,
                         feedbackType: "",
                         category: "",
@@ -721,8 +818,14 @@ const Feedback = () => {
           {/* Feedback Info Table */}
           <div className="divide-y divide-gray-200">
             <div className="flex justify-between py-3 text-sm md:text-base">
-              <span className="text-gray-500">Agent</span>
-              <span className="text-gray-800 font-semibold">{`${resolveData?.assignedAgent?.firstName} ${resolveData?.assignedAgent?.lastName}`}</span>
+              <span className="text-gray-500">Agent(s)</span>
+              <span className="text-gray-800 font-semibold text-right max-w-[60%]">
+                {Array.isArray(resolveData?.assignedAgent)
+                  ? resolveData.assignedAgent.map(a => `${a.firstName} ${a.lastName}`).join(", ")
+                  : resolveData?.assignedAgent
+                    ? `${resolveData.assignedAgent.firstName} ${resolveData.assignedAgent.lastName}`
+                    : "-"}
+              </span>
             </div>
             <div className="flex justify-between py-3 text-sm md:text-base">
               <span className="text-gray-500">Date submitted</span>
@@ -734,14 +837,16 @@ const Feedback = () => {
                 ? resolveData?.holidayVenue?.name || "-"
                 : resolveData?.venue?.name || "-"}</span>
             </div>
-            <div className="flex justify-between py-3 text-sm md:text-base">
-              <span className="text-gray-500">Class details</span>
-              <span className="text-gray-800 font-semibold">
-                {serviceParam === "holidayCamps"
-                  ? `${resolveData?.holidayClassSchedule?.className} (${resolveData?.holidayClassSchedule?.startTime} - ${resolveData?.holidayClassSchedule?.endTime})`
-                  : `${resolveData?.classSchedule?.className} (${resolveData?.classSchedule?.day} • ${resolveData?.classSchedule?.startTime} - ${resolveData?.classSchedule?.endTime})`}
-              </span>
-            </div>
+            {serviceParam !== "oneToOne" && serviceParam !== "birthdayParty" && (
+              <div className="flex justify-between py-3 text-sm md:text-base">
+                <span className="text-gray-500">Class details</span>
+                <span className="text-gray-800 font-semibold">
+                  {serviceParam === "holidayCamps"
+                    ? `${resolveData?.holidayClassSchedule?.className} (${resolveData?.holidayClassSchedule?.startTime} - ${resolveData?.holidayClassSchedule?.endTime})`
+                    : `${resolveData?.classSchedule?.className} (${resolveData?.classSchedule?.day} • ${resolveData?.classSchedule?.startTime} - ${resolveData?.classSchedule?.endTime})`}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between py-3 text-sm md:text-base">
               <span className="text-gray-500">Feedback type</span>
               <span className="text-gray-800 font-semibold capitalize">{resolveData?.feedbackType}</span>
@@ -763,13 +868,30 @@ const Feedback = () => {
         <div className="bg-white rounded-2xl w-full max-w-4xl shadow-sm mt-6 p-6 flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
             <h3 className="text-gray-800 font-semibold mb-3">Assigned to</h3>
-            <div className="flex items-center gap-3">
-              <img
-                src={resolveData?.assignedAgent?.profile || '/members/dummyuser.png'}
-                alt="Ethan"
-                className="w-10 h-10 rounded-full"
-              />
-              <span className="text-gray-800 font-semibold">{`${resolveData?.assignedAgent?.firstName} ${resolveData?.assignedAgent?.lastName}`}</span>
+            <div className="flex flex-wrap gap-4">
+              {Array.isArray(resolveData?.assignedAgent) && resolveData.assignedAgent.length > 0 ? (
+                resolveData.assignedAgent.map((agent, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <img
+                      src={agent?.profile || '/members/dummyuser.png'}
+                      alt="Agent"
+                      className="w-10 h-10 rounded-full"
+                    />
+                    <span className="text-gray-800 font-semibold">{`${agent?.firstName} ${agent?.lastName}`}</span>
+                  </div>
+                ))
+              ) : resolveData?.assignedAgent ? (
+                <div className="flex items-center gap-3">
+                  <img
+                    src={resolveData.assignedAgent.profile || '/members/dummyuser.png'}
+                    alt="Agent"
+                    className="w-10 h-10 rounded-full"
+                  />
+                  <span className="text-gray-800 font-semibold">{`${resolveData.assignedAgent.firstName} ${resolveData.assignedAgent.lastName}`}</span>
+                </div>
+              ) : (
+                <span className="text-gray-500">-</span>
+              )}
             </div>
           </div>
           <button onClick={() => setShowAgentModal(true)} className="text-[#237FEA] font-semibold mt-3 md:mt-0 hover:underline">
@@ -782,15 +904,13 @@ const Feedback = () => {
               <h3 className="text-gray-800 font-semibold mb-4">Assign Agent</h3>
               <Select
                 options={agentOptions}
-                placeholder="Select Agent"
+                placeholder="Select Agent(s)"
                 isClearable
                 isSearchable
-                value={agentOptions.find((opt) => opt.value === selectedAgent.id) || null}
+                isMulti
+                value={agentOptions.filter(opt => selectedAgentIds.includes(opt.value))}
                 onChange={(selected) => {
-                  setSelectedAgent({
-                    id: selected?.value || null,
-                    name: selected?.label || "",
-                  });
+                  setSelectedAgentIds(selected ? selected.map(s => s.value) : []);
                 }}
                 className="w-full"
                 classNamePrefix="react-select"

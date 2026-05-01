@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check } from "lucide-react";
@@ -8,12 +7,12 @@ import { usePermission } from '../../Common/permission';
 import { useSearchParams } from "react-router-dom";
 import Select from "react-select";
 import { showError, showLoading, showSuccess } from '../../../../../utils/swalHelper';
+import { useAccountsInfo } from '../../contexts/AccountsInfoContext';
 
 const Feedback = () => {
   const { checkPermission } = usePermission();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-
   // 🔒 FIXED SERVICE TYPE
   const SERVICE_TYPE = "holidayCamps";
   const DISPLAY_SERVICE_TYPE = "holiday camp";
@@ -22,15 +21,12 @@ const Feedback = () => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const token = localStorage.getItem("adminToken");
 
-  const { fetchMembers, loading } = useMembers();
+  const { fetchMembers, loading, data } = useAccountsInfo();
+
   const formatDate = (dateString, withTime = false) => {
     if (!dateString) return "-";
     const date = new Date(dateString);
-    const options = {
-      year: "numeric",
-      month: "short",
-      day: "2-digit",
-    };
+    const options = { year: "numeric", month: "short", day: "2-digit" };
     if (withTime) {
       return (
         date.toLocaleDateString("en-US", options) +
@@ -40,79 +36,62 @@ const Feedback = () => {
     }
     return date.toLocaleDateString("en-US", options);
   };
+
   // ---------------- STATES ----------------
   const [feedbackData, setFeedbackData] = useState([]);
   const [agentAndClassesData, setAgentAndClassesData] = useState({});
   const [createLoading, setCreateLoading] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [resolveData, setResolveData] = useState('');
-
-  const [selectedAgent, setSelectedAgent] = useState({
-    id: resolveData?.assignedAgent?.id || null,
-    name: resolveData?.assignedAgent
-      ? `${resolveData.assignedAgent.firstName} ${resolveData.assignedAgent.lastName}`
-      : "",
-  }); const [showAgentModal, setShowAgentModal] = useState(false);
+  const [selectedAgentIds, setSelectedAgentIds] = useState([]);
+  const [showAgentModal, setShowAgentModal] = useState(false);
   const [openResolve, setOpenResolve] = useState(false);
 
   const [formData, setFormData] = useState({
-    holidayClassScheduleId: null,
-    agentId: null,
+    holidayClassScheduleIds: [],
+    agentIds: [],
     feedbackType: "",
     category: "",
     notes: "",
   });
 
+  const [categories, setCategories] = useState([
+    { value: "Behavior", label: "Behavior" },
+    { value: "Attendance", label: "Attendance" },
+  ]);
+  const categoryOptions = useMemo(() => [
+    ...categories,
+    { value: "add_new", label: "+ Add Category" },
+  ], [categories]);
+
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
   const [selectedUserIds, setSelectedUserIds] = useState([]);
-
-
-
 
   // ---------------- FETCH FEEDBACK ----------------
   const fetchFeedback = useCallback(async () => {
     if (!token) return;
-
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/admin/feedback/list`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
+      const response = await fetch(`${API_BASE_URL}/api/admin/feedback/parent/${data?.parentAdminId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const result = await response.json();
-
-      if (!result?.status) {
-        showError("Error", result.message);
-        return;
-      }
-
-      // 🎯 ONLY BIRTHDAY PARTY DATA
+      if (!result?.status) { showError("Error", result.message); return; }
       setFeedbackData(result.data?.[DISPLAY_SERVICE_TYPE] || []);
     } catch (err) {
       showError("Error", err.message);
     }
   }, []);
 
-  // ---------------- FETCH AGENTS & CLASSES ----------------
+  // ---------------- FETCH AGENTS & CLASSES (holiday-specific endpoint) ----------------
   const fetchAgentAndClasses = useCallback(async () => {
     if (!token) return;
-
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/admin/feedback/agent-holiday-classes/list`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
+      const response = await fetch(`${API_BASE_URL}/api/admin/feedback/agent-holiday-classes/list`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const result = await response.json();
-
-      if (!result?.status) {
-        showError("Error", result.message);
-        return;
-      }
-
+      if (!result?.status) { showError("Error", result.message); return; }
       setAgentAndClassesData(result.data || {});
     } catch (err) {
       showError("Error", err.message);
@@ -122,14 +101,53 @@ const Feedback = () => {
   // ---------------- EFFECT ----------------
   useEffect(() => {
     const load = async () => {
-      await fetchMembers();
+      // await fetchMembers();
       await fetchFeedback();
       await fetchAgentAndClasses();
     };
     load();
-  }, [fetchMembers, fetchFeedback, fetchAgentAndClasses]);
+  }, [fetchFeedback, fetchAgentAndClasses]);
 
-  // ---------------- OPTIONS ----------------serviceParam
+
+  console.log('data', data)
+  useEffect(() => {
+    if (!openForm) {
+      setIsAddingCategory(false);
+      setNewCategoryName("");
+    }
+  }, [openForm]);
+
+
+
+
+
+  // ---------------- OPTIONS ----------------
+  const studentClassOptions = useMemo(() => {
+    if (!data) return [];
+    const students = data?.students || [];
+
+    return students.map((student) => {
+      const cls = student.holidayClassSchedules;
+      const clsId = cls?.id;
+
+      return {
+        studentId: student.id || Math.random(),
+        studentName: `${student.studentFirstName} ${student.studentLastName}`,
+        holidayClassScheduleId: clsId,
+        label: cls
+          ? `${cls.className} (${cls.startTime} - ${cls.endTime})`
+          : `No class assigned`,
+      };
+    }).filter(s => s.holidayClassScheduleId);
+  }, [data]);
+
+  useEffect(() => {
+    if (openForm) {
+      const ids = studentClassOptions.map((s) => s.holidayClassScheduleId).filter(Boolean);
+      setFormData((prev) => ({ ...prev, holidayClassScheduleIds: [...new Set(ids)] }));
+    }
+  }, [openForm, studentClassOptions]);
+
   const classOptions = useMemo(() => {
     return (agentAndClassesData?.holidayClassSchedules || []).map((cls) => ({
       value: cls.id,
@@ -144,184 +162,149 @@ const Feedback = () => {
       label: `${agent.firstName} ${agent.lastName}`,
     }));
   }, [agentAndClassesData]);
+
   const feedbackTypeOptions = [
     { value: "Positive", label: "Positive" },
     { value: "Negative", label: "Negative" },
   ];
 
-  const categoryOptions = [
-    { value: "Behavior", label: "Behavior" },
-    { value: "Attendance", label: "Attendance" },
-  ];
   // ---------------- HANDLERS ----------------
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
   const toggleCheckbox = (userId) => {
     setSelectedUserIds((prev) =>
-      prev.includes(userId)
-        ? prev.filter((id) => id !== userId)
-        : [...prev, userId]
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
     );
   };
+
   const isAllSelected = feedbackData.length > 0 && selectedUserIds.length === feedbackData.length;
 
   const toggleSelectAll = () => {
     if (isAllSelected) {
       setSelectedUserIds([]);
     } else {
-      const allIds = feedbackData.map((user) => user.id);
-      setSelectedUserIds(allIds);
+      setSelectedUserIds(feedbackData.map((user) => user.id));
     }
   };
+
   // ---------------- CREATE FEEDBACK ----------------
   const handleSubmit = async () => {
-    const { holidayClassScheduleId, agentId, feedbackType, category, notes } = formData;
+    const { holidayClassScheduleIds, agentIds, feedbackType, category, notes } = formData;
 
-    if (!holidayClassScheduleId || !agentId || !feedbackType || !category || !notes) {
+    if (!holidayClassScheduleIds?.length || !agentIds?.length || !feedbackType || !category || !notes) {
       return showError("Error", "All fields are required");
     }
-    // holidayClassScheduleId
+
     const payload = {
       holidayBookingId: bookingId,
-      holidayClassScheduleId,
+      parentAdminId: data?.parentAdminId,
+      holidayClassScheduleId: holidayClassScheduleIds[0],
       serviceType: DISPLAY_SERVICE_TYPE,
       feedbackType,
       category,
       notes,
-      agentAssigned: agentId,
+      agentAssigned: agentIds,
     };
 
 
-
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/admin/feedback/create`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        }
-      );
-
+      const response = await fetch(`${API_BASE_URL}/api/admin/feedback/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      });
       const result = await response.json();
       if (!response.ok) throw new Error(result.message);
-
       showSuccess("Success", result.message);
       setOpenForm(false);
-      setFormData({
-        holidayClassScheduleId: null,
-        agentId: null,
-        feedbackType: "",
-        category: "",
-        notes: "",
-      });
-
+      setFormData({ holidayClassScheduleIds: [], agentIds: [], feedbackType: "", category: "", notes: "" });
       fetchFeedback();
     } catch (err) {
       showError("Error", err.message);
     }
   };
+
+  // ---------------- RESOLVE / SAVE ----------------
   const handleSave = async (id, successCallback) => {
     if (!token) return showError("Error", "Token not found. Please login again.");
-    if (!selectedAgent?.id) {
+    if (selectedAgentIds.length === 0) {
       return showError("Agent Required", "Please select an agent before saving.");
-
     }
-    const myHeaders = new Headers({
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`,
-    });
 
-    const payload = {
-      agentAssigned: selectedAgent?.id,
-    };
-
-    const requestOptions = {
-      method: "PUT",
-      headers: myHeaders,
-      body: JSON.stringify(payload),
-      redirect: "follow",
-    };
+    const payload = { agentAssigned: selectedAgentIds };
 
     try {
-      // Show loading
       setCreateLoading(true);
-
-      const response = await fetch(`${API_BASE_URL}/api/admin/feedback/resolve/${id}`, requestOptions);
-
+      const response = await fetch(`${API_BASE_URL}/api/admin/feedback/resolve/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+        redirect: "follow",
+      });
       const result = await response.json();
+      if (!response.ok) throw new Error(result?.message || "Something went wrong");
 
-      if (!response.ok) {
-        throw new Error(result?.message || "Something went wrong");
-      }
-
-      // Show success message from API response
       showSuccess("Updated!", result?.message || "Information updated successfully.");
-
       fetchFeedback();
-      setShowAgentModal(false)
+      setShowAgentModal(false);
       setOpenResolve(false);
-      setSelectedAgent(null)
+      setSelectedAgentIds([]);
       setResolveData('');
-      // Dynamic callback after success (e.g., refetch data)
-      if (typeof successCallback === "function") {
-        successCallback(result);
-      }
-
+      if (typeof successCallback === "function") successCallback(result);
       return result;
     } catch (error) {
-
       console.error(error);
       showError("Error", error.message || "Something went wrong while updating.");
-
     } finally {
       setCreateLoading(false);
     }
   };
 
+  // ✅ Prefill agents array on resolve open
   useEffect(() => {
-    if (openResolve && resolveData?.assignedAgent) {
-      setSelectedAgent({
-        id: resolveData.assignedAgent.id,
-        name: `${resolveData.assignedAgent.firstName} ${resolveData.assignedAgent.lastName}`,
-      });
+    if (openResolve && resolveData) {
+      if (Array.isArray(resolveData.assignedAgents) && resolveData.assignedAgents.length > 0) {
+        setSelectedAgentIds(resolveData.assignedAgents.map((a) => a.id));
+      } else if (Array.isArray(resolveData.assignedAgent) && resolveData.assignedAgent.length > 0) {
+        setSelectedAgentIds(resolveData.assignedAgent.map((a) => a.id));
+      } else if (resolveData.assignedAgent?.id) {
+        setSelectedAgentIds([resolveData.assignedAgent.id]);
+      } else {
+        setSelectedAgentIds([]);
+      }
     }
   }, [openResolve, resolveData]);
 
+  if (loading) return <Loader />;
 
-
-  if (loading) {
-    return (
-      <>
-        <Loader />
-      </>
-    )
-  }
+  // Helper: normalise agents from any row
+  const getAgents = (row) => {
+    if (Array.isArray(row?.assignedAgents) && row.assignedAgents.length > 0) return row.assignedAgents;
+    if (Array.isArray(row?.assignedAgent) && row.assignedAgent.length > 0) return row.assignedAgent;
+    if (row?.assignedAgent) return [row.assignedAgent];
+    return [];
+  };
 
   return (
     <>
+      {/* ===== LIST VIEW ===== */}
       <div className={`pt-1 bg-gray-50 min-h-screen md:px-4 ${openResolve ? 'hidden' : 'block'}`}>
-        {checkPermission(
-          { module: "member", action: "create" }) && (
-            <button
-              onClick={() => setOpenForm(true)}
-              className="bg-[#237FEA] md:absolute right-0 -top-0 flex items-center gap-2 cursor-pointer text-white px-4 py-2 rounded-xl hover:bg-blue-700 text-sm md:text-base font-semibold"
-            >
-              <img src="/members/add.png" className="w-5" alt="" />
-              Add Feedback
-            </button>
-          )}
+        {checkPermission({ module: "member", action: "create" }) && (
+          <button
+            onClick={() => setOpenForm(true)}
+            className="bg-[#237FEA] md:absolute right-50 top-3 flex items-center gap-2 cursor-pointer text-white px-4 py-2 rounded-xl hover:bg-blue-700 text-sm md:text-base font-semibold"
+          >
+            <img src="/members/add.png" className="w-5" alt="" />
+            Add Feedback
+          </button>
+        )}
 
         {checkPermission({ module: "account-information", action: "view-listing" }) ? (
           <div className="md:flex md:gap-6 md:mt-0 mt-5">
-
-            <div className={`transition-all duration-300 w-full`}>
-
+            <div className="transition-all duration-300 w-full">
               {feedbackData.length > 0 ? (
                 <div className="overflow-auto rounded-2xl bg-white shadow-sm">
                   <table className="min-w-full text-sm">
@@ -335,7 +318,7 @@ const Feedback = () => {
                             >
                               {isAllSelected && <Check size={16} strokeWidth={3} className="text-gray-500" />}
                             </button>
-                            Date Submmited
+                            Date Submitted
                           </div>
                         </th>
                         <th className="p-4">Type of Feedback</th>
@@ -346,10 +329,10 @@ const Feedback = () => {
                         <th className="p-4">Status</th>
                       </tr>
                     </thead>
-
                     <tbody>
                       {feedbackData.map((user, idx) => {
                         const isChecked = selectedUserIds.includes(user.id);
+                        const agents = getAgents(user);
                         return (
                           <tr key={idx} className="border-t font-semibold text-[#282829] border-[#EFEEF2] hover:bg-gray-50">
                             <td className="p-4 cursor-pointer">
@@ -360,33 +343,33 @@ const Feedback = () => {
                                 >
                                   {isChecked && <Check size={16} strokeWidth={3} className="text-gray-500" />}
                                 </button>
-
                                 {formatDate(user.createdAt, false)}
                               </div>
                             </td>
-                            <td className="p-4" >{user?.feedbackType || '-'}</td>
-                            <td className="p-4" >{user?.holidayVenue?.name || '-'}</td>
-                            <td className="p-4" >{user?.category || '-'}</td>
-                            <td className="p-4" >{user?.notes || '-'}
+                            <td className="p-4 capitalize">{user?.feedbackType || '-'}</td>
+                            <td className="p-4">{user?.holidayVenue?.name || '-'}</td>
+                            <td className="p-4 capitalize">{user?.category || '-'}</td>
+                            <td className="p-4">{user?.notes || '-'}</td>
+                            {/* ✅ agents array */}
+                            <td className="p-4">
+                              {agents.length > 0
+                                ? agents.map((a) => `${a.firstName} ${a.lastName}`).join(", ")
+                                : "-"}
                             </td>
-                            <td className="p-4" >{user?.assignedAgent
-                              ? `${user.assignedAgent.firstName} ${user.assignedAgent.lastName}`
-                              : "-"}</td>
                             <td className="p-4">
                               <div className="flex items-center gap-3">
                                 <button className="text-[#EDA600] bg-[#FDF6E5] px-5 rounded-xl p-2">
-                                  {user.status
-                                    ?.replace(/_/g, " ")
-                                    ?.toLowerCase()
-                                    ?.replace(/\b\w/g, (char) => char.toUpperCase())}
+                                  {user.status?.replace(/_/g, " ")?.toLowerCase()?.replace(/\b\w/g, (c) => c.toUpperCase())}
                                 </button>
-
-                                <button onClick={() => {
-                                  setOpenResolve(true);
-                                  setResolveData(user)
-                                }} className='bg-[#237FEA] rounded-xl p-2 px-5  text-white'>
-                                  Resolve
-                                </button>
+                                {/* ✅ Resolve only when not_resolved */}
+                                {(user.status === "not_resolved" || user.status === "not_resolve") && (
+                                  <button
+                                    onClick={() => { setOpenResolve(true); setResolveData(user); }}
+                                    className="bg-[#237FEA] rounded-xl p-2 px-5 text-white"
+                                  >
+                                    Resolve
+                                  </button>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -399,116 +382,118 @@ const Feedback = () => {
                 <p className="text-center p-4 border-dotted border rounded-md bg-white">No Data Found</p>
               )}
             </div>
-
-
           </div>
         ) : (
-          <p className="text-center p-6 text-red-500 font-semibold">
-            Not Authorized
-          </p>
+          <p className="text-center p-6 text-red-500 font-semibold">Not Authorized</p>
         )}
 
+        {/* ===== ADD FEEDBACK MODAL ===== */}
         {openForm && (
           <div className="fixed inset-0 bg-[#00000047] bg-opacity-40 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl w-[95%] md:w-[420px] md:max-h-[90vh] overflow-auto shadow-lg relative">
               <div className="flex relative justify-center items-center border-b border-[#E2E1E5] px-6 py-4">
                 <h2 className="text-lg font-semibold text-gray-800">Add Feedback</h2>
-                <button
-                  onClick={() => setOpenForm(false)}
-                  className="text-gray-500 absolute left-5 top-4  hover:text-gray-800 text-xl"
-                >
-                  ×
-                </button>
+                <button onClick={() => setOpenForm(false)} className="text-gray-500 absolute left-5 top-4 hover:text-gray-800 text-xl">×</button>
               </div>
 
               <div className="p-6 space-y-4">
-                {/* Select Class */}
+                {/* Select Holiday Class */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Please select the classes you wish to add feedback for
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Classes (prefilled from enrolled students)
                   </label>
-
-                  <Select
-                    options={classOptions}
-                    placeholder="Select Class"
-                    isSearchable
-                    isClearable
-                    value={
-                      classOptions.find(
-                        (opt) => opt.value === formData.holidayClassScheduleId
-                      ) || null
-                    }
-                    onChange={(selected) => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        holidayClassScheduleId: selected?.value || null,
-                      }));
-                    }}
-                    className="w-full"
-                    classNamePrefix="react-select"
-                  />
-
+                  {studentClassOptions.length > 0 ? (
+                    <div className="space-y-2">
+                      {studentClassOptions.map((sc, idx) => (
+                        <div key={sc.studentId || idx}>
+                          <p className="text-xs text-gray-500 mb-1">{sc.studentName}</p>
+                          <Select
+                            options={[{ value: sc.holidayClassScheduleId, label: sc.label }]}
+                            value={{ value: sc.holidayClassScheduleId, label: sc.label }}
+                            isDisabled={true}
+                            className="w-full"
+                            classNamePrefix="react-select"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-400 italic">No students found for this booking.</p>
+                  )}
                 </div>
 
                 {/* Feedback Type */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Feedback type
-                  </label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Feedback type</label>
                   <Select
                     name="feedbackType"
                     options={feedbackTypeOptions}
                     placeholder="Select Type"
                     isClearable
                     isSearchable
-                    value={
-                      feedbackTypeOptions.find(
-                        (opt) => opt.value === formData.feedbackType
-                      ) || null
-                    }
+                    value={feedbackTypeOptions.find((opt) => opt.value === formData.feedbackType) || null}
                     onChange={(selected) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        feedbackType: selected?.value || "",
-                      }))
+                      setFormData((prev) => ({ ...prev, feedbackType: selected?.value || "" }))
                     }
                     className="w-full"
                     classNamePrefix="react-select"
                   />
                 </div>
 
-                {/* Category */}
+                {/* ✅ Category with Add New */}
                 <div>
-                  <label className="block text-sm font-semibold text-[#282829] mb-1">
-                    Category
-                  </label>
-                  <Select
-                    name="category"
-                    options={categoryOptions}
-                    placeholder="Select Category"
-                    isClearable
-                    isSearchable
-                    value={
-                      categoryOptions.find(
-                        (opt) => opt.value === formData.category
-                      ) || null
-                    }
-                    onChange={(selected) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        category: selected?.value || "",
-                      }))
-                    }
-                    className="w-full"
-                    classNamePrefix="react-select"
-                  />
+                  <label className="block text-sm font-semibold text-[#282829] mb-1">Category</label>
+                  {!isAddingCategory ? (
+                    <Select
+                      name="category"
+                      options={categoryOptions}
+                      placeholder="Select Category"
+                      isClearable
+                      isSearchable
+                      value={categoryOptions.find((opt) => opt.value === formData.category) || null}
+                      onChange={(selected) => {
+                        if (selected?.value === "add_new") {
+                          setIsAddingCategory(true);
+                        } else {
+                          setFormData((prev) => ({ ...prev, category: selected?.value || "" }));
+                        }
+                      }}
+                      className="w-full"
+                      classNamePrefix="react-select"
+                    />
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        autoFocus
+                        className="w-full border border-[#E2E1E5] rounded-xl p-2 px-3 text-sm h-[38px]"
+                        placeholder="Enter category name"
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                      />
+                      <button
+                        onClick={() => {
+                          if (newCategoryName.trim()) {
+                            const newOpt = { value: newCategoryName, label: newCategoryName };
+                            setCategories((prev) => [...prev, newOpt]);
+                            setFormData((prev) => ({ ...prev, category: newCategoryName }));
+                            setNewCategoryName("");
+                            setIsAddingCategory(false);
+                          }
+                        }}
+                        className="bg-[#237FEA] text-white px-3 rounded-xl text-xs font-semibold"
+                      >Add</button>
+                      <button
+                        onClick={() => { setIsAddingCategory(false); setNewCategoryName(""); }}
+                        className="bg-gray-100 px-3 rounded-xl text-xs font-semibold"
+                      >Cancel</button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Notes */}
                 <div>
-                  <label className="block text-sm font-semibold text-[#282829] mb-1">
-                    Notes
-                  </label>
+                  <label className="block text-sm font-semibold text-[#282829] mb-1">Notes</label>
                   <textarea
                     name="notes"
                     value={formData.notes}
@@ -518,29 +503,23 @@ const Feedback = () => {
                   />
                 </div>
 
-                {/* Assign Agent */}
+                {/* ✅ Assign Agent — multi-select (already was in original) */}
                 <div>
-                  <label className="block text-sm font-semibold text-[#282829] mb-1">
-                    Assign agent
-                  </label>
+                  <label className="block text-sm font-semibold text-[#282829] mb-1">Assign agent</label>
                   <Select
                     name="agent"
                     options={agentOptions}
-                    placeholder="Select Agent"
+                    placeholder="Select Agent(s)"
                     isClearable
                     isSearchable
-                    value={
-                      agentOptions.find(
-                        (opt) => opt.value === formData.agentId
-                      ) || null
-                    }
-                    onChange={(selected) => {
+                    isMulti
+                    value={agentOptions.filter((opt) => formData.agentIds.includes(opt.value))}
+                    onChange={(selected) =>
                       setFormData((prev) => ({
                         ...prev,
-                        agentId: selected?.value || null,
-                        agentName: selected?.label || "",
-                      }));
-                    }}
+                        agentIds: selected ? selected.map((s) => s.value) : [],
+                      }))
+                    }
                     className="w-full"
                     classNamePrefix="react-select"
                   />
@@ -550,64 +529,42 @@ const Feedback = () => {
                 <div className="flex justify-end gap-3 pt-4">
                   <button
                     onClick={() => {
-                      setFormData({
-                        className: "",
-                        agentId: null,
-                        holidayClassScheduleId: null,
-                        feedbackType: "",
-                        category: "",
-                        notes: "",
-                        agent: "",
-                      });
+                      setFormData({ holidayClassScheduleIds: [], agentIds: [], feedbackType: "", category: "", notes: "" });
                       setOpenForm(false);
                     }}
                     className="px-5 py-2 rounded-xl border"
-                  >
-                    Cancel
-                  </button>
-
-
-                  <button
-                    onClick={handleSubmit}
-                    className="px-6 py-2 bg-[#237FEA] text-white rounded-xl"
-                  >
+                  >Cancel</button>
+                  <button onClick={handleSubmit} className="px-6 py-2 bg-[#237FEA] text-white rounded-xl">
                     Submit
                   </button>
                 </div>
               </div>
-
             </div>
           </div>
         )}
-
       </div>
-      <div className={`min-h-screen bg-[#F9F9FB] flex flex-col  p-4 md:p-8 ${openResolve ? 'flex' : 'hidden'}`}>
-        {/* Main Card */}
+
+      {/* ===== RESOLVE DETAIL VIEW ===== */}
+      <div className={`min-h-screen bg-[#F9F9FB] flex flex-col p-4 md:p-8 ${openResolve ? 'flex' : 'hidden'}`}>
         <div className="bg-white rounded-2xl w-full max-w-4xl shadow-sm p-6 md:p-8">
-          {/* Header */}
           <div className="flex items-center gap-2 mb-6">
-
-
             <h2
-              className='text-lg font-semibold text-gray-800 flex items-center gap-2 '
-              onClick={() => {
-                setOpenResolve(false);
-                setResolveData('');
-              }}>
-              <img
-                src="/images/icons/arrow-left.png"
-                alt="Back"
-                className="w-5 h-5 md:w-6 md:h-6"
-              />
+              className="text-lg font-semibold text-gray-800 flex items-center gap-2 cursor-pointer"
+              onClick={() => { setOpenResolve(false); setResolveData(''); }}
+            >
+              <img src="/images/icons/arrow-left.png" alt="Back" className="w-5 h-5 md:w-6 md:h-6" />
               Feedback
             </h2>
           </div>
 
-          {/* Feedback Info Table */}
           <div className="divide-y divide-gray-200">
             <div className="flex justify-between py-3 text-sm md:text-base">
-              <span className="text-gray-500">Agent</span>
-              <span className="text-gray-800 font-semibold">{`${resolveData?.assignedAgent?.firstName} ${resolveData?.assignedAgent?.lastName}`}</span>
+              <span className="text-gray-500">Agent(s)</span>
+              <span className="text-gray-800 font-semibold text-right max-w-[60%]">
+                {getAgents(resolveData).length > 0
+                  ? getAgents(resolveData).map((a) => `${a.firstName} ${a.lastName}`).join(", ")
+                  : "-"}
+              </span>
             </div>
             <div className="flex justify-between py-3 text-sm md:text-base">
               <span className="text-gray-500">Date submitted</span>
@@ -631,9 +588,7 @@ const Feedback = () => {
             </div>
             <div className="flex justify-between py-3 text-sm md:text-base">
               <span className="text-gray-500">Notes</span>
-              <span className="text-gray-800 font-semibold max-w-[60%] text-right">
-                {resolveData?.notes}
-              </span>
+              <span className="text-gray-800 font-semibold max-w-[60%] text-right">{resolveData?.notes}</span>
             </div>
           </div>
         </div>
@@ -642,64 +597,58 @@ const Feedback = () => {
         <div className="bg-white rounded-2xl w-full max-w-4xl shadow-sm mt-6 p-6 flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
             <h3 className="text-gray-800 font-semibold mb-3">Assigned to</h3>
-            <div className="flex items-center gap-3">
-              <img
-                src={resolveData?.assignedAgent?.profile || '/members/dummyuser.png'}
-                alt="Ethan"
-                className="w-10 h-10 rounded-full"
-              />
-              <span className="text-gray-800 font-semibold">{`${resolveData?.assignedAgent?.firstName} ${resolveData?.assignedAgent?.lastName}`}</span>
+            <div className="flex flex-wrap gap-4">
+              {getAgents(resolveData).length > 0 ? (
+                getAgents(resolveData).map((agent, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <img src={agent?.profile || '/members/dummyuser.png'} alt="Agent" className="w-10 h-10 rounded-full" />
+                    <span className="text-gray-800 font-semibold">{`${agent?.firstName} ${agent?.lastName}`}</span>
+                  </div>
+                ))
+              ) : (
+                <span className="text-gray-500">-</span>
+              )}
             </div>
           </div>
           <button onClick={() => setShowAgentModal(true)} className="text-[#237FEA] font-semibold mt-3 md:mt-0 hover:underline">
             Change
           </button>
         </div>
+
         {showAgentModal && (
           <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-6 w-full max-w-md">
               <h3 className="text-gray-800 font-semibold mb-4">Assign Agent</h3>
               <Select
                 options={agentOptions}
-                placeholder="Select Agent"
+                placeholder="Select Agent(s)"
                 isClearable
                 isSearchable
-                value={agentOptions.find((opt) => opt.value === selectedAgent?.id) || null}
-                onChange={(selected) => {
-                  setSelectedAgent({
-                    id: selected?.value || null,
-                    name: selected?.label || "",
-                  });
-                }}
+                isMulti
+                value={agentOptions.filter((opt) => selectedAgentIds.includes(opt.value))}
+                onChange={(selected) => setSelectedAgentIds(selected ? selected.map((s) => s.value) : [])}
                 className="w-full"
                 classNamePrefix="react-select"
               />
               <div className="flex justify-end gap-3 mt-6">
-                <button
-                  className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300"
-                  onClick={() => setShowAgentModal(false)}
-                >
+                <button className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300" onClick={() => setShowAgentModal(false)}>
                   Cancel
                 </button>
-                <button
-                  className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
-                  onClick={() => handleSave(resolveData.id)}                >
+                <button className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700" onClick={() => handleSave(resolveData.id)}>
                   Save
                 </button>
               </div>
             </div>
           </div>
         )}
-        {/* Resolve Button */}
+
         <div className="w-full max-w-4xl flex justify-end mt-6">
           <button onClick={() => handleSave(resolveData.id)} className="bg-[#237FEA] hover:bg-blue-700 text-white font-semibold px-8 py-2 rounded-xl">
             Resolve
           </button>
         </div>
       </div>
-
     </>
-
   );
 };
 

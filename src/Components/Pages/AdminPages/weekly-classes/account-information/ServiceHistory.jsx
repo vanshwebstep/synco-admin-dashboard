@@ -528,7 +528,7 @@ const ServiceHistory = () => {
         </div>
       </div>
 
-      <div className="p-6  min-h-screen">
+      <div className="min-h-screen">
         {[data].map((booking, index) => (
           <BookingCard key={index} booking={booking} />
         ))}

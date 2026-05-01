@@ -97,32 +97,32 @@ const renderField = (label, value) => {
 };
 
 const BookingCard = ({ booking }) => {
-const statusColors = {
-  active: "bg-green-500 text-white",
-  cancelled: "bg-red-500 text-white",
-  hold: "bg-orange-500 text-white",
-  pending: "bg-yellow-500 text-white",
-  "waiting list": "bg-gray-200 text-black",
-};
+  const statusColors = {
+    active: "bg-green-500 text-white",
+    cancelled: "bg-red-500 text-white",
+    hold: "bg-orange-500 text-white",
+    pending: "bg-yellow-500 text-white",
+    "waiting list": "bg-gray-200 text-black",
+  };
 
-console.log('booking',booking)
-const formatPrettyDate = (dateString) => {
-  if (!dateString) return "N/A";
+  console.log('booking', booking)
+  const formatPrettyDate = (dateString) => {
+    if (!dateString) return "N/A";
 
-  const date = new Date(dateString);
+    const date = new Date(dateString);
 
-  const day = date.getDate();
-  const month = date.toLocaleString("en-US", { month: "short" });
-  const year = date.getFullYear();
+    const day = date.getDate();
+    const month = date.toLocaleString("en-US", { month: "short" });
+    const year = date.getFullYear();
 
-  // suffix (st, nd, rd, th)
-  const suffix =
-    day % 10 === 1 && day !== 11 ? "st" :
-    day % 10 === 2 && day !== 12 ? "nd" :
-    day % 10 === 3 && day !== 13 ? "rd" : "th";
+    // suffix (st, nd, rd, th)
+    const suffix =
+      day % 10 === 1 && day !== 11 ? "st" :
+        day % 10 === 2 && day !== 12 ? "nd" :
+          day % 10 === 3 && day !== 13 ? "rd" : "th";
 
-  return `${month} ${day}${suffix} ${year}`;
-};
+    return `${month} ${day}${suffix} ${year}`;
+  };
 
   return (
     <div className="bg-white rounded-2xl shadow p-3 mb-6">
@@ -168,7 +168,7 @@ const formatPrettyDate = (dateString) => {
               {renderField("Booking Source", booking?.paymentPlanId)}
             </>
           )}
-           {booking.serviceType == "weekly class trial" && (
+          {booking.serviceType == "weekly class trial" && (
             <>
               {renderField("Date of trial", booking?.trialDate)}
               {renderField("Students", booking?.totalStudents)}
@@ -176,7 +176,7 @@ const formatPrettyDate = (dateString) => {
               {/* {renderField("ID", booking?.paymentPlanId)} */}
               {renderField("Trial Attempt", booking?.attempt)}
               {renderField("Date Of Booking", formatPrettyDate(booking?.createdAt))}
-              {renderField("Booking Source", booking?.source  )}
+              {renderField("Booking Source", booking?.source)}
             </>
           )}
 
@@ -259,8 +259,8 @@ const formatPrettyDate = (dateString) => {
   );
 };
 
-const ServiceHistory = (bookingData ) => {
-  console.log('bookig ',bookingData )
+const ServiceHistory = (bookingData) => {
+  console.log('bookig ', bookingData)
 
 
   const [bookings, setBookings] = useState([]);
@@ -268,7 +268,7 @@ const ServiceHistory = (bookingData ) => {
   const [showModal, setShowModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const filterModalRef = useRef(null);
-  
+
   useEffect(() => {
     if (bookingData?.leadData?.bookings) {
       setBookings(bookingData?.leadData?.bookings);
@@ -330,7 +330,7 @@ const ServiceHistory = (bookingData ) => {
 
   const month = currentDate.getMonth();
   const year = currentDate.getFullYear();
-console.log('bookings',bookings )
+  console.log('bookings', bookings)
   const getDaysArray = () => {
     const startDay = new Date(year, month, 1).getDay(); // Sunday = 0
     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -351,13 +351,13 @@ console.log('bookings',bookings )
 
   const calendarDays = getDaysArray();
 
-const goToPreviousMonth = () => {
-  setCurrentDate(new Date(year, month - 1, 1));
-};
+  const goToPreviousMonth = () => {
+    setCurrentDate(new Date(year, month - 1, 1));
+  };
 
-const goToNextMonth = () => {
-  setCurrentDate(new Date(year, month + 1, 1)); 
- };
+  const goToNextMonth = () => {
+    setCurrentDate(new Date(year, month + 1, 1));
+  };
   const isSameDate = (d1, d2) =>
     d1 &&
     d2 &&
@@ -465,7 +465,7 @@ const goToNextMonth = () => {
         </div>
       </div>
 
-      <div className="p-6  min-h-screen">
+      <div className="min-h-screen">
         {bookings.map((booking, index) => (
           <BookingCard key={index} booking={booking} />
         ))}
