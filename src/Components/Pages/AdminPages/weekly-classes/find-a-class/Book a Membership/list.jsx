@@ -860,203 +860,203 @@ const List = () => {
     //    2. `starterPackPayment` → Stripe — starter pack charge always routed to HQ
     // ─────────────────────────────────────────────────────────────────────────
 
-      const handleAfterBooking = async (result) => {
-            console.log("Booking successful, now submitting comments if any...", result);
-     const types = {
-                commentType: "paid",
-                serviceType: "weekly class"
-            };
-            try {
-                console.log("Submitting comments tempComments:", tempComments);
-                console.log("Submitting comments parentAdminId:", result?.data);
-                if (tempComments.length > 0 && result?.data?.parentAdminId) {
-    
-                    await submitAllComments(tempComments, result.data.parentAdminId, types);
-                    setTempComments([]);
-                }
-            } catch (err) {
-                console.error("Comment submit failed:", err);
-            }
+    const handleAfterBooking = async (result) => {
+        console.log("Booking successful, now submitting comments if any...", result);
+        const types = {
+            commentType: "paid",
+            serviceType: "weekly class"
         };
-        const handleSubmit = async (finalpayload) => {
-            if (!selectedDate) {
-                showWarning("Membership Date Required", "Please select a membership date before submitting.");
-                return;
+        try {
+            console.log("Submitting comments tempComments:", tempComments);
+            console.log("Submitting comments parentAdminId:", result?.data);
+            if (tempComments.length > 0 && result?.data?.parentAdminId) {
+
+                await submitAllComments(tempComments, result.data.parentAdminId, types);
+                setTempComments([]);
             }
-            console.log('finalpayload', finalpayload)
-            const filteredPayment = Object.fromEntries(
-                Object.entries(payment || {}).filter(
-                    ([, value]) => value !== null && value !== "" && value !== undefined
-                )
-            );
-    
-            // Transform payment fields
-            const transformedPayment = { ...filteredPayment };
-    
-            // Handle expiry date
-            if (transformedPayment.expiryDate || transformedPayment["expiry date"]) {
-                const rawExpiry =
-                    transformedPayment.expiryDate || transformedPayment["expiry date"];
-                transformedPayment.expiryDate = rawExpiry.replace("/", ""); // "12/12" -> "1212"
-                delete transformedPayment["expiry date"]; // remove old key if exists
+        } catch (err) {
+            console.error("Comment submit failed:", err);
+        }
+    };
+    const handleSubmit = async (finalpayload) => {
+        if (!selectedDate) {
+            showWarning("Membership Date Required", "Please select a membership date before submitting.");
+            return;
+        }
+        console.log('finalpayload', finalpayload)
+        const filteredPayment = Object.fromEntries(
+            Object.entries(payment || {}).filter(
+                ([, value]) => value !== null && value !== "" && value !== undefined
+            )
+        );
+
+        // Transform payment fields
+        const transformedPayment = { ...filteredPayment };
+
+        // Handle expiry date
+        if (transformedPayment.expiryDate || transformedPayment["expiry date"]) {
+            const rawExpiry =
+                transformedPayment.expiryDate || transformedPayment["expiry date"];
+            transformedPayment.expiryDate = rawExpiry.replace("/", ""); // "12/12" -> "1212"
+            delete transformedPayment["expiry date"]; // remove old key if exists
+        }
+
+        // Handle PAN
+        if (transformedPayment.pan) {
+            transformedPayment.pan = transformedPayment.pan.replace(/\s+/g, ""); // remove spaces
+        }
+
+
+        const missingClass = students.some(
+            (s, i) => {
+                if (i === 0 || comesFrom) return false;
+                return !s.selectedClassData && !s?.classSchedule?.id;
             }
-    
-            // Handle PAN
-            if (transformedPayment.pan) {
-                transformedPayment.pan = transformedPayment.pan.replace(/\s+/g, ""); // remove spaces
-            }
-    
-    
-            const missingClass = students.some(
-                (s, i) => {
-                    if (i === 0 || comesFrom) return false;
-                    return !s.selectedClassData && !s?.classSchedule?.id;
-                }
-            );
-            console.log('students', students)
-    
-            console.log('missingClass', students)
-    
-            if (missingClass) {
-                showWarning("Class Required", "Please select class for all students");
-                return;
-            }
-            setIsSubmitting(true);
-            const amountToSend = calculateAmount(selectedDate);
-            const proRataToSend = pricingBreakdown.isFullMonthCharge
-                ? 0
-                : pricingBreakdown.finalProRataCost;
-            const paymentData =
-                Object.keys(filteredPayment).length > 0
-                    ? isFranchisee
-                        ? {
-                            paymentType: "bank",
-                            firstName: filteredPayment.firstName,
-                            lastName: filteredPayment.lastName,
-                            email: filteredPayment.email,
-                            account_number: filteredPayment.account_number,
-                            branch_code: filteredPayment.branch_code,
-                            account_holder_name: filteredPayment.account_holder_name,
-                            authorise: filteredPayment.authorise,
-                            price: pricingBreakdown.nextMonthPayment,
-                            proRataAmount: proRataToSend,
-                        }
-                        : {
-                            paymentType: "accesspaysuite",
-                            firstName: filteredPayment.firstName,
-                            lastName: filteredPayment.lastName,
-                            email: filteredPayment.email,
-                            line1: filteredPayment.line1,
-                            city: filteredPayment.city,
-                            postcode: filteredPayment.postalCode,
-                            account_number: filteredPayment.account_number,
-                            branch_code: filteredPayment.branch_code,
-                            account_holder_name: filteredPayment.account_holder_name,
-                            authorise: filteredPayment.authorise,
-                            price: pricingBreakdown.nextMonthPayment,
-                            calculateAmount: amountToSend,
-                            proRataAmount: proRataToSend,
-                        }
-                    : null;
-            const validStudentIds = students
-                .map((s) => s.id)
-                .filter(Boolean);
-    
-            const cleanedParents = parents.map((p) => ({
-                ...p,
-                studentIds: (p.studentIds || []).filter(id =>
-                    validStudentIds.includes(id)
-                )
-            }));
-            const payload = {
-                venueId: singleClassSchedulesOnly?.venue?.id,
-                startDate: selectedDate,
-                totalStudents: students.length,
-                keyInformation: selectedKeyInfo,
-    
-                students: students.map((s, index) => {
-                    const { studentStatus, ...rest } = s; // ❌ remove this field
-    
-                    return {
-                        ...rest,
-                        dateOfBirth: toDateOnly(s.dateOfBirth),
-                        classScheduleId:
-                            index === 0 || comesFrom
-                                ? singleClassSchedulesOnly?.id
-                                : s.selectedClassData?.id,
-                    };
-                }),
-    
-                parents: parents.map(({ id, ...rest }) =>
-                    studentRemoved ? rest : { id, ...rest }  // ✅
-                ),
-                starterPack:
-                    singleClassSchedulesOnly?.venue?.starterPack &&
-                        comesFrom !== "cancellation"
-                        ? Number(membershipPlan?.starterPackPrice || 0)
-                        : 0,
-                discountId: appliedDiscount?.data?.discountId || null,
-                emergency: studentRemoved
-                    ? (({ id, ...rest }) => rest)(emergency)
-                    : emergency,
-    
-                paymentPlanId: membershipPlan?.value ?? null,
-    
-                ...(paymentData && {
-                    payment: {
-                        ...paymentData,
-                        nameOnCard: finalpayload?.cardDetails?.nameOnCard?.trim(),
-                        cardNumber: finalpayload?.cardDetails?.cardNumber?.replace(/\s+/g, ''), // ✅ FIX
-                        expiryDate: finalpayload?.cardDetails?.expiryDate,
-                        cvc: finalpayload?.cardDetails?.cvc,
-                        country: finalpayload?.cardDetails?.country,
-                        zipCode: finalpayload?.cardDetails?.zipCode
+        );
+        console.log('students', students)
+
+        console.log('missingClass', students)
+
+        if (missingClass) {
+            showWarning("Class Required", "Please select class for all students");
+            return;
+        }
+        setIsSubmitting(true);
+        const amountToSend = calculateAmount(selectedDate);
+        const proRataToSend = pricingBreakdown.isFullMonthCharge
+            ? 0
+            : pricingBreakdown.finalProRataCost;
+        const paymentData =
+            Object.keys(filteredPayment).length > 0
+                ? isFranchisee
+                    ? {
+                        paymentType: "bank",
+                        firstName: filteredPayment.firstName,
+                        lastName: filteredPayment.lastName,
+                        email: filteredPayment.email,
+                        account_number: filteredPayment.account_number,
+                        branch_code: filteredPayment.branch_code,
+                        account_holder_name: filteredPayment.account_holder_name,
+                        authorise: filteredPayment.authorise,
+                        price: pricingBreakdown.nextMonthPayment,
+                        proRataAmount: proRataToSend,
                     }
-                }),
-            };
-            console.log('amountToSend', amountToSend);
-            console.log('payload', payload);
-            // setIsSubmitting(false);
-            // return;
-            try {
-                let res;
-    
-                if (comesFrom === "trials") {
-                    res = await createBookMembershipByfreeTrial(payload, TrialData.id);
+                    : {
+                        paymentType: "accesspaysuite",
+                        firstName: filteredPayment.firstName,
+                        lastName: filteredPayment.lastName,
+                        email: filteredPayment.email,
+                        line1: filteredPayment.line1,
+                        city: filteredPayment.city,
+                        postcode: filteredPayment.postalCode,
+                        account_number: filteredPayment.account_number,
+                        branch_code: filteredPayment.branch_code,
+                        account_holder_name: filteredPayment.account_holder_name,
+                        authorise: filteredPayment.authorise,
+                        price: pricingBreakdown.nextMonthPayment,
+                        calculateAmount: amountToSend,
+                        proRataAmount: proRataToSend,
+                    }
+                : null;
+        const validStudentIds = students
+            .map((s) => s.id)
+            .filter(Boolean);
+
+        const cleanedParents = parents.map((p) => ({
+            ...p,
+            studentIds: (p.studentIds || []).filter(id =>
+                validStudentIds.includes(id)
+            )
+        }));
+        const payload = {
+            venueId: singleClassSchedulesOnly?.venue?.id,
+            startDate: selectedDate,
+            totalStudents: students.length,
+            keyInformation: selectedKeyInfo,
+
+            students: students.map((s, index) => {
+                const { studentStatus, ...rest } = s; // ❌ remove this field
+
+                return {
+                    ...rest,
+                    dateOfBirth: toDateOnly(s.dateOfBirth),
+                    classScheduleId:
+                        index === 0 || comesFrom
+                            ? singleClassSchedulesOnly?.id
+                            : s.selectedClassData?.id,
+                };
+            }),
+
+            parents: parents.map(({ id, ...rest }) =>
+                studentRemoved ? rest : { id, ...rest }  // ✅
+            ),
+            starterPack:
+                singleClassSchedulesOnly?.venue?.starterPack &&
+                    comesFrom !== "cancellation"
+                    ? Number(membershipPlan?.starterPackPrice || 0)
+                    : 0,
+            discountId: appliedDiscount?.data?.discountId || null,
+            emergency: studentRemoved
+                ? (({ id, ...rest }) => rest)(emergency)
+                : emergency,
+
+            paymentPlanId: membershipPlan?.value ?? null,
+
+            ...(paymentData && {
+                payment: {
+                    ...paymentData,
+                    nameOnCard: finalpayload?.cardDetails?.nameOnCard?.trim(),
+                    cardNumber: finalpayload?.cardDetails?.cardNumber?.replace(/\s+/g, ''), // ✅ FIX
+                    expiryDate: finalpayload?.cardDetails?.expiryDate,
+                    cvc: finalpayload?.cardDetails?.cvc,
+                    country: finalpayload?.cardDetails?.country,
+                    zipCode: finalpayload?.cardDetails?.zipCode
                 }
-                else if (comesFrom === "waitingList") {
-                    res = await createBookMembershipByWaitingList(payload, TrialData.id);
-                }
-                else if (leadId) {
-                    res = await createBookMembership(payload, leadId);
-                }
-                else if (comesFrom === "cancellation") {
-                    const updatedPayload = {
-                        ...payload,
-                        oldBookingId: TrialData.id,
-                    };
-    
-                    res = await createBookMembershipbyCancellation(updatedPayload);
-                }
-                else {
-                    res = await createBookMembership(payload);
-                }
-    
-                // ✅ SINGLE POINT PE COMMENTS HIT
-                console.log("Booking successful, now submitting comments if any...", res);
-                await handleAfterBooking(res);
-                navigate(`/weekly-classes/all-members/list`);
-            }
-            catch (error) {
-                console.error("Booking submitted. Confirmation may be delayed due to network issues. Check your email shortly", error);
-            } finally {
-                setIsSubmitting(false);
-                setStudentRemoved(false);
-            }
-    
-            // console.log("Final Payload:", JSON.stringify(payload, null, 2));
-            // send to API with fetch/axios
+            }),
         };
+        console.log('amountToSend', amountToSend);
+        console.log('payload', payload);
+        // setIsSubmitting(false);
+        // return;
+        try {
+            let res;
+
+            if (comesFrom === "trials") {
+                res = await createBookMembershipByfreeTrial(payload, TrialData.id);
+            }
+            else if (comesFrom === "waitingList") {
+                res = await createBookMembershipByWaitingList(payload, TrialData.id);
+            }
+            else if (leadId) {
+                res = await createBookMembership(payload, leadId);
+            }
+            else if (comesFrom === "cancellation") {
+                const updatedPayload = {
+                    ...payload,
+                    oldBookingId: TrialData.id,
+                };
+
+                res = await createBookMembershipbyCancellation(updatedPayload);
+            }
+            else {
+                res = await createBookMembership(payload);
+            }
+
+            // ✅ SINGLE POINT PE COMMENTS HIT
+            console.log("Booking successful, now submitting comments if any...", res);
+            await handleAfterBooking(res);
+            navigate(`/weekly-classes/all-members/list`);
+        }
+        catch (error) {
+            console.error("Booking submitted. Confirmation may be delayed due to network issues. Check your email shortly", error);
+        } finally {
+            setIsSubmitting(false);
+            setStudentRemoved(false);
+        }
+
+        // console.log("Final Payload:", JSON.stringify(payload, null, 2));
+        // send to API with fetch/axios
+    };
 
     const handleClick = (val) => {
         if (val === 'AC') { setExpression(''); setResult(''); }
@@ -1163,7 +1163,7 @@ const List = () => {
         }
     }, []);
 
-  const handleFinalSubmit = async () => {
+    const handleFinalSubmit = async () => {
         // setLoading(true);
         try {
             const finalPayload = {

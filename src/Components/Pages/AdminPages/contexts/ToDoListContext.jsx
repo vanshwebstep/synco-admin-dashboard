@@ -126,6 +126,99 @@ export const ToDoListProvider = ({ children }) => {
                 //   .filter(Boolean)
                 //   .forEach(d => queryParams.append("trialDate", d));
 
+                const url = `${API_BASE_URL}/api/admin/to-do-list/parent/list${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+                const response = await fetch(url, {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                const resultRaw = await response.json();
+                const result = resultRaw.data || {};
+                const venues = resultRaw.data || [];
+                const bookedByAdmin = resultRaw || [];
+                setBookedByAdmin(bookedByAdmin);
+                setMyVenues(Array.isArray(venues) ? venues : []);
+                setStatsFreeTrial(resultRaw.data);
+                setToDoList(result);
+            } catch (error) {
+                console.error("Failed to fetch bookFreeTrials:", error);
+            } finally {
+                // if (shouldShowLoader) setLoading(false); // only stop loader if it was started
+            }
+        },
+        []
+    );
+    const fetchToDoAdminList = useCallback(
+        async (
+            studentName = "",
+            venueName = "",
+            status1 = false,
+            status2 = false,
+            otherDateRange = [],
+            dateoftrial = [],
+            forOtherDate = [],
+            BookedBy = []
+
+        ) => {
+            const token = localStorage.getItem("adminToken");
+            if (!token) return;
+            // console.log('status1', status1)
+            // console.log('satus2', status2)
+            // console.log('otherDateRange', otherDateRange)
+            // console.log('dateoftrial', dateoftrial)
+            // console.log('forOtherDate', forOtherDate)
+
+            const shouldShowLoader = studentName || venueName || status1 || status2 || otherDateRange || dateoftrial || forOtherDate;
+            // if (shouldShowLoader) setLoading(true);
+
+            try {
+                const queryParams = new URLSearchParams();
+
+                // Student & Venue filters
+                if (studentName) queryParams.append("studentName", studentName);
+                if (venueName) queryParams.append("venueName", venueName);
+
+                // Status filters
+                if (status1) queryParams.append("status", "attended");
+                if (status2) queryParams.append("status", "not attend");
+                if (BookedBy && Array.isArray(BookedBy) && BookedBy.length > 0) {
+                    BookedBy.forEach(agent => queryParams.append("bookedBy", agent));
+                }
+
+                if (Array.isArray(dateoftrial) && dateoftrial.length === 2) {
+                    const [from, to] = dateoftrial;
+                    if (from && to) {
+                        queryParams.append("dateTrialFrom", formatLocalDate(from));
+                        queryParams.append("dateTrialTo", formatLocalDate(to));
+                    }
+                }
+
+                // 🔹 Handle general (createdAt range)
+                if (Array.isArray(otherDateRange) && otherDateRange.length === 2) {
+                    const [from, to] = otherDateRange;
+                    if (from && to) {
+                        queryParams.append("fromDate", formatLocalDate(from));
+                        queryParams.append("toDate", formatLocalDate(to));
+                    }
+                }
+
+                if (Array.isArray(forOtherDate) && forOtherDate.length === 2) {
+                    const [from, to] = forOtherDate;
+                    if (from && to) {
+                        queryParams.append("fromDate", formatLocalDate(from));
+                        queryParams.append("toDate", formatLocalDate(to));
+                    }
+                }
+                // Trial dates (support array or single value)
+                // const trialDates = Array.isArray(dateoftrial) ? dateoftrial : [dateoftrial];
+                // trialDates
+                //   .filter(Boolean)
+                //   .map(d => formatLocalDate(d))
+                //   .filter(Boolean)
+                //   .forEach(d => queryParams.append("trialDate", d));
+
                 const url = `${API_BASE_URL}/api/admin/to-do-list/list${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
                 const response = await fetch(url, {
                     method: "GET",
@@ -2895,14 +2988,14 @@ export const ToDoListProvider = ({ children }) => {
                 fetchBookMembershipsLoading,
                 ServiceHistoryFulltto,
                 ServiceHistoryAlltto,
-                fetchMembershipSalesLoading, createBookLeads, createBookBirthday, addToWaitingList, setaddToWaitingList, showCancelTrial, setshowCancelTrial
+                fetchMembershipSalesLoading, createBookLeads, createBookBirthday, addToWaitingList, setaddToWaitingList, showCancelTrial, setshowCancelTrial,
+                fetchToDoAdminList,
 
-
-                , fetchToDoList, toDoList,
+                fetchToDoList, toDoList,
                 fetchCommunicationTemplate, fetchCommunicationTemplateById, apiTemplates, setApiTemplates, createToDoList, createCommunicationTemplate, deleteCommunicationTemplate, updateCommunicationTemplate
             }}>
             {children}
-        </ToDoListContext.Provider>
+        </ToDoListContext.Provider >
     );
 };
 

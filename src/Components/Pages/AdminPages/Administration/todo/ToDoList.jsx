@@ -12,71 +12,15 @@ const columns = [
     { id: "completed", label: "Completed", color: "bg-[#1CB72B]", bgColor: "bg-[#1CB72B]" },
 ];
 
-const apiTasks = {
-    "to_do": [
-        {
-            id: 8,
-            title: "fd",
-            description: "hfj",
-            attachments: "[{\"file\":\"data:image/webp;base64,\"}]",
-            createdBy: 335,
-            assignedAdmins: [
-                { id: 12, name: "Jessica", avatar: "/reportsIcons/Avatar.png" },
-                { id: 14, name: "Matt", avatar: "/reportsIcons/Avatar1.png" }
-            ],
-            status: "to_do",
-            priority: "medium",
-            isActive: true,
-            created_at: "2025-12-03T04:50:06.000Z",
-            updated_at: "2025-12-03T04:50:06.000Z"
-        },
-        {
-            id: 9,
-            title: "fd",
-            description: "hfj",
-            attachments: "[{\"file\":\"data:image/webp;base64,\"}]",
-            createdBy: 335,
-            assignedAdmins: [
-                { id: 12, name: "Jessica", avatar: "/reportsIcons/Avatar.png" },
-                { id: 14, name: "Matt", avatar: "/reportsIcons/Avatar1.png" }
-            ],
-            status: "to_do",
-            priority: "medium",
-            isActive: true,
-            created_at: "2025-12-03T04:50:06.000Z",
-            updated_at: "2025-12-03T04:50:06.000Z"
-        }
-    ],
-    "in_progress": [
-        {
-            id: 10,
-            title: "fd",
-            description: "hfj",
-            attachments: "[{\"file\":\"data:image/webp;base64,\"}]",
-            createdBy: 335,
-            assignedAdmins: [
-                { id: 14, name: "Matt", avatar: "/reportsIcons/Avatar1.png" }
-            ],
-            status: "in_progress", // ✅ FIXED (was incorrect in your API sample)
-            priority: "medium",
-            isActive: true,
-            created_at: "2025-12-03T04:50:06.000Z",
-            updated_at: "2025-12-03T04:50:06.000Z"
-        }
-    ]
-};
-
-// Convert to flat array for your board
-
-
 
 
 export default function TodoList() {
 
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-    const { fetchToDoList, toDoList } = useToDoListTemplate();
+    const { fetchToDoList, toDoList, fetchToDoAdminList } = useToDoListTemplate();
     useEffect(() => {
         fetchToDoList();
+        fetchToDoAdminList();
     }, [fetchToDoList]);
     const formatTasks = (data) => {
         return Object.values(data || {}).flat().map(item => ({
@@ -98,7 +42,7 @@ export default function TodoList() {
 
     const tasks = formatTasks(toDoList);
     const [selectedAdmins, setSelectedAdmins] = useState([]);
-    const [selectedPriority, setSelectedPriority] = useState([]);
+    const [selectedPriority, setSelectedPriority] = useState(['high']);
 
     const [openNewTask, setOpenNewTask] = useState(false);
     const [openViewTask, setOpenViewTask] = useState(false);
@@ -164,33 +108,22 @@ export default function TodoList() {
     };
 
 
-    const task = {
-        title: "Task 1 title",
-        description: "Lorem ipsum...",
-        attachments: [],   // or existing files
-        assigned: [
-            { avatar: "/reportsIcons/Avatar1.png", id: 1 },
-            { avatar: "/reportsIcons/Avatar.png", id: 2 }
-        ],
-        createdBy: {
-            name: "Nilio Bagga",
-            avatar: "/reportsIcons/Avatar1.png"
-        },
-        status: "Next",
-        priority: "high",
-        createdAt: "Feb 2, 2023 – 4:30 PM",
-        updatedAt: "Feb 3, 2023 – 2:15 PM"
-    }
+
     const updateTaskStatus = async (id, status) => {
         const token = localStorage.getItem("adminToken");
+
         let mappedStatus = status;
-        if (status === 'in_progress') {
-            mappedStatus = 'in-progress';
+
+        if (status === 'completed') {
+            mappedStatus = 'resolved';
         } else if (status === 'to_do') {
             mappedStatus = 'to-do';
+        } else if (status === 'in_progress') {
+            mappedStatus = 'in_progress';
         }
+
         try {
-            await fetch(`${API_BASE_URL}/api/admin/to-do-list/update-status`, {
+            await fetch(`${API_BASE_URL}/api/admin/to-do-list/parent/update-status`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -198,16 +131,23 @@ export default function TodoList() {
                 },
                 body: JSON.stringify({ id, status: mappedStatus }),
             });
+
             await fetchToDoList();
         } catch (err) {
             console.error("Failed to update status:", err);
         }
     };
 
+    console.log('taskData', taskData);
+
+
+    const resolvedStatus = taskData.filter(task => task.status === 'completed');
+
+    console.log('resolvedStatus', resolvedStatus)
     const updateSortOrder = async (sortOrder) => {
         const token = localStorage.getItem("adminToken");
         try {
-            await fetch(`${API_BASE_URL}/api/admin/to-do-list/update-sort-order`, {
+            await fetch(`${API_BASE_URL}/api/admin/to-do-list/parent/update-sort-order`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -264,37 +204,47 @@ export default function TodoList() {
         if (!result.destination) return;
 
         const { draggableId, destination, source } = result;
-        const updated = [...taskData];
         const taskId = parseInt(draggableId);
 
-        // Find index of dragged task
-        const index = updated.findIndex(t => t.id === taskId);
+        let updatedTaskData = [...taskData];
+        const taskIndex = updatedTaskData.findIndex(t => t.id === taskId);
+        if (taskIndex === -1) return;
+
+        const taskToMove = updatedTaskData[taskIndex];
+        const oldStatus = taskToMove.status;
+        const newStatus = destination.droppableId;
 
         // Detect if column changed → STATUS UPDATE
-        if (source.droppableId !== destination.droppableId) {
-            const newStatus = destination.droppableId;
-
-            // Update UI instantly
-            updated[index] = { ...updated[index], status: newStatus };
-            setTaskData(updated);
+        if (oldStatus !== newStatus) {
+            taskToMove.status = newStatus;
 
             // 🔥 CALL STATUS API
-            await updateTaskStatus(taskId, newStatus);
+            updateTaskStatus(taskId, newStatus);
         }
 
-        // Reordering inside same column or across columns
-        const filtered = updated.filter(t => t.status === destination.droppableId);
+        // Get all tasks in the destination column matching the current tab
+        const isFeedback = taskToMove.type === 'feedback' || taskToMove.category === 'Parent Feedback' || taskToMove.isFeedback;
+        const columnTasks = updatedTaskData.filter(t => {
+            const tIsFeedback = t.type === 'feedback' || t.category === 'Parent Feedback' || t.isFeedback;
+            return t.status === newStatus && (activeTab === "feedback" ? tIsFeedback : !tIsFeedback);
+        });
 
-        // Reorder list
-        const [movedItem] = updated.splice(source.index, 1);
-        updated.splice(destination.index, 0, movedItem);
-        setTaskData(updated);
+        // Reorder list within the specific column
+        const columnTasksWithoutMoved = columnTasks.filter(t => t.id !== taskId);
+        columnTasksWithoutMoved.splice(destination.index, 0, taskToMove);
+
+        // Isolate tasks not belonging to the current column/tab
+        const otherTasks = updatedTaskData.filter(t => {
+            const tIsFeedback = t.type === 'feedback' || t.category === 'Parent Feedback' || t.isFeedback;
+            return !(t.status === newStatus && (activeTab === "feedback" ? tIsFeedback : !tIsFeedback));
+        });
+
+        // Re-assemble global task data
+        const finalData = [...otherTasks, ...columnTasksWithoutMoved];
+        setTaskData(finalData);
 
         // 🔥 CALL SORT ORDER API — send IDs in new order
-        const sortOrder = updated
-            .filter(t => t.status === destination.droppableId)
-            .map(t => t.id);
-
+        const sortOrder = columnTasksWithoutMoved.map(t => t.id);
         if (sortOrder.length > 0) {
             await updateSortOrder(sortOrder);
         }
@@ -424,6 +374,7 @@ function FilterModal({
     setSelectedPriority
 }) {
     const priorities = ["low", "medium", "high"];
+
 
     const toggleAdmin = (id) => {
         setSelectedAdmins(prev =>

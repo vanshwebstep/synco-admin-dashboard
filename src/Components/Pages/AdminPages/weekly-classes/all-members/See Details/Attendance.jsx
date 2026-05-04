@@ -70,15 +70,14 @@ const Attendance = ({ stateData }) => {
 
                 {/* Attendance */}
                 <td className="py-3 px-4">
-<span
-  className={`px-3 py-1 capitalize rounded-md text-xs font-medium ${
-    activeStudent.attendance?.toLowerCase() === "attended"
-      ? "bg-green-100 text-green-600"
-      : activeStudent.attendance?.toLowerCase() === "pending"
-      ? "bg-orange-100 text-orange-600"
-      : "bg-red-100 text-red-500"
-  }`}
->
+                  <span
+                    className={`px-3 py-1 capitalize rounded-md text-xs font-medium ${activeStudent.attendance?.toLowerCase() === "attended"
+                        ? "bg-green-100 text-green-600"
+                        : activeStudent.attendance?.toLowerCase() === "pending"
+                          ? "bg-orange-100 text-orange-600"
+                          : "bg-red-100 text-red-500"
+                      }`}
+                  >
                     {activeStudent.attendance || "Not Recorded"}
                   </span>
                 </td>
