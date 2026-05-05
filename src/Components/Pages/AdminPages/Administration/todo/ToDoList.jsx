@@ -17,24 +17,44 @@ const columns = [
 export default function TodoList() {
 
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-    const { fetchToDoList, toDoList, fetchToDoAdminList } = useToDoListTemplate();
-    useEffect(() => {
-        fetchToDoList();
-        fetchToDoAdminList();
-    }, [fetchToDoList]);
+    const { fetchToDoList, toDoList } = useToDoListTemplate();
+const getServiceTypePath = (serviceType) => {
+    if (!serviceType) return "";
+    const type = serviceType.toLowerCase();
+    if (type === "weekly class membership") return "membership";
+    if (type === "weekly class trial") return "trial";
+    if (type === "holiday camp") return "holiday";
+    if (type === "birthday party") return "birthdayparty";
+    if (type === "one to one") return "onetoone";
+    return type;
+};
+const getBookingId = (item) => {
+    const type = item.serviceType?.toLowerCase();
+    if (type === "weekly class membership") return item.bookingId || null;
+    if (type === "weekly class trial") return item.bookingId || null;
+    if (type === "holiday camp") return item.holidayBookingId || null;
+    if (type === "birthday party") return item.birthdayPartyBookingId || null;
+    if (type === "one to one") return item.oneToOneBookingId || null;
+    return item.bookingId || null;
+};
     const formatTasks = (data) => {
-        return Object.values(data || {}).flat().map(item => ({
-            ...item,
-            type: item.feedbackType ? 'feedback' : (item.type || 'task'),
-            title: item.category || item.title || "Feedback",
-            description: item.notes || item.description || "",
-            assignedAdmins: item.assignedAgents || item.assignedAdmins || [],
-            attachments: item.attachments || [],
-            status: item.status === "not_resolved" ? "to_do" : (item.status === "resolved" ? "completed" : (item.status || "to_do")),
-            parentAccount: item.creator ? { id: item.creator.id, name: `${item.creator.firstName || ''} ${item.creator.lastName || ''}`.trim() } : null,
-            priority: item.priority || "high"
-        }));
-    };
+    return Object.values(data || {}).flat().map(item => ({
+        ...item,
+        type: item.feedbackType ? 'feedback' : (item.type || 'task'),
+        title: item.category || item.title || "Feedback",
+        description: item.notes || item.description || "",
+        assignedAdmins: item.assignedAgents || item.assignedAdmins || [],
+        attachments: item.attachments || [],
+        status: item.status === "not_resolved" ? "to_do" : (item.status === "resolved" ? "completed" : (item.status === "to-do" ? "to_do" : (item.status || "to_do"))),
+        parentAccount: item.creator ? { id: item.creator.id, name: `${item.creator.firstName || ''} ${item.creator.lastName || ''}`.trim() } : null,
+        creator: item.createdByDetails || item.creator || null,
+        priority: item.priority || "high",
+        createdAt: item.created_at || item.createdAt,
+        updatedAt: item.updated_at || item.updatedAt,
+        bookingId:getBookingId(item) || null,        // ✅ add this
+        serviceType: getServiceTypePath(item.serviceType) || null,    // ✅ add this
+    }));
+};
 
     useEffect(() => {
         setTaskData(formatTasks(toDoList));
@@ -78,7 +98,9 @@ export default function TodoList() {
         }, []);
 
 
-
+    useEffect(() => {
+        fetchToDoList(activeTab);
+    }, [fetchToDoList, activeTab]);
     const [admins, setAdmins] = useState(allAdmins);
 
     useEffect(() => {
@@ -122,8 +144,12 @@ export default function TodoList() {
             mappedStatus = 'in_progress';
         }
 
+        const endpoint = activeTab === 'feedback'
+            ? `${API_BASE_URL}/api/admin/to-do-list/parent/update-status`
+            : `${API_BASE_URL}/api/admin/to-do-list/update-status`;
+
         try {
-            await fetch(`${API_BASE_URL}/api/admin/to-do-list/parent/update-status`, {
+            await fetch(endpoint, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -132,7 +158,7 @@ export default function TodoList() {
                 body: JSON.stringify({ id, status: mappedStatus }),
             });
 
-            await fetchToDoList();
+            await fetchToDoList(activeTab);
         } catch (err) {
             console.error("Failed to update status:", err);
         }
@@ -146,8 +172,13 @@ export default function TodoList() {
     console.log('resolvedStatus', resolvedStatus)
     const updateSortOrder = async (sortOrder) => {
         const token = localStorage.getItem("adminToken");
+
+        const endpoint = activeTab === 'feedback'
+            ? `${API_BASE_URL}/api/admin/to-do-list/parent/update-sort-order`
+            : `${API_BASE_URL}/api/admin/to-do-list/update-sort-order`;
+
         try {
-            await fetch(`${API_BASE_URL}/api/admin/to-do-list/parent/update-sort-order`, {
+            await fetch(endpoint, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -155,7 +186,7 @@ export default function TodoList() {
                 },
                 body: JSON.stringify({ sortOrder }),
             });
-            await fetchToDoList();
+            await fetchToDoList(activeTab);
         } catch (err) {
             console.error("Failed to update sort order:", err);
         }
@@ -169,27 +200,28 @@ export default function TodoList() {
             title: task.title,
             description: task.description,
             attachments: task.attachments || [],
-            comment: task.comment || [],
+            comment: task.comment || task.notes || [],
             assigned: (task.assignedAdmins || []).map(a => ({
                 id: a.id,
-                avatar: a.profile || "/defaultAvatar.png",
-                name: a.firstName + " " + a.lastName
+                avatar: a.profile || "/members/dummyuser.png",
+                name: a.name || (a.firstName + " " + (a.lastName || ""))
             })),
             creator: {
                 id: task.creator?.id,
-                name: task.creator?.firstName + " " + task.creator?.lastName
+                name: task.creator?.name || (task.creator?.firstName + " " + (task.creator?.lastName || "")),
+                profile: task.creator?.profile
             },
 
             assignedAdmins: {
-                name: task.creator?.firstName + " " + task.creator?.lastName || "Unknown",
-                avatar: task.creator?.profile || "/defaultAvatar.png"
+                name: task.creator?.name || (task.creator?.firstName + " " + (task.creator?.lastName || "")),
+                avatar: task.creator?.profile || "/members/dummyuser.png"
             },
 
             status: task.status,
             priority: task.priority,
 
-            createdAt: new Date(task.createdAt).toLocaleString(),
-            updatedAt: new Date(task.updatedAt).toLocaleString()
+            createdAt: task.createdAt,
+            updatedAt: task.updatedAt
         };
     };
     const handleOpenViewTask = (rawTask) => {
@@ -348,6 +380,7 @@ export default function TodoList() {
                                 tasks={filteredTasks}
                                 onAddTask={handleOpenNewTask}
                                 onTaskClick={handleOpenViewTask}
+                                activeTab={activeTab}
                             />
                         )
                     })}
@@ -373,7 +406,7 @@ function FilterModal({
     setSelectedAdmins,
     setSelectedPriority
 }) {
-    const priorities = ["low", "medium", "high"];
+    const priorities = ["high","medium","low"];
 
 
     const toggleAdmin = (id) => {
@@ -410,7 +443,7 @@ function FilterModal({
                             onChange={() => toggleAdmin(a.id)}
                             checked={selectedAdmins.includes(a.id)} // ✅ now works
                         />
-                        {a.firstName + " " + a.lastName}
+                        {a.name || (a.firstName + " " + (a.lastName || ""))}
                     </label>
                 ))}
             </div>
@@ -440,7 +473,7 @@ function FilterModal({
 
 
 
-function TaskColumn({ column, tasks, onAddTask, onTaskClick }) {
+function TaskColumn({ column, tasks, onAddTask, onTaskClick, activeTab }) {
     return (
         <Droppable droppableId={column.id}>
             {(provided, snapshot) => (
@@ -466,14 +499,16 @@ function TaskColumn({ column, tasks, onAddTask, onTaskClick }) {
                     </div>
 
                     {/* ADD NEW TASK BUTTON SAME */}
-                    <button
-                        onClick={onAddTask}
-                        className="w-full bg-white flex items-center justify-center gap-2 py-2 border border-gray-300 rounded-xl text-sm text-[#237FEA] hover:bg-gray-50 mb-4"
-                    >
-                        <Plus size={16} />
-                        Add New Task
-                    </button>
+                    {
+                        activeTab !== "feedback" && <button
+                            onClick={onAddTask}
+                            className="w-full bg-white flex items-center justify-center gap-2 py-2 border border-gray-300 rounded-xl text-sm text-[#237FEA] hover:bg-gray-50 mb-4"
+                        >
+                            <Plus size={16} />
+                            Add New Task
+                        </button>
 
+                    }
                     {/* TASKS WITH DRAGGABLE */}
                     <div className="space-y-4 relative">
                         {tasks.length === 0 && !snapshot.isDraggingOver && (
@@ -534,7 +569,7 @@ function TaskCard({ task, onClick }) {
                 </div>
 
                 <h2 className="mt-3 font-semibold capitalize text-[18px]">{task.title}</h2>
-                {isFeedback && <p className="text-sm text-gray-600 capitalize mt-1 line-clamp-2">{task.description}</p>}
+                <p className="text-sm text-gray-600 capitalize mt-1 line-clamp-2">{task.description}</p>
 
 
 
@@ -543,30 +578,39 @@ function TaskCard({ task, onClick }) {
                         <div key={index} className="flex gap-1 items-center">
                             <img
                                 key={index}
-                                src={u.profile}
-                                className="h-9 w-9 rounded-full border-2 border-white"
+                                src={u.profile || "/members/dummyuser.png"}
+                                className="h-9 w-9 rounded-full border-2 border-white object-cover"
                             />
-                            {u.firstName + " " + u.lastName}
+                            <span className="text-sm font-medium">{u.name || (u.firstName + " " + (u.lastName || ""))}</span>
                         </div>
                     ))}
                 </div>
             </div>
 
             <div className="flex justify-between items-center border-t border-[#E2E1E5] text-[16px] p-4 font-semibold text-gray-500 mt-4">
-                <div className="flex items-center gap-1">
-                    {isFeedback && task.parentAccount && (
+                <div className="flex items-center gap-1 justify-between w-full">
+                    {isFeedback && task.parentAccount ? (
                         <div className="mt-3" onClick={(e) => e.stopPropagation()}>
                             <a
-                                href={`/admin/parent-profile/${task.parentAccount.id || task.parentAccount}`}
-                                className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                                href={`/weekly-classes/account-information?id=${task.bookingId}&serviceType=${task.serviceType}`}
+                                className="text-sm  hover:underline flex items-center gap-1"
                             >
                                 <img src="/reportsIcons/share.png" className="w-4" /> Parent: {task.parentAccount.name || task.parentAccount}
                             </a>
                         </div>
+                    ) : (
+                        <a
+
+                            className="text-sm hover:underline flex items-center gap-1"
+                        >
+                            <img src="/reportsIcons/share.png" className="w-4" />  {task.assignedAdmins.length}
+                        </a>
+
                     )}
+                    <span>3 Days Left</span>
 
                 </div>
-                <div>{task.daysLeft} 3 days left</div>
+                {/* <div>{task.daysLeft} 3 days left</div> */}
             </div>
         </div>
     );
@@ -576,7 +620,7 @@ function TaskCard({ task, onClick }) {
 function CreateTaskModal({ members, onClose }) {
     const { adminInfo, setAdminInfo } = useNotification();
 
-    const { fetchToDoList, toDoList, createToDoList } = useToDoListTemplate();
+    const { createToDoList } = useToDoListTemplate();
 
     const memberOptions = members.map(m => ({
         value: m.id,
@@ -584,13 +628,13 @@ function CreateTaskModal({ members, onClose }) {
         profile: m.profile,
         fullData: m
     }));
-    const [priority, setPriority] = useState("low");
+    const [priority, setPriority] = useState("high");
     const [showComment, setShowComment] = useState(false);
 
     const [createdAt] = useState(new Date());
     const [updatedAt, setUpdatedAt] = useState(new Date());
 
-    const priorityOptions = ["low", "medium", "high"];
+    const priorityOptions = ["high","medium","low" ];
 
     const [selectedMembers, setSelectedMembers] = useState([]);
 
@@ -880,9 +924,9 @@ function CreateTaskModal({ members, onClose }) {
                         {/* Status */}
                         <div className="border-b border-[#E2E1E5] pb-6 px-6">
                             <p className="text-[17px] font-semibold mb-2">Status</p>
-                            <span className="mt-1 inline-block bg-blue-100 text-[#237FEA] text-xs px-2 py-1 rounded-md">
+                            {/* <span className="mt-1 inline-block bg-blue-100 text-[#237FEA] text-xs px-2 py-1 rounded-md">
                                 Next
-                            </span>
+                            </span> */}
                         </div>
 
                         {/* Priority */}
@@ -1147,7 +1191,7 @@ function ViewTaskModal({ task, open, setOpen, onClose }) {
                             {open === "comment" && (
 
                                 <div className="mt-3 space-y-4 p-4">
-                                    <p className="text-[16px] text-[#717073]">{task.comment}</p>
+                                    <p className="text-[16px] text-[#717073]">{task.comment || task.notes}</p>
 
                                 </div>
                             )}

@@ -59,6 +59,7 @@ export const ToDoListProvider = ({ children }) => {
     // Book a Free Trial
     const fetchToDoList = useCallback(
         async (
+            tab = "feedback",
             studentName = "",
             venueName = "",
             status1 = false,
@@ -67,7 +68,6 @@ export const ToDoListProvider = ({ children }) => {
             dateoftrial = [],
             forOtherDate = [],
             BookedBy = []
-
         ) => {
             const token = localStorage.getItem("adminToken");
             if (!token) return;
@@ -126,7 +126,7 @@ export const ToDoListProvider = ({ children }) => {
                 //   .filter(Boolean)
                 //   .forEach(d => queryParams.append("trialDate", d));
 
-                const url = `${API_BASE_URL}/api/admin/to-do-list/parent/list${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+                const url = `${API_BASE_URL}/api/admin/to-do-list/${tab === 'feedback' ? 'parent/' : ''}list${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
                 const response = await fetch(url, {
                     method: "GET",
                     headers: {
@@ -371,7 +371,7 @@ export const ToDoListProvider = ({ children }) => {
                 headers["Authorization"] = `Bearer ${token}`;
             }
 
-            let url = `${API_BASE_URL}/api/admin/holiday/to-do-list/create`;
+            let url = `${API_BASE_URL}/api/admin/to-do-list/create`;
 
             const response = await fetch(url, {
                 method: "POST",
@@ -395,7 +395,7 @@ export const ToDoListProvider = ({ children }) => {
             throw error;
 
         } finally {
-            await fetchToDoList();
+            await fetchToDoList("task");
             setLoading(false);
         }
     };
@@ -435,7 +435,7 @@ export const ToDoListProvider = ({ children }) => {
             await showError("Error", error.message || "Something went wrong while creating class schedule.");
             throw error;
         } finally {
-            await fetchToDoList();
+            await fetchToDoList("feedback");
             setLoading(false);
         }
     };

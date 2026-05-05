@@ -141,7 +141,7 @@ const WaitingListTab = () => {
         )}
       </div >
       {activeTab === "Service History" && (
-        <ServiceHistory serviceHistory={serviceHistory} />
+        <ServiceHistory serviceHistory={serviceHistory} itemId={itemId} />
       )}
       {activeTab === "Parent Profile" && (
         <ParentProfile profile={serviceHistory} />

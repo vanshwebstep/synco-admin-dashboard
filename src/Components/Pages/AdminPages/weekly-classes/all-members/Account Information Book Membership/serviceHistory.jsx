@@ -192,11 +192,17 @@ const ServiceHistory = ({ serviceHistory }) => {
             {/* Buttons */}
             <div className="flex flex-col w-full space-y-4">
               <div className="flex gap-2 flex-wrap justify-start">
-                <button onClick={() => navigate('/weekly-classes/all-members/see-details')}
+                <button onClick={() => navigate(`/weekly-classes/all-members/see-details?id=${itemId || serviceHistory?.id || ""}`, {
+                  state: { itemId: itemId || serviceHistory?.id, memberInfo: "allMembers", defaultTab: "General" },
+                })}
                   className="font-semibold whitespace-nowrap border border-[#BEBEBE] px-3 py-2 rounded-xl text-[15px] font-medium">
                   See Details
                 </button>
-                <button className="font-semibold whitespace-nowrap border border-[#BEBEBE] px-3 py-2 rounded-xl text-[15px] font-medium">
+                <button
+                  onClick={() => navigate(`/weekly-classes/all-members/see-details?id=${itemId || serviceHistory?.id || ""}`, {
+                    state: { itemId: itemId || serviceHistory?.id, memberInfo: "allMembers", defaultTab: "Attendance" },
+                  })}
+                  className="font-semibold whitespace-nowrap border border-[#BEBEBE] px-3 py-2 rounded-xl text-[15px] font-medium">
                   Attendance
                 </button>
               </div>

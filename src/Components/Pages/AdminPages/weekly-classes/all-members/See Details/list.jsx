@@ -47,17 +47,17 @@ const SeeDetails = () => {
         fetchData();
     }, [itemId, memberInfo]); // ✅ correct dependency
     const [activeTab, setActiveTab] = useState("General");
-   const tabs = [
-    "General",
-    "History of Payments",
-    "Credits",
-    "Attendance",
-].filter(tab => {
-    if (memberInfo === 'freeTrial' && tab === "History of Payments") {
-        return false;
-    }
-    return true;
-});
+    const tabs = [
+        "General",
+        "History of Payments",
+        "Credits",
+        "Attendance",
+    ].filter(tab => {
+        if (memberInfo === 'freeTrial' && tab === "History of Payments") {
+            return false;
+        }
+        return true;
+    });
     const navigateTo =
         memberInfo === "allMembers" || memberInfo === "freeTrial"
             ? {
@@ -78,16 +78,22 @@ const SeeDetails = () => {
                         pathname: "/weekly-classes/all-members/account-info",
                         state: { itemId: itemId, defaultTab: "Service History", memberInfo: memberInfo }
                     };
+
+    const handleBack = () => {
+        const backPath = location.state?.from || navigateTo.pathname;
+        navigate(backPath, {
+            state: {
+                ...(location.state?.from ? { itemId, defaultTab: "Service History", memberInfo } : navigateTo.state)
+            }
+        });
+    };
+
     return (
         <>
             <div className=" flex justify-between items-end mb-5 gap-2 md:gap-3">
                 <div className=" flex items-center gap-2 md:gap-3">
                     <h2
-                        onClick={() => {
-                            navigate(navigateTo.pathname, {
-                                state: navigateTo.state
-                            });
-                        }}
+                        onClick={handleBack}
                         className="text-xl md:text-2xl font-semibold cursor-pointer hover:opacity-80 transition-opacity duration-200"
                     >
                         <img
@@ -113,7 +119,7 @@ const SeeDetails = () => {
 
                 {memberInfo !== 'freeTrial' &&
                     <div className=" flex items-start  gap-2 md:gap-3">
-                        <button  onClick={() => setActiveTab("Failed Payments")}
+                        <button onClick={() => setActiveTab("Failed Payments")}
                             className=" border border-black flex items-center gap-2 text-black px-8 py-8 md:py-[12px] rounded-xl hover:bg-gray-200 text-[18px]  "
                         >
                             See Failed Payments
@@ -130,34 +136,34 @@ const SeeDetails = () => {
                         </button>
                     </div>
                 }
-        </div >
-        {/* {/* {activeTab === "Service History" && (
+            </div >
+            {/* {/* {activeTab === "Service History" && (
         <ServiceHistory serviceHistory={serviceHistory} />
       )} */}
-    {
-        activeTab === "History of Payments" && (
-            <HistoryOfPayments stateData={serviceHistory} />
-        )
-    }
-    {activeTab === "Failed Payments" && (
-  <FailedPayments itemId={itemId} memberInfo={memberInfo} />
-)}
-    {
-        activeTab === "Attendance" && (
-            <Attendance stateData={serviceHistory} />
-        )
-    }
+            {
+                activeTab === "History of Payments" && (
+                    <HistoryOfPayments stateData={serviceHistory} />
+                )
+            }
+            {activeTab === "Failed Payments" && (
+                <FailedPayments itemId={itemId} memberInfo={memberInfo} />
+            )}
+            {
+                activeTab === "Attendance" && (
+                    <Attendance stateData={serviceHistory} />
+                )
+            }
 
-    {
-        activeTab === "Credits" && (
-            <Credits itemId={itemId} />
-        )
-    }
-    {
-        activeTab === "General" && (
-            <General stateData={serviceHistory} />
-        )
-    }
+            {
+                activeTab === "Credits" && (
+                    <Credits itemId={itemId} stateData={serviceHistory} />
+                )
+            }
+            {
+                activeTab === "General" && (
+                    <General stateData={serviceHistory} />
+                )
+            }
         </>
     )
 }

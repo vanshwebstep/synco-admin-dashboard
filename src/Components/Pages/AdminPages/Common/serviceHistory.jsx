@@ -341,6 +341,7 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
 
                               memberInfo: comesFrom,
                               defaultTab: tab, // ✅ important
+                              from: window.location.pathname,
                             },
                           });
                         }}

@@ -172,8 +172,19 @@ const ParentProfile = ({ profile }) => {
         cancelReason: "",
         additionalNote: "",
     });
-    const [emergencyContacts, setEmergencyContacts] = useState(profile.emergency || []);
-    const [editingEmergency, setEditingEmergency] = useState(null);
+const [emergencyContacts, setEmergencyContacts] = useState(() => {
+    const raw = profile.emergency;
+
+    if (!raw) return [];
+
+    // If it's an array, use it directly
+    if (Array.isArray(raw)) return raw;
+
+    // If it's an object, wrap it in an array
+    if (typeof raw === "object") return [raw];
+
+    return [];
+});    const [editingEmergency, setEditingEmergency] = useState(null);
     // console.log('loading', loading)
 
 
@@ -624,12 +635,12 @@ const ParentProfile = ({ profile }) => {
                                     {/* Header + Pencil/Save */}
                                     <div className="flex justify-between items-start">
                                         <h2 className="text-[20px] font-semibold">Parent information</h2>
-                                        <button
+                                        {/* <button
                                             onClick={() => toggleEditParent(index)}
                                             className="text-gray-600 hover:text-blue-600"
                                         >
                                             {editingIndex === index ? <FaSave /> : <FaEdit />}
-                                        </button>
+                                        </button> */}
                                     </div>
 
                                     {/* First/Last Name */}
@@ -752,6 +763,82 @@ const ParentProfile = ({ profile }) => {
                                 </div>
                             ))}
                         </div>
+
+
+                        {
+                            emergencyContacts.map((emergency, index) => (
+                                <div key={index} className="bg-white p-6 rounded-3xl shadow-sm space-y-6">
+                                    <div className="flex justify-between items-start">
+                                        <h2 className="text-[20px] font-semibold">Emergency contact details</h2>
+                                        {/* <button
+                                            onClick={() => toggleEditEmergency(index)}
+                                            className="text-gray-600 hover:text-blue-600"
+                                        >
+                                            {editingEmergency === index ? <FaSave /> : <FaEdit />}
+                                        </button> */}
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <input type="checkbox" checked={emergency.sameAsAbove} readOnly disabled />
+                                        <label className="text-base font-semibold text-gray-700">
+                                            Fill same as above
+                                        </label>
+                                    </div>
+
+                                    {/* First / Last Name */}
+                                    <div className="flex gap-4">
+                                        <div className="w-1/2">
+                                            <label className="block text-[16px] font-semibold">First name</label>
+                                            <input
+                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                                value={emergency.emergencyFirstName}
+                                                readOnly={editingEmergency !== index}
+                                                onChange={(e) =>
+                                                    handleEmergencyChange(index, "emergencyFirstName", e.target.value)
+                                                }
+                                            />
+                                        </div>
+                                        <div className="w-1/2">
+                                            <label className="block text-[16px] font-semibold">Last name</label>
+                                            <input
+                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                                value={emergency.emergencyLastName}
+                                                readOnly={editingEmergency !== index}
+                                                onChange={(e) =>
+                                                    handleEmergencyChange(index, "emergencyLastName", e.target.value)
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Phone / Relation */}
+                                    <div className="flex gap-4">
+                                        <div className="w-1/2">
+                                            <label className="block text-[16px] font-semibold">Phone number</label>
+                                            <input
+                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                                value={emergency.emergencyPhoneNumber}
+                                                readOnly={editingEmergency !== index}
+                                                onChange={(e) =>
+                                                    handleEmergencyChange(index, "emergencyPhoneNumber", e.target.value)
+                                                }
+                                            />
+                                        </div>
+                                        <div className="w-1/2">
+                                            <label className="block text-[16px] font-semibold">Relation to child</label>
+                                            <input
+                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                                value={emergency.emergencyRelation}
+                                                readOnly={editingEmergency !== index}
+                                                onChange={(e) =>
+                                                    handleEmergencyChange(index, "emergencyRelation", e.target.value)
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        }
 
                     </div>
                     <Comments
@@ -2105,76 +2192,3 @@ const ParentProfile = ({ profile }) => {
 export default ParentProfile;
 
 
-
-//    {emergencyContacts.map((emergency, index) => (
-//                         <div key={index} className="bg-white p-6 rounded-3xl shadow-sm space-y-6">
-//                                 <div className="flex justify-between items-start">
-//                                     <h2 className="text-[20px] font-semibold">Emergency contact details</h2>
-//                                     <button
-//                                         onClick={() => toggleEditEmergency(index)}
-//                                         className="text-gray-600 hover:text-blue-600"
-//                                     >
-//                                         {editingEmergency === index ? <FaSave /> : <FaEdit />}
-//                                     </button>
-//                                 </div>
-
-//                                 <div className="flex items-center gap-2">
-//                                     <input type="checkbox" checked={emergency.sameAsAbove} readOnly disabled />
-//                                     <label className="text-base font-semibold text-gray-700">
-//                                         Fill same as above
-//                                     </label>
-//                                 </div>
-
-//                                 {/* First / Last Name */}
-//                                 <div className="flex gap-4">
-//                                     <div className="w-1/2">
-//                                         <label className="block text-[16px] font-semibold">First name</label>
-//                                         <input
-//                                             className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-//                                             value={emergency.emergencyFirstName}
-//                                             readOnly={editingEmergency !== index}
-//                                             onChange={(e) =>
-//                                                 handleEmergencyChange(index, "emergencyFirstName", e.target.value)
-//                                             }
-//                                         />
-//                                     </div>
-//                                     <div className="w-1/2">
-//                                         <label className="block text-[16px] font-semibold">Last name</label>
-//                                         <input
-//                                             className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-//                                             value={emergency.emergencyLastName}
-//                                             readOnly={editingEmergency !== index}
-//                                             onChange={(e) =>
-//                                                 handleEmergencyChange(index, "emergencyLastName", e.target.value)
-//                                             }
-//                                         />
-//                                     </div>
-//                                 </div>
-
-//                                 {/* Phone / Relation */}
-//                                 <div className="flex gap-4">
-//                                     <div className="w-1/2">
-//                                         <label className="block text-[16px] font-semibold">Phone number</label>
-//                                         <input
-//                                             className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-//                                             value={emergency.emergencyPhoneNumber}
-//                                             readOnly={editingEmergency !== index}
-//                                             onChange={(e) =>
-//                                                 handleEmergencyChange(index, "emergencyPhoneNumber", e.target.value)
-//                                             }
-//                                         />
-//                                     </div>
-//                                     <div className="w-1/2">
-//                                         <label className="block text-[16px] font-semibold">Relation to child</label>
-//                                         <input
-//                                             className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-//                                             value={emergency.emergencyRelation}
-//                                             readOnly={editingEmergency !== index}
-//                                             onChange={(e) =>
-//                                                 handleEmergencyChange(index, "emergencyRelation", e.target.value)
-//                                             }
-//                                         />
-//                                     </div>
-//                                 </div>
-//                             </div>
-//                         ))}

@@ -972,9 +972,9 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                 <div key={index} className="bg-white p-6 mb-10 rounded-3xl shadow-sm space-y-6 relative">
                                     <div className="flex justify-between items-start">
                                         <h2 className="text-[20px] font-semibold">Parent information</h2>
-                                        <button onClick={() => toggleEditParent(index)} className="text-gray-600 hover:text-blue-600">
+                                        {/* <button onClick={() => toggleEditParent(index)} className="text-gray-600 hover:text-blue-600">
                                             {editingIndex === index ? <FaSave /> : <FaEdit />}
-                                        </button>
+                                        </button> */}
                                     </div>
 
                                     {/* First / Last Name */}

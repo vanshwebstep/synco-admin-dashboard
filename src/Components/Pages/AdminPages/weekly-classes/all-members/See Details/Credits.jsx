@@ -1,12 +1,18 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
-const Credits = ({ itemId }) => {
+const Credits = ({ itemId, stateData }) => {
   const [searchParams] = useSearchParams();
-
-  const [creditsData, setCreditsData] = useState([]);
+  const creditsInfo = stateData?.credits || [];
   const [loading, setLoading] = useState(false);
-
+  const creditsData = creditsInfo.map((item) => ({
+    id: item.creditId,
+    status: stateData.venue.name,
+    date: item.date,
+    reason: item.reason || "N/A",
+    credit: Number(item.credit || 0),
+    issuedBy: item.issuedBy || "System",
+  }));
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const token = localStorage.getItem("adminToken");
 
@@ -32,18 +38,15 @@ const Credits = ({ itemId }) => {
 
       const data = result?.data || [];
 
-      // 👉 map API response to UI structure (adjust keys if needed)
       const formatted = data.map((item) => ({
-        id: item.id,
-        className: item.className || "N/A",
-        cancelDate: item.dueDate,
+        id: item.creditId,
+        status: "Cancelled", // static or based on logic
+        date: item.date,
         reason: item.reason || "N/A",
-        cancelledBy: item.cancelledBy || "Admin",
-        credits: Number(item.credits || 0),
+        credit: Number(item.credit || 0),
         issuedBy: item.issuedBy || "System",
       }));
 
-      setCreditsData(formatted);
     } catch (error) {
       console.error("Error fetching credits:", error);
     } finally {
@@ -57,81 +60,86 @@ const Credits = ({ itemId }) => {
 
   // ✅ total credits
   const totalCredits = creditsData.reduce(
-    (sum, item) => sum + item.credits,
+    (sum, item) => sum + item.credit,
     0
   );
 
   return (
-    <div className="p-6 bg-white rounded-xl shadow-sm">
-      
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Credits</h2>
+    <div className="py-6 bg-white rounded-xl shadow-sm">
 
-        <div className="text-sm font-medium text-blue-600">
+      {/* Header */}
+      <div className="flex justify-between items-center px-6 mb-4">
+        <h2 className="text-lg font-semibold">Class Cancelled</h2>
+
+        <div className="text-sm font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-lg">
           Total Credits: {totalCredits}
         </div>
       </div>
 
-      {loading && (
-        <p className="text-sm text-gray-500 mb-4">Loading...</p>
-      )}
 
-      <div className="overflow-hidden border border-gray-200 rounded-lg">
+
+      <div className="overflow-hidden ">
         <table className="w-full text-sm">
 
           <thead className="bg-gray-100 text-gray-500 text-left">
             <tr>
-              <th className="py-3 px-4">Class</th>
+              {/* <th className="py-3 px-4">Class</th>
               <th className="py-3 px-4">Date Cancelled</th>
               <th className="py-3 px-4">Reason</th>
               <th className="py-3 px-4">Cancelled By</th>
-              <th className="py-3 px-4">Credits</th>
+              <th className="py-3 px-4">Credits</th>*/}
+
+              <th className="py-3 px-4">Status</th>
+              <th className="py-3 px-4">Reason</th>
               <th className="py-3 px-4">Issued By</th>
+              <th className="py-3 px-4">Credit</th>
             </tr>
           </thead>
 
           <tbody className="divide-y">
-            {creditsData.length > 0 ? (
-              creditsData.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
+            {loading ? (
+              <tr>
+                <td colSpan={3} className="text-center py-6 text-gray-500">
+                  Loading...
+                </td>
+              </tr>
+            ) : creditsData.length > 0 ? (
+              creditsData.map((item, index) => (
+                <tr
+                  key={item.id}
+                  className={`hover:bg-gray-50 ${index !== creditsData.length - 1 ? "border-b border-gray-200" : ""
+                    }`}
+                >
 
-                  <td className="py-3 px-4">
-                    {item.className}
+                  {/* Status + Date */}
+                  <td className="py-3 px-4  font-semibold">
+                    <div className="flex gap-2 capitalize items-center">
+                      {item.status} - {new Date(item.date).toLocaleDateString("en-GB")}
+                     
+                    </div>
                   </td>
 
+                  {/* Reason */}
                   <td className="py-3 px-4">
-                    {item.cancelDate
-                      ? new Date(item.cancelDate).toLocaleDateString("en-GB")
-                      : "-"}
+                    <div className="font-semibold">{item.reason}</div>
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="font-semibold">{item.issuedBy}</div>
                   </td>
 
-                  <td className="py-3 px-4">
-                    {item.reason}
-                  </td>
-
-                  <td className="py-3 px-4">
-                    {item.cancelledBy}
-                  </td>
-
-                  <td className="py-3 px-4 font-medium text-green-600">
-                    {item.credits}
-                  </td>
-
-                  <td className="py-3 px-4">
-                    {item.issuedBy}
+                  {/* Credit */}
+                  <td className="py-3 px-4 font-semibold text-green-600">
+                    +{item.credit}
                   </td>
 
                 </tr>
               ))
             ) : (
-              !loading && (
-                <tr>
-                  <td colSpan={6} className="text-center py-6 text-gray-500">
-                    No credits found
-                  </td>
-                </tr>
-              )
+              <tr>
+                <td colSpan={3} className="text-center py-6 text-gray-500">
+                  No credits found
+                </td>
+              </tr>
             )}
           </tbody>
 

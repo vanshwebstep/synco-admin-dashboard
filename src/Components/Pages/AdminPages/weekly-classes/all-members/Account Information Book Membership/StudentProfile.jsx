@@ -35,7 +35,7 @@ const StudentProfile = ({ profile }) => {
         loading,
         addtoWaitingListSubmit, cancelMembershipSubmit,
         sendBookMembershipMail, transferMembershipSubmit,
-        freezerMembershipSubmit, reactivateDataSubmit, cancelWaitingListSpot, fetchComments, commentsList,setComment, comment,  handleSubmitComment, loadingComment, updateBookMembershipFamily, removeWaiting, setRemoveWaiting, addToWaitingList, setaddToWaitingList, showCancelTrial, setshowCancelTrial
+        freezerMembershipSubmit, reactivateDataSubmit, cancelWaitingListSpot, fetchComments, commentsList, setComment, comment, handleSubmitComment, loadingComment, updateBookMembershipFamily, removeWaiting, setRemoveWaiting, addToWaitingList, setaddToWaitingList, showCancelTrial, setshowCancelTrial
     } = useBookFreeTrial() || {};
     const { openTextPopup } = useTextPopup();
 
@@ -130,7 +130,7 @@ const StudentProfile = ({ profile }) => {
     useEffect(() => {
         fetchComments(commentData);
     }, [])
-   
+
     const sendText = async (bookingIds) => {
         setTextLoading(true);
 
@@ -564,12 +564,12 @@ const StudentProfile = ({ profile }) => {
                                     <h2 className="text-[20px] font-semibold">Student Information <span className={`capitalize ${getStatusColor(student.studentStatus)}`}>
                                         ( {student.studentStatus} )
                                     </span></h2>
-                                    <button
+                                    {/* <button
                                         onClick={() => toggleEditStudent(index)}
                                         className="text-gray-600 hover:text-blue-600"
                                     >
                                         {editingIndex === index ? <FaSave /> : <FaEdit />}
-                                    </button>
+                                    </button> */}
                                 </div>
 
                                 {/* Row 1 */}

@@ -116,10 +116,12 @@ import BirthdayUpdate from './Components/Pages/AdminPages/birthday-parties/sessi
 import BirthdayReports from './Components/Pages/AdminPages/birthday-parties/Reports.jsx';
 import AccountMainBirthDay from './Components/Pages/AdminPages/birthday-parties/Sales/Info/AccountMainBirthday.jsx';
 import SeeDetailsAccountBirthday from './Components/Pages/AdminPages/birthday-parties/Sales/Info/SeeDetailsAccountBirthday.jsx';
+import SeeDetailsAccountWeekly from './Components/Pages/AdminPages/weekly-classes/account-information/SeeDetails/SeeDetailsAccount.jsx';
 import BookACamp from './Components/Pages/AdminPages/holiday-camps/BookACamp.jsx';
 import StudentCamp from './Components/Pages/AdminPages/holiday-camps/StudentCamp.jsx';
 import AccountMainHoliday from './Components/Pages/AdminPages/holiday-camps/accountInfo/AccountMainHoliday.jsx';
 import SeeDetailsAccountHoliday from './Components/Pages/AdminPages/holiday-camps/accountInfo/SeeDetailsAccountHoliday.jsx';
+import SeeDetailsWaitingList from './Components/Pages/AdminPages/holiday-camps/add-to-waiting-list/AccountInfo/SeeDetails/SeeDetailsWaitingList.jsx';
 import Recruitment from './Components/Pages/AdminPages/Recruitment/Recruitment.jsx';
 import CandidateDetails from './Components/Pages/AdminPages/Recruitment/applications/seeDetails/CandidateDetails.jsx';
 import CandidateVenueDetails from './Components/Pages/AdminPages/Recruitment/applications/seeCandidateDetails/CandidateVenueDetails.jsx';
@@ -448,7 +450,22 @@ const AppRoutes = () => {
           <GlobalSearchProvider>
             <AdminLayout>
               <RoleBasedRoute>
-                <Account />
+                <AccountsInfoProvider>
+                  <Account />
+                </AccountsInfoProvider>
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
+        </ProtectedRoute>
+      } />
+      <Route path="/weekly-classes/account-information/see-details" element={
+        <ProtectedRoute>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <AccountsInfoProvider>
+                  <SeeDetailsAccountWeekly />
+                </AccountsInfoProvider>
               </RoleBasedRoute>
             </AdminLayout>
           </GlobalSearchProvider>
@@ -882,6 +899,18 @@ const AppRoutes = () => {
             <AdminLayout>
               <RoleBasedRoute>
                 <SeeDetailsAccountHoliday />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
+        </ProtectedRoute>
+      } />
+
+      <Route path="/holiday-camp/waiting-list/account-information/see-details" element={
+        <ProtectedRoute>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <SeeDetailsWaitingList />
               </RoleBasedRoute>
             </AdminLayout>
           </GlobalSearchProvider>

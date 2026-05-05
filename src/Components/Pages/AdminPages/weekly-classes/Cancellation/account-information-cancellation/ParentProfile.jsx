@@ -42,7 +42,7 @@ const ParentProfile = ({ ParentProfile }) => {
     const [revertPopup, setRevertPopup] = useState(false);
     const [selectedStudents, setSelectedStudents] = useState([]);
     const [currentBookingId, setCurrentBookingId] = useState(null);
-    const { loading, cancelFreeTrial, sendCancelFreeTrialmail, rebookFreeTrialsubmit, cancelMembershipSubmit, reactivateDataSubmit, addtoWaitingListSubmit, freezerMembershipSubmit, sendAllmail, sendFullTomail, sendRequestTomail, transferMembershipSubmit ,setComment, comment,fetchComments, commentsList, handleSubmitComment, loadingComment } = useBookFreeTrial() || {};
+    const { loading, cancelFreeTrial, sendCancelFreeTrialmail, rebookFreeTrialsubmit, cancelMembershipSubmit, reactivateDataSubmit, addtoWaitingListSubmit, freezerMembershipSubmit, sendAllmail, sendFullTomail, sendRequestTomail, transferMembershipSubmit, setComment, comment, fetchComments, commentsList, handleSubmitComment, loadingComment } = useBookFreeTrial() || {};
     const [addToWaitingList, setaddToWaitingList] = useState(false);
     const [freezeMembership, setFreezeMembership] = useState(false);
     const [reactivateMembership, setReactivateMembership] = useState(false);
@@ -163,7 +163,7 @@ const ParentProfile = ({ ParentProfile }) => {
     });
     const MembershipTenure = ParentProfile?.membershipTenure || "";
 
-   
+
     const [currentPage, setCurrentPage] = useState(1);
     const commentsPerPage = 5; // Number of comments per page
 

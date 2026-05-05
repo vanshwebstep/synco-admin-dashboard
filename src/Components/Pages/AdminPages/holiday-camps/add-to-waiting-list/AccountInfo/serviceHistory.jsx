@@ -20,7 +20,18 @@ const formatDate = (dateString, withTime = false) => {
   return date.toLocaleDateString("en-US", options);
 };
 
-const ServiceHistory = ({ serviceHistory }) => {
+const ServiceHistory = ({ serviceHistory, itemId }) => {
+  const navigate = useNavigate();
+  const handleSeeDetails = (tab = "General") => {
+    navigate(`/holiday-camp/waiting-list/account-information/see-details?id=${itemId || ""}`, {
+      state: {
+        itemId: itemId,
+        memberInfo: "waitingList",
+        defaultTab: tab,
+      },
+    });
+  };
+
   if (!serviceHistory || serviceHistory.length === 0) return null;
   const {
     bookingId,
@@ -39,7 +50,6 @@ const ServiceHistory = ({ serviceHistory }) => {
   console.log('status', status)
   // pick first payment if exists
   const payment = payments?.[0];
-  const navigate = useNavigate();
 
   // Conditional ID based on payment type
   let transactionId = "-";
@@ -168,11 +178,13 @@ const ServiceHistory = ({ serviceHistory }) => {
             {/* Buttons */}
             <div className="flex flex-col w-full space-y-4">
               <div className="flex gap-2 flex-wrap justify-start">
-                <button onClick={() => navigate('/weekly-classes/all-members/see-details')}
+                <button onClick={() => handleSeeDetails("General")}
                   className="font-semibold whitespace-nowrap border border-[#BEBEBE] px-3 py-2 rounded-xl text-[15px] font-medium">
                   See Details
                 </button>
-                <button className="font-semibold whitespace-nowrap border border-[#BEBEBE] px-3 py-2 rounded-xl text-[15px] font-medium">
+                <button
+                  onClick={() => handleSeeDetails("Attendance")}
+                  className="font-semibold whitespace-nowrap border border-[#BEBEBE] px-3 py-2 rounded-xl text-[15px] font-medium">
                   Attendance
                 </button>
               </div>

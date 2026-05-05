@@ -40,7 +40,7 @@ const StudentProfile = ({ profile }) => {
     const [editingIndex, setEditingIndex] = useState(null);
     const navigate = useNavigate();
     const [students, setStudents] = useState(profile?.students || []);
-    
+
     const [currentPage, setCurrentPage] = useState(1);
     const commentsPerPage = 5; // Number of comments per page
     const sendText = async (id) => {
@@ -440,12 +440,12 @@ const StudentProfile = ({ profile }) => {
                                 {/* Top Header Row */}
                                 <div className="flex justify-between items-start">
                                     <h2 className="text-[20px] font-semibold">Student Information</h2>
-                                    <button
+                                    {/* <button
                                         onClick={() => toggleEditStudent(index)}
                                         className="text-gray-600 hover:text-blue-600"
                                     >
                                         {editingIndex === index ? <FaSave /> : <FaEdit />}
-                                    </button>
+                                    </button> */}
                                 </div>
 
                                 {/* Row 1 */}

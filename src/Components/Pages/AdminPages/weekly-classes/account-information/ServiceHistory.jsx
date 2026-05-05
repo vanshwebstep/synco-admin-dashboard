@@ -5,74 +5,9 @@ import Select from "react-select";
 import { Check, Plus } from "lucide-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useAccountsInfo } from "../../contexts/AccountsInfoContext";
+import { useNavigate } from "react-router-dom";
 
-// Sample data
-const bookings = [
-  {
-    serviceType: "weekly class membership",
-    plan: "12 month plan",
-    students: 2,
-    venue: "Acton",
-    id: "XHDJDHLS314",
-    price: "£3999",
-    bookingDate: "Nov 18 2021, 17:00",
-    progress: "6/12 months",
-    source: "Ben Marcus",
-    status: "Active",
-    statusColor: "green",
-  },
-  // {
-  //   serviceType: "Birthday Party Booking",
-  //   package: "Gold",
-  //   pricePaid: "£315.00",
-  //   stripeID: "XHDJDHLS314",
-  //   bookingDate: "Nov 18 2021, 17:00",
-  //   partyDate: "Nov 18 2021, 17:00",
-  //   coach: "Ethan Bond-Vaughan",
-  //   source: "Abdul Ali",
-  //   status: "Completed",
-  //   statusColor: "red",
-  // },
-  // {
-  //   serviceType: "One to One Booking",
-  //   package: "Gold",
-  //   students: 1,
-  //   pricePaid: "£3999",
-  //   stripeID: "XHDJDHLS314",
-  //   bookingDate: "Nov 18 2021, 17:00",
-  //   venue: "Chelsea Park",
-  //   coach: "Ethan Bond-Vaughan",
-  //   source: "Abdul Ali",
-  //   status: "Expired",
-  //   statusColor: "red",
-  // },
-  // {
-  //   serviceType: "Holiday Camp",
-  //   camp: "Easter",
-  //   students: 2,
-  //   pricePaid: "£3999",
-  //   stripeID: "XHDJDHLS314",
-  //   bookingDate: "Nov 18 2021, 17:00",
-  //   venue: "Chelsea Park",
-  //   discount: "15% Early Bird Discount",
-  //   source: "Abdul Ali",
-  //   status: "Expired",
-  //   statusColor: "red",
-  // },
-  // {
-  //   serviceType: "Merchandise",
-  //   item: "Full Set",
-  //   quantity: 2,
-  //   pricePaid: "£3999",
-  //   transactionID: "XHDJDHLS314",
-  //   bookingDate: "Nov 18 2021, 17:00",
-  //   discount: 0,
-  //   fulfillment: "Fulfilled",
-  //   source: "Online Store",
-  //   status: "Paid",
-  //   statusColor: "green",
-  // },
-];
+
 
 // Helper function for images
 const renderImage = (serviceType) => {
@@ -120,6 +55,8 @@ const formatStatus = (status = "") => {
 };
 
 const BookingCard = ({ booking }) => {
+  const navigate = useNavigate();
+  const { data } = useAccountsInfo();
   const statusColors = {
     active: "bg-green-500 text-white",
     cancelled: "bg-red-500 text-white",
@@ -298,18 +235,42 @@ const BookingCard = ({ booking }) => {
 
         {/* Buttons */}
         <div className="flex gap-3">
-          <button className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50">
+          <button
+            onClick={() => navigate(`/weekly-classes/account-information/see-details?id=${booking?.id || booking?.bookingId || ""}`, {
+              state: { itemId: booking?.id || booking?.bookingId, memberInfo: "allMembers", defaultTab: "General", from: "/weekly-classes/account-information" },
+            })}
+            className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50"
+          >
             See details
           </button>
 
           {serviceType !== "Merchandise" && (
             <>
-              <button className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50">
+              <button
+                onClick={() => navigate(`/weekly-classes/account-information/see-details?id=${booking?.id || booking?.bookingId || ""}`, {
+                  state: { itemId: booking?.id || booking?.bookingId, memberInfo: "allMembers", defaultTab: "History of Payments", from: "/weekly-classes/account-information" },
+                })}
+                className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50"
+              >
                 See payments
               </button>
 
+              <button
+                onClick={() => navigate(`/weekly-classes/account-information/see-details?id=${booking?.id || booking?.bookingId || ""}`, {
+                  state: { itemId: booking?.id || booking?.bookingId, memberInfo: "allMembers", defaultTab: "Credits", from: "/weekly-classes/account-information" },
+                })}
+                className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50"
+              >
+                Credits
+              </button>
+
               {booking?.students && (
-                <button className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50">
+                <button
+                  onClick={() => navigate(`/weekly-classes/account-information/see-details?id=${booking?.id || booking?.bookingId || ""}`, {
+                    state: { itemId: booking?.id || booking?.bookingId, memberInfo: "allMembers", defaultTab: "Attendance", from: "/weekly-classes/account-information" },
+                  })}
+                  className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50"
+                >
                   Attendance
                 </button>
               )}

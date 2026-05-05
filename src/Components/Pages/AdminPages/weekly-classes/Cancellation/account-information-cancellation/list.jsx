@@ -152,6 +152,7 @@ const AccountInfoCancellation = (from) => {
         {activeTab === "Service History" && (
           <ServiceHistory
             serviceHistory={serviceHistory}
+            itemId={itemId}
             labels={{
               header: serviceHistory.serviceType,
               membershipPlan: "Membership Plan ",

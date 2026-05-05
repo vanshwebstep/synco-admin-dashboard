@@ -90,7 +90,10 @@ const Account = () => {
         <div className="flex items-center gap-1">
           <h2
             onClick={() => {
-              navigate('/weekly-classes/members-info');
+              const backPath = location.state?.from === "allMembers" 
+                ? "/weekly-classes/all-members/list" 
+                : "/weekly-classes/members-info";
+              navigate(backPath);
             }}
             className="cursor-pointer"
           >

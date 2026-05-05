@@ -166,7 +166,11 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
                   className="font-semibold whitespace-nowrap border border-[#BEBEBE] px-3 py-2 rounded-xl text-[15px] font-medium">
                   See Details
                 </button>
-                <button className="font-semibold whitespace-nowrap border border-[#BEBEBE] px-3 py-2 rounded-xl text-[15px] font-medium">
+                <button
+                  onClick={() => navigate(`/weekly-classes/all-members/see-details?id=${itemId || serviceHistory?.id || ""}`, {
+                    state: { itemId: itemId || serviceHistory?.id, memberInfo: "waitingList", defaultTab: "Attendance" },
+                  })}
+                  className="font-semibold whitespace-nowrap border border-[#BEBEBE] px-3 py-2 rounded-xl text-[15px] font-medium">
                   Attendance
                 </button>
               </div>

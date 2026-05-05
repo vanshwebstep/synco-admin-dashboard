@@ -186,6 +186,7 @@ const list = () => {
         </div>
         {activeTab === "Service History" && <ServiceHistory
           serviceHistory={serviceHistory}
+          itemId={itemId}
           labels={{
             header: `${serviceHistory.serviceType}`,
             dateOfTrial: "Date of Trial ",
