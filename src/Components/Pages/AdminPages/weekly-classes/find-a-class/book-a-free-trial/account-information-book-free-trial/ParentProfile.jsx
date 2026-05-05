@@ -437,7 +437,7 @@ const ParentProfile = ({ ParentProfile }) => {
 
         // Navigate to your component/route
         navigate("/weekly-classes/find-a-class/book-a-membership", {
-            state: { TrialData: ParentProfile, comesFrom: "trials" },
+            state: { TrialData: ParentProfile, comesFrom: "trials", startmembership: "startmembership" },
         });
 
     };

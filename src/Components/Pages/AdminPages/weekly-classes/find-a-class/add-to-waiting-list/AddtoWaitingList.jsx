@@ -38,7 +38,7 @@ const AddtoWaitingList = () => {
   const [result, setResult] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
-  const { classId, from_lead, leadId } = location.state || {};
+  const { classId, from_lead, leadId, itemId, comesFrom, studentsData, parentsData, emergencyData, selectedClassData } = location.state || {};
   const popup1Ref = useRef(null);
   const popup2Ref = useRef(null);
   const popup3Ref = useRef(null);
@@ -63,16 +63,16 @@ const AddtoWaitingList = () => {
   };
   // console.log('classId', classId)
   const { fetchFindClassID, singleClassSchedulesOnly, loading } = useClassSchedule() || {};
-  const { createWaitinglist, isBooked, setIsBooked,submitAllComments } = useBookFreeTrial()
+  const { createWaitinglist, isBooked, setIsBooked, submitAllComments } = useBookFreeTrial()
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { keyInfoData, fetchKeyInfo } = useMembers();
 
   useEffect(() => {
     const fetchData = async () => {
       await fetchKeyInfo();
-      if (classId) {
+      if (classId || itemId) {
         setIsBooked(false);
-        await fetchFindClassID(classId);
+        await fetchFindClassID(classId || itemId);
         // await fetchComments();
       }
     };
@@ -497,8 +497,8 @@ const AddtoWaitingList = () => {
           age: '',
           gender: '',
           medicalInformation: '',
-          class: singleClassSchedulesOnly?.className || '',
-          time: singleClassSchedulesOnly?.startTime || '',
+          class: selectedClassData?.className || singleClassSchedulesOnly?.className || '',
+          time: selectedClassData?.startTime || singleClassSchedulesOnly?.startTime || '',
         }));
         return [...prevStudents, ...newStudents];
       }
@@ -512,6 +512,49 @@ const AddtoWaitingList = () => {
       return prevStudents;
     });
   }, [numberOfStudents]);
+const formatDateToDDMMYYYY = (dateStr) => {
+  if (!dateStr) return "";
+
+  // ✅ Already in DD/MM/YYYY → return as it is
+  if (dateStr.includes("/")) return dateStr;
+
+  // ✅ Handle YYYY-MM-DD only
+  if (dateStr.includes("-")) {
+    const parts = dateStr.split("-");
+
+    if (parts.length === 3) {
+      const [year, month, day] = parts;
+
+      if (year && month && day) {
+        return `${day}/${month}/${year}`;
+      }
+    }
+  }
+
+  // ❌ Invalid format fallback
+  return "";
+};
+  useEffect(() => {
+    if (studentsData) {
+      const formattedStudents = studentsData.map((student) => ({
+        ...student,
+        dateOfBirth: formatDateToDDMMYYYY(student.dateOfBirth),
+      }));
+      setStudents(formattedStudents);
+    }
+    console.log('selectedClassData', selectedClassData)
+    if (selectedClassData) {
+      setSelectedClass(selectedClassData);
+    }
+    if (parentsData) {
+      setParents(parentsData);
+    }
+    if (emergencyData) {
+      setEmergency(emergencyData);
+    }
+  }, [studentsData, parentsData, emergencyData]);
+
+
 
 
   const [parents, setParents] = useState([
@@ -1313,7 +1356,7 @@ const AddtoWaitingList = () => {
                       {index === 0 ? (
                         <input
                           type="text"
-                          value={singleClassSchedulesOnly?.className || ""}
+                          value={selectedClassData?.className || singleClassSchedulesOnly?.className || ""}
                           readOnly
                           className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3"
                         />
@@ -1344,7 +1387,7 @@ const AddtoWaitingList = () => {
                         readOnly
                         value={
                           index === 0
-                            ? `${singleClassSchedulesOnly?.startTime || ""} - ${singleClassSchedulesOnly?.endTime || ""}`
+                            ? `${selectedClassData?.startTime || singleClassSchedulesOnly?.startTime || ""} - ${selectedClassData?.endTime || singleClassSchedulesOnly?.endTime || ""}`
                             : student.selectedClassData
                               ? `${student.selectedClassData.startTime} - ${student.selectedClassData.endTime}`
                               : ""

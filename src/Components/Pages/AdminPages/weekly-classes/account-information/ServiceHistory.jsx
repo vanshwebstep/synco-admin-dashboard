@@ -67,7 +67,20 @@ const BookingCard = ({ booking }) => {
     frozen: "bg-blue-500 text-white",
     "waiting list": "bg-gray-200 text-black",
   };
-  console.log('booking', booking)
+
+
+  const getServiceTypePath = (serviceType) => {
+    if (!serviceType) return "";
+    const type = serviceType.toLowerCase();
+    if (type === "weekly class membership") return "membership";
+    if (type === "weekly class trial") return "trial";
+    if (type === "holiday camp") return "holiday";
+    if (type === "birthday party") return "birthdayparty";
+    if (type === "one to one") return "onetoone";
+    return type;
+  };
+  const serviceTypeForUrl =
+    getServiceTypePath(booking?.serviceType || booking?.booking?.serviceType || "");
   const serviceType =
     booking?.serviceType || booking?.booking?.serviceType || "";
 
@@ -236,8 +249,8 @@ const BookingCard = ({ booking }) => {
         {/* Buttons */}
         <div className="flex gap-3">
           <button
-            onClick={() => navigate(`/weekly-classes/account-information/see-details?id=${booking?.id || booking?.bookingId || ""}`, {
-              state: { itemId: booking?.id || booking?.bookingId, memberInfo: "allMembers", defaultTab: "General", from: "/weekly-classes/account-information" },
+            onClick={() => navigate(`/weekly-classes/account-information/see-details?id=${booking?.id || booking?.bookingId || ""}&serviceType=${serviceTypeForUrl}`, {
+              state: { itemId: booking?.id || booking?.bookingId, serviceTypeForUrl, memberInfo: "allMembers", defaultTab: "General", from: "/weekly-classes/account-information" },
             })}
             className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50"
           >
@@ -247,8 +260,8 @@ const BookingCard = ({ booking }) => {
           {serviceType !== "Merchandise" && (
             <>
               <button
-                onClick={() => navigate(`/weekly-classes/account-information/see-details?id=${booking?.id || booking?.bookingId || ""}`, {
-                  state: { itemId: booking?.id || booking?.bookingId, memberInfo: "allMembers", defaultTab: "History of Payments", from: "/weekly-classes/account-information" },
+                onClick={() => navigate(`/weekly-classes/account-information/see-details?id=${booking?.id || booking?.bookingId || ""}&serviceType=${serviceTypeForUrl}`, {
+                  state: { itemId: booking?.id || booking?.bookingId, serviceTypeForUrl, memberInfo: "allMembers", defaultTab: "History of Payments", from: "/weekly-classes/account-information" },
                 })}
                 className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50"
               >
@@ -256,8 +269,8 @@ const BookingCard = ({ booking }) => {
               </button>
 
               <button
-                onClick={() => navigate(`/weekly-classes/account-information/see-details?id=${booking?.id || booking?.bookingId || ""}`, {
-                  state: { itemId: booking?.id || booking?.bookingId, memberInfo: "allMembers", defaultTab: "Credits", from: "/weekly-classes/account-information" },
+                onClick={() => navigate(`/weekly-classes/account-information/see-details?id=${booking?.id || booking?.bookingId || ""}&serviceType=${serviceTypeForUrl}`, {
+                  state: { itemId: booking?.id || booking?.bookingId, serviceTypeForUrl, memberInfo: "allMembers", defaultTab: "Credits", from: "/weekly-classes/account-information" },
                 })}
                 className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50"
               >
@@ -266,8 +279,8 @@ const BookingCard = ({ booking }) => {
 
               {booking?.students && (
                 <button
-                  onClick={() => navigate(`/weekly-classes/account-information/see-details?id=${booking?.id || booking?.bookingId || ""}`, {
-                    state: { itemId: booking?.id || booking?.bookingId, memberInfo: "allMembers", defaultTab: "Attendance", from: "/weekly-classes/account-information" },
+                  onClick={() => navigate(`/weekly-classes/account-information/see-details?id=${booking?.id || booking?.bookingId || ""}&serviceType=${serviceTypeForUrl}`, {
+                    state: { itemId: booking?.id || booking?.bookingId, serviceTypeForUrl, memberInfo: "allMembers", defaultTab: "Attendance", from: "/weekly-classes/account-information" },
                   })}
                   className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50"
                 >

@@ -47,6 +47,8 @@ const List = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { createBookMembership, createBookMembershipByfreeTrial, submitAllComments, createBookMembershipbyCancellation, createBookMembershipByWaitingList, isBooked, setIsBooked } = useBookFreeTrial()
+    const [selectedVenue, setSelectedVenue] = useState(null);
+    const [selectedClassId, setSelectedClassId] = useState(null);
 
     const [expression, setExpression] = useState('');
     const [studentRemoved, setStudentRemoved] = useState(false);
@@ -347,7 +349,7 @@ const List = () => {
     const [result, setResult] = useState('');
     const navigate = useNavigate();
     const location = useLocation();
-    const { classId, TrialData, comesFrom, from_lead, leadId } = location.state || {};
+    const { classId, TrialData, comesFrom, from_lead, leadId, startmembership } = location.state || {};
     const popup1Ref = useRef(null);
     const popup2Ref = useRef(null);
     const popup3Ref = useRef(null);
@@ -413,7 +415,7 @@ const List = () => {
         relationToChild: '', howDidYouHear: '', isCustomReason: false
     }]);
 
-    const finalClassId = classId || TrialData?.classScheduleId || TrialData?.students?.[0]?.classSchedule?.id;
+    const finalClassId = selectedClassId || classId || TrialData?.classScheduleId || TrialData?.students?.[0]?.classSchedule?.id;
 
     const allPaymentPlans =
         singleClassSchedulesOnly?.venue?.paymentGroups[0]?.paymentPlans?.map((plan) => ({
@@ -443,16 +445,67 @@ const List = () => {
     const classesWithCapacity = Array.isArray(singleClassSchedulesOnly?.venueClasses)
         ? singleClassSchedulesOnly.venueClasses.filter((cls) => cls.capacity > 0)
         : [];
-
+    const allClasses = Array.isArray(singleClassSchedulesOnly?.venueClasses)
+        ? singleClassSchedulesOnly.venueClasses
+        : [];
     const handleStudentClassChange = (index, selectedOption) => {
-        const selectedClass = classesWithCapacity?.find((cls) => cls.id === selectedOption.value);
         setStudents((prev) => {
             const updated = [...prev];
-            updated[index] = { ...updated[index], selectedClassId: selectedOption.value, selectedClassData: selectedClass };
+
+            if (!selectedOption) {
+                updated[index] = {
+                    ...updated[index],
+                    selectedClassId: null,
+                    selectedClassData: null,
+                    error: null
+                };
+                return updated;
+            }
+
+            const selectedClass = allClasses.find(
+                (cls) => cls.id === selectedOption.value
+            );
+
+            // 🚨 Capacity 0 case
+            if (selectedClass?.capacity === 0) {
+
+                showConfirm(
+                    "Are you sure?",
+                    "This class has no capacity. Do you want to join the waiting list instead?",
+                    "Yes"
+                ).then((result) => {
+                    if (result.isConfirmed) {
+                        navigate("/weekly-classes/find-a-class/add-to-waiting-list", {
+                            state: {
+                                itemId: finalClassId,
+                                studentsData: prev,              // 👈 ALL students
+                                parentsData: parents,            // 👈 parents
+                                emergencyData: emergency,        // 👈 emergency
+                                selectedClassData: selectedClass,
+                                selectedStudentIndex: index,
+                                comesFrom: 'trials',
+                            }
+                        });
+                    }
+                });
+
+
+
+
+                return prev; // don't update selection
+            }
+
+            // ✅ Normal case
+            updated[index] = {
+                ...updated[index],
+                selectedClassId: selectedOption.value,
+                selectedClassData: selectedClass,
+                error: null
+            };
+
             return updated;
         });
     };
-
     const handleNumberChange = (e) => {
         const val = e.target.value === "" ? "" : Number(e.target.value);
         if (val === "" || [1, 2, 3, 4].includes(val)) {
@@ -475,7 +528,7 @@ const List = () => {
         }
     };
 
-    const venueClassOptions = classesWithCapacity?.map((cls) => ({ value: cls.id, label: cls.className }));
+    const venueClassOptions = allClasses    ?.map((cls) => ({ value: cls.id, label: cls.className }));
 
     const validationCheck = () => {
         for (let i = 0; i < students.length; i++) {
@@ -536,7 +589,11 @@ const List = () => {
             return prevStudents;
         });
     }, [numberOfStudents, singleClassSchedulesOnly]);
-
+    useEffect(() => {
+        if (singleClassSchedulesOnly?.venue) {
+            setSelectedVenue(singleClassSchedulesOnly.venue);
+        }
+    }, [singleClassSchedulesOnly]);
     useEffect(() => {
         if (TrialData) {
             if (Array.isArray(TrialData.students) && TrialData.students.length > 0) {
@@ -548,6 +605,7 @@ const List = () => {
                 const mappedStudents = TrialData.students.map((student) => ({
                     ...student,
                     dateOfBirth: formatDOB(student.dateOfBirth),
+
                     selectedClassId: student.selectedClassId || singleClassSchedulesOnly?.id || null,
                     selectedClassData: student.selectedClassData || singleClassSchedulesOnly || null,
                 }));
@@ -1501,9 +1559,38 @@ const List = () => {
                         <div>
                             <label className="text-base font-semibold">Venue</label>
                             <div className="relative mt-2">
-                                <input type="text" placeholder="Select venue" value={singleClassSchedulesOnly?.venue?.name} readOnly
-                                    className="w-full border border-gray-300 rounded-xl px-3 text-[16px] py-3 pl-9 focus:outline-none"
-                                />
+                                {startmembership === "startmembership" ? (
+                                    <select
+                                        value={selectedVenue?.id || ""}
+                                        onChange={(e) => {
+                                            const venue = venues.find(v => v.id === Number(e.target.value));
+
+                                            setSelectedVenue(venue);
+
+                                            // 👇 get classScheduleId from selected venue
+                                            if (venue?.classSchedules?.length > 0) {
+                                                setSelectedClassId(venue.classSchedules[0].id); // or based on your logic
+                                            }
+                                        }}
+                                        className="w-full border border-gray-300 rounded-xl px-3 text-[16px] py-3 pl-9 focus:outline-none"
+                                    >
+                                        <option value="">Select venue</option>
+
+                                        {venues.map((venue) => (
+                                            <option key={venue.id} value={venue.id}>
+                                                {venue.name} ({venue.area})
+                                            </option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <input
+                                        type="text"
+                                        value={singleClassSchedulesOnly?.venue?.name || ""}
+                                        readOnly
+                                        placeholder="Select venue"
+                                        className="w-full border border-gray-300 rounded-xl px-3 text-[16px] py-3 pl-9 focus:outline-none"
+                                    />
+                                )}
                                 <FiSearch className="absolute left-3 top-4 text-[20px]" />
                             </div>
                         </div>

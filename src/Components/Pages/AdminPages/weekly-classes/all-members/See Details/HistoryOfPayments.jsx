@@ -443,75 +443,78 @@ const HistoryOfPayments = ({ stateData }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-300">
-            {stateData?.payments?.length > 0 ? (
-              stateData.payments.map((payment, index) => {
-                const isFailed =
-                  payment.paymentStatus === "failed" || payment.paymentStatus === "cancelled";
+            {stateData?.payments?.filter(p => p.paymentStatus === "paid").length > 0 ? (
+              stateData.payments
+                .filter(payment => payment.paymentStatus === "paid")
+                .map((payment, index) => {
+                  console.log('stateData.payments', stateData.payments);
+                  const isFailed =
+                    payment.paymentStatus === "failed" || payment.paymentStatus === "cancelled";
 
-                return (
-                  <tr key={payment.id || index} className="relative">
-                    <td className="py-3 px-6 font-medium relative">
-                      <div
-                        className={`flex gap-2 text-left w-44 bg-gray-100 px-2 py-1 rounded-xl shadow-sm whitespace-nowrap items-center ${isFailed ? "cursor-pointer" : ""}`}
-                        onClick={() =>
-                          isFailed &&
-                          setShowPopup(showPopup === payment.id ? null : payment.id)
-                        }
-                      >
-                        <div className={isFailed ? "text-red-500" : "text-green-500"}>●</div>
-                        <div>
-                          {payment.paymentStatus === "failed" ? (
-                            <button className="text-red-500 text-sm font-medium">
-                              Retry Payment
-                            </button>
-                          ) : payment.paymentStatus === "pending" ? (
-                            <span className="text-yellow-500 text-sm font-semibold">
-                              Payment Pending
-                            </span>
-                          ) : payment.paymentStatus === "cancelled" ? (
-                            <span className="text-red-500 whitespace-nowrap text-sm font-semibold">
-                              Payment Cancelled
-                            </span>
-                          ) : (
-                            <span className="text-green-600 text-sm font-semibold">
-                              Paid Successfully
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {showPopup === payment.id && isFailed && (
-                        <div className="absolute right-[200px] top-[-30px] mt-2 w-72 bg-white shadow-lg rounded-xl p-4 z-10">
-                          <div className="text-red-500 font-semibold mb-2">Payment Failed</div>
-                          <div className="text-gray-700 mb-2">
-                            Unsuccessful payment of {safeValue(payment.firstName)}{" "}
-                            {safeValue(payment.lastName)}'s subscription for{" "}
-                            {safeValue(payment.description, "this month")}.
+                  return (
+                    <tr key={payment.id || index} className="relative">
+                      <td className="py-3 px-6 font-medium relative">
+                        <div
+                          className={`flex gap-2 text-left w-44 bg-gray-100 px-2 py-1 rounded-xl shadow-sm whitespace-nowrap items-center ${isFailed ? "cursor-pointer" : ""}`}
+                          onClick={() =>
+                            isFailed &&
+                            setShowPopup(showPopup === payment.id ? null : payment.id)
+                          }
+                        >
+                          <div className={isFailed ? "text-red-500" : "text-green-500"}>●</div>
+                          <div>
+                            {payment.paymentStatus === "failed" ? (
+                              <button className="text-red-500 text-sm font-medium">
+                                Retry Payment
+                              </button>
+                            ) : payment.paymentStatus === "pending" ? (
+                              <span className="text-yellow-500 text-sm font-semibold">
+                                Payment Pending
+                              </span>
+                            ) : payment.paymentStatus === "cancelled" ? (
+                              <span className="text-red-500 whitespace-nowrap text-sm font-semibold">
+                                Payment Cancelled
+                              </span>
+                            ) : (
+                              <span className="text-green-600 text-sm font-semibold">
+                                Paid Successfully
+                              </span>
+                            )}
                           </div>
-                          <a href="/failed-payments" className="text-blue-600 hover:underline">
-                            Go to the failed payments page
-                          </a>
                         </div>
-                      )}
-                    </td>
 
-                    <td className="capitalize">
-                      {payment.paymentCategory === "starter_pack"
-                        ? "Stripe"
-                        : safeValue(payment.paymentType)}
-                    </td>
-                    <td>
-                      {payment.paymentCategory === "starter_pack"
-                        ? formatDate(payment.updatedAt)
-                        : formatDate(payment.dueDate)}
-                    </td>
-                    <td className="capitalize">{safeValue(payment.paymentStatus)}</td>
-                    <td>
-                      {safeValue(payment.price)} {safeValue(payment.currency, "GBP")}
-                    </td>
-                  </tr>
-                );
-              })
+                        {showPopup === payment.id && isFailed && (
+                          <div className="absolute right-[200px] top-[-30px] mt-2 w-72 bg-white shadow-lg rounded-xl p-4 z-10">
+                            <div className="text-red-500 font-semibold mb-2">Payment Failed</div>
+                            <div className="text-gray-700 mb-2">
+                              Unsuccessful payment of {safeValue(payment.firstName)}{" "}
+                              {safeValue(payment.lastName)}'s subscription for{" "}
+                              {safeValue(payment.description, "this month")}.
+                            </div>
+                            <a href="/failed-payments" className="text-blue-600 hover:underline">
+                              Go to the failed payments page
+                            </a>
+                          </div>
+                        )}
+                      </td>
+
+                      <td className="capitalize">
+                        {payment.paymentCategory === "starter_pack"
+                          ? "Stripe"
+                          : safeValue(payment.paymentType)}
+                      </td>
+                      <td>
+                        {payment.paymentCategory === "starter_pack"
+                          ? formatDate(payment.updatedAt)
+                          : formatDate(payment.dueDate)}
+                      </td>
+                      <td className="capitalize">{safeValue(payment.paymentStatus)}</td>
+                      <td>
+                        {safeValue(payment.price)} {safeValue(payment.currency, "GBP")}
+                      </td>
+                    </tr>
+                  );
+                })
             ) : (
               <tr>
                 <td colSpan={5} className="text-center py-6 text-gray-500">
@@ -850,15 +853,15 @@ const HistoryOfPayments = ({ stateData }) => {
                           <p className="text-red-500 text-xs mt-1">{errors.cvc}</p>
                         )}
                       </label>
-                     
+
                     </div>
-                     <div className="flex-1">
-                        <label className="block text-gray-700 poppins text-[14px] font-medium mb-1">Postal Code<span className="text-red-500 ml-0.5">*</span></label>
-                        <input type="text" value={zipCode} onChange={(e) => handleCheckoutChange("zipCode", e.target.value)}
-                          placeholder="Enter Postal Code" className="w-full bg-white border border-gray-200 rounded-[6px] px-4 py-2"
-                        />
-                        {errors.zipCode && <span className="text-red-500 text-[12px] mt-1 block">{errors.zipCode}</span>}
-                      </div>
+                    <div className="flex-1">
+                      <label className="block text-gray-700 poppins text-[14px] font-medium mb-1">Postal Code<span className="text-red-500 ml-0.5">*</span></label>
+                      <input type="text" value={zipCode} onChange={(e) => handleCheckoutChange("zipCode", e.target.value)}
+                        placeholder="Enter Postal Code" className="w-full bg-white border border-gray-200 rounded-[6px] px-4 py-2"
+                      />
+                      {errors.zipCode && <span className="text-red-500 text-[12px] mt-1 block">{errors.zipCode}</span>}
+                    </div>
 
                     <p className="text-lg font-semibold">
                       Total: £{pricingBreakdown?.totalAmountToday?.toFixed(2)}

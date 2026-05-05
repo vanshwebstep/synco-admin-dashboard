@@ -19,6 +19,7 @@ const Account = () => {
   // const { serviceHistoryMembership, serviceHistory, error, loading } = useBookFreeTrial()
 
   const { loading, setMainId, fetchMembers, data } = accountsInfo;
+  const location = useLocation();
 
   const tabs = [
     { name: "Parent Profile", component: <ParentProfile profile={data} /> },
@@ -28,9 +29,14 @@ const Account = () => {
     { name: "Rewards", component: <Rewards profile={data} /> },
     { name: "Events", component: <Events profile={data} /> },
   ];
-  const [activeTab, setActiveTab] = useState(tabs[0].name);
+  const [activeTab, setActiveTab] = useState(location.state?.defaultTab || tabs[0].name);
 
-  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.defaultTab) {
+      setActiveTab(location.state.defaultTab);
+    }
+  }, [location.state]);
+
   const queryParams = new URLSearchParams(location.search);
   const id = queryParams.get("id"); // <-- this will be "9"  console.log('id',id)
   const serviceType = queryParams.get("serviceType");
@@ -90,8 +96,8 @@ const Account = () => {
         <div className="flex items-center gap-1">
           <h2
             onClick={() => {
-              const backPath = location.state?.from === "allMembers" 
-                ? "/weekly-classes/all-members/list" 
+              const backPath = location.state?.from === "allMembers"
+                ? "/weekly-classes/all-members/list"
                 : "/weekly-classes/members-info";
               navigate(backPath);
             }}
@@ -117,13 +123,17 @@ const Account = () => {
           ))}
         </div>
 
-        <button
-          onClick={handleDelete}
-          className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl hover:bg-red-100 transition-colors font-semibold"
-        >
-          <Trash2 size={18} />
-          Delete Account
-        </button>
+        {activeTab !== "Service History" && (
+
+          <button
+            onClick={handleDelete}
+            className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl hover:bg-red-100 transition-colors font-semibold"
+          >
+            <Trash2 size={18} />
+            Delete Account
+          </button>
+        )
+        }
       </div>
 
       <div className="mt-6">

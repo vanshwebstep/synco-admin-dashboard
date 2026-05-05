@@ -451,6 +451,28 @@ const List = () => {
             exclusions.some(ex => ex.toDateString() === date?.toDateString())
         );
     };
+   const formatDateToDDMMYYYY = (dateStr) => {
+  if (!dateStr) return "";
+
+  // ✅ Already in DD/MM/YYYY → return as it is
+  if (dateStr.includes("/")) return dateStr;
+
+  // ✅ Handle YYYY-MM-DD only
+  if (dateStr.includes("-")) {
+    const parts = dateStr.split("-");
+
+    if (parts.length === 3) {
+      const [year, month, day] = parts;
+
+      if (year && month && day) {
+        return `${day}/${month}/${year}`;
+      }
+    }
+  }
+
+  // ❌ Invalid format fallback
+  return "";
+};
     useEffect(() => {
         if (TrialData) {
             // console.log('stp1')
@@ -458,6 +480,7 @@ const List = () => {
 
                 const mappedStudents = TrialData.students.map((student, index) => ({
                     ...student,
+                    dateOfBirth: formatDateToDDMMYYYY(student.dateOfBirth),
 
                     // ✅ Inject default class if missing
                     selectedClassId:
@@ -579,11 +602,13 @@ const List = () => {
     const classesWithCapacity = Array.isArray(singleClassSchedulesOnly?.venueClasses) ? singleClassSchedulesOnly?.venueClasses?.filter((cls) => {
         return cls.capacity > 0;
     }) : [];
+    const allClasses = Array.isArray(singleClassSchedulesOnly?.venueClasses)
+        ? singleClassSchedulesOnly.venueClasses
+        : [];
     const handleStudentClassChange = (index, selectedOption) => {
         setStudents((prev) => {
             const updated = [...prev];
 
-            // 👇 If cleared
             if (!selectedOption) {
                 updated[index] = {
                     ...updated[index],
@@ -594,33 +619,58 @@ const List = () => {
                 return updated;
             }
 
-            const selectedClass = classesWithCapacity?.find(
+            const selectedClass = allClasses.find(
                 (cls) => cls.id === selectedOption.value
             );
 
-            // 👇 Check capacity condition
-            const isOnlyOneClass = classesWithCapacity?.length === 1;
-            const hasNoCapacity = selectedClass?.capacity === 0;
+            // 🚨 Capacity 0 case
+            if (selectedClass?.capacity === 0) {
 
-            if (isOnlyOneClass && hasNoCapacity) {
-                updated[index] = {
-                    ...updated[index],
-                    selectedClassId: selectedOption.value,
-                    selectedClassData: null, // ❌ clear time
-                    error: "Class has no capacity"
-                };
-            } else {
-                updated[index] = {
-                    ...updated[index],
-                    selectedClassId: selectedOption.value,
-                    selectedClassData: selectedClass,
-                    error: null
-                };
+                showConfirm(
+                    "Are you sure?",
+                    "This class has no capacity. Do you want to join the waiting list instead?",
+                    "Yes"
+                ).then((result) => {
+                    if (result.isConfirmed) {
+                        navigate("/weekly-classes/find-a-class/add-to-waiting-list", {
+                            state: {
+                                itemId: finalClassId,
+                                studentsData: prev,              // 👈 ALL students
+                                parentsData: parents,            // 👈 parents
+                                emergencyData: emergency,        // 👈 emergency
+                                selectedClassData: selectedClass,
+                                selectedStudentIndex: index,
+                                comesFrom: 'trials',
+                            }
+                        });
+                    }
+                });
+
+
+
+
+                return prev; // don't update selection
             }
+
+            // ✅ Normal case
+            updated[index] = {
+                ...updated[index],
+                selectedClassId: selectedOption.value,
+                selectedClassData: selectedClass,
+                error: null
+            };
 
             return updated;
         });
     };
+    const formatOptionLabel = (option) => (
+        <div className="flex justify-between">
+            <span>{option.label}</span>
+            {option.capacity === 0 && (
+                <span className="text-red-500 text-sm">(Capacity 0)</span>
+            )}
+        </div>
+    );
     const handleNumberChange = (e) => {
         const val = e.target.value === "" ? "" : Number(e.target.value);
 
@@ -655,7 +705,7 @@ const List = () => {
 
         }
     };
-    const venueClassOptions = classesWithCapacity?.map((cls) => ({
+    const venueClassOptions = allClasses?.map((cls) => ({
         value: cls.id,
         label: cls.className
     }));
@@ -1622,6 +1672,7 @@ const List = () => {
                                                 isClearable
                                                 placeholder="Select class"
                                                 options={venueClassOptions}
+                                                formatOptionLabel={formatOptionLabel}
                                                 value={
                                                     venueClassOptions.find(
                                                         (opt) => opt.value === student.selectedClassId
