@@ -78,9 +78,9 @@ const DynamicTable = ({
 
   const finalData = useGrouped ? groupedData : flattenedData;
   const searchableKeys = ["name", "email", "phone"]; // customize
-
- const searchedData = useMemo(() => {
-  if (!searchQuery) return finalData;
+console.log("finalData before search", searchQuery);
+const searchedData = useMemo(() => {
+  if (!searchQuery?.trim()) return finalData;
 
   const queryWords = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
 
@@ -93,16 +93,12 @@ const DynamicTable = ({
       ""
     ).toLowerCase();
 
-    // ✅ Parent phones
     const parentPhones = (row?.parents || [])
       .map(p => p?.parentPhoneNumber || "")
-      .join(" ")
-      .toLowerCase();
+      .join(" ");
 
-    // ✅ Normalize phones (remove +, spaces, etc.)
     const normalizedPhones = parentPhones.replace(/[^\d]/g, "");
 
-    // ✅ Parent names + emails
     const parentInfo = (row?.parents || [])
       .map(p =>
         `${p?.parentFirstName || ""} ${p?.parentLastName || ""} ${p?.parentEmail || ""}`
@@ -110,21 +106,33 @@ const DynamicTable = ({
       .join(" ")
       .toLowerCase();
 
+    const studentInfo = row?.student
+      ? `${row.student.studentFirstName || ""} ${row.student.studentLastName || ""}`
+      : (row?.students || [])
+          .map(s => `${s.studentFirstName || ""} ${s.studentLastName || ""}`)
+          .join(" ");
+
     const searchString = `
-      ${row?.student?.studentFirstName || ""}
-      ${row?.student?.studentLastName || ""}
-      ${row?.student?.age || ""}
+      ${studentInfo}
       ${parentInfo}
-      ${parentPhones}
-      ${normalizedPhones}
       ${venueName}
     `.toLowerCase();
 
-    return queryWords.every(word =>
-      searchString.includes(word.replace(/[^\d]/g, ""))
-    );
+    return queryWords.every(word => {
+      const cleanWord = word.trim().toLowerCase();
+
+      // 🔢 number search (phone)
+      if (/^\d+$/.test(cleanWord)) {
+        return normalizedPhones.includes(cleanWord);
+      }
+
+      // 🔤 text search (names etc)
+      return searchString.includes(cleanWord);
+    });
   });
 }, [finalData, searchQuery]);
+console.log("finalData", finalData);
+console.log("searchedData", searchedData);
   /* =============================
      Pagination
   ============================== */
