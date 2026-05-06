@@ -240,7 +240,7 @@ const StudentProfile = ({ StudentProfile }) => {
             if (result.isConfirmed) {
                 // Navigate to your component/route
                 navigate("/weekly-classes/find-a-class/book-a-free-trial", {
-                    state: { TrialData: StudentProfile, comesFrom: "trials", useofRebook: "useofRebook" },
+                    state: { TrialData: StudentProfile, comesFrom: "trials", useofRebook: "useofRebook", mainBookingId: StudentProfile?.id },
                 });
             }
         });
@@ -527,7 +527,7 @@ const StudentProfile = ({ StudentProfile }) => {
     const handleBookMembership = () => {
 
         navigate("/weekly-classes/find-a-class/book-a-membership", {
-            state: { TrialData: StudentProfile, comesFrom: "trials" },
+            state: { TrialData: StudentProfile, comesFrom: "trials", mainBookingId: StudentProfile?.id },
         });
 
     };

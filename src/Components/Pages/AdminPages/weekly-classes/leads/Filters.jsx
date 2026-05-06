@@ -3,63 +3,21 @@ import {
     Search,
     Mail,
     MessageSquare,
-    Download,
+    FileText,
     ChevronLeft,
     ChevronRight,
     Check
 } from "lucide-react";
 import { useLeads } from "../../contexts/LeadsContext";
 import Select from "react-select";
-import * as XLSX from "xlsx";
 import { showError, showWarning, showSuccess } from "../../../../../utils/swalHelper";
 import { useEmail } from '../../contexts/messages/SendEmailContext';
 
 import { saveAs } from "file-saver";
 import { useTextPopup } from "../../contexts/messages/SendTextContext";
-function exportDataToExcel(data) {
-    // Prepare flat data for excel rows
-    const flattenedData = data.map((lead) => {
-        return {
-            Date: new Date(lead.createdAt).toLocaleDateString("en-GB"),
-            "Parent Name": lead.firstName + " " + lead.lastName,
-            Email: lead.email || "-",
-            Phone: lead.phone || "-",
-            Postcode: lead.postcode || "-",
-            "Kid Range": lead.childAge || "-",
-            "Assigned Agent":
-                lead.assignedAgent?.firstName && lead.assignedAgent?.lastName
-                    ? lead.assignedAgent.firstName + " " + lead.assignedAgent.lastName
-                    : "-",
-            Status: lead.status,
-            // For nested nearestVenues, flatten to a string (comma separated names)
-            "Nearest Venues":
-                lead.nearestVenues && lead.nearestVenues.length > 0
-                    ? lead.nearestVenues.map((v) => v.name).join(", ")
-                    : "No nearest venues",
-        };
-    });
-
-    // Create worksheet and workbook
-    const worksheet = XLSX.utils.json_to_sheet(flattenedData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Leads");
-
-    // Generate buffer
-    const excelBuffer = XLSX.write(workbook, {
-        bookType: "xlsx",
-        type: "array",
-    });
-
-    // Save file using file-saver
-    const dataBlob = new Blob([excelBuffer], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-
-    saveAs(dataBlob, `Leads_export_${new Date().toISOString().slice(0, 10)}.xlsx`);
-}
 const Filters = () => {
 
-    const { fetchData, activeTabm, setActiveTab, data, setSelectedVenue, selectedVenue, selectedUserIds, sendleadsMail, setCurrentPage, setSearchTerm, searchTerm } = useLeads()
+    const { fetchData, activeTab, setActiveTab, data, setSelectedVenue, selectedVenue, selectedUserIds, sendleadsMail, setCurrentPage, setSearchTerm, searchTerm, sheetUrl } = useLeads()
     const { openEmailPopup } = useEmail();
     const token = localStorage.getItem("adminToken");
     const { openTextPopup } = useTextPopup();
@@ -553,9 +511,20 @@ const Filters = () => {
                     }} className="flex-1 flex items-center justify-center gap-1 border text-[#717073] border-[#717073] rounded-lg py-2 text-sm hover:bg-gray-50">
                     <MessageSquare size={16} className="text-[#717073]" /> Send Text
                 </button>
-                <button onClick={() => exportDataToExcel(data)} className="flex items-center justify-center gap-1 bg-[#237FEA] text-white text-sm py-2 rounded-lg hover:bg-blue-700 transition">
-                    <Download size={16} /> Export Data
-                </button>
+                {activeTab === "Facebook" && (
+                    <button
+                        onClick={() => {
+                            if (sheetUrl) {
+                                window.open(sheetUrl, "_blank");
+                            } else {
+                                showError("Missing URL", "No Google Sheet URL found for this tab.");
+                            }
+                        }}
+                        className="flex items-center justify-center gap-1 bg-[#4285F4] text-white text-sm py-2 rounded-lg hover:bg-[#357ae8] transition"
+                    >
+                        <FileText size={16} /> View Docs
+                    </button>
+                )}
             </div>
         </div>
     );

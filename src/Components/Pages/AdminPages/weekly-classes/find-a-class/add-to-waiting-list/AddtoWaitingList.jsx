@@ -38,7 +38,7 @@ const AddtoWaitingList = () => {
   const [result, setResult] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
-  const { classId, from_lead, leadId, itemId, comesFrom, studentsData, parentsData, emergencyData, selectedClassData } = location.state || {};
+  const { classId, from_lead, leadId, itemId, comesFrom, studentsData, mainBookingId, parentsData, emergencyData, selectedClassData } = location.state || {};
   const popup1Ref = useRef(null);
   const popup2Ref = useRef(null);
   const popup3Ref = useRef(null);
@@ -61,9 +61,11 @@ const AddtoWaitingList = () => {
     if (page > totalPages) page = totalPages;
     setCurrentPage(page);
   };
+
+  console.log('comesFrom', comesFrom)
   // console.log('classId', classId)
   const { fetchFindClassID, singleClassSchedulesOnly, loading } = useClassSchedule() || {};
-  const { createWaitinglist, isBooked, setIsBooked, submitAllComments } = useBookFreeTrial()
+  const { createWaitinglist, createMembershipWaitinglist, isBooked, setIsBooked, submitAllComments } = useBookFreeTrial()
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { keyInfoData, fetchKeyInfo } = useMembers();
 
@@ -512,28 +514,28 @@ const AddtoWaitingList = () => {
       return prevStudents;
     });
   }, [numberOfStudents]);
-const formatDateToDDMMYYYY = (dateStr) => {
-  if (!dateStr) return "";
+  const formatDateToDDMMYYYY = (dateStr) => {
+    if (!dateStr) return "";
 
-  // ✅ Already in DD/MM/YYYY → return as it is
-  if (dateStr.includes("/")) return dateStr;
+    // ✅ Already in DD/MM/YYYY → return as it is
+    if (dateStr.includes("/")) return dateStr;
 
-  // ✅ Handle YYYY-MM-DD only
-  if (dateStr.includes("-")) {
-    const parts = dateStr.split("-");
+    // ✅ Handle YYYY-MM-DD only
+    if (dateStr.includes("-")) {
+      const parts = dateStr.split("-");
 
-    if (parts.length === 3) {
-      const [year, month, day] = parts;
+      if (parts.length === 3) {
+        const [year, month, day] = parts;
 
-      if (year && month && day) {
-        return `${day}/${month}/${year}`;
+        if (year && month && day) {
+          return `${day}/${month}/${year}`;
+        }
       }
     }
-  }
 
-  // ❌ Invalid format fallback
-  return "";
-};
+    // ❌ Invalid format fallback
+    return "";
+  };
   useEffect(() => {
     if (studentsData) {
       const formattedStudents = studentsData.map((student) => ({
@@ -808,13 +810,17 @@ const formatDateToDDMMYYYY = (dateStr) => {
       parents: parents.map(({ id, ...rest }) => rest),
       emergency,
     };
-    console.log('payload', payload)
+    console.log('comesFrom', comesFrom)
     // return
     try {
       let res;
 
-      if (leadId) {
+      if (leadId && comesFrom != "membership" && comesFrom != "trials") {
         res = await createWaitinglist(payload, leadId);
+      }
+      if (comesFrom == "membership" || comesFrom == "trials") {
+
+        res = await createMembershipWaitinglist(payload, mainBookingId);
       }
       else {
         res = await createWaitinglist(payload);

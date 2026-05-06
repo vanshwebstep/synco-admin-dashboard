@@ -5,73 +5,7 @@ import Select from "react-select";
 import { Check, Plus } from "lucide-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-// Sample data
-const bookings = [
-  {
-    type: "Weekly Classes Membership",
-    plan: "12 month plan",
-    students: 2,
-    venue: "Acton",
-    id: "XHDJDHLS314",
-    price: "£3999",
-    bookingDate: "Nov 18 2021, 17:00",
-    progress: "6/12 months",
-    source: "Ben Marcus",
-    status: "Active",
-    statusColor: "green",
-  },
-  {
-    type: "Birthday Party Booking",
-    package: "Gold",
-    pricePaid: "£315.00",
-    stripeID: "XHDJDHLS314",
-    bookingDate: "Nov 18 2021, 17:00",
-    partyDate: "Nov 18 2021, 17:00",
-    coach: "Ethan Bond-Vaughan",
-    source: "Abdul Ali",
-    status: "Completed",
-    statusColor: "red",
-  },
-  {
-    type: "One to One Booking",
-    package: "Gold",
-    students: 1,
-    pricePaid: "£3999",
-    stripeID: "XHDJDHLS314",
-    bookingDate: "Nov 18 2021, 17:00",
-    venue: "Chelsea Park",
-    coach: "Ethan Bond-Vaughan",
-    source: "Abdul Ali",
-    status: "Expired",
-    statusColor: "red",
-  },
-  {
-    type: "Holiday Camp",
-    camp: "Easter",
-    students: 2,
-    pricePaid: "£3999",
-    stripeID: "XHDJDHLS314",
-    bookingDate: "Nov 18 2021, 17:00",
-    venue: "Chelsea Park",
-    discount: "15% Early Bird Discount",
-    source: "Abdul Ali",
-    status: "Expired",
-    statusColor: "red",
-  },
-  {
-    type: "Merchandise",
-    item: "Full Set",
-    quantity: 2,
-    pricePaid: "£3999",
-    transactionID: "XHDJDHLS314",
-    bookingDate: "Nov 18 2021, 17:00",
-    discount: 0,
-    fulfillment: "Fulfilled",
-    source: "Online Store",
-    status: "Paid",
-    statusColor: "green",
-  },
-];
+
 
 // Helper function for images
 const renderImage = (type) => {
@@ -176,7 +110,7 @@ const BookingCard = ({ booking }) => {
               {/* {renderField("ID", booking?.paymentPlanId)} */}
               {renderField("Trial Attempt", booking?.attempt)}
               {renderField("Date Of Booking", formatPrettyDate(booking?.createdAt))}
-              {renderField("Booking Source", booking?.source)}
+              {renderField("Booking Source", booking?.assignedAgent ? booking?.assignedAgent?.firstName + ' ' + booking?.assignedAgent?.lastName : "-")}
             </>
           )}
 

@@ -45,7 +45,7 @@ const List = () => {
 
     const navigate = useNavigate();
     const location = useLocation();
-    const { classId, existingparentid, TrialData, comesFrom, from_lead, leadId, useofRebook } = location.state || {};
+    const { classId, existingparentid, TrialData, comesFrom, mainBookingId, from_lead, leadId, useofRebook } = location.state || {};
     console.log('existingparentid-', existingparentid)
     const popup1Ref = useRef(null);
     const popup2Ref = useRef(null);
@@ -73,7 +73,8 @@ const List = () => {
             gender: '',
             medicalInformation: '',
             selectedClassId: null,
-            selectedClassData: null
+            selectedClassData: null,
+            initialClassId: null
             // Add other fields if needed
         },
     ]);
@@ -451,28 +452,28 @@ const List = () => {
             exclusions.some(ex => ex.toDateString() === date?.toDateString())
         );
     };
-   const formatDateToDDMMYYYY = (dateStr) => {
-  if (!dateStr) return "";
+    const formatDateToDDMMYYYY = (dateStr) => {
+        if (!dateStr) return "";
 
-  // ✅ Already in DD/MM/YYYY → return as it is
-  if (dateStr.includes("/")) return dateStr;
+        // ✅ Already in DD/MM/YYYY → return as it is
+        if (dateStr.includes("/")) return dateStr;
 
-  // ✅ Handle YYYY-MM-DD only
-  if (dateStr.includes("-")) {
-    const parts = dateStr.split("-");
+        // ✅ Handle YYYY-MM-DD only
+        if (dateStr.includes("-")) {
+            const parts = dateStr.split("-");
 
-    if (parts.length === 3) {
-      const [year, month, day] = parts;
+            if (parts.length === 3) {
+                const [year, month, day] = parts;
 
-      if (year && month && day) {
-        return `${day}/${month}/${year}`;
-      }
-    }
-  }
+                if (year && month && day) {
+                    return `${day}/${month}/${year}`;
+                }
+            }
+        }
 
-  // ❌ Invalid format fallback
-  return "";
-};
+        // ❌ Invalid format fallback
+        return "";
+    };
     useEffect(() => {
         if (TrialData) {
             // console.log('stp1')
@@ -488,6 +489,8 @@ const List = () => {
 
                     selectedClassData:
                         student.selectedClassData || singleClassSchedulesOnly || null,
+                    initialClassId:
+                        student.selectedClassId || singleClassSchedulesOnly?.id || null,
                 }));
                 console.log('mappedStudents', mappedStudents)
                 setStudents(mappedStudents);
@@ -520,6 +523,7 @@ const List = () => {
                 ...student,
                 selectedClassId: singleClassSchedulesOnly.id,
                 selectedClassData: singleClassSchedulesOnly,
+                initialClassId: singleClassSchedulesOnly.id,
             }));
 
             console.log("Reset + Updated Students:", updated);
@@ -605,6 +609,8 @@ const List = () => {
     const allClasses = Array.isArray(singleClassSchedulesOnly?.venueClasses)
         ? singleClassSchedulesOnly.venueClasses
         : [];
+
+
     const handleStudentClassChange = (index, selectedOption) => {
         setStudents((prev) => {
             const updated = [...prev];
@@ -624,7 +630,9 @@ const List = () => {
             );
 
             // 🚨 Capacity 0 case
-            if (selectedClass?.capacity === 0) {
+            if (selectedClass?.capacity === 0 &&
+                selectedOption.value !== updated[index].initialClassId &&
+                selectedOption.value !== updated[index].selectedClassId) {
 
                 showConfirm(
                     "Are you sure?",
@@ -634,13 +642,14 @@ const List = () => {
                     if (result.isConfirmed) {
                         navigate("/weekly-classes/find-a-class/add-to-waiting-list", {
                             state: {
-                                itemId: finalClassId,
+                                itemId: selectedClass.id,
                                 studentsData: prev,              // 👈 ALL students
                                 parentsData: parents,            // 👈 parents
                                 emergencyData: emergency,        // 👈 emergency
                                 selectedClassData: selectedClass,
                                 selectedStudentIndex: index,
                                 comesFrom: 'trials',
+                                mainBookingId: mainBookingId,
                             }
                         });
                     }
@@ -692,10 +701,10 @@ const List = () => {
                             medicalInformation: "",
                             selectedClassId: "",
                             selectedClassData: null,
+                            initialClassId: null,
                         })
                     );
                     return [...prevStudents, ...newStudents];
-                    console.log('sdasasasasa', prevStudents, newStudents)
 
                 }
 
@@ -705,10 +714,13 @@ const List = () => {
 
         }
     };
-    const venueClassOptions = allClasses?.map((cls) => ({
-        value: cls.id,
-        label: cls.className
-    }));
+    const isEmpty =
+        comesFrom === "" || comesFrom === null || comesFrom === undefined;
+
+    const venueClassOptions = !isEmpty
+        ? allClasses?.map((cls) => ({ value: cls.id, label: cls.className }))
+        : classesWithCapacity?.map((cls) => ({ value: cls.id, label: cls.className }));
+
 
     console.log('singleClassSchedulesOnlyasasasa', singleClassSchedulesOnly)
     // useEffect(() => {
@@ -954,58 +966,47 @@ const List = () => {
             return;
         }
 
+        const formattedStudents = students.map((s) => {
+            const { studentStatus, selectedClassData, ...rest } = s;
+
+            return {
+                ...rest,
+                dateOfBirth: toDateOnly(s.dateOfBirth),
+                classScheduleId:
+                    s.selectedClassData?.id || singleClassSchedulesOnly?.id,
+            };
+        });
+
+        const formattedParents = parents.map(({ id, ...rest }) =>
+            studentRemoved ? rest : { id, ...rest }
+        );
+
+        const formattedEmergency = studentRemoved
+            ? (({ id, ...rest }) => rest)(emergency)
+            : emergency;
+
+        // ✅ Main payload
         const payload = {
             keyInformation: selectedKeyInfo,
             venueId: selectedVenue?.id,
             trialDate: selectedDate,
             totalStudents: students.length,
-
-            students: students.map((s, index) => {
-                const { studentStatus, ...rest } = s; // ❌ remove this field
-
-                return {
-                    ...rest,
-                    dateOfBirth: toDateOnly(s.dateOfBirth),
-                    classScheduleId:
-                        s.selectedClassData?.id || singleClassSchedulesOnly?.id,
-                };
-            }),
-
-
-            parents: parents.map(({ id, ...rest }) =>
-                studentRemoved ? rest : { id, ...rest }  // ✅
-            ),
-            emergency: studentRemoved
-                ? (({ id, ...rest }) => rest)(emergency)
-                : emergency,
+            students: formattedStudents,
+            parents: formattedParents,
+            emergency: formattedEmergency,
         };
+
+        // ✅ Waiting list payload
         const payloadwaitinglist = {
             bookingId: TrialData?.bookingId || null,
             keyInformation: selectedKeyInfo,
             venueId: selectedVenue?.id,
             trialDate: selectedDate,
             totalStudents: students.length,
-
-            students: students.map((s, index) => {
-                const { studentStatus, ...rest } = s; // ❌ remove this field
-
-                return {
-                    ...rest,
-                    dateOfBirth: toDateOnly(s.dateOfBirth),
-                    classScheduleId:
-                        s.selectedClassData?.id || singleClassSchedulesOnly?.id,
-                };
-            }),
-
-
-            parents: parents.map(({ id, ...rest }) =>
-                studentRemoved ? rest : { id, ...rest }  // ✅
-            ),
-            emergency: studentRemoved
-                ? (({ id, ...rest }) => rest)(emergency)
-                : emergency,
+            students: formattedStudents,
+            parents: formattedParents,
+            emergency: formattedEmergency,
         };
-
 
 
 

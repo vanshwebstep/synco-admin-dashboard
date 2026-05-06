@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef,useMemo } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   MapPin,
@@ -6,6 +6,7 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  FileText
 } from "lucide-react";
 import { useLeads } from "../../contexts/LeadsContext";
 import Loader from "../../contexts/Loader";
@@ -26,7 +27,7 @@ const Facebook = () => {
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const { searchQuery } = useGlobalSearch();
 
-  const { loading, fetchData, data, selectedUserIds, setSelectedUserIds, setSelectedBookingIds, selectedBookingIds, setCurrentPage, currentPage } = useLeads();
+  const { loading, fetchData, data, selectedUserIds, setSelectedUserIds, setSelectedBookingIds, selectedBookingIds, setCurrentPage, currentPage, sheetUrl } = useLeads();
   const [expandedRow, setExpandedRow] = useState(null);
   const navigate = useNavigate()
   const iconContainerRef = useRef(null);
@@ -400,15 +401,16 @@ const Facebook = () => {
   // ✅ data used for rendering table rows
 
   const paginatedData = searchedData.slice(startIndex, endIndex);
-React.useEffect(() => {
-  setCurrentPage(1);
-}, [rowsPerPage, searchQuery]);
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [rowsPerPage, searchQuery]);
 
   console.log('selectedUserIds', selectedUserIds)
   if (loading) return <Loader />;
   if (searchedData.length == 0) return <p className="text-center">No Data Found</p>;
   return (
     <>
+
       <div className="overflow-auto rounded-2xl bg-white shadow-sm">
         <table className="min-w-full text-sm">
           <thead className="bg-[#F5F5F5] text-left border border-[#EFEEF2]">
@@ -457,12 +459,14 @@ React.useEffect(() => {
                     <td className="py-3 px-4">{lead.postcode || '-'}</td>
                     <td className="py-3 px-4 whitespace-nowrap">{lead.childAge || '-'}</td>
                     <td className="py-3 px-4 whitespace-nowrap">
-                      {lead.assignedAgent?.firstName + ' ' + lead.assignedAgent?.lastName || '-'}
+                      {/* {lead.assignedAgent?.firstName + ' ' + lead.assignedAgent?.lastName || '-'} */}
+                      {lead.assignedAgent && `${lead.assignedAgent.firstName} ${lead.assignedAgent.lastName}` || '-'}
+
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
                         <span className="bg-[#FBEECE] text-[#EDA600] min-w-25 text-center  px-5 py-1.5 rounded-xl text-xs font-semibold">
-                          {lead.status}
+                          {lead.leadStatus}
                         </span>
                         <button onClick={(e) => toggleExpand(lead.id, e)}>
                           {isExpanded ? (

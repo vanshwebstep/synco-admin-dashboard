@@ -10,16 +10,19 @@ import { showSuccess, showError, showWarning } from "../../../../../../utils/swa
 import Comments from "../../../Common/Comments";
 import { useEmail } from "../../../contexts/messages/SendEmailContext";
 import { useTextPopup } from "../../../contexts/messages/SendTextContext";
+import { useBookFreeTrial } from "../../../contexts/BookAFreeTrialContext";
 const ParentProfile = (fetchedData) => {
   const { adminInfo } = useNotification();
   const location = useLocation();
   const [showFreeTrialPopup, setShowFreeTrialPopup] = useState(false);
+  const {
+    setComment, comment, fetchComments, commentsList, handleSubmitComment, loadingComment
+  } = useBookFreeTrial() || {};
   const [showMembershipPopup, setShowMembershipPopup] = useState(false);
   const [showAddtoWaitingPoppup, setShowAddtoWaitingPoppup] = useState(false);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
   const token = localStorage.getItem("adminToken");
-  const [loadingComment, setLoadingComment] = useState(false);
   const [showEmailPopup, setShowEmailPopup] = useState(false);
   const [studentsData, setStudentsData] = useState([]);
   const [textloading, setTextLoading] = useState(null);
@@ -39,7 +42,7 @@ const ParentProfile = (fetchedData) => {
     childAge: "",
   });
 
-  console.log('fetchedData', fetchedData);
+  console.log('formData', formData);
 
   useEffect(() => {
     if (fetchedData?.fetchedformData) {
@@ -56,7 +59,7 @@ const ParentProfile = (fetchedData) => {
             parentFirstName: parent.parentFirstName,
             parentLastName: parent.parentLastName,
             parentEmail: parent.parentEmail,
-            parentPhoneNumber: parent.parentPhoneNumber,
+            parentPhoneNumber: parent.phone,
             relationToChild: parent.relationToChild
           }));
 
@@ -76,8 +79,8 @@ const ParentProfile = (fetchedData) => {
   }, [fetchedData]);
   const navigate = useNavigate();
   const [country, setCountry] = useState("uk");
-  const [commentsList, setCommentsList] = useState([]);
-  const [comment, setComment] = useState("");
+
+  const [dialCode, setDialCode] = useState("+44");
   const [currentPage, setCurrentPage] = useState(1);
   const commentsPerPage = 5;
   // Pagination calculations
@@ -169,7 +172,7 @@ const ParentProfile = (fetchedData) => {
   const handlePhoneChange = (value, data) => {
     setDialCode("+" + data.dialCode);
     setCountry(data.countryCode);
-    setFormData((prev) => ({ ...prev, mobile: value.replace(data.dialCode, "").trim() }));
+    setFormData((prev) => ({ ...prev, phone: value.replace(data.dialCode, "").trim() }));
   };
 
   const formatTimeAgo = (timestamp) => {
@@ -189,64 +192,25 @@ const ParentProfile = (fetchedData) => {
     });
   };
 
-  const fetchComments = useCallback(async () => {
-    const token = localStorage.getItem("adminToken");
-    if (!token) return;
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/lead/comment/list`, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const result = await response.json();
-      setCommentsList(result?.data || []);
-    } catch (error) {
-      console.error("Failed to fetch comments:", error);
-      showError("Error", error.message || "Failed to fetch comments.");
-    }
-  }, []);
 
 
 
-  const handleSubmitComment = async (e) => {
-    e.preventDefault();
-    const token = localStorage.getItem("adminToken");
-    if (!token || !comment.trim()) return;
-
-    try {
-      /* Loading state handled by UI or we can add a specific loader if needed, 
-         but for now we'll skip the Swal loading popup and rely on non-blocking UI updates or let the user wait.
-         The original code used Swal.showLoading which is blocking. 
-         If blocking is desired, we might need a showLoading helper, but for now we'll stick to error/success. */
-      setLoadingComment(true)
-      const response = await fetch(`${API_BASE_URL}/api/admin/lead/comment/create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ comment }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        showError("Failed to Add Comment", result.message || "Something went wrong.");
-        return;
-      }
-
-      // showSuccess("Comment Created", "Comment has been added successfully!");
-
-      setComment("");
-      fetchComments();
-    } catch (error) {
-      console.error("Error creating comment:", error);
-      showError("Network Error", error.message || "An error occurred while submitting.");
-    } finally {
-      setLoadingComment(false)
-    }
+  const commentData = {
+    commentByLead: leadId,
+    commentType: "lead",
+    serviceType: "weekly class",
+  }
+  const payload = {
+    comment: comment,
+    commentType: "lead",
+    serviceType: "weekly class",
+    commentByLead: leadId, // ensure correct ID
   };
+
+  useEffect(() => {
+    fetchComments(commentData, "commentByLead");
+  }, [])
+
 
   const handleSendEmail = useCallback(async (bookingIds, type) => {
     setLoading(true);
@@ -555,7 +519,7 @@ const ParentProfile = (fetchedData) => {
                 <input
                   name="firstName"
                   className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-3"
-                  value={formData.firstName}
+                  value={formData.firstName || ''}
                   onChange={handleInputChange}
                 />
               </div>
@@ -564,7 +528,7 @@ const ParentProfile = (fetchedData) => {
                 <input
                   name="lastName"
                   className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-3"
-                  value={formData.lastName}
+                  value={formData.lastName || ''}
                   onChange={handleInputChange}
                 />
               </div>
@@ -578,7 +542,7 @@ const ParentProfile = (fetchedData) => {
                   type="email"
                   name="email"
                   className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-3"
-                  value={formData.email}
+                  value={formData.email || ''}
                   onChange={handleInputChange}
                 />
               </div>
@@ -587,8 +551,8 @@ const ParentProfile = (fetchedData) => {
                 <label className="block text-[16px] font-semibold">Phone</label>
                 <div className="flex items-center border border-gray-300 rounded-xl px-3 py-3 mt-1">
                   <PhoneInput
-                    country="uk"
-                    value="+44"
+                    country={country}
+                    value={dialCode}
                     onChange={handlePhoneChange}
                     disableDropdown={true}
                     disableCountryCode={true}
@@ -604,9 +568,9 @@ const ParentProfile = (fetchedData) => {
                     buttonClass="!bg-white !border-none !p-0"
                   />
                   <input
-                    type="number"
+                    type="text"
                     name="mobile"
-                    value={formData.mobile}
+                    value={formData.mobile || formData.phone || ''}
                     onChange={handleInputChange}
                     placeholder="Enter number"
                     className="border-none w-full focus:outline-none flex-1"
@@ -622,7 +586,7 @@ const ParentProfile = (fetchedData) => {
                 <input
                   type="text"
                   name="postalCode"
-                  value={formData.postalCode}
+                  value={formData.postalCode || ''}
                   onChange={handleInputChange}
                   placeholder="Enter postal code"
                   className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-3"
@@ -633,7 +597,7 @@ const ParentProfile = (fetchedData) => {
                 <input
                   type="number"
                   name="childAge"
-                  value={formData.childAge}
+                  value={formData.childAge || ''}
                   onChange={handleInputChange}
                   placeholder="Enter age"
                   className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-3"
@@ -646,7 +610,8 @@ const ParentProfile = (fetchedData) => {
             adminInfo={adminInfo}
             comment={comment}
             setComment={setComment}
-            handleSubmitComment={handleSubmitComment}
+            handleSubmitComment={() => handleSubmitComment(payload, commentData, 'commentByLead')}
+
             loadingComment={loadingComment}
             commentsList={commentsList}
             currentComments={currentComments}
@@ -755,10 +720,10 @@ const ParentProfile = (fetchedData) => {
                 </button>
                 <button disabled={textloading} onClick={() => {
                   const formattedParents = students.flatMap(s => s.parents)
-                    .filter(p => p.parentPhoneNumber)
+                    .filter(p => p.phone)
                     .map(p => ({
                       name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
-                      phone: p.parentPhoneNumber
+                      phone: p.phone
                     }));
 
                   if (formattedParents.length > 0) {

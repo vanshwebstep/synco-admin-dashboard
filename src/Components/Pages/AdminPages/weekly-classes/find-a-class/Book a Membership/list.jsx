@@ -349,7 +349,7 @@ const List = () => {
     const [result, setResult] = useState('');
     const navigate = useNavigate();
     const location = useLocation();
-    const { classId, TrialData, comesFrom, from_lead, leadId, startmembership } = location.state || {};
+    const { classId, TrialData, comesFrom, from_lead, leadId, startmembership, mainBookingId } = location.state || {};
     const popup1Ref = useRef(null);
     const popup2Ref = useRef(null);
     const popup3Ref = useRef(null);
@@ -371,6 +371,7 @@ const List = () => {
         branch_code: "",
         account_holder_name: "",
     });
+    console.log('comesFrom', comesFrom)
 
     const formatTimeAgo = (timestamp) => {
         const now = new Date();
@@ -383,7 +384,7 @@ const List = () => {
         return past.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
     };
 
-    const { fetchFindClassID, singleClassSchedulesOnly, loading } = useClassSchedule() || {};
+    const { fetchFindClassID, singleClassSchedulesOnly, loading, setLoading } = useClassSchedule() || {};
 
     // ── Issue #48: Reliable franchisee detection (check adminInfo role AND venue role) ──
     const isFranchisee =
@@ -401,7 +402,7 @@ const List = () => {
 
     const [students, setStudents] = useState([{
         studentFirstName: '', studentLastName: '', dateOfBirth: null, age: '',
-        gender: '', medicalInformation: '', selectedClassId: null, selectedClassData: null
+        gender: '', medicalInformation: '', selectedClassId: null, selectedClassData: null, initialClassId: null
     }]);
 
     const [emergency, setEmergency] = useState({
@@ -467,7 +468,9 @@ const List = () => {
             );
 
             // 🚨 Capacity 0 case
-            if (selectedClass?.capacity === 0) {
+            if (selectedClass?.capacity === 0 &&
+                selectedOption.value !== updated[index].initialClassId &&
+                selectedOption.value !== updated[index].selectedClassId) {
 
                 showConfirm(
                     "Are you sure?",
@@ -477,13 +480,14 @@ const List = () => {
                     if (result.isConfirmed) {
                         navigate("/weekly-classes/find-a-class/add-to-waiting-list", {
                             state: {
-                                itemId: finalClassId,
+                                itemId: selectedClass.id,
                                 studentsData: prev,              // 👈 ALL students
                                 parentsData: parents,            // 👈 parents
                                 emergencyData: emergency,        // 👈 emergency
                                 selectedClassData: selectedClass,
                                 selectedStudentIndex: index,
-                                comesFrom: 'trials',
+                                comesFrom: 'membership',
+                                mainBookingId: mainBookingId,
                             }
                         });
                     }
@@ -515,7 +519,7 @@ const List = () => {
                 if (val > prevStudents.length) {
                     const newStudents = Array.from({ length: val - prevStudents.length }, () => ({
                         studentFirstName: "", studentLastName: "", gender: "", age: "",
-                        dateOfBirth: "", medicalInformation: "", selectedClassId: "", selectedClassData: null,
+                        dateOfBirth: "", medicalInformation: "", selectedClassId: "", selectedClassData: null, initialClassId: null,
                     }));
                     return [...prevStudents, ...newStudents];
                 }
@@ -527,8 +531,12 @@ const List = () => {
             }
         }
     };
+    const isEmpty =
+        comesFrom === "" || comesFrom === null || comesFrom === undefined;
 
-    const venueClassOptions = allClasses    ?.map((cls) => ({ value: cls.id, label: cls.className }));
+    const venueClassOptions = !isEmpty
+        ? allClasses?.map((cls) => ({ value: cls.id, label: cls.className }))
+        : classesWithCapacity?.map((cls) => ({ value: cls.id, label: cls.className }));
 
     const validationCheck = () => {
         for (let i = 0; i < students.length; i++) {
@@ -564,7 +572,7 @@ const List = () => {
                 if (val > prevStudents.length) {
                     const newStudents = Array.from({ length: val - prevStudents.length }, () => ({
                         studentFirstName: "", studentLastName: "", gender: "", age: "",
-                        dateOfBirth: "", medicalInformation: "", selectedClassId: "", selectedClassData: null,
+                        dateOfBirth: "", medicalInformation: "", selectedClassId: "", selectedClassData: null, initialClassId: null,
                     }));
                     return [...prevStudents, ...newStudents];
                 }
@@ -582,6 +590,7 @@ const List = () => {
                     gender: '', medicalInformation: '',
                     selectedClassId: singleClassSchedulesOnly?.id || null,
                     selectedClassData: singleClassSchedulesOnly || null,
+                    initialClassId: singleClassSchedulesOnly?.id || null,
                 }));
                 return [...prevStudents, ...newStudents];
             }
@@ -608,6 +617,7 @@ const List = () => {
 
                     selectedClassId: student.selectedClassId || singleClassSchedulesOnly?.id || null,
                     selectedClassData: student.selectedClassData || singleClassSchedulesOnly || null,
+                    initialClassId: student.selectedClassId || singleClassSchedulesOnly?.id || null,
                 }));
                 setStudents(mappedStudents);
                 setNumberOfStudents(TrialData?.totalStudents);
@@ -649,6 +659,9 @@ const List = () => {
                 setIsBooked(false);
                 await fetchFindClassID(finalClassId);
                 await fetchKeyInfo();
+                if (startmembership === "startmembership") {
+                    await fetchVenues();
+                }
             }
         };
         fetchData();
@@ -1072,9 +1085,7 @@ const List = () => {
                 }
             }),
         };
-        console.log('amountToSend', amountToSend);
-        console.log('payload', payload);
-        // setIsSubmitting(false);
+
         // return;
         try {
             let res;

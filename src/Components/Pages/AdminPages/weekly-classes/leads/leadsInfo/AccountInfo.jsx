@@ -29,7 +29,7 @@ const AccountInfo = () => {
   const leadId = queryParams.get("id");
 
   const leads = useLeads();
-  const { fetchDataById } = leads;
+  const { fetchDataById } = leads || {};
   const [loading, setLoading] = useState(false);
 
   const [leadData, setLeadData] = useState([]);
@@ -98,7 +98,9 @@ const AccountInfo = () => {
     (async () => {
       try {
         setLoading(true);
-        await fetchDataById(leadId);
+        if (fetchDataById) {
+          await fetchDataById(leadId);
+        }
         await fetchLeadById(leadId);
       } catch (error) {
         console.error("Error loading lead data:", error);

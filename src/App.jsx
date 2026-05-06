@@ -587,27 +587,31 @@ const AppRoutes = () => {
         </LeadsContextProvider>
       } />
       <Route path="/weekly-classes/central-leads/create" element={
-        <ProtectedRoute>
-          <GlobalSearchProvider>
-            <AdminLayout>
-              <RoleBasedRoute>
-                <CreateLead />
-              </RoleBasedRoute>
-            </AdminLayout>
+        <LeadsContextProvider>
+          <ProtectedRoute>
+            <GlobalSearchProvider>
+              <AdminLayout>
+                <RoleBasedRoute>
+                  <CreateLead />
+                </RoleBasedRoute>
+              </AdminLayout>
 
-          </GlobalSearchProvider>
-        </ProtectedRoute>
+            </GlobalSearchProvider>
+          </ProtectedRoute>
+        </LeadsContextProvider>
       } />
       <Route path="/reports" element={
-        <ProtectedRoute>
-          <GlobalSearchProvider>
-            <AdminLayout>
-              <RoleBasedRoute>
-                <AccountInfo />
-              </RoleBasedRoute>
-            </AdminLayout>
-          </GlobalSearchProvider>
-        </ProtectedRoute>
+        <LeadsContextProvider>
+          <ProtectedRoute>
+            <GlobalSearchProvider>
+              <AdminLayout>
+                <RoleBasedRoute>
+                  <AccountInfo />
+                </RoleBasedRoute>
+              </AdminLayout>
+            </GlobalSearchProvider>
+          </ProtectedRoute>
+        </LeadsContextProvider>
       } />
 
       <Route path="/reports/members" element={
@@ -677,15 +681,17 @@ const AppRoutes = () => {
         </ProtectedRoute>
       } />
       <Route path="/weekly-classes/central-leads/accont-info" element={
-        <ProtectedRoute>
-          <GlobalSearchProvider>
-            <AdminLayout>
-              <RoleBasedRoute>
-                <AccountInfo />
-              </RoleBasedRoute>
-            </AdminLayout>
-          </GlobalSearchProvider>
-        </ProtectedRoute>
+        <LeadsContextProvider>
+          <ProtectedRoute>
+            <GlobalSearchProvider>
+              <AdminLayout>
+                <RoleBasedRoute>
+                  <AccountInfo />
+                </RoleBasedRoute>
+              </AdminLayout>
+            </GlobalSearchProvider>
+          </ProtectedRoute>
+        </LeadsContextProvider>
       } />
       <Route path="/reports/weekly-classes" element={
         <ProtectedRoute>

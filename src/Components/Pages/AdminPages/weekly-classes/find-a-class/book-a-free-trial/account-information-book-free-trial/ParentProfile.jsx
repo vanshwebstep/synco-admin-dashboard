@@ -437,7 +437,7 @@ const ParentProfile = ({ ParentProfile }) => {
 
         // Navigate to your component/route
         navigate("/weekly-classes/find-a-class/book-a-membership", {
-            state: { TrialData: ParentProfile, comesFrom: "trials", startmembership: "startmembership" },
+            state: { TrialData: ParentProfile, comesFrom: "trials", startmembership: "startmembership", mainBookingId: ParentProfile?.id },
         });
 
     };
@@ -450,7 +450,7 @@ const ParentProfile = ({ ParentProfile }) => {
             if (result.isConfirmed) {
                 // Navigate to your component/route
                 navigate("/weekly-classes/find-a-class/book-a-free-trial", {
-                    state: { TrialData: ParentProfile, comesFrom: "trials", useofRebook: "useofRebook" },
+                    state: { TrialData: ParentProfile, comesFrom: "trials", useofRebook: "useofRebook", mainBookingId: ParentProfile?.id },
                 });
             }
         });

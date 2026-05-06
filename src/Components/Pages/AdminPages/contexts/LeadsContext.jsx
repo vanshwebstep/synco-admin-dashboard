@@ -1,25 +1,20 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
 import { showSuccess, showError } from "../../../../utils/swalHelper";
 // import Facebook from "../one-to-one/leads/Facebook";
-import Facebook from "../weekly-classes/leads/Facebook";
 const LeadsContext = createContext();
 
 export const LeadsContextProvider = ({ children }) => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-  const tabs = [
-    { name: "Facebook", component: <Facebook /> },
-    { name: "Referral", component: <Facebook /> },
-    { name: "All other leads", component: <Facebook /> },
-    { name: "All", component: <Facebook /> },
-  ];
+
   const [selectedUserIds, setSelectedUserIds] = useState([]);
   const [selectedBookingIds, setSelectedBookingIds] = useState([]);
   const [currentPage, setCurrentPage] = React.useState(1);
   const [searchTerm, setSearchTerm] = useState("");
 
   const [selectedVenue, setSelectedVenue] = useState(null);
-  const [activeTab, setActiveTab] = useState(tabs[0].name);
+  const [activeTab, setActiveTab] = useState("Facebook");
+  const [sheetUrl, setSheetUrl] = useState("");
   const [data, setData] = useState([]);
   const [analytics, setAnalytics] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -80,6 +75,8 @@ export const LeadsContextProvider = ({ children }) => {
 
         setData(resultRaw.data || []);
         setAnalytics(resultRaw.analytics || []);
+        setSheetUrl(resultRaw.sheetUrl || "");
+
       } catch (error) {
         console.error("Failed to fetch leads:", error);
         showError("Fetch Failed", error.message || "Something went wrong while fetching data.");
@@ -175,6 +172,7 @@ export const LeadsContextProvider = ({ children }) => {
 
       setData(resultRaw.data || []);
       setAnalytics(resultRaw.analytics || []);
+      setSheetUrl(resultRaw.sheetUrl || "");
     } catch (error) {
       console.error("Failed to fetch leads:", error);
       showError("Fetch Failed", error.message || "Something went wrong while fetching data.");
@@ -199,7 +197,7 @@ export const LeadsContextProvider = ({ children }) => {
         setLoading,
         selectedUserIds,
         setSelectedUserIds,
-        tabs,
+
         currentPage,
         setCurrentPage,
         sendleadsMail,
@@ -207,7 +205,8 @@ export const LeadsContextProvider = ({ children }) => {
         setSearchTerm,
         searchTerm,
         setSelectedVenue,
-        fetchDataById
+        fetchDataById,
+        sheetUrl
       }}
     >
       {children}

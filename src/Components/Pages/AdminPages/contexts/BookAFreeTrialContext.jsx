@@ -334,7 +334,7 @@ export const BookFreeTrialProvider = ({ children }) => {
 
       await showSuccess("Success!", result.message || "Free Trial has been created successfully.");
 
-    
+
       return result;
 
     } catch (error) {
@@ -1127,12 +1127,12 @@ export const BookFreeTrialProvider = ({ children }) => {
       console.error("Error submitting comments:", err);
     }
   };
-  const fetchComments = useCallback(async (commentData) => {
+  const fetchComments = useCallback(async (commentData, commentBy) => {
     const token = localStorage.getItem("adminToken");
     if (!token) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/comment/list?commentType=${commentData.commentType}&serviceType=${commentData.serviceType}&commentBy=${commentData.commentBy}`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/comment/list?commentType=${commentData.commentType}&serviceType=${commentData.serviceType}&${commentBy || 'commentBy'}=${commentData[commentBy]}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -1148,7 +1148,7 @@ export const BookFreeTrialProvider = ({ children }) => {
       showError("Error", error.message || error.error || "Failed to fetch comments. Please try again later.");
     }
   }, []);
-  const handleSubmitComment = async (payload, commentData) => {
+  const handleSubmitComment = async (payload, commentData, commentBy) => {
     // ✅ Validate from payload instead of external state
     if (!payload?.comment?.trim()) return;
 
@@ -1181,7 +1181,7 @@ export const BookFreeTrialProvider = ({ children }) => {
 
       // ✅ Refresh comments list
       if (commentData) {
-        fetchComments(commentData);
+        fetchComments(commentData, commentBy);
       }
 
     } catch (err) {
@@ -2273,7 +2273,46 @@ export const BookFreeTrialProvider = ({ children }) => {
 
       await showSuccess("Success!", result.message || "Customer successfully added to the waiting list. Confirmation email has been sent");
       setIsBooked(true);
-    
+
+      return result;
+
+    } catch (error) {
+      console.error("Error creating class schedule:", error);
+      await showError("Error", error.message || "Something went wrong while creating class schedule.");
+      throw error;
+    } finally {
+      await fetchAddtoWaitingList();
+      setLoading(false);
+    }
+  };
+  const createMembershipWaitinglist = async (waitingListData, mainBookingId) => {
+    setLoading(true);
+    console.log('mainBookingId', mainBookingId)
+    const headers = {
+      "Content-Type": "application/json",
+    };
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    let url = `${API_BASE_URL}/api/admin/waiting-list/convert-to-waiting-list/${mainBookingId}`;
+
+    try {
+      const response = await fetch(url, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify(waitingListData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to create Membership");
+      }
+
+      await showSuccess("Success!", result.message || "Customer successfully added to the waiting list. Confirmation email has been sent");
+      setIsBooked(true);
+
       return result;
 
     } catch (error) {
@@ -3020,7 +3059,7 @@ export const BookFreeTrialProvider = ({ children }) => {
         ServiceHistoryFulltto,
         ServiceHistoryAlltto,
         setIsBooked, isBooked,
-        fetchMembershipSalesLoading, parentData, setLoadingComment, loadingComment, handleSubmitComment, setParentData, setComment, comment, setCommentsList, commentsList, createBookLeads, createBookBirthday, addToWaitingList, setaddToWaitingList, showCancelTrial, setshowCancelTrial
+        fetchMembershipSalesLoading, createMembershipWaitinglist, parentData, setLoadingComment, loadingComment, handleSubmitComment, setParentData, setComment, comment, setCommentsList, commentsList, createBookLeads, createBookBirthday, addToWaitingList, setaddToWaitingList, showCancelTrial, setshowCancelTrial
 
         , fetchMembershipByParent
       }}>
