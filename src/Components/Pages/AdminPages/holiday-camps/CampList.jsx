@@ -29,8 +29,8 @@ const CampList = () => {
   const { fetchFindClasses, findClasses, loading } = useHolidayFindClass();
   const [openMapId, setOpenMapId] = useState(null);
   const navigate = useNavigate();
-    const { searchQuery } = useGlobalSearch();
-  
+  const { searchQuery } = useGlobalSearch();
+
   const [isOpen, setIsOpen] = useState(true);
   useEffect(() => {
     fetchFindClasses()
@@ -165,12 +165,12 @@ const CampList = () => {
   const calendarDays = getDaysArray();
 
   const goToPreviousMonth = () => {
-  setCurrentDate(new Date(year, month - 1, 1));
-};
+    setCurrentDate(new Date(year, month - 1, 1));
+  };
 
-const goToNextMonth = () => {
-  setCurrentDate(new Date(year, month + 1, 1)); 
- };
+  const goToNextMonth = () => {
+    setCurrentDate(new Date(year, month + 1, 1));
+  };
 
   const getDateStatus = (date) => {
     let isStartOrEnd = false;
@@ -248,8 +248,8 @@ const goToNextMonth = () => {
     }
   };
 
- const filteredClasses = Array.isArray(findClasses)
-  ? findClasses.filter((venue) => {
+  const filteredClasses = Array.isArray(findClasses)
+    ? findClasses.filter((venue) => {
       const query = searchQuery?.toLowerCase() || "";
 
       // 🔍 GLOBAL SEARCH (NEW)
@@ -310,7 +310,7 @@ const goToNextMonth = () => {
         availableMatch
       );
     })
-  : [];
+    : [];
 
 
 
@@ -447,9 +447,9 @@ const goToNextMonth = () => {
       state: { classId },
     });
   };
-const handleBookCamp = (classId) => {
-  navigate(`/holiday-camp/find-a-camp/book-camp?id=${classId}`);
-};
+  const handleBookCamp = (classId) => {
+    navigate(`/holiday-camp/find-a-camp/book-camp?id=${classId}`);
+  };
 
 
   const getActiveTerm = () =>

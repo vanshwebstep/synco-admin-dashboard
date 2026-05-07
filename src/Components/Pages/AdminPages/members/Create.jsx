@@ -44,13 +44,16 @@ const Create = () => {
     formData?.role?.label === "Coach" ||
     formData?.role?.value === "Coach";
 
-  const isFranchisee =
-    formData?.role?.label?.toLowerCase() === "franchisee" ||
-    formData?.role?.value?.toLowerCase() === "franchisee" ||
-    formData?.role?.label?.toLowerCase() === "franchise" ||
-    formData?.role?.value?.toLowerCase() === "franchise";
-  const token = localStorage.getItem("adminToken");
+  const roleLabel = String(formData?.role?.label || "").toLowerCase();
+  const roleValue = String(formData?.role?.value || "").toLowerCase();
 
+  const isFranchisee =
+    roleLabel === "franchisee" ||
+    roleValue === "franchisee" ||
+    roleLabel === "franchise" ||
+    roleValue === "franchise";
+  const token = localStorage.getItem("adminToken");
+  console.log('formData', formData)
   useEffect(() => {
     if (token) fetchRoles();
   }, [token]);

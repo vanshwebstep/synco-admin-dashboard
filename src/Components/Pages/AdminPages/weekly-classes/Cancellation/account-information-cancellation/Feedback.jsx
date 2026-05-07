@@ -51,7 +51,7 @@ const Feedback = ({ profile }) => {
   const [selectedAgentIds, setSelectedAgentIds] = useState([]);
   const [showAgentModal, setShowAgentModal] = useState(false);
   const [openResolve, setOpenResolve] = useState(false);
-  console.log('profile', profile)
+  const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     classScheduleIds: [],
     agentIds: [],
@@ -216,8 +216,26 @@ const Feedback = ({ profile }) => {
   const handleSubmit = async () => {
     const { classScheduleIds, agentIds, feedbackType, category, notes } = formData;
 
-    if (!classScheduleIds?.length || !agentIds?.length || !feedbackType || !category || !notes) {
-      return showError("Error", "All fields are required");
+    const newErrors = {};
+    if (!classScheduleIds?.length) {
+      newErrors.classScheduleIds = "Class is required";
+    }
+    if (!feedbackType) {
+      newErrors.feedbackType = "Feedback type is required";
+    }
+    if (!category) {
+      newErrors.category = "Category is required";
+    }
+    if (!notes?.trim()) {
+      newErrors.notes = "Notes are required";
+    }
+    if (!agentIds || agentIds.length === 0) {
+      newErrors.agentIds = "At least one agent must be assigned";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
     }
     // classScheduleId
     const parentAdminId = profile?.parentAdminId || profile?.parents?.[0]?.id;
@@ -496,7 +514,12 @@ const Feedback = ({ profile }) => {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-400 italic">No students found on this booking.</p>
+                    <>
+                      <p className="text-sm text-gray-400 italic">No students found on this booking.</p>
+                      {errors.classScheduleIds && (
+                        <p className="text-red-500 text-xs mt-1">{errors.classScheduleIds}</p>
+                      )}
+                    </>
                   )}
                 </div>
 
@@ -516,15 +539,30 @@ const Feedback = ({ profile }) => {
                         (opt) => opt.value === formData.feedbackType
                       ) || null
                     }
-                    onChange={(selected) =>
+                    onChange={(selected) => {
                       setFormData((prev) => ({
                         ...prev,
                         feedbackType: selected?.value || "",
-                      }))
-                    }
+                      }));
+                      if (errors.feedbackType) {
+                        setErrors(prev => ({ ...prev, feedbackType: null }));
+                      }
+                    }}
                     className="w-full"
                     classNamePrefix="react-select"
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        borderColor: errors.feedbackType ? '#ef4444' : base.borderColor,
+                        '&:hover': {
+                          borderColor: errors.feedbackType ? '#ef4444' : base.borderColor,
+                        }
+                      })
+                    }}
                   />
+                  {errors.feedbackType && (
+                    <p className="text-red-500 text-xs mt-1">{errors.feedbackType}</p>
+                  )}
                 </div>
 
                 {/* Category */}
@@ -533,39 +571,61 @@ const Feedback = ({ profile }) => {
                     Category
                   </label>
                   {!isAddingCategory ? (
-                    <Select
-                      name="category"
-                      options={categoryOptions}
-                      placeholder="Select Category"
-                      isClearable
-                      isSearchable
-                      value={
-                        categoryOptions.find(
-                          (opt) => opt.value === formData.category
-                        ) || null
-                      }
-                      onChange={(selected) => {
-                        if (selected?.value === "add_new") {
-                          setIsAddingCategory(true);
-                        } else {
-                          setFormData((prev) => ({
-                            ...prev,
-                            category: selected?.value || "",
-                          }));
+                    <>
+                      <Select
+                        name="category"
+                        options={categoryOptions}
+                        placeholder="Select Category"
+                        isClearable
+                        isSearchable
+                        value={
+                          categoryOptions.find(
+                            (opt) => opt.value === formData.category
+                          ) || null
                         }
-                      }}
-                      className="w-full"
-                      classNamePrefix="react-select"
-                    />
+                        onChange={(selected) => {
+                          if (selected?.value === "add_new") {
+                            setIsAddingCategory(true);
+                          } else {
+                            setFormData((prev) => ({
+                              ...prev,
+                              category: selected?.value || "",
+                            }));
+                            if (errors.category) {
+                              setErrors(prev => ({ ...prev, category: null }));
+                            }
+                          }
+                        }}
+                        className="w-full"
+                        classNamePrefix="react-select"
+                        styles={{
+                          control: (base) => ({
+                            ...base,
+                            borderColor: errors.category ? '#ef4444' : base.borderColor,
+                            '&:hover': {
+                              borderColor: errors.category ? '#ef4444' : base.borderColor,
+                            }
+                          })
+                        }}
+                      />
+                      {errors.category && (
+                        <p className="text-red-500 text-xs mt-1">{errors.category}</p>
+                      )}
+                    </>
                   ) : (
                     <div className="flex gap-2">
                       <input
                         type="text"
                         autoFocus
-                        className="w-full border border-[#E2E1E5] rounded-xl p-2 px-3 text-sm h-[38px]"
+                        className={`w-full border ${errors.category ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl p-2 px-3 text-sm h-[38px]`}
                         placeholder="Enter category name"
                         value={newCategoryName}
-                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        onChange={(e) => {
+                          setNewCategoryName(e.target.value);
+                          if (errors.category) {
+                            setErrors(prev => ({ ...prev, category: null }));
+                          }
+                        }}
                       />
                       <button
                         onClick={() => {
@@ -575,6 +635,9 @@ const Feedback = ({ profile }) => {
                             setFormData((prev) => ({ ...prev, category: newCategoryName }));
                             setNewCategoryName("");
                             setIsAddingCategory(false);
+                            if (errors.category) {
+                              setErrors(prev => ({ ...prev, category: null }));
+                            }
                           }
                         }}
                         className="bg-[#237FEA] text-white px-3 rounded-xl text-xs font-semibold"
@@ -599,10 +662,18 @@ const Feedback = ({ profile }) => {
                   <textarea
                     name="notes"
                     value={formData.notes}
-                    onChange={handleChange}
-                    className="w-full border border-[#E2E1E5] rounded-xl p-3 h-24 resize-none"
+                    onChange={(e) => {
+                      handleChange(e);
+                      if (errors.notes) {
+                        setErrors(prev => ({ ...prev, notes: null }));
+                      }
+                    }}
+                    className={`w-full border ${errors.notes ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl p-3 h-24 resize-none`}
                     placeholder="Write your notes here..."
                   />
+                  {errors.notes && (
+                    <p className="text-red-500 text-xs mt-1">{errors.notes}</p>
+                  )}
                 </div>
 
                 {/* Assign Agent */}
@@ -618,15 +689,30 @@ const Feedback = ({ profile }) => {
                     isSearchable
                     isMulti
                     value={agentOptions.filter((opt) => formData.agentIds.includes(opt.value))}
-                    onChange={(selected) =>
+                    onChange={(selected) => {
                       setFormData((prev) => ({
                         ...prev,
                         agentIds: selected ? selected.map((s) => s.value) : [],
-                      }))
-                    }
+                      }));
+                      if (errors.agentIds) {
+                        setErrors(prev => ({ ...prev, agentIds: null }));
+                      }
+                    }}
                     className="w-full"
                     classNamePrefix="react-select"
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        borderColor: errors.agentIds ? '#ef4444' : base.borderColor,
+                        '&:hover': {
+                          borderColor: errors.agentIds ? '#ef4444' : base.borderColor,
+                        }
+                      })
+                    }}
                   />
+                  {errors.agentIds && (
+                    <p className="text-red-500 text-xs mt-1">{errors.agentIds}</p>
+                  )}
                 </div>
 
                 {/* Buttons */}

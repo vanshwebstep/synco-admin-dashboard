@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useClassSchedule } from "../../../contexts/ClassScheduleContent";
 import Select from "react-select";
 import { Check, X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
@@ -9,6 +9,7 @@ const HistoryOfPayments = ({ stateData }) => {
   const { fetchFindClassID, singleClassSchedulesOnly, loading } = useClassSchedule() || {};
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { createBookMembership, updateBookMembership } = useBookFreeTrial() || {};
+  const hasInitialized = useRef(false);
 
   // ── Card / checkout state ──
   const [nameOnCard, setCardHolderName] = useState("");
@@ -63,11 +64,19 @@ const HistoryOfPayments = ({ stateData }) => {
   const [isOpenMembership, setIsOpenMembership] = useState(false);
   const [numberOfStudents, setNumberOfStudents] = useState(stateData.students?.length || 0);
   const [isApplied, setIsApplied] = useState(false);
+  const [appliedDiscount, setAppliedDiscount] = useState(null);
+  const [discountCode, setDiscountCode] = useState("");
+  const [isDiscountLoading, setIsDiscountLoading] = useState(false);
   const [pricingBreakdown, setPricingBreakdown] = useState({
     pricePerClassPerChild: 0,
     numberOfLessonsProRated: 0,
     costOfProRatedLessons: 0,
-    totalAmount: 0,
+    finalProRataCost: 0,
+    starterPack: 0,
+    starterDiscount: 0,
+    totalBeforeDiscount: 0,
+    totalAmountToday: 0,
+    nextMonthPayment: 0,
     isFullMonthCharge: false,
   });
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -89,8 +98,11 @@ const HistoryOfPayments = ({ stateData }) => {
 
   const formatLocalDate = (date) => {
     if (!date) return null;
-    if (typeof date === "string") return date; // already formatted
-    return date.toISOString().split("T")[0];
+    if (typeof date === "string") return date;
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
   };
 
   const isSameDate = (d1, d2) => {
@@ -105,36 +117,59 @@ const HistoryOfPayments = ({ stateData }) => {
   };
 
   // ── PLAN OPTIONS ──
-  const allPaymentPlans =
-    singleClassSchedulesOnly?.venue?.paymentGroups?.[0]?.paymentPlans?.map((plan) => ({
+  const paymentPlanOptions = useMemo(() => {
+    const all = singleClassSchedulesOnly?.venue?.paymentGroups?.[0]?.paymentPlans?.map((plan) => ({
       label: `${plan.title} (${plan.students} student${plan.students > 1 ? "s" : ""})`,
       value: plan.id,
+      starterPackPrice: singleClassSchedulesOnly?.starterPack?.[0]?.price || 0,
       all: plan,
     })) || [];
 
-  const paymentPlanOptions = numberOfStudents
-    ? allPaymentPlans.filter((plan) => plan.all?.students === Number(numberOfStudents))
-    : allPaymentPlans;
+    let filtered = numberOfStudents
+      ? all.filter((plan) => plan.all?.students === Number(numberOfStudents))
+      : all;
 
-  // ── SESSION DATES ──
-  const sessionDates = useMemo(() => {
-    return (
-      singleclassschedule?.venue?.termGroups?.flatMap((group) =>
-        group.terms.flatMap((term) => term.sessionsMap.map((s) => s.sessionDate))
-      ) || []
-    );
-  }, [singleclassschedule]);
+    // ✅ Don't show plans which are already used (current plan)
+    if (stateData?.paymentPlan?.id) {
+      filtered = filtered.filter(plan => plan.value !== stateData.paymentPlan.id);
+    }
+
+    return filtered;
+  }, [singleClassSchedulesOnly, numberOfStudents, stateData]);
+
+  // ── SESSION & EXCLUSION DATES ──
+  const sessionDates = singleClassSchedulesOnly?.venue?.termGroups?.flatMap(group =>
+    group.terms.flatMap(term => term.sessionsMap.map(s => s.sessionDate))
+  ) || [];
+
+
   const sessionDatesSet = new Set(sessionDates);
 
-  // ── EXCLUSION DATES ──
-  const exclusionDates = useMemo(() => {
-    return (
-      singleclassschedule?.venue?.termGroups?.flatMap((group) =>
-        group.terms.flatMap((term) => term.exclusionDates || [])
-      ) || []
-    );
-  }, [singleclassschedule]);
-  const exclusionDatesSet = new Set(exclusionDates);
+  useEffect(() => {
+    if (hasInitialized.current || !sessionDatesSet || sessionDatesSet.size === 0) return;
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
+    const allDates = Array.from(sessionDatesSet).map(dateStr => {
+      const [y, m, d] = dateStr.split("-").map(Number);
+      return new Date(y, m - 1, d);
+    })
+      .filter(d => {
+        const date = new Date(d);
+        date.setHours(0, 0, 0, 0);
+        return date >= todayDate;
+      })
+      .sort((a, b) => a - b);
+    if (allDates.length === 0) return;
+    const earliestDate = allDates[0];
+    setCurrentDate(new Date(earliestDate.getFullYear(), earliestDate.getMonth(), 1));
+    hasInitialized.current = true;
+  }, [sessionDatesSet]);
+
+  useEffect(() => {
+    if (selectedDate && membershipPlan) calculateAmount(selectedDate);
+  }, [numberOfStudents, membershipPlan, selectedDate, isApplied, appliedDiscount, proRataDiscountData]);
+
+
 
   // ── HANDLERS ──
   const handleChangeClick = async () => {
@@ -157,77 +192,61 @@ const HistoryOfPayments = ({ stateData }) => {
   };
 
   const calculateAmount = (startDate) => {
-    console.log("🚀 FUNCTION CALLED with startDate:", startDate);
-
-    if (!membershipPlan || !startDate) {
-      console.warn("❌ Missing membershipPlan or startDate");
-      return;
-    }
+    if (!membershipPlan || !startDate) return;
 
     const monthlyPrice = Number(membershipPlan?.all?.price ?? 0);
+    // In "Change Membership" we might not always charge starter pack, 
+    // but aligning with "Book a Membership" logic:
+    const starterPack = singleClassSchedulesOnly?.venue?.starterPack
+      ? Number(membershipPlan?.starterPackPrice || 0)
+      : 0;
 
-    // ── DATE PARSER ──
     const parseLocalDate = (dateStr) => {
       if (!dateStr) return null;
-      if (dateStr instanceof Date) return dateStr;
-      if (typeof dateStr === "string") {
-        const parts = dateStr.split("-");
-        if (parts.length !== 3) return null;
-        const [y, m, d] = parts.map(Number);
-        return new Date(y, m - 1, d);
-      }
-      return null;
+      const [y, m, d] = dateStr.split("-").map(Number);
+      return new Date(y, m - 1, d);
     };
 
-    // ✅ FIX 4: normalize startDate to a "YYYY-MM-DD" string first, then parse
-    const startDateStr = typeof startDate === "string" ? startDate : formatLocalDate(startDate);
-    const selected = parseLocalDate(startDateStr);
-
-    if (!selected) {
-      console.error("❌ Selected date invalid");
-      return;
-    }
+    const selected = parseLocalDate(startDate);
     selected.setHours(0, 0, 0, 0);
 
-    const allSessions = Array.from(sessionDatesSet)
-      .map((d) => {
-        const date = parseLocalDate(d);
-        if (!date) return null;
-        date.setHours(0, 0, 0, 0);
-        return date;
-      })
-      .filter(Boolean);
+    const allSessions = Array.from(sessionDatesSet).map((d) => {
+      const date = parseLocalDate(d);
+      date.setHours(0, 0, 0, 0);
+      return date;
+    });
 
     const selectedMonth = selected.getMonth();
     const selectedYear = selected.getFullYear();
 
     const sessionsInStartMonth = allSessions
-      .filter((d) => d.getMonth() === selectedMonth && d.getFullYear() === selectedYear)
+      .filter(d => d.getMonth() === selectedMonth && d.getFullYear() === selectedYear)
       .sort((a, b) => a - b);
 
     const firstSessionDate = sessionsInStartMonth[0];
-    const isFirstSessionSelected =
-      firstSessionDate && selected.getTime() === firstSessionDate.getTime();
-
-    const remainingSessions = sessionsInStartMonth.filter(
-      (d) => d.getTime() >= selected.getTime()
-    );
-
+    const isFirstSessionSelected = firstSessionDate && selected.getTime() === firstSessionDate.getTime();
+    const remainingSessions = sessionsInStartMonth.filter(d => d.getTime() >= selected.getTime());
     const proRataLessons = remainingSessions.length;
     const pricePerLesson = membershipPlan?.all?.priceLesson || 0;
     const proRataCost = Number((proRataLessons * pricePerLesson).toFixed(2));
     const safeProRataCost = Math.min(proRataCost, monthlyPrice);
-
-    const isFullMonth =
-      (isFirstSessionSelected && proRataLessons >= 3) || safeProRataCost >= monthlyPrice;
+    const isFullMonth = (isFirstSessionSelected && proRataLessons >= 3) || safeProRataCost >= monthlyPrice;
 
     let finalProRata = safeProRataCost;
-    if (!isFullMonth && proRataDiscountData?.finalProRata != null) {
-      finalProRata = proRataDiscountData.finalProRata;
-    }
+    if (!isFullMonth && proRataDiscountData?.finalProRata != null) finalProRata = proRataDiscountData.finalProRata;
 
     const effectiveLessonCharge = isFullMonth ? monthlyPrice : finalProRata;
-    const finalTotal = Math.max(effectiveLessonCharge, 0);
+
+    let starterDiscountAmount = 0;
+    if (isApplied && appliedDiscount?.data) {
+      if (appliedDiscount.data.type === "percentage")
+        starterDiscountAmount = (starterPack * Number(appliedDiscount.data.value)) / 100;
+      else
+        starterDiscountAmount = Number(appliedDiscount.data.discountAmount || 0);
+    }
+
+    const totalBeforeDiscount = effectiveLessonCharge + starterPack;
+    const finalTotal = Math.max(totalBeforeDiscount - starterDiscountAmount, 0);
     const totalToday = Number(finalTotal.toFixed(2));
     const nextMonthPayment = Number(monthlyPrice.toFixed(2));
 
@@ -238,13 +257,51 @@ const HistoryOfPayments = ({ stateData }) => {
       numberOfLessonsProRated: proRataLessons,
       costOfProRatedLessons: safeProRataCost,
       finalProRataCost: finalProRata,
-      totalBeforeDiscount: effectiveLessonCharge,
+      starterPack,
+      starterDiscount: starterDiscountAmount,
+      totalBeforeDiscount,
       totalAmountToday: totalToday,
       nextMonthPayment,
       isFullMonthCharge: isFullMonth,
     });
 
     return totalToday;
+  };
+
+  const handleApplyDiscount = async () => {
+    if (!discountCode.trim()) {
+      setIsApplied(false);
+      return;
+    }
+    setIsDiscountLoading(true);
+    const token = localStorage.getItem("adminToken");
+    const payload = {
+      starterPack: singleClassSchedulesOnly?.starterPack?.[0]?.price || 0,
+      code: discountCode
+    };
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/admin/book-membership/apply-discount`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json();
+      if (response.ok && result?.status) {
+        setAppliedDiscount(result);
+        setIsApplied(true);
+      } else {
+        showWarning("Invalid Code", result?.message || "Discount code is invalid.");
+        setIsApplied(false);
+      }
+    } catch (error) {
+      console.error("Discount error:", error);
+      showWarning("Error", "Failed to apply discount.");
+    } finally {
+      setIsDiscountLoading(false);
+    }
   };
 
   // ✅ FIX 4: handleDateClick stores formatted string, not raw Date
@@ -334,9 +391,9 @@ const HistoryOfPayments = ({ stateData }) => {
     const payload = {
       newPaymentPlanId: membershipPlan?.value ?? null,
       startDate: selectedDate,
-      price: pricingBreakdown.nextMonthPayment,
-      proRataAmount: proRataToSend,
       payment: {
+        price: pricingBreakdown.nextMonthPayment,
+        proRataAmount: proRataToSend,
         ...payment, // existing fields
         nameOnCard,
         cardNumber,
@@ -529,7 +586,7 @@ const HistoryOfPayments = ({ stateData }) => {
       {/* Change Membership Popup */}
       {isPopupOpen && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-          <div className="bg-white w-[95%] max-w-4xl max-h-[90vh] overflow-y-auto p-6 rounded-2xl">
+          <div className="bg-white w-[95%] max-w-4xl max-h-[90vh] min-h-[70vh] overflow-y-auto  p-6 rounded-2xl">
 
             <div className="flex justify-end">
               <button onClick={() => setIsPopupOpen(false)}>✕</button>
@@ -652,6 +709,7 @@ const HistoryOfPayments = ({ stateData }) => {
                         <span>Price Per Lesson</span>
                         <span>£{pricingBreakdown.pricePerClassPerChild}</span>
                       </div>
+
                       {pricingBreakdown.isFullMonthCharge ? (
                         <div className="flex justify-between text-[#000]">
                           <span>Full Monthly Charge</span>
@@ -659,17 +717,39 @@ const HistoryOfPayments = ({ stateData }) => {
                         </div>
                       ) : (
                         <>
-                          <div className="flex justify-between text-[#333]">
-                            <span>Number of Pro-Rata Lessons</span>
-                            <span>{pricingBreakdown.numberOfLessonsProRated}</span>
-                          </div>
-                          <div className="flex justify-between text-[#000]">
-                            <span>Total Pro-Rata Cost</span>
-                            <span>£{pricingBreakdown.finalProRataCost?.toFixed(2)}</span>
-                          </div>
+                          {pricingBreakdown.numberOfLessonsProRated <= 3 && (
+                            <>
+                              <div className="flex justify-between text-[#333]">
+                                <span>Number of Pro-Rata Lessons</span>
+                                <span>{pricingBreakdown.numberOfLessonsProRated}</span>
+                              </div>
+
+                              <div className="flex justify-between text-[#000]">
+                                <span>Total Pro-Rata Cost</span>
+                                <span>
+                                  £{pricingBreakdown.finalProRataCost?.toFixed(2)}
+                                </span>
+                              </div>
+                            </>
+                          )}
                         </>
                       )}
+
+                      {/* {pricingBreakdown.starterPack > 0 &&
+                        pricingBreakdown.numberOfLessonsProRated <= 3 && (
+                          <div className="flex justify-between text-[#333]">
+                            <span>Starter Pack</span>
+
+                            <span className={isApplied ? "line-through text-gray-400" : ""}>
+                              £{pricingBreakdown.starterPack?.toFixed(2)}
+                            </span>
+                          </div>
+                        )} */}
+
+
+
                     </div>
+
 
                     <div className="border-t border-gray-200 pt-4">
                       <div className="flex justify-between text-[#000] text-[18px] font-bold">
@@ -897,8 +977,9 @@ const HistoryOfPayments = ({ stateData }) => {
 
           </div>
         </div>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 };
 

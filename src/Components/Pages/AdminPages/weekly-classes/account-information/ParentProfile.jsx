@@ -238,7 +238,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
     const firstPayment = Array.isArray(profile?.payments)
         ? profile.payments[0]
         : profile?.payments;
-    const ID = profile?.bookedId || firstPayment?.pan;
+    const ID = profile?.bookingId || firstPayment?.pan;
 
     const formatTimeAgo = (timestamp) => {
         const now = new Date();
@@ -509,6 +509,24 @@ const ParentProfile = ({ profile: rawProfile }) => {
             ...prev,
             studentConfigs: { ...prev.studentConfigs, [studentId]: { ...prev.studentConfigs?.[studentId], [field]: value } }
         }));
+    };
+
+    const handleWaitingListVenueChange = (selected) => {
+        setWaitingListData(prev => {
+            const newConfigs = { ...prev.studentConfigs };
+            // Reset class selections for all students when venue changes
+            Object.keys(newConfigs).forEach(id => {
+                newConfigs[id] = {
+                    ...newConfigs[id],
+                    classScheduleId: null
+                };
+            });
+            return {
+                ...prev,
+                venueId: selected?.value || null,
+                studentConfigs: newConfigs
+            };
+        });
     };
 
     const handleWaitingListStudentSelect = (selectedOptions) => {
@@ -1196,7 +1214,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
 
                             {/* 🔷 STATUS HEADER (SAME STYLE) */}
                             <div
-                                className="m-2 px-6 rounded-3xl py-3 flex items-center justify-between bg-no-repeat bg-center"
+                                className="m-2 px-6 rounded-3xl py-5 items-center justify-between bg-no-repeat bg-center"
                                 style={{
                                     backgroundImage:
                                         status === "cancelled"
@@ -1209,7 +1227,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                     backgroundSize: "cover",
                                 }}
                             >
-                                <div>
+                                <div className="flex items-center justify-between gap-4">
                                     <div className="text-[20px] font-bold text-[#1F2937]">
                                         Account Status
                                     </div>
@@ -1360,7 +1378,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
 
                                 {/* 🔷 STATUS HEADER (EXACT SAME) */}
                                 <div
-                                    className="m-2 px-6 rounded-3xl py-3 flex items-center justify-between bg-no-repeat bg-center"
+                                    className="m-2 px-6 rounded-3xl py-5 items-center justify-between bg-no-repeat bg-center"
                                     style={{
                                         backgroundImage:
                                             status === "cancelled"
@@ -1375,7 +1393,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                         backgroundSize: "cover",
                                     }}
                                 >
-                                    <div>
+                                    <div className="flex items-center justify-between gap-4">
                                         <div className="text-[20px] font-bold text-[#1F2937]">
                                             Account Status
                                         </div>
@@ -1527,7 +1545,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
 
                                         {/* 🔷 STATUS HEADER (MATCHED) */}
                                         <div
-                                            className="m-2 px-6 rounded-3xl py-3 flex items-center justify-between bg-no-repeat bg-center"
+                                            className="m-2 px-6 rounded-3xl py-5 items-center justify-between bg-no-repeat bg-center"
                                             style={{
                                                 backgroundImage:
                                                     status === "cancelled"
@@ -1540,7 +1558,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                                 backgroundSize: "cover",
                                             }}
                                         >
-                                            <div>
+                                            <div className="flex items-center justify-between gap-4">
                                                 <div className="text-[20px] font-bold text-[#1F2937]">
                                                     Account Status
                                                 </div>
@@ -1558,7 +1576,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                             {/* Booked By */}
                                             <div className="flex items-center gap-4">
                                                 <img
-                                                    src="/members/user2.png"
+                                                    src={profile?.bookedByAdmin?.profile || "/members/user2.png"}
                                                     alt="Coach"
                                                     className="w-18 h-18 rounded-full object-cover"
                                                 />
@@ -1753,7 +1771,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                 <div className="md:w-4/12 max-h-fit rounded-full text-base space-y-5">
                                     <div className="rounded-3xl bg-[#363E49] overflow-hidden shadow-md border border-gray-200">
                                         {/* Status header */}
-                                        {isTrials ? <div className=" m-2 px-6 rounded-3xl py-3 flex items-center justify-between bg-no-repeat bg-center"
+                                        {isTrials ? <div className=" m-2 px-6 rounded-3xl py-5 items-center justify-between bg-no-repeat bg-center"
                                             style={{
                                                 backgroundImage: status === "cancelled"
                                                     ? "url('/frames/Cancelled.png')"
@@ -1768,7 +1786,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
 
                                                 backgroundSize: "cover",
                                             }}>
-                                            <div>
+                                            <div className="flex items-center justify-between">
                                                 <div className="text-[20px] font-bold text-[#1F2937]">Account Status</div>
                                                 <div className="text-[16px] font-semibold text-[#1F2937]">Trials</div>
                                             </div>
@@ -1805,7 +1823,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                             </div>
                                         </div> :
                                             <div
-                                                className="m-2 px-6 rounded-3xl py-3 flex items-center justify-between bg-no-repeat bg-center"
+                                                className="m-2 px-6 rounded-3xl py-5 items-center justify-between bg-no-repeat bg-center"
                                                 style={{
                                                     backgroundImage: status === "cancelled"
                                                         ? "url('/frames/Cancelled.png')"
@@ -1821,7 +1839,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                                     backgroundSize: "cover",
                                                 }}
                                             >
-                                                <div>
+                                                <div className="flex items-center justify-between gap-4">
                                                     <div className="text-[20px] font-bold text-[#1F2937]">Account Status</div>
                                                     <div className="text-[16px] font-semibold capitalize text-[#1F2937]">
                                                         {status ? status.replaceAll("_", " ") : "Unknown"}
@@ -1833,7 +1851,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                             {/* Avatar & Booked By */}
                                             <div className="flex items-center gap-4">
                                                 <img
-                                                    src={bookedBy?.profile ? `${API_BASE_URL}/${bookedBy.profile}` : "https://cdn-icons-png.flaticon.com/512/147/147144.png"}
+                                                    src={profile?.bookedByAdmin?.profile ? `${profile?.bookedByAdmin?.profile}` : "https://cdn-icons-png.flaticon.com/512/147/147144.png"}
                                                     alt="avatar"
                                                     className="w-18 h-18 rounded-full"
                                                     onError={(e) => { e.currentTarget.src = "https://cdn-icons-png.flaticon.com/512/147/147144.png"; }}
@@ -1946,7 +1964,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                                                 <div className=" text-[20px] text-white"> Cancelled Date </div>
 
                                                             </div>
-                                                            <div className="text-[16px] mt-1 text-gray-400">{formatISODate(profile?.updatedAt)}</div>
+                                                            <div className="text-[16px] mt-1 text-gray-400">{formatISODate(profile?.cancelData?.cancelDate)}</div>
                                                         </div>
                                                     )}
 
@@ -2017,40 +2035,52 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                             {/* Membership-only actions */}
                                             {isMembership && (
                                                 <>
-                                                    {(status === "active" || status === "frozen" || status === "cancelled" || status === "request_to_cancel") && (
-                                                        <button
-                                                            onClick={() => setaddToWaitingList(true)}
-                                                            className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
-                                                ${addToWaitingList ? "bg-[#237FEA] text-white shadow-md" : "bg-white border border-gray-300 hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"}`}
-                                                        >
-                                                            Add to the waiting list
-                                                        </button>
-                                                    )}
+                                                    {
+                                                        status === "active" &&
+                                                        profile?.students?.every((s) => s.studentStatus === "active") && (
+                                                            <button
+                                                                onClick={() => setaddToWaitingList(true)}
+                                                                className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
+            ${addToWaitingList
+                                                                        ? "bg-[#237FEA] text-white shadow-md"
+                                                                        : "bg-white border border-gray-300 hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"
+                                                                    }`}
+                                                            >
+                                                                Add to the waiting list
+                                                            </button>
+                                                        )
+                                                    }
 
-                                                    {(!profile.freezeBooking && (status === "active" || (status === "request_to_cancel" && canCancelTrial)) && !(profile?.paymentPlan?.duration === 1 && profile?.paymentPlan?.interval === "Month")) ? (
-                                                        <button
-                                                            onClick={() => setFreezeMembership(true)}
-                                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
-                                                        >
-                                                            Freeze Membership
-                                                        </button>
-                                                    ) : profile.freezeBooking ? (
+                                                    {
+                                                        status === "active" &&
+                                                        profile?.students?.every((s) => s.studentStatus === "active") && (
+                                                            <button
+                                                                onClick={() => setFreezeMembership(true)}
+                                                                className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                                            >
+                                                                Freeze Membership
+                                                            </button>
+                                                        )}
+                                                    {status == "frozen" && (
                                                         <button
                                                             onClick={() => setReactivateMembership(true)}
                                                             className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
                                                         >
                                                             Reactivate Membership
                                                         </button>
-                                                    ) : null}
+                                                    )
 
-                                                    {(status === "active" || (status === "request_to_cancel" && canCancelTrial)) && (
-                                                        <button
-                                                            onClick={() => setTransferVenue(true)}
-                                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
-                                                        >
-                                                            Transfer Class
-                                                        </button>
-                                                    )}
+                                                    }
+                                                    {
+                                                        status === "active" &&
+                                                        profile?.students?.every((s) => s.studentStatus === "active") && (
+                                                            <button
+                                                                onClick={() => setTransferVenue(true)}
+                                                                className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                                            >
+                                                                Transfer Class
+                                                            </button>
+                                                        )}
 
                                                     {status === 'waiting list' && canCancelTrial && (
                                                         <button
@@ -2200,7 +2230,6 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                     />
                                 </div>
 
-                                {/* Per-Student Configuration */}
                                 {waitingListData.selectedStudents.length > 0 && (
                                     <div className="space-y-6 border-t pt-4">
                                         {waitingListData.selectedStudents.map((studentOption) => {
@@ -2208,7 +2237,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                             const config = waitingListData.studentConfigs?.[studentId] || {};
                                             const currentClass = studentOption.classSchedule?.className || "-";
                                             const currentVenue = studentOption.classSchedule?.venue?.name || "-";
-                                            const selectedVenue = venueOptionsnoCapacity.find(v => v.value === config.venueId);
+                                            const selectedVenue = venueOptionsnoCapacity.find(v => v.value === waitingListData.venueId);
                                             const classOptions = selectedVenue
                                                 ? selectedVenue.classes.map(cls => ({
                                                     value: cls.id,
@@ -2243,20 +2272,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                                         </div>
 
                                                     </div>
-                                                    <label className="block text-[16px] font-semibold">Select New Venue</label>
-                                                    <Select
-                                                        value={
-                                                            config.venueId
-                                                                ? venueOptionsnoCapacity.find(v => v.value === config.venueId)
-                                                                : null
-                                                        }
-                                                        onChange={(selected) => {
-                                                            handleWaitingListConfigChange(studentId, "venueId", selected?.value);
-                                                            handleWaitingListConfigChange(studentId, "classScheduleId", null); // reset class
-                                                        }}
-                                                        options={venueOptionsnoCapacity}
-                                                        placeholder="Select Venue"
-                                                    />
+
                                                     {/* Select New Class */}
                                                     <div>
                                                         <label className="block text-[16px] font-semibold">Select New Class</label>
@@ -2287,36 +2303,49 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                                             }}
                                                         />
                                                     </div>
-                                                    <div>
-                                                        <label className="block text-[16px] font-semibold mb-2">
-                                                            Interest Level
-                                                        </label>
-
-                                                        <div className="flex gap-6">
-                                                            {["Low", "Medium", "High"].map((level) => (
-                                                                <label key={level} className="flex items-center gap-2 cursor-pointer">
-                                                                    <input
-                                                                        type="radio"
-                                                                        name="interest"
-                                                                        value={level}
-                                                                        checked={waitingListData.interest === level}
-                                                                        onChange={(e) =>
-                                                                            setWaitingListData((prev) => ({
-                                                                                ...prev,
-                                                                                interest: e.target.value
-                                                                            }))
-                                                                        }
-                                                                    />
-                                                                    {level}
-                                                                </label>
-                                                            ))}
-                                                        </div>
-                                                    </div>
                                                 </div>
                                             );
                                         })}
                                     </div>
                                 )}
+
+                                <label className="block text-[16px] font-semibold">Select New Venue</label>
+                                <Select
+                                    value={
+                                        waitingListData.venueId
+                                            ? venueOptionsnoCapacity.find(v => v.value === waitingListData.venueId)
+                                            : null
+                                    }
+                                    onChange={handleWaitingListVenueChange}
+                                    options={venueOptionsnoCapacity}
+                                    placeholder="Select Venue"
+                                />
+
+                                <div>
+                                    <label className="block text-[16px] font-semibold mb-2 mt-4">
+                                        Interest Level
+                                    </label>
+
+                                    <div className="flex gap-6">
+                                        {["Low", "Medium", "High"].map((level) => (
+                                            <label key={level} className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="interest"
+                                                    value={level}
+                                                    checked={waitingListData.interest === level}
+                                                    onChange={(e) =>
+                                                        setWaitingListData((prev) => ({
+                                                            ...prev,
+                                                            interest: e.target.value
+                                                        }))
+                                                    }
+                                                />
+                                                {level}
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
 
                                 {/* Preferred Date */}
                                 <div>
@@ -2368,7 +2397,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                                 return {
                                                     studentId: studentOption.value,
                                                     classScheduleId: config.classScheduleId,
-                                                    venueId: config.venueId // ✅ ADD THIS
+                                                    venueId: waitingListData.venueId // ✅ ADD THIS
                                                 };
                                             });
                                             const selectedConfigs = waitingListData.selectedStudents.map((studentOption) => {
@@ -2398,8 +2427,12 @@ const ParentProfile = ({ profile: rawProfile }) => {
 
                                             // Validation: all students must have a class
                                             const incomplete = studentsPayload.some(
-                                                s => !s.classScheduleId || !s.venueId
+                                                s => !s.classScheduleId
                                             );
+                                            if (!waitingListData.venueId) {
+                                                showWarning("Missing Information", "Please select a new venue.");
+                                                return;
+                                            }
                                             if (incomplete) {
                                                 showWarning("Missing Information", "Please select a new class for all selected students.");
                                                 return;
@@ -2408,7 +2441,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                             const payload = {
                                                 existingBookingId: waitingListData.bookingId,
                                                 interest: waitingListData.interest, // static ya dynamic kar sakte ho
-                                                venueId: venueId,
+                                                venueId: waitingListData.venueId,
                                                 totalStudents: selectedConfigs.length,
                                                 preferredStartDate: waitingListData.startDate,
                                                 additionalNote: waitingListData.notes,

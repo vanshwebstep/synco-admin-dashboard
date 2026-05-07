@@ -485,20 +485,20 @@ const trialLists = () => {
     };
     const handleDelete = useCallback(async () => {
         if (!token) return;
-    
+
         if (!selectedStudents?.length) {
             showWarning("Please select at least 1 student");
             return;
         }
-    
+
         const result = await showConfirm(
             "Are you sure?",
             "Are you sure you want to remove this account from Synco?",
             "Yes"
         );
-    
+
         if (!result.isConfirmed) return;
-    
+
         try {
             await axios.delete(
                 `${API_BASE_URL}/api/admin/delete`, // ✅ match your working fetch URL
@@ -512,16 +512,16 @@ const trialLists = () => {
                     },
                 }
             );
-    
+
             showSuccess("Deleted!", "Members removed successfully.");
             fetchBookFreeTrials();
-    
+
         } catch (err) {
             console.error(err);
             toast.error(err?.response?.data?.message || "Failed to delete members");
         }
     }, [token, selectedStudents, fetchBookFreeTrials]);
-    
+
     console.log('statsFreeTrial', statsFreeTrial)
     const { checkPermission } = usePermission();
     const formatStatus = (status) => {
@@ -659,9 +659,9 @@ const trialLists = () => {
                     <StatsGrid stats={stats} variant="B" />
 
                     <div className="flex justify-end items-center gap-2">
-                         <div className="bg-white min-w-[40px] min-h-[38px]   border border-gray-300 p-2 rounded-full flex items-center justify-center">
-                                                    <Trash2 size={18} className='cursor-pointer' onClick={handleDelete} />
-                                                </div>
+                        <div className="bg-white min-w-[40px] min-h-[38px]   border border-gray-300 p-2 rounded-full flex items-center justify-center">
+                            <Trash2 size={18} className='cursor-pointer' onClick={handleDelete} />
+                        </div>
                         <div className="bg-white min-w-[38px] min-h-[38px]   border border-gray-300 p-2 rounded-full flex items-center justify-center"> <Filter size={16} className='cursor-pointer' onClick={() => setShowFilter(!showFilter)} />
                         </div>
                         <div className="bg-white min-w-[38px] min-h-[38px] border border-gray-300 p-2 rounded-full flex items-center justify-center">
@@ -984,89 +984,89 @@ const trialLists = () => {
                                 </div>
                             </div>
                             <div className="grid md:grid-cols-3 gap-2 justify-between">
-                                 <button
-                                onClick={() => {
-                                    if (bookFreeTrials && bookFreeTrials.length > 0) {
+                                <button
+                                    onClick={() => {
+                                        if (bookFreeTrials && bookFreeTrials.length > 0) {
 
-                                        // Step 1: Filter only selected bookings
-                                        const filteredBookings = bookFreeTrials.filter(b =>
-                                            selectedStudents.includes(b.id)
-                                        );
-
-                                        // Step 2: Extract emails from filtered bookings
-                                        const parentEmails = filteredBookings.flatMap(b =>
-                                            (b.parents || [])
-                                                .map(p => p.parentEmail)
-                                                .filter(email => email)
-                                        );
-
-                                        if (parentEmails.length > 0) {
-                                            openEmailPopup(
-                                                parentEmails,
-                                                "/api/admin/send-manual-email",
-                                                { token, showError, showSuccess }
+                                            // Step 1: Filter only selected bookings
+                                            const filteredBookings = bookFreeTrials.filter(b =>
+                                                selectedStudents.includes(b.id)
                                             );
+
+                                            // Step 2: Extract emails from filtered bookings
+                                            const parentEmails = filteredBookings.flatMap(b =>
+                                                (b.parents || [])
+                                                    .map(p => p.parentEmail)
+                                                    .filter(email => email)
+                                            );
+
+                                            if (parentEmails.length > 0) {
+                                                openEmailPopup(
+                                                    parentEmails,
+                                                    "/api/admin/send-manual-email",
+                                                    { token, showError, showSuccess }
+                                                );
+                                            } else {
+                                                showWarning(
+                                                    "No Emails Found",
+                                                    "Selected parents do not have valid email addresses."
+                                                );
+                                            }
+
                                         } else {
                                             showWarning(
-                                                "No Emails Found",
-                                                "Selected parents do not have valid email addresses."
+                                                "No Parents Found",
+                                                "No parent data available to send email."
                                             );
                                         }
-
-                                    } else {
-                                        showWarning(
-                                            "No Parents Found",
-                                            "No parent data available to send email."
-                                        );
-                                    }
-                                }}
-                                className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl text-[16px]"
-                            >
-                                <img
-                                    src="/images/icons/mail.png"
-                                    className="w-4 h-4 sm:w-5 sm:h-5"
-                                    alt=""
-                                />
-                                Send Email
-                            </button>
+                                    }}
+                                    className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl text-[16px]"
+                                >
+                                    <img
+                                        src="/images/icons/mail.png"
+                                        className="w-4 h-4 sm:w-5 sm:h-5"
+                                        alt=""
+                                    />
+                                    Send Email
+                                </button>
 
                                 <button
-                                     onClick={() => {
-                                                                        if (bookFreeTrials && bookFreeTrials.length > 0) {
-                                    
-                                                                            const filteredBookings = bookFreeTrials.filter(b =>
-                                                                                selectedStudents.includes(b.id)
-                                                                            );
-                                    
-                                                                            const parents = filteredBookings.flatMap(b =>
-                                                                                (b.parents || [])
-                                                                                    .filter(p => p.parentPhoneNumber)
-                                                                                    .map(p => ({
-                                                                                        name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
-                                                                                        phone: p.parentPhoneNumber
-                                                                                    }))
-                                                                            );
-                                    
-                                                                            if (parents.length > 0) {
-                                                                                openTextPopup(
-                                                                                    parents,
-                                                                                    "/api/admin/send-manual-text",
-                                                                                    { token, showError, showSuccess }
-                                                                                );
-                                                                            } else {
-                                                                                showWarning(
-                                                                                    "No Phone Numbers",
-                                                                                    "Selected parents do not have valid phone numbers."
-                                                                                );
-                                                                            }
-                                    
-                                                                        } else {
-                                                                            showWarning(
-                                                                                "No Parents Found",
-                                                                                "No parent data available to send text."
-                                                                            );
-                                                                        }
-                                                                    }}
+                                    onClick={() => {
+                                        if (bookFreeTrials && bookFreeTrials.length > 0) {
+
+                                            const filteredBookings = bookFreeTrials.filter(b =>
+                                                selectedStudents.includes(b.id)
+                                            );
+
+                                            const parents = filteredBookings.flatMap(b =>
+                                                (b.parents || [])
+                                                    .filter(p => p.parentPhoneNumber)
+                                                    .map(p => ({
+                                                        name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
+                                                        phone: p.parentPhoneNumber
+                                                    }))
+                                            );
+
+                                            if (parents.length > 0) {
+                                                openTextPopup(
+                                                    parents,
+                                                    "/api/admin/send-manual-text",
+                                                    { token, showError, showSuccess }
+                                                );
+                                            } else {
+                                                showWarning(
+                                                    "No Phone Numbers",
+                                                    "Selected parents do not have valid phone numbers."
+                                                );
+                                            }
+
+                                        } else {
+                                            showWarning(
+                                                "No Parents Found",
+                                                "No parent data available to send text."
+                                            );
+                                        }
+                                    }}
                                     className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-3 py-2 rounded-xl  text-[16px]">
                                     <img src='/images/icons/sendText.png' className='w-4 h-4 sm:w-5 sm:h-5' alt="" />
                                     {textloading ? (

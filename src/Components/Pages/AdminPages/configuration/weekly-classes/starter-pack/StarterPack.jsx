@@ -119,7 +119,6 @@ const StarterPack = () => {
                                     <th className="p-4 text-[14px] text-[#717073] font-semibold">Title</th>
                                     <th className="p-4 text-[14px] text-[#717073] font-semibold">Description</th>
                                     <th className="p-4 text-[14px] text-[#717073] font-semibold text-center">Price</th>
-                                    <th className="p-4 text-[14px] text-[#717073] font-semibold text-center whitespace-nowrap">Status</th>
                                     <th className="p-4 text-[14px] text-[#717073] font-semibold text-center whitespace-nowrap">Actions</th>
                                 </tr>
                             </thead>
@@ -134,11 +133,7 @@ const StarterPack = () => {
                                             <td className="p-4">{pack.title}</td>
                                             <td className="p-4 text-xs lg:text-sm text-[#717073] max-w-[200px] truncate">{pack.description}</td>
                                             <td className="p-4 text-center">£{parseFloat(pack.price || 0).toFixed(2)}</td>
-                                            <td className="p-4 text-center">
-                                                <span className={`inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${pack.enabled ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                    {pack.enabled ? 'Active' : 'Inactive'}
-                                                </span>
-                                            </td>
+
                                             <td className="p-4">
                                                 <div className="flex gap-4 items-center justify-center">
                                                     <button

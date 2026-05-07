@@ -588,8 +588,8 @@ const StudentProfile = ({ profile }) => {
                             <div className="flex items-center gap-4">
                                 <img
                                     src={
-                                        bookedBy?.profile
-                                            ? `${API_BASE_URL}/${bookedBy?.profile}`
+                                        profile?.bookedByAdmin?.profile
+                                            ? `${profile?.bookedByAdmin?.profile}`
                                             : "https://cdn-icons-png.flaticon.com/512/147/147144.png"
                                     }
                                     alt="avatar"

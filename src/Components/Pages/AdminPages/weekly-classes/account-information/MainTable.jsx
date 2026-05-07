@@ -67,56 +67,63 @@ const MainTable = () => {
   };
   const activeMembers = members?.[activeTab] ?? [];
 
-const filteredMembers = useMemo(() => {
-  if (!searchQuery) return activeMembers;
+  const filteredMembers = useMemo(() => {
+    if (!searchQuery?.trim()) return activeMembers;
 
-  const queryWords = searchQuery.toLowerCase().trim().split(/\s+/);
+    const queryWords = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
 
-  return activeMembers.filter((main) => {
-    const user = main?.booking || main;
+    return activeMembers.filter((main) => {
+      const user = main?.booking || main;
 
-    const venueName = (
-      user?.venue?.name ||
-      user?.venue?.address ||
-      user?.address ||
-      ""
-    ).toLowerCase();
+      // 1. Gather all searchable data for the booking
+      const venueName = (
+        user?.venue?.name ||
+        user?.venue?.address ||
+        user?.address ||
+        ""
+      ).toLowerCase();
 
-    // ✅ Parent full info
-    const parentInfo = (user?.parents || [])
-      .map(p =>
-        `${p?.parentFirstName || ""} ${p?.parentLastName || ""} ${p?.parentEmail || ""} ${p?.parentPhoneNumber || ""}`
-      )
-      .join(" ")
-      .toLowerCase();
+      const parents = user?.parents || [];
+      const parentNames = parents.map(p => `${p.parentFirstName} ${p.parentLastName}`).join(" ").toLowerCase();
+      const parentEmails = parents.map(p => p.parentEmail).join(" ").toLowerCase();
+      const parentPhones = parents.map(p => (p.parentPhoneNumber || "").replace(/[^\d]/g, "")).join(" ");
 
-    // ✅ Normalize phone (important)
-    const normalizedParentPhones = parentInfo.replace(/[^\d]/g, "");
+      const students = user?.students || [];
+      const studentNames = students.map(s => `${s.studentFirstName} ${s.studentLastName}`).join(" ").toLowerCase();
+      const studentAges = students.map(s => String(s.age || "")).join(" ");
 
-    return (user?.students || []).some((s) => {
-      const studentInfo = `
-        ${s?.studentFirstName || ""}
-        ${s?.studentLastName || ""}
-        ${s?.age || ""}
-      `.toLowerCase();
+      const idStr = String(main?.id || "").toLowerCase();
 
-      const searchString = `
-        ${studentInfo}
-        ${parentInfo}
-        ${normalizedParentPhones}
-        ${venueName}
-      `;
+      // Combine text for tokenization (excluding phones for numeric query check)
+      const searchString = `${studentNames} ${parentNames} ${parentEmails} ${venueName} ${idStr}`.toLowerCase();
+      const tokens = searchString.split(/[\s@.,_\-+]+/).filter(Boolean);
 
+      // 2. Check if EVERY query word matches
       return queryWords.every((word) => {
-        const cleanWord = word.replace(/[^\d]/g, "");
-        return (
-          searchString.includes(word) ||
-          (cleanWord && searchString.includes(cleanWord))
-        );
+        const clean = word.trim().toLowerCase();
+        if (!clean) return true;
+
+        // Phone matching (6+ digits)
+        if (/^\d{6,}$/.test(clean)) {
+          return parentPhones.includes(clean);
+        }
+
+        // Exact age match
+        if (/^\d{1,3}$/.test(clean)) {
+          if (studentAges.split(" ").includes(clean)) return true;
+        }
+
+        // Token-based matching
+        return tokens.some((token) => {
+          // If both are numeric, require exact match
+          if (/^\d+$/.test(clean) && /^\d+$/.test(token)) {
+            return token === clean;
+          }
+          return token.startsWith(clean);
+        });
       });
     });
-  });
-}, [activeMembers, searchQuery]);
+  }, [activeMembers, searchQuery]);
 
   const isAllSelected =
     filteredMembers.length > 0 &&
@@ -208,7 +215,7 @@ const filteredMembers = useMemo(() => {
         ))}
       </div>
       <div className="transition-all duration-300 w-full">
-        {activeMembers.length > 0 ? (
+        {filteredMembers.length > 0 ? (
           <>
             <div className="overflow-auto rounded-2xl bg-white shadow-sm">
               <table className="min-w-full text-sm ss">
@@ -392,7 +399,9 @@ const filteredMembers = useMemo(() => {
             </div>
           </>
         ) : (
-          <p className="text-center p-4 rounded-md bg-white">No Data Found</p>
+          <p className="text-center p-8 rounded-2xl bg-white shadow-sm font-semibold text-gray-500">
+            {searchQuery ? "No results found for your search" : "No data available in this section"}
+          </p>
         )}
       </div>
     </>

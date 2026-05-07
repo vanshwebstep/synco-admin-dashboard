@@ -63,6 +63,8 @@ const Create = () => {
     const [recording, setRecording] = useState(null); // stores Blob
     const [audioURL, setAudioURL] = useState(null);
     const [elapsedTime, setElapsedTime] = useState(0);
+    const [errors, setErrors] = useState({});
+    const [modalErrors, setModalErrors] = useState({});
 
     const mediaRecorderRef = useRef(null);
     const audioChunks = useRef([]);
@@ -127,7 +129,6 @@ const Create = () => {
 
 
 
-    // console.log('level', level)
 
     const [sessionExerciseId, setSessionExerciseId] = useState([]); // or selectedPlans[0]?.id
     const [levels, setLevels] = useState([]);
@@ -156,7 +157,6 @@ const Create = () => {
 
     });
 
-    console.log('formData', formData)
 
     const [openForm, setOpenForm] = useState(false);
     const navigate = useNavigate();
@@ -255,12 +255,15 @@ const Create = () => {
             ...prev,
             images: [...(Array.isArray(prev.images) ? prev.images : []), ...files],
         }));
+
+        if (modalErrors.images) {
+            setModalErrors({ ...modalErrors, images: null });
+        }
     };
 
 
 
     const handleRemoveImage = (index) => {
-        console.log('handleRemoveImage', index)
 
         setPhotoPreview((prev) => {
             const urlToRemove = prev[index];
@@ -289,9 +292,39 @@ const Create = () => {
     const handleCreateSession = (finalSubmit = false) => {
         if (isProcessing) return;
 
+        const newErrors = {};
+        let firstErrorId = null;
 
-        if (!groupNameSection || !player || !skillOfTheDay || !descriptionSession || selectedPlans.length === 0) {
-            showWarning("Missing Fields", "Please fill out all required fields before proceeding.");
+        if (!groupNameSection?.trim() && !isEditMode) {
+            newErrors.groupNameSection = "Group name is required";
+            if (!firstErrorId) firstErrorId = "groupNameSection";
+        }
+        if (!player?.trim()) {
+            newErrors.player = "Player name is required";
+            if (!firstErrorId) firstErrorId = "player";
+        }
+        if (!skillOfTheDay?.trim()) {
+            newErrors.skillOfTheDay = "Skill of the day is required";
+            if (!firstErrorId) firstErrorId = "skillOfTheDay";
+        }
+        if (!descriptionSession?.trim()) {
+            newErrors.descriptionSession = "Description is required";
+            if (!firstErrorId) firstErrorId = "descriptionSession";
+        }
+        if (!selectedPlans || selectedPlans.length === 0) {
+            newErrors.selectedPlans = "At least one exercise is required";
+            if (!firstErrorId) firstErrorId = "exercises-select-area";
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            if (firstErrorId) {
+                const el = document.getElementById(firstErrorId);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.focus?.();
+                }
+            }
             return;
         }
 
@@ -300,7 +333,6 @@ const Create = () => {
         // if (!finalSubmit && tabRef.current) {
         //     tabRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
         // }
-        // console.log('selectedPlanssssssssssss', selectedPlans)
 
         const currentLevel = {
             level: activeTab,
@@ -411,7 +443,6 @@ const Create = () => {
 
             // console.log('nextTab', nextTab)
             const existingLevel = updatedLevels.find((lvl) => lvl.level === nextTab);
-            console.log('existinasasagLevel', existingLevel)
 
             if (existingLevel) {
                 setPlayer(existingLevel.player || "");
@@ -598,7 +629,6 @@ const Create = () => {
             );
 
             if (!existingLevel) {
-                console.warn("No matching level found for activeTab:", activeTab);
             }
             setPlayer(existingLevel?.player || '');
             setSkillOfTheDay(existingLevel?.skillOfTheDay || '');
@@ -640,7 +670,6 @@ const Create = () => {
             });
         };
     }, []);
-    console.log('bannerPreviews', bannerPreviews)
     // Update audio URL when tab changes
     useEffect(() => {
         if (levels.length > 0) {
@@ -755,32 +784,26 @@ const Create = () => {
     }
 
     const handleSavePlan = async () => {
-        const { title, duration, description, images } = formData;
-
-        // console.log('formData---(35)', formData)
-
-        const showAlert = ({ type = "info", message = "", title = "" }) => {
-            if (type === "success") {
-                showSuccess(title || "Success", message);
-            } else if (type === "error") {
-                showError(title || "Error", message);
-            } else if (type === "warning") {
-                showWarning(title || "Warning", message);
-            } else {
-                showSuccess(title || "Info", message);
-            }
-        };
+        const { title, duration, description, images, imageUrl } = formData;
+        const newModalErrors = {};
 
         if (!title?.trim()) {
-            showAlert({ type: "warning", message: "Title is required", title: "Missing Field" });
-            return;
-        }
-        if (!images) {
-            showAlert({ type: "warning", message: "Image is required", title: "Missing Field" });
-            return;
+            newModalErrors.title = "Title is required";
         }
         if (!duration?.trim()) {
-            showAlert({ type: "warning", message: "Duration is required", title: "Missing Field" });
+            newModalErrors.duration = "Duration is required";
+        }
+        if (!description?.trim() || description === "<p><br></p>") {
+            newModalErrors.description = "Description is required";
+        }
+        // Check both new images and existing images
+        const hasImages = (images && images.length > 0) || (imageUrl && imageUrl.length > 0);
+        if (!hasImages) {
+            newModalErrors.images = "At least one image is required";
+        }
+
+        if (Object.keys(newModalErrors).length > 0) {
+            setModalErrors(newModalErrors);
             return;
         }
 
@@ -980,8 +1003,6 @@ const Create = () => {
         // 🔥 You were missing this line!
         // Handle per-tab video
         const existingLevel = levels.find((lvl) => lvl.level === tab);
-        console.log('tab', tab)
-        console.log('existingLevel (1)', existingLevel)
         if (existingLevel?.videoFile) {
             setVideoFiles((prev) => ({
                 ...prev,
@@ -1003,7 +1024,6 @@ const Create = () => {
 
         }
 
-        console.log('existingLevelchekk(1)', existingLevel)
 
         if (existingLevel) {
             setPlayer(existingLevel.player || "");
@@ -1086,14 +1106,23 @@ const Create = () => {
                                         Group Name
                                     </label>
                                     <input
+                                        id="groupNameSection"
                                         value={groupNameSection}
-                                        onChange={(e) => setGroupNameSection(e.target.value)}
+                                        onChange={(e) => {
+                                            setGroupNameSection(e.target.value);
+                                            if (errors.groupNameSection) {
+                                                setErrors({ ...errors, groupNameSection: null });
+                                            }
+                                        }}
                                         type="text"
                                         required
                                         disabled={isEditMode}
                                         placeholder="Enter Group Name"
-                                        className={`w-full px-4 font-semibold text-[18px] py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isEditMode ? 'disabled cursor-not-allowed' : ''}`}
+                                        className={`w-full px-4 font-semibold text-[18px] py-3 border ${errors.groupNameSection ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isEditMode ? 'disabled cursor-not-allowed' : ''}`}
                                     />
+                                    {errors.groupNameSection && (
+                                        <p className="text-red-500 text-sm mt-1">{errors.groupNameSection}</p>
+                                    )}
                                 </div>
                                 {/* Description */}
 
@@ -1239,26 +1268,42 @@ const Create = () => {
                                         Player
                                     </label>
                                     <input
-
+                                        id="player"
                                         value={player}
-                                        onChange={(e) => setPlayer(e.target.value)}
+                                        onChange={(e) => {
+                                            setPlayer(e.target.value);
+                                            if (errors.player) {
+                                                setErrors({ ...errors, player: null });
+                                            }
+                                        }}
                                         type="text"
                                         requiredx
-                                        className="w-full px-4 font-semibold py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className={`w-full px-4 font-semibold py-3 border ${errors.player ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
                                     />
+                                    {errors.player && (
+                                        <p className="text-red-500 text-sm mt-1">{errors.player}</p>
+                                    )}
                                 </div>
                                 <div ref={containerRef}>
-
                                     <label className="block text-[18px]  font-semibold text-gray-700 mb-2">
                                         Skill of the day
                                     </label>
                                     <input
+                                        id="skillOfTheDay"
                                         value={skillOfTheDay}
-                                        onChange={(e) => setSkillOfTheDay(e.target.value)}
+                                        onChange={(e) => {
+                                            setSkillOfTheDay(e.target.value);
+                                            if (errors.skillOfTheDay) {
+                                                setErrors({ ...errors, skillOfTheDay: null });
+                                            }
+                                        }}
                                         type="text"
                                         required
-                                        className="w-full px-4 font-semibold py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className={`w-full px-4 font-semibold py-3 border ${errors.skillOfTheDay ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
                                     />
+                                    {errors.skillOfTheDay && (
+                                        <p className="text-red-500 text-sm mt-1">{errors.skillOfTheDay}</p>
+                                    )}
                                 </div>
 
 
@@ -1268,13 +1313,21 @@ const Create = () => {
                                         Description
                                     </label>
                                     <input
-
+                                        id="descriptionSession"
                                         value={descriptionSession}
-                                        onChange={(e) => setDescriptionSession(e.target.value)}
+                                        onChange={(e) => {
+                                            setDescriptionSession(e.target.value);
+                                            if (errors.descriptionSession) {
+                                                setErrors({ ...errors, descriptionSession: null });
+                                            }
+                                        }}
                                         type="text"
                                         required
-                                        className="w-full px-4 font-semibold py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className={`w-full px-4 font-semibold py-3 border ${errors.descriptionSession ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
                                     />
+                                    {errors.descriptionSession && (
+                                        <p className="text-red-500 text-sm mt-1">{errors.descriptionSession}</p>
+                                    )}
                                 </div>
 
                                 {/* Payment Plans */}
@@ -1295,11 +1348,10 @@ const Create = () => {
 
 
                                     {/* Selected Plans */}
-                                    <div className="relative">
+                                    <div className="relative" id="exercises-select-area">
                                         <div
-
                                             onClick={() => setIsOpen(!isOpen)}
-                                            className="mt-4 space-y-2 border border-gray-200 px-4 py-3 rounded-lg max-h-28 overflow-auto"
+                                            className={`mt-4 space-y-2 border ${errors.selectedPlans ? 'border-red-500' : 'border-gray-200'} px-4 py-3 rounded-lg max-h-28 overflow-auto`}
                                         >
                                             {selectedPlans.length > 0 ? (
                                                 selectedPlans.map((plan, idx) => {
@@ -1378,6 +1430,9 @@ const Create = () => {
                                                 <div className="text-gray-400 italic py-3">  </div>
                                             )}
                                         </div>
+                                        {errors.selectedPlans && (
+                                            <p className="text-red-500 text-sm mt-1">{errors.selectedPlans}</p>
+                                        )}
 
                                         <AnimatePresence initial={false}>
                                             {isOpen && (
@@ -1498,19 +1553,24 @@ const Create = () => {
 
                                     {[
                                         { label: "Title", name: "title" },
-
                                         { label: "Duration", name: "duration" },
-
                                     ].map((field) => (
                                         <div key={field.name} className="mb-4">
                                             <label className="block text-[18px]  font-semibold text-gray-700 mb-2">{field.label}</label>
                                             <input
                                                 type="text"
                                                 value={formData[field.name]}
-                                                onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
-                                                className="w-full px-4 font-semibold text-[18px] py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                onChange={(e) => {
+                                                    setFormData({ ...formData, [field.name]: e.target.value });
+                                                    if (modalErrors[field.name]) {
+                                                        setModalErrors({ ...modalErrors, [field.name]: null });
+                                                    }
+                                                }}
+                                                className={`w-full px-4 font-semibold text-[18px] py-3 border ${modalErrors[field.name] ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
                                             />
-
+                                            {modalErrors[field.name] && (
+                                                <p className="text-red-500 text-sm mt-1">{modalErrors[field.name]}</p>
+                                            )}
                                         </div>
                                     ))}
 
@@ -1518,14 +1578,17 @@ const Create = () => {
                                         <label className="block text-[18px] font-semibold text-gray-700 mb-2">
                                             Description
                                         </label>
-                                        <div className="rounded-md border border-gray-300 bg-gray-100 p-1">
+                                        <div className={`rounded-md border ${modalErrors.description ? 'border-red-500' : 'border-gray-300'} bg-gray-100 p-1`}>
                                             { /* bullist numlist  code */}
                                             <Editor
                                                 apiKey="sqe5er2lyngzjf0armhqaw1u7ffh0xgjyzmb7unv5irietwa"
                                                 value={formData.description}
-                                                onEditorChange={(content) =>
-                                                    setFormData({ ...formData, description: content })
-                                                }
+                                                onEditorChange={(content) => {
+                                                    setFormData({ ...formData, description: content });
+                                                    if (modalErrors.description) {
+                                                        setModalErrors({ ...modalErrors, description: null });
+                                                    }
+                                                }}
                                                 init={{
                                                     menubar: false,
                                                     plugins: "lists advlist code",
@@ -1575,6 +1638,9 @@ const Create = () => {
 
 
                                         </div>
+                                        {modalErrors.description && (
+                                            <p className="text-red-500 text-sm mt-1">{modalErrors.description}</p>
+                                        )}
 
                                     </div>
 
@@ -1592,10 +1658,13 @@ const Create = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => fileInputRef.current?.click()}
-                                                className="flex w-full items-center justify-center gap-1 border border-blue-500 text-[#237FEA] px-4 py-2 rounded-lg font-semibold hover:bg-blue-50"
+                                                className={`flex w-full items-center justify-center gap-1 border ${modalErrors.images ? 'border-red-500' : 'border-blue-500'} text-[#237FEA] px-4 py-2 rounded-lg font-semibold hover:bg-blue-50`}
                                             >
                                                 Upload images
                                             </button>
+                                            {modalErrors.images && (
+                                                <p className="text-red-500 text-sm mt-1">{modalErrors.images}</p>
+                                            )}
 
                                             {/* Multiple Previews */}
                                             <div className="flex flex-wrap gap-3 mt-3">

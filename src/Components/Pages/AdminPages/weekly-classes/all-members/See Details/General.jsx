@@ -15,7 +15,7 @@ import { addDays } from "date-fns";
 import { FaEdit, FaSave } from "react-icons/fa";
 import { useNotification } from '../../../contexts/NotificationContext';
 import { showSuccess, showError, showConfirm, showWarning } from '../../../../../../utils/swalHelper';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import PhoneInput from 'react-phone-input-2';
 import Comments from '../../../Common/Comments';
 import { useEmail } from '../../../contexts/messages/SendEmailContext';
@@ -25,12 +25,13 @@ import { useTextPopup } from '../../../contexts/messages/SendTextContext';
 
 const ParentProfile = (stateData) => {
     const profile = stateData?.stateData || {};
-    console.log('profileprofile', profile)
+
     const navigate = useNavigate();
     const { serviceHistoryMembership } = useBookFreeTrial();
     const [textloading, setTextLoading] = useState(null);
     const { openEmailPopup } = useEmail();
     const { openTextPopup } = useTextPopup();
+    const [memberInfo, setMemberInfo] = useState(null);
 
     const { openCancelPopup } = useCancelMembership();
 
@@ -45,11 +46,11 @@ const ParentProfile = (stateData) => {
     const classSchedule = profile?.classSchedule;
     const bookingId = profile?.bookingId;
     const id = profile?.id;
-    console.log('profile', profile)
     const paymentPlans = profile?.paymentPlans;
     const [editingIndex, setEditingIndex] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const commentsPerPage = 5; // Number of comments per page
+    const location = useLocation();
 
     // Pagination calculations
     const indexOfLastComment = currentPage * commentsPerPage;
@@ -64,7 +65,6 @@ const ParentProfile = (stateData) => {
     const isTrials = serviceType === "weekly class trial";
     const isBirthdayParty = profile?.booking?.serviceType === "birthday party";
     const isOneToOne = profile?.booking?.serviceType === "one to one";
-
     const goToPage = (page) => {
         if (page < 1) page = 1;
         if (page > totalPages) page = totalPages;
@@ -103,7 +103,16 @@ const ParentProfile = (stateData) => {
                 return "/frames/Default.png"; // fallback if needed
         }
     };
+
+    useEffect(() => {
+
+        if (location.state?.memberInfo) {
+            setMemberInfo(location.state.memberInfo);
+        }
+    }, [location.state]);
     // ── Extra info rows for the right panel (service-specific) ───────────────
+
+    console.log("Location state:", location.state.memberInfo);
     const renderExtraInfoRows = () => {
         if (isBirthdayParty) {
             return (
@@ -208,7 +217,7 @@ const ParentProfile = (stateData) => {
         });
     };
 
-    console.log
+
     const commentData = {
         commentBy: profile?.parentAdminId,
         commentType: profile?.status === "waiting list" ? "waiting list" : isTrials ? "free" : "paid",
@@ -216,7 +225,7 @@ const ParentProfile = (stateData) => {
     }
     const payload = {
         comment: comment,
-        commentType:  profile?.status === "waiting list" ? "waiting list" : isTrials ? "free" : "paid",
+        commentType: profile?.status === "waiting list" ? "waiting list" : isTrials ? "free" : "paid",
         serviceType: "weekly class",
         commentBy: profile?.parentAdminId, // ensure correct ID
     };
@@ -224,7 +233,6 @@ const ParentProfile = (stateData) => {
         fetchComments(commentData);
     }, [])
 
-    // console.log('profile', profile)
     const [rebookFreeTrial, setRebookFreeTrial] = useState({
         bookingId: id || null,
         trialDate: "",
@@ -238,7 +246,7 @@ const ParentProfile = (stateData) => {
     });
     const [emergencyContacts, setEmergencyContacts] = useState(profile?.emergency || []);
     const [editingEmergency, setEditingEmergency] = useState(null);
-    // console.log('loading', loading)
+
 
 
     const { checkPermission } = usePermission();
@@ -271,6 +279,24 @@ const ParentProfile = (stateData) => {
                 }
             }
         }));
+    };
+
+    const handleWaitingListVenueChange = (selected) => {
+        setWaitingListData(prev => {
+            const newConfigs = { ...prev.studentConfigs };
+            // Reset class selections for all students when venue changes
+            Object.keys(newConfigs).forEach(id => {
+                newConfigs[id] = {
+                    ...newConfigs[id],
+                    classScheduleId: null
+                };
+            });
+            return {
+                ...prev,
+                venueId: selected?.value || null,
+                studentConfigs: newConfigs
+            };
+        });
     };
 
     const handleWaitingListStudentSelect = (selectedOptions) => {
@@ -397,15 +423,12 @@ const ParentProfile = (stateData) => {
     const MembershipTenure = profile?.membershipTenure || "";
     const totalBars = profile?.progressBar?.totalBars || 0;
     const filledBars = profile?.progressBar?.filledBars || 0;
-    console.log('filledBars', filledBars)
     const progressPercent =
         totalBars > 0 ? Math.round((filledBars / totalBars) * 100) : 0;
 
 
     const dateBooked = profile?.startDate;
     const status = profile?.status;
-    console.log('profile', profile)
-    // console.log('Venue Name:', profile.dateBooked);
 
     function formatISODate(isoDateString, toTimezone = null) {
         if (!isoDateString) return "N/A"; // ✅ Handles null, undefined, or empty string
@@ -447,9 +470,6 @@ const ParentProfile = (stateData) => {
         return `${month} ${day} ${year}`;
     }
 
-    console.log('status', status)
-    console.log('canCancelTrial', canCancelTrial)
-
     const handleDataChange = (index, field, value) => {
         const updatedParents = [...parents];
         updatedParents[index][field] = value;
@@ -460,8 +480,7 @@ const ParentProfile = (stateData) => {
         updated[index][field] = value;
         setEmergencyContacts(updated);
     };
-    // console.log('profile',profile)
-    // ✅ Parent edit/save toggle
+
     const toggleEditParent = (index) => {
         if (editingIndex === index) {
             // 🔹 Save Mode
@@ -497,7 +516,6 @@ const ParentProfile = (stateData) => {
             }));
 
             updateBookMembershipFamily(profile?.bookingId, payload);
-            // console.log("Parent Payload to send:", payload);
         } else {
             // 🔹 Edit Mode
             setEditingIndex(index);
@@ -529,7 +547,6 @@ const ParentProfile = (stateData) => {
             }));
 
             updateBookMembershipFamily(profile?.bookingId, payload);
-            // console.log("Emergency Payload to send:", payload);
         } else {
             // 🔹 Edit Mode
             setEditingEmergency(index);
@@ -556,11 +573,6 @@ const ParentProfile = (stateData) => {
         { value: 12, label: "12 Months" },
     ];
 
-    // console.log('waitingListData', waitingListData)
-    // console.log('transferData', transferData)
-    // console.log('freezeData', freezeData)
-    // console.log('cancelData', cancelData)
-    // console.log('emergencyContacts', emergencyContacts)
 
     const newClasses = profile?.newClasses?.map((cls) => ({
         value: cls.id,
@@ -586,8 +598,7 @@ const ParentProfile = (stateData) => {
             "Cancel"
         ).then((result) => {
             if (result.isConfirmed) {
-                // console.log('profile',profile)
-                // Navigate to your component/route
+
                 navigate("/weekly-classes/find-a-class/book-a-membership", {
                     state: { TrialData: profile, comesFrom: "waitingList" },
                 });
@@ -615,7 +626,7 @@ const ParentProfile = (stateData) => {
         const headers = {
             "Content-Type": "application/json",
         };
-        // console.log('bookingIds', bookingIds)
+
         if (token) {
             headers["Authorization"] = `Bearer ${token}`;
         }
@@ -929,7 +940,7 @@ const ParentProfile = (stateData) => {
                                     backgroundSize: "cover",
                                 }}
                             >
-                                <div>
+                                <div className="flex items-center justify-between gap-4">
                                     <div className="text-[20px] font-bold text-[#1F2937]">
                                         Account Status
                                     </div>
@@ -945,7 +956,7 @@ const ParentProfile = (stateData) => {
                                 {/* Avatar + Coach */}
                                 <div className="flex items-center gap-4">
                                     <img
-                                        src="/members/user2.png"
+                                        src={profile?.bookedByAdmin?.profile || profile?.bookedByAdmin?.profile}
                                         alt="Coach"
                                         className="w-16 h-16 rounded-full object-cover"
                                     />
@@ -1111,7 +1122,7 @@ const ParentProfile = (stateData) => {
                                     {/* Avatar + Coach */}
                                     <div className="flex items-center gap-4">
                                         <img
-                                            src="/members/user2.png"
+                                            src={profile?.bookedByAdmin?.profile || profile?.bookedByAdmin?.profile}
                                             alt="Coach"
                                             className="w-18 h-18 rounded-full"
                                         />
@@ -1278,7 +1289,7 @@ const ParentProfile = (stateData) => {
                                             {/* Booked By */}
                                             <div className="flex items-center gap-4">
                                                 <img
-                                                    src="/members/user2.png"
+                                                    src={profile?.bookedByAdmin?.profile || profile?.bookedByAdmin?.profile}
                                                     alt="Coach"
                                                     className="w-18 h-18 rounded-full object-cover"
                                                 />
@@ -1487,7 +1498,7 @@ const ParentProfile = (stateData) => {
 
                                                 backgroundSize: "cover",
                                             }}>
-                                            <div>
+                                            <div className="flex items-center justify-between gap-4">
                                                 <div className="text-[20px] font-bold text-[#1F2937]">Account Status</div>
                                                 <div className="text-[16px] font-semibold text-[#1F2937]">Trials</div>
                                             </div>
@@ -1552,7 +1563,7 @@ const ParentProfile = (stateData) => {
                                             {/* Avatar & Booked By */}
                                             <div className="flex items-center gap-4">
                                                 <img
-                                                    src={bookedBy?.profile ? `${API_BASE_URL}/${bookedBy.profile}` : "https://cdn-icons-png.flaticon.com/512/147/147144.png"}
+                                                    src={profile?.bookedByAdmin?.profile ? `${profile?.bookedByAdmin?.profile}` : "https://cdn-icons-png.flaticon.com/512/147/147144.png"}
                                                     alt="avatar"
                                                     className="w-18 h-18 rounded-full"
                                                     onError={(e) => { e.currentTarget.src = "https://cdn-icons-png.flaticon.com/512/147/147144.png"; }}
@@ -1716,40 +1727,47 @@ const ParentProfile = (stateData) => {
                                             {/* Membership-only actions */}
                                             {isMembership && (
                                                 <>
-                                                    {(status === "active" || status === "frozen"  || status === "request_to_cancel") && (
-                                                        <button
-                                                            onClick={() => setaddToWaitingList(true)}
-                                                            className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
+                                                    {
+                                                        status === "active" &&
+                                                        profile?.students?.every((s) => s.studentStatus === "active") && (
+                                                            <button
+                                                                onClick={() => setaddToWaitingList(true)}
+                                                                className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
                                                                 ${addToWaitingList ? "bg-[#237FEA] text-white shadow-md" : "bg-white border border-gray-300 hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"}`}
-                                                        >
-                                                            Add to the waiting list
-                                                        </button>
-                                                    )}
+                                                            >
+                                                                Add to the waiting list
+                                                            </button>
+                                                        )}
+                                                    {
+                                                        status === "active" &&
+                                                        profile?.students?.every((s) => s.studentStatus === "active") && (
+                                                            <button
+                                                                onClick={() => setFreezeMembership(true)}
+                                                                className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                                            >
+                                                                Freeze Membership
+                                                            </button>)}
 
-                                                    {(!profile.freezeBooking && (status === "active" || (status === "request_to_cancel" && canCancelTrial)) && !(profile?.paymentPlan?.duration === 1 && profile?.paymentPlan?.interval === "Month")) ? (
-                                                        <button
-                                                            onClick={() => setFreezeMembership(true)}
-                                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
-                                                        >
-                                                            Freeze Membership
-                                                        </button>
-                                                    ) : profile.freezeBooking ? (
+                                                    {status === "frozen" && (
                                                         <button
                                                             onClick={() => setReactivateMembership(true)}
                                                             className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
                                                         >
                                                             Reactivate Membership
                                                         </button>
-                                                    ) : null}
 
-                                                    {(status === "active" || (status === "request_to_cancel" && canCancelTrial)) && (
-                                                        <button
-                                                            onClick={() => setTransferVenue(true)}
-                                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
-                                                        >
-                                                            Transfer Class
-                                                        </button>
                                                     )}
+
+                                                    {
+                                                        status === "active" &&
+                                                        profile?.students?.every((s) => s.studentStatus === "active") && (
+                                                            <button
+                                                                onClick={() => setTransferVenue(true)}
+                                                                className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                                            >
+                                                                Transfer Class
+                                                            </button>
+                                                        )}
 
                                                     {status === 'waiting list' && canCancelTrial && (
                                                         <button
@@ -1849,22 +1867,25 @@ const ParentProfile = (stateData) => {
                                                             Reactivate Membership
                                                         </button>
                                                     )}
-                                                
+
                                                 </>
                                             )}
 
 
-                                            <button
-                                                onClick={handleReinstateMembership}
-                                                className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
+                                            {location.state?.memberInfo == "cancellation" ? (
+                                                <button
+                                                    onClick={handleReinstateMembership}
+                                                    className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
             ${addToWaitingList
-                                                        ? "bg-[#237FEA] text-white shadow-md"   // Active state
-                                                        : "bg-white  border border-gray-300  hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"
-                                                    }`}
-                                            >
-                                                Reinstate Membership
+                                                            ? "bg-[#237FEA] text-white shadow-md"   // Active state
+                                                            : "bg-white  border border-gray-300  hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"
+                                                        }`}
+                                                >
+                                                    Reinstate Membership
 
-                                            </button>
+                                                </button>
+                                            )
+                                                : null}
                                         </div>
                                     )}
 
@@ -1916,7 +1937,6 @@ const ParentProfile = (stateData) => {
                                     />
                                 </div>
 
-                                {/* Per-Student Configuration */}
                                 {waitingListData.selectedStudents.length > 0 && (
                                     <div className="space-y-6 border-t pt-4">
                                         {waitingListData.selectedStudents.map((studentOption) => {
@@ -1924,6 +1944,13 @@ const ParentProfile = (stateData) => {
                                             const config = waitingListData.studentConfigs?.[studentId] || {};
                                             const currentClass = studentOption.classSchedule?.className || "-";
                                             const currentVenue = studentOption.classSchedule?.venue?.name || "-";
+                                            const selectedVenue = noCapacityClasses.find(v => v.venueId === waitingListData.venueId);
+                                            const classOptions = selectedVenue
+                                                ? selectedVenue.classes.map(cls => ({
+                                                    value: cls.id,
+                                                    label: `${cls.className} (${cls.startTime} - ${cls.endTime})`
+                                                }))
+                                                : [];
 
                                             return (
                                                 <div key={studentId} className="bg-gray-50 p-4 rounded-xl space-y-3 border border-gray-200">
@@ -1959,11 +1986,11 @@ const ParentProfile = (stateData) => {
                                                         <Select
                                                             value={
                                                                 config.classScheduleId
-                                                                    ? newClassesForWaitingList.find((cls) => cls.value === config.classScheduleId) || null
+                                                                    ? classOptions.find((cls) => cls.value === config.classScheduleId) || null
                                                                     : null
                                                             }
                                                             onChange={(selected) => handleWaitingListConfigChange(studentId, "classScheduleId", selected?.value)}
-                                                            options={newClassesForWaitingList}
+                                                            options={classOptions}
                                                             placeholder="Select Class"
                                                             className="rounded-lg mt-2"
                                                             styles={{
@@ -1985,6 +2012,18 @@ const ParentProfile = (stateData) => {
                                         })}
                                     </div>
                                 )}
+
+                                <label className="block text-[16px] font-semibold">Select New Venue</label>
+                                <Select
+                                    value={
+                                        waitingListData.venueId
+                                            ? noCapacityClasses.map(v => ({ value: v.venueId, label: v.venueName })).find(v => v.value === waitingListData.venueId)
+                                            : null
+                                    }
+                                    onChange={handleWaitingListVenueChange}
+                                    options={noCapacityClasses.map(v => ({ value: v.venueId, label: v.venueName }))}
+                                    placeholder="Select Venue"
+                                />
 
                                 {/* Preferred Date */}
                                 <div>
@@ -2037,6 +2076,10 @@ const ParentProfile = (stateData) => {
 
                                             // Validation: all students must have a class
                                             const incomplete = studentsPayload.some(s => !s.classScheduleId);
+                                            if (!waitingListData.venueId) {
+                                                showWarning("Missing Information", "Please select a new venue.");
+                                                return;
+                                            }
                                             if (incomplete) {
                                                 showWarning("Missing Information", "Please select a new class for all selected students.");
                                                 return;
@@ -2044,6 +2087,8 @@ const ParentProfile = (stateData) => {
 
                                             const payload = {
                                                 bookingId: waitingListData.bookingId,
+                                                venueId: waitingListData.venueId,
+                                                interest: waitingListData.interest,
                                                 additionalNote: waitingListData.notes,
                                                 startDate: waitingListData.startDate,
                                                 students: studentsPayload

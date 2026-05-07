@@ -157,10 +157,7 @@ const HolidayAddPaymentPlanGroup = () => {
     };
 
     const handleSavePlan = async () => {
-        if (Number(formData.price) < 100) {
-            showError("Error", "Price must be at least £100!");
-            return;
-        }
+
 
         const { title, price, interval, duration, joiningFee, students } = formData;
 

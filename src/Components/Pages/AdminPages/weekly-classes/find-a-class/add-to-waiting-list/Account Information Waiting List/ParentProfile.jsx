@@ -718,7 +718,7 @@ const ParentProfile = ({ profile }) => {
                     {/* Card Wrapper */}
                     <div className="rounded-3xl bg-[#363E49] overflow-hidden shadow-md border border-gray-200">
                         {/* Header */}
-                        <div className={`m-2 px-6 rounded-3xl py-3 flex items-center justify-between bg-no-repeat bg-center `}
+                        <div className={`m-2 px-6 rounded-3xl py-5 items-center justify-between bg-no-repeat bg-center `}
                             style={{
                                 backgroundImage: status === "cancelled"
                                     ? "url('/frames/Cancelled.png')"
@@ -733,7 +733,7 @@ const ParentProfile = ({ profile }) => {
 
                                 backgroundSize: "cover",
                             }}>
-                            <div>
+                            <div className='flex justify-between '>
                                 <div className="text-[20px] font-bold text-[#1F2937]">Account Status</div>
                                 <div className="text-[16px] font-semibold capitalize text-[#1F2937]">      <span>
                                     {status ? status.replaceAll("_", " ") : "Unknown"}
@@ -747,8 +747,8 @@ const ParentProfile = ({ profile }) => {
                             <div className="flex items-center gap-4">
                                 <img
                                     src={
-                                        bookedBy?.profile
-                                            ? `${API_BASE_URL}/${bookedBy?.profile}`
+                                        profile?.bookedByAdmin?.profile || profile?.bookedBy?.profile
+                                            ? `${profile?.bookedByAdmin?.profile || profile?.bookedBy?.profile}`
                                             : "https://cdn-icons-png.flaticon.com/512/147/147144.png"
                                     }
                                     alt="avatar"

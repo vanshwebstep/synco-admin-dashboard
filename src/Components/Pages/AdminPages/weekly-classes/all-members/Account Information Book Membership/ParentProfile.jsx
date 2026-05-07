@@ -172,19 +172,19 @@ const ParentProfile = ({ profile }) => {
         cancelReason: "",
         additionalNote: "",
     });
-const [emergencyContacts, setEmergencyContacts] = useState(() => {
-    const raw = profile.emergency;
+    const [emergencyContacts, setEmergencyContacts] = useState(() => {
+        const raw = profile.emergency;
 
-    if (!raw) return [];
+        if (!raw) return [];
 
-    // If it's an array, use it directly
-    if (Array.isArray(raw)) return raw;
+        // If it's an array, use it directly
+        if (Array.isArray(raw)) return raw;
 
-    // If it's an object, wrap it in an array
-    if (typeof raw === "object") return [raw];
+        // If it's an object, wrap it in an array
+        if (typeof raw === "object") return [raw];
 
-    return [];
-});    const [editingEmergency, setEditingEmergency] = useState(null);
+        return [];
+    }); const [editingEmergency, setEditingEmergency] = useState(null);
     // console.log('loading', loading)
 
 
@@ -887,8 +887,8 @@ const [emergencyContacts, setEmergencyContacts] = useState(() => {
                             <div className="flex items-center gap-4">
                                 <img
                                     src={
-                                        bookedBy?.profile
-                                            ? `${API_BASE_URL}/${bookedBy?.profile}`
+                                        profile?.bookedByAdmin?.profile
+                                            ? `${profile?.bookedByAdmin?.profile}`
                                             : "https://cdn-icons-png.flaticon.com/512/147/147144.png"
                                     }
                                     alt="avatar"
@@ -1226,15 +1226,48 @@ const [emergencyContacts, setEmergencyContacts] = useState(() => {
                                     />
                                 </div>
 
+                                {/* Common Venue Selection */}
+                                {waitingListData.selectedStudents.length > 0 && (
+                                    <div className="mt-4">
+                                        <label className="block text-[16px] font-semibold">Select New Venue</label>
+                                        <Select
+                                            value={
+                                                waitingListData.venueId
+                                                    ? venueOptionsnoCapacity.find(v => v.value === waitingListData.venueId)
+                                                    : null
+                                            }
+                                            onChange={(selected) => {
+                                                const newVenueId = selected?.value;
+                                                setWaitingListData(prev => {
+                                                    const updatedConfigs = { ...prev.studentConfigs };
+                                                    Object.keys(updatedConfigs).forEach(studentId => {
+                                                        updatedConfigs[studentId] = {
+                                                            ...updatedConfigs[studentId],
+                                                            classScheduleId: null
+                                                        };
+                                                    });
+                                                    return {
+                                                        ...prev,
+                                                        venueId: newVenueId,
+                                                        studentConfigs: updatedConfigs
+                                                    };
+                                                });
+                                            }}
+                                            options={venueOptionsnoCapacity}
+                                            placeholder="Select Venue"
+                                            className="rounded-lg mt-2"
+                                        />
+                                    </div>
+                                )}
+
                                 {/* Per-Student Configuration */}
                                 {waitingListData.selectedStudents.length > 0 && (
-                                    <div className="space-y-6 border-t pt-4">
+                                    <div className="space-y-6 border-t pt-4 mt-6">
                                         {waitingListData.selectedStudents.map((studentOption) => {
                                             const studentId = studentOption.value;
                                             const config = waitingListData.studentConfigs?.[studentId] || {};
                                             const currentClass = studentOption.classSchedule?.className || "-";
-                                            const currentVenue = studentOption.classSchedule?.venue?.name || "-";
-                                            const selectedVenue = venueOptionsnoCapacity.find(v => v.value === config.venueId);
+                                            const selectedVenue = venueOptionsnoCapacity.find(v => v.value === waitingListData.venueId);
                                             const classOptions = selectedVenue
                                                 ? selectedVenue.classes.map(cls => ({
                                                     value: cls.id,
@@ -1269,20 +1302,7 @@ const [emergencyContacts, setEmergencyContacts] = useState(() => {
                                                         </div>
 
                                                     </div>
-                                                    <label className="block text-[16px] font-semibold">Select New Venue</label>
-                                                    <Select
-                                                        value={
-                                                            config.venueId
-                                                                ? venueOptionsnoCapacity.find(v => v.value === config.venueId)
-                                                                : null
-                                                        }
-                                                        onChange={(selected) => {
-                                                            handleWaitingListConfigChange(studentId, "venueId", selected?.value);
-                                                            handleWaitingListConfigChange(studentId, "classScheduleId", null); // reset class
-                                                        }}
-                                                        options={venueOptionsnoCapacity}
-                                                        placeholder="Select Venue"
-                                                    />
+
                                                     {/* Select New Class */}
                                                     <div>
                                                         <label className="block text-[16px] font-semibold">Select New Class</label>
@@ -1394,7 +1414,7 @@ const [emergencyContacts, setEmergencyContacts] = useState(() => {
                                                 return {
                                                     studentId: studentOption.value,
                                                     classScheduleId: config.classScheduleId,
-                                                    venueId: config.venueId // ✅ ADD THIS
+                                                    venueId: waitingListData.venueId
                                                 };
                                             });
                                             const selectedConfigs = waitingListData.selectedStudents.map((studentOption) => {
@@ -1412,15 +1432,11 @@ const [emergencyContacts, setEmergencyContacts] = useState(() => {
                                                     age: fullStudent.age,
                                                     gender: fullStudent.gender,
                                                     medicalInformation: fullStudent.medicalInformation,
-                                                    classScheduleId: config.classScheduleId
+                                                    classScheduleId: config.classScheduleId,
+                                                    venueId: waitingListData.venueId
                                                 };
                                             });
-                                            const firstStudentConfig =
-                                                waitingListData.studentConfigs?.[
-                                                waitingListData.selectedStudents[0]?.value
-                                                ];
-
-                                            const venueId = firstStudentConfig?.venueId;
+                                            const venueId = waitingListData.venueId;
 
                                             // Validation: all students must have a class
                                             const incomplete = studentsPayload.some(

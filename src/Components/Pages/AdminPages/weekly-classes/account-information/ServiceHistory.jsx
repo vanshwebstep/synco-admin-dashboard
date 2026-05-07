@@ -132,7 +132,7 @@ const BookingCard = ({ booking }) => {
               {renderField("KGo/Cardless ID", booking?.bookingId)}
               {renderField("Monthly Price", `£${booking?.paymentPlan?.priceLesson}`)}
               {renderField("Date Of Booking", booking?.startDate)}
-              {renderField("Progress", "70%")}
+              {renderField("Progress", `${booking?.progressBar?.filledBars}/${booking?.progressBar?.totalBars}`)}
               {renderField(
                 "Booking Source",
                 booking?.bookedByAdmin

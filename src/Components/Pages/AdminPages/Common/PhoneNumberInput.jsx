@@ -10,6 +10,7 @@ const PhoneNumberInput = ({
     readOnly = false,
     placeholder = "Enter phone number",
     className = "",
+    id,
 }) => {
     const {
         dialCode,
@@ -72,6 +73,7 @@ console.log('detec detected ',  detected)
 
             {/* ✅ Raw number input */}
             <input
+                id={id}
                 type="text"
                 inputMode="numeric"
                 value={stripDialCode(value || "")}   // ✅ sirf raw number dikhao

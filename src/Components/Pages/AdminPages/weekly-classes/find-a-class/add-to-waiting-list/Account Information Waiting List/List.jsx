@@ -16,6 +16,9 @@ import StudentProfile from "./StudentProfile";
 import Loader from "../../../../contexts/Loader";
 import Feedback from "./Feedback";
 import { useBookFreeTrial } from "../../../../contexts/BookAFreeTrialContext";
+import { Trash2 } from "lucide-react";
+import { showConfirm, showSuccess, showError } from "../../../../../../../utils/swalHelper";
+import axios from "axios";
 
 const AccountInfoWaitingList = () => {
   const { serviceHistoryWaitingList, serviceHistory, loading } = useBookFreeTrial()
@@ -49,7 +52,39 @@ const AccountInfoWaitingList = () => {
     };
     fetchData();
   }, [itemId, serviceHistoryWaitingList]);
+  const handleDelete = async () => {
+    const result = await showConfirm(
+      "Are you sure?",
+      "Are you sure you want to remove this account from Synco?",
+      "Yes"
+    );
 
+    if (!result.isConfirmed) return;
+
+    const token = localStorage.getItem("adminToken");
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+    try {
+      await axios.delete(
+        `${API_BASE_URL}/api/admin/delete`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          data: {
+            bookingIds: [itemId],
+          },
+        }
+      );
+
+      showSuccess("Deleted!", "Account removed successfully.");
+      navigate('/weekly-classes/find-a-class/add-to-waiting-list/list');
+    } catch (err) {
+      console.error(err);
+      showError("Error", err?.response?.data?.message || "Failed to delete account");
+    }
+  };
   if (loading) {
     return (
       <>
@@ -61,7 +96,7 @@ const AccountInfoWaitingList = () => {
   return (
     <>
       <div className="relative ">
-        <div className=" flex items-end mb-5 gap-2 md:gap-3">
+        <div className=" flex items-end mb-5 gap-2 md:gap-3 justify-between items-center">
           <div className=" flex items-center gap-2 md:gap-3">
             <h2
               onClick={() => {
@@ -96,9 +131,10 @@ const AccountInfoWaitingList = () => {
               ))}
             </div>
           </div>
-          {activeTab === "Service History" && (
-            <div className=" flex items-start  gap-2 md:gap-3">
-              {/* <div className="flex gap-2  items-center    p-2 rounded-xl flex-wrap bg-white">
+          <div className="flex items-start gap-2">
+            {activeTab === "Service History" && (
+              <div className=" flex items-start  gap-2 md:gap-3">
+                {/* <div className="flex gap-2  items-center    p-2 rounded-xl flex-wrap bg-white">
             <img
               src="/images/points.png"
               alt="Back"
@@ -109,39 +145,50 @@ const AccountInfoWaitingList = () => {
               <div className="text-[20px] font-semibold text-[#384455]">543</div>
             </div>
           </div> */}
-              <div className="flex gap-2  items-center    p-2 rounded-xl flex-wrap bg-white">
-                <img
-                  src="/images/totalPoints.png"
-                  alt="Back"
-                  className="md:w-11 md:h-11 w-6 h-6"
-                />
-                <div className="block">
-                  <div className="whitespace-nowrap font-semibold text-[#717073] text-[14px]">Total Payments</div>
-                  <div className="text-[20px] font-semibold text-[#384455]">£0.00</div>
+                <div className="flex gap-2  items-center    p-2 rounded-xl flex-wrap bg-white">
+                  <img
+                    src="/images/totalPoints.png"
+                    alt="Back"
+                    className="md:w-11 md:h-11 w-6 h-6"
+                  />
+                  <div className="block">
+                    <div className="whitespace-nowrap font-semibold text-[#717073] text-[14px]">Total Payments</div>
+                    <div className="text-[20px] font-semibold text-[#384455]">£0.00</div>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex gap-4  items-center    p-2 rounded-xl flex-wrap bg-white">
-                <img
-                  src="/images/filterGray.png"
-                  alt="Back"
-                  className=""
-                />
-                <div className="block  pr-3">
-                  <div className="whitespace-nowrap font-semibold text-[#717073] text-[16px]">Filters</div>
+                <div className="flex gap-4  items-center    p-2 rounded-xl flex-wrap bg-white">
+                  <img
+                    src="/images/filterGray.png"
+                    alt="Back"
+                    className=""
+                  />
+                  <div className="block  pr-3">
+                    <div className="whitespace-nowrap font-semibold text-[#717073] text-[16px]">Filters</div>
+                  </div>
                 </div>
+                <button
+                  onClick={() => {
+                    navigate('/weekly-classes/find-a-class');
+                  }}
+                  className="bg-[#237FEA] flex items-center gap-2 text-white px-4 py-2 md:py-[10px] rounded-xl hover:bg-blue-700 text-[15px]  font-semibold"
+                >
+                  <img src="/members/add.png" className="w-4 md:w-5" alt="Add" />
+                  Add booking
+                </button>
+
+
               </div>
-              <button
-                onClick={() => {
-                  navigate('/weekly-classes/find-a-class');
-                }}
-                className="bg-[#237FEA] flex items-center gap-2 text-white px-4 py-2 md:py-[10px] rounded-xl hover:bg-blue-700 text-[15px]  font-semibold"
-              >
-                <img src="/members/add.png" className="w-4 md:w-5" alt="Add" />
-                Add booking
-              </button>
-            </div>
-          )}
+            )}
+
+            <button
+              onClick={handleDelete}
+              className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl hover:bg-red-100 transition-colors font-semibold"
+            >
+              <Trash2 size={18} />
+              Delete Account
+            </button>
+          </div>
         </div >
         {activeTab === "Service History" && (
           <ServiceHistory serviceHistory={serviceHistory} />

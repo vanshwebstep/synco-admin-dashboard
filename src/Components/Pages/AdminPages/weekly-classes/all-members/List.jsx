@@ -21,7 +21,6 @@ import { useTextPopup } from '../../contexts/messages/SendTextContext';
 const trialLists = () => {
     const { openEmailPopup } = useEmail();
     const { openTextPopup } = useTextPopup();
-
     const [currentDate, setCurrentDate] = useState(new Date());
     const [fromDate, setFromDate] = useState(null);
     const [toDate, setToDate] = useState(null);
@@ -142,7 +141,6 @@ const trialLists = () => {
     };
 
 
-    console.log('selectedStudents:', selectedStudents);
     // ✅ Define all filters with dynamic API mapping
     const filterOptions = [
         { label: "Pending", key: "pending", apiParam: "status", apiValue: "pending" },
@@ -173,45 +171,6 @@ const trialLists = () => {
         }
     }, [selectedVenue, fetchBookMemberships, fetchBookMembershipsLoading]);
 
-
-    const sendText = async (bookingIds) => {
-        console.log('bookingIds', bookingIds)
-        setTextLoading(true);
-
-        const headers = {
-            "Content-Type": "application/json",
-        };
-        // console.log('bookingIds', bookingIds)
-        if (token) {
-            headers["Authorization"] = `Bearer ${token}`;
-        }
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/book/free-trials/send-text`, {
-                method: "POST",
-                headers,
-                body: JSON.stringify({
-                    bookingId: bookingIds, // make sure bookingIds is an array like [96, 97]
-                }),
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.message || "Failed to send text");
-            }
-
-            await showSuccess("Success!", result.message || "Text has been sent successfully.");
-
-            return result;
-
-        } catch (error) {
-            console.error("Error sending Text:", error);
-            await showError("Error", error.message || "Something went wrong while sending text.");
-            throw error;
-        } finally {
-            setTextLoading(false);
-        }
-    };
 
     const month = currentDate.getMonth();
     const year = currentDate.getFullYear();

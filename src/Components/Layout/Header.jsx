@@ -294,6 +294,7 @@ const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpe
         setActiveAccount,
         setFranchisesInfo,
       });
+      navigate('/')
       window.location.reload();
 
 

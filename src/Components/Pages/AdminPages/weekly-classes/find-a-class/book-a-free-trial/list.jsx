@@ -46,7 +46,6 @@ const List = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { classId, existingparentid, TrialData, comesFrom, mainBookingId, from_lead, leadId, useofRebook } = location.state || {};
-    console.log('existingparentid-', existingparentid)
     const popup1Ref = useRef(null);
     const popup2Ref = useRef(null);
     const popup3Ref = useRef(null);
@@ -55,15 +54,16 @@ const List = () => {
     const img2Ref = useRef(null);
     const { pathname } = useLocation();
     const [isOpen, setIsOpen] = useState(false);
-    console.log('TrialData', TrialData)
-    console.log('comesFrom', comesFrom)
-    console.log('classId', classId)
-    console.log('useofRebook', useofRebook)
     const { fetchFindClassID, singleClassSchedulesOnly, loading } = useClassSchedule() || {};
     const { createBookFreeTrials, isBooked, setIsBooked, fetchMembershipByParent, parentData, submitAllComments, createBookFreeTrialsByWaitingList, createReBookFreeTrials } = useBookFreeTrial()
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { keyInfoData, fetchKeyInfo } = useMembers();
     const { adminInfo, setAdminInfo } = useNotification();
+
+    const [studentErrors, setStudentErrors] = useState([]);
+    const [parentErrors, setParentErrors] = useState([]);
+    const [emergencyErrors, setEmergencyErrors] = useState({});
+    const [trialErrors, setTrialErrors] = useState({});
     const [students, setStudents] = useState([
         {
             studentFirstName: '',
@@ -78,27 +78,6 @@ const List = () => {
             // Add other fields if needed
         },
     ]);
-    const [country, setCountry] = useState("uk"); // default country
-    const [country2, setCountry2] = useState("uk"); // default country
-    const [dialCode, setDialCode] = useState("+44"); // store selected code silently
-    const [dialCode2, setDialCode2] = useState("+44"); // store selected code silently
-    const handleChange = (value, data) => {
-        // When library fires onChange, just update the dial code
-        setDialCode("+" + data.dialCode);
-    };
-    const handleChange2 = (value, data) => {
-        // When library fires onChange, just update the dial code
-        setDialCode("+" + data.dialCode);
-    };
-
-    const handleCountryChange = (countryData) => {
-        setCountry(countryData.countryCode);
-        setDialCode2("+" + countryData.dialCode);
-    };
-    const handleCountryChange2 = (countryData) => {
-        setCountry2(countryData.countryCode);
-        setDialCode2("+" + countryData.dialCode);
-    };
     const [activePopup, setActivePopup] = useState(null);
     const togglePopup = (id) => {
         setActivePopup((prev) => (prev === id ? null : id));
@@ -932,17 +911,13 @@ const List = () => {
         students[0]?.id || TrialData?.students?.[0]?.id || null;
 
     const handleAfterBooking = async (result) => {
-        console.log("Booking successful, now submitting comments if any...", result);
         const types = {
             commentType: "free",
             serviceType: "weekly class"
         };
 
         try {
-            console.log("Submitting comments tempComments:", tempComments);
-            console.log("Submitting comments parentAdminId:", result?.data);
             if (tempComments.length > 0 && result?.data?.parentAdminId) {
-
                 await submitAllComments(tempComments, result.data.parentAdminId, types);
                 setTempComments([]);
             }
@@ -952,19 +927,105 @@ const List = () => {
     };
 
     const handleSubmit = async () => {
-        if (!selectedDate) {
-            showWarning("Trial Date Required", "Please select a trial date before submitting.");
-            return;
-        }
-        setIsSubmitting(true); // Start loading
-        const missingClass = students.some(
-            (s) => !s.selectedClassData && !singleClassSchedulesOnly?.id
-        );
+        const sErrors = [];
+        const pErrors = [];
+        const eErrors = {};
+        const tErrors = {};
+        let firstErrorField = null;
 
-        if (missingClass) {
-            showWarning("Class Required", "Please select class for all students");
+        const scrollToError = (id) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.focus?.();
+            }
+        };
+
+        // Trial Date Validation
+        if (!selectedDate) {
+            tErrors.selectedDate = "Please select a trial date";
+            if (!firstErrorField) firstErrorField = "trial-date-calendar";
+        }
+
+        // Students Validation
+        students.forEach((s, idx) => {
+            const err = {};
+            if (!s.studentFirstName?.trim()) {
+                err.studentFirstName = "First name is required";
+                if (!firstErrorField) firstErrorField = `student-${idx}-studentFirstName`;
+            }
+            if (!s.studentLastName?.trim()) {
+                err.studentLastName = "Last name is required";
+                if (!firstErrorField) firstErrorField = `student-${idx}-studentLastName`;
+            }
+            if (!s.dateOfBirth) {
+                err.dateOfBirth = "Date of birth is required";
+                if (!firstErrorField) firstErrorField = `student-${idx}-dateOfBirth`;
+            }
+            if (!s.gender) {
+                err.gender = "Gender is required";
+                if (!firstErrorField) firstErrorField = `student-${idx}-gender`;
+            }
+            if (!s.selectedClassId && !singleClassSchedulesOnly?.id) {
+                err.selectedClassId = "Class is required";
+                if (!firstErrorField) firstErrorField = `student-${idx}-selectedClassId`;
+            }
+            if (!s.medicalInformation?.trim()) {
+                err.medicalInformation = "Medical information is required";
+                if (!firstErrorField) firstErrorField = `student-${idx}-medicalInformation`;
+            }
+            sErrors[idx] = err;
+        });
+
+        // Parents Validation
+        parents.forEach((p, idx) => {
+            const err = {};
+            if (!p.parentFirstName?.trim()) {
+                err.parentFirstName = "First name is required";
+                if (!firstErrorField) firstErrorField = `parent-${idx}-parentFirstName`;
+            }
+            if (!p.parentLastName?.trim()) {
+                err.parentLastName = "Last name is required";
+                if (!firstErrorField) firstErrorField = `parent-${idx}-parentLastName`;
+            }
+            if (!p.parentEmail?.trim()) {
+                err.parentEmail = "Email is required";
+                if (!firstErrorField) firstErrorField = `parent-${idx}-parentEmail`;
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.parentEmail)) {
+                err.parentEmail = "Invalid email format";
+                if (!firstErrorField) firstErrorField = `parent-${idx}-parentEmail`;
+            }
+            if (!p.parentPhoneNumber?.trim()) {
+                err.parentPhoneNumber = "Phone number is required";
+                if (!firstErrorField) firstErrorField = `parent-${idx}-parentPhoneNumber`;
+            }
+            if (!p.relationToChild) {
+                err.relationToChild = "Relation is required";
+                if (!firstErrorField) firstErrorField = `parent-${idx}-relationToChild`;
+            }
+            if (!p.interestReason) {
+                err.interestReason = "Interest reason is required";
+                if (!firstErrorField) firstErrorField = `parent-${idx}-interestReason`;
+            }
+            if (!p.howDidYouHear) {
+                err.howDidYouHear = "Source is required";
+                if (!firstErrorField) firstErrorField = `parent-${idx}-howDidYouHear`;
+            }
+            pErrors[idx] = err;
+        });
+
+        // Emergency Validation (Optional)
+        setStudentErrors(sErrors);
+        setParentErrors(pErrors);
+        setEmergencyErrors(eErrors);
+        setTrialErrors(tErrors);
+
+        if (firstErrorField) {
+            scrollToError(firstErrorField);
             return;
         }
+
+        setIsSubmitting(true);
 
         const formattedStudents = students.map((s) => {
             const { studentStatus, selectedClassData, ...rest } = s;
@@ -1029,7 +1090,6 @@ const List = () => {
             setIsBooked(true);
             await handleAfterBooking(res);
             navigate(`/weekly-classes/trial/list`)
-            // console.log("Final Payload:", JSON.stringify(payload, null, 2));
             // Optionally show success alert or reset form
         } catch (error) {
             console.error("Error while submitting:", error);
@@ -1117,8 +1177,6 @@ const List = () => {
         });
     };
 
-    // console.log('"2025-08-01"', selectedDate)
-
     const buttons = [
         ['AC', '±', '%', '÷',],
         ["7", "8", "9", "×"],
@@ -1179,7 +1237,6 @@ const List = () => {
         keyInfoOptions.find((opt) => opt.value === selectedKeyInfo)?.label ||
         "Key Information";
     const sessionDatesSet = new Set(sessionDates);
-    console.log('sessionDatesSet', sessionDatesSet);
     useEffect(() => {
         if (hasInitialized.current || !sessionDatesSet || sessionDatesSet.size === 0) return;
 
@@ -1211,26 +1268,6 @@ const List = () => {
     }, [sessionDatesSet]);
 
     const handleSubmitClick = (e) => {
-        if (!selectedDate) {
-            e.preventDefault();
-            showWarning("Please select a trial date");
-            return;
-        }
-        // console.log('mappedStudents', mappedStudents)
-        const mappedStudents = students.map((student, index) => ({
-
-            selectedClassData:
-                venueClassOptions.find(
-                    (opt) => opt.value === student.selectedClassId
-                )
-        }));
-        console.log('mappedStudents', mappedStudents)
-
-        if (!mappedStudents.every((s) => s?.selectedClassData?.value)) {
-            e.preventDefault();
-            showWarning("please select class first");
-            return;
-        }
         handleSubmit();
     };
     useEffect(() => {
@@ -1463,9 +1500,12 @@ const List = () => {
                         </div>
                     </div>
 
-                    <div className="space-y-3 bg-white p-6 rounded-3xl shadow-sm ">
+                    <div className={`space-y-3 bg-white p-6 rounded-3xl shadow-sm border ${trialErrors.selectedDate ? 'border-red-500' : 'border-transparent'}`} id="trial-date-calendar">
                         <div className="">
                             <h2 className="text-[24px] font-semibold">Select Trial Date</h2>
+                            {trialErrors.selectedDate && (
+                                <p className="text-red-500 text-sm mt-2">{trialErrors.selectedDate}</p>
+                            )}
 
                             <div className="rounded p-4 mt-6 text-center text-base w-full max-w-md mx-auto">
                                 {/* Header */}
@@ -1523,7 +1563,14 @@ const List = () => {
                                                     return (
                                                         <div
                                                             key={i}
-                                                            onClick={() => isAvailable && handleDateClick(date)}
+                                                            onClick={() => {
+                                                                if (isAvailable) {
+                                                                    handleDateClick(date);
+                                                                    if (trialErrors.selectedDate) {
+                                                                        setTrialErrors({ ...trialErrors, selectedDate: null });
+                                                                    }
+                                                                }
+                                                            }}
                                                             className={`w-8 h-8 flex text-[18px] items-center justify-center mx-auto text-base rounded-full
     ${isPastAvailable
                                                                     ? "bg-red-200 text-red-700 cursor-not-allowed"
@@ -1532,6 +1579,7 @@ const List = () => {
                                                                         : "cursor-not-allowed opacity-40 bg-white"
                                                                 }
     ${isSelected ? "selectedDate text-white font-bold" : ""}
+    ${trialErrors.selectedDate ? "ring-2 ring-red-500" : ""}
   `}
                                                         >
                                                             {date.getDate()}
@@ -1578,24 +1626,42 @@ const List = () => {
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">First name</label>
                                             <input
-                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                                id={`student-${index}-studentFirstName`}
+                                                className={`w-full mt-2 border ${studentErrors[index]?.studentFirstName ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                                                 placeholder="Enter first name"
                                                 value={student.studentFirstName}
-                                                onChange={(e) =>
-                                                    handleInputChange(index, 'studentFirstName', e.target.value)
-                                                }
+                                                onChange={(e) => {
+                                                    handleInputChange(index, 'studentFirstName', e.target.value);
+                                                    if (studentErrors[index]?.studentFirstName) {
+                                                        const newErrs = [...studentErrors];
+                                                        newErrs[index].studentFirstName = null;
+                                                        setStudentErrors(newErrs);
+                                                    }
+                                                }}
                                             />
+                                            {studentErrors[index]?.studentFirstName && (
+                                                <p className="text-red-500 text-sm mt-1">{studentErrors[index].studentFirstName}</p>
+                                            )}
                                         </div>
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Last name</label>
                                             <input
-                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                                id={`student-${index}-studentLastName`}
+                                                className={`w-full mt-2 border ${studentErrors[index]?.studentLastName ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                                                 placeholder="Enter last name"
                                                 value={student.studentLastName}
-                                                onChange={(e) =>
-                                                    handleInputChange(index, 'studentLastName', e.target.value)
-                                                }
+                                                onChange={(e) => {
+                                                    handleInputChange(index, 'studentLastName', e.target.value);
+                                                    if (studentErrors[index]?.studentLastName) {
+                                                        const newErrs = [...studentErrors];
+                                                        newErrs[index].studentLastName = null;
+                                                        setStudentErrors(newErrs);
+                                                    }
+                                                }}
                                             />
+                                            {studentErrors[index]?.studentLastName && (
+                                                <p className="text-red-500 text-sm mt-1">{studentErrors[index].studentLastName}</p>
+                                            )}
                                         </div>
                                     </div>
 
@@ -1607,13 +1673,24 @@ const List = () => {
                                             </label>
 
                                             <input
+                                                id={`student-${index}-dateOfBirth`}
                                                 type="text"
                                                 value={student.dateOfBirth || ""}
-                                                onChange={(e) => handleDOBChange(index, e.target.value)}
+                                                onChange={(e) => {
+                                                    handleDOBChange(index, e.target.value);
+                                                    if (studentErrors[index]?.dateOfBirth) {
+                                                        const newErrs = [...studentErrors];
+                                                        newErrs[index].dateOfBirth = null;
+                                                        setStudentErrors(newErrs);
+                                                    }
+                                                }}
                                                 placeholder="DD/MM/YYYY (e.g., 15/10/2026)"
-                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                                className={`w-full mt-2 border ${studentErrors[index]?.dateOfBirth ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                                                 maxLength={10}
                                             />
+                                            {studentErrors[index]?.dateOfBirth && (
+                                                <p className="text-red-500 text-sm mt-1">{studentErrors[index].dateOfBirth}</p>
+                                            )}
                                         </div>
 
                                         <div className="w-1/2">
@@ -1631,31 +1708,58 @@ const List = () => {
 
                                     {/* Row 3 */}
                                     <div className="flex gap-4">
-                                        <div className="w-1/2">
+                                        <div className="w-1/2" id={`student-${index}-gender`}>
                                             <label className="block text-[16px] font-semibold">Gender</label>
                                             <Select
                                                 className="w-full mt-2 text-base"
                                                 classNamePrefix="react-select"
                                                 placeholder="Select gender"
                                                 value={genderOptions.find((option) => option.value === student.gender) || null}
-                                                onChange={(selectedOption) =>
-                                                    handleInputChange(index, "gender", selectedOption ? selectedOption.value : "")
-                                                }
+                                                onChange={(selectedOption) => {
+                                                    handleInputChange(index, "gender", selectedOption ? selectedOption.value : "");
+                                                    if (studentErrors[index]?.gender) {
+                                                        const newErrs = [...studentErrors];
+                                                        newErrs[index].gender = null;
+                                                        setStudentErrors(newErrs);
+                                                    }
+                                                }}
                                                 options={genderOptions}
+                                                styles={{
+                                                    control: (base) => ({
+                                                        ...base,
+                                                        borderColor: studentErrors[index]?.gender ? '#EF4444' : base.borderColor,
+                                                        '&:hover': {
+                                                            borderColor: studentErrors[index]?.gender ? '#EF4444' : base.borderColor
+                                                        }
+                                                    })
+                                                }}
                                             />
+                                            {studentErrors[index]?.gender && (
+                                                <p className="text-red-500 text-sm mt-1">{studentErrors[index].gender}</p>
+                                            )}
                                         </div>
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">
                                                 Medical information
                                             </label>
                                             <input
+                                                id={`student-${index}-medicalInformation`}
                                                 type="text"
                                                 placeholder="Enter medical info"
                                                 value={student.medicalInformation || ""}
-                                                onChange={(e) => handleInputChange(index, "medicalInformation", e.target.value)}
-                                                className="mt-2 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                onChange={(e) => {
+                                                    handleInputChange(index, "medicalInformation", e.target.value);
+                                                    if (studentErrors[index]?.medicalInformation) {
+                                                        const newErrs = [...studentErrors];
+                                                        newErrs[index].medicalInformation = null;
+                                                        setStudentErrors(newErrs);
+                                                    }
+                                                }}
+                                                className={`mt-2 w-full px-4 py-3 border ${studentErrors[index]?.medicalInformation ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
                                             />
-
+                                            {studentErrors[index]?.medicalInformation && (
+                                                <p className="text-red-500 text-sm mt-1">{studentErrors[index].medicalInformation}</p>
+                                            )}
 
                                         </div>
                                     </div>
@@ -1664,7 +1768,7 @@ const List = () => {
 
                                     <div className="flex gap-4">
                                         {/* CLASS */}
-                                        <div className="w-1/2">
+                                        <div className="w-1/2" id={`student-${index}-selectedClassId`}>
                                             <label className="block text-[16px] font-semibold">Class</label>
 
                                             <Select
@@ -1679,13 +1783,27 @@ const List = () => {
                                                         (opt) => opt.value === student.selectedClassId
                                                     ) || null
                                                 }
-                                                onChange={(option) =>
-                                                    handleStudentClassChange(index, option)
-                                                }
+                                                onChange={(option) => {
+                                                    handleStudentClassChange(index, option);
+                                                    if (studentErrors[index]?.selectedClassId) {
+                                                        const newErrs = [...studentErrors];
+                                                        newErrs[index].selectedClassId = null;
+                                                        setStudentErrors(newErrs);
+                                                    }
+                                                }}
+                                                styles={{
+                                                    control: (base) => ({
+                                                        ...base,
+                                                        borderColor: studentErrors[index]?.selectedClassId ? '#EF4444' : base.borderColor,
+                                                        '&:hover': {
+                                                            borderColor: studentErrors[index]?.selectedClassId ? '#EF4444' : base.borderColor
+                                                        }
+                                                    })
+                                                }}
                                             />
-                                            {student.error && (
+                                            {studentErrors[index]?.selectedClassId && (
                                                 <p className="text-red-500 text-sm mt-1">
-                                                    {student.error}
+                                                    {studentErrors[index].selectedClassId}
                                                 </p>
                                             )}
                                         </div>
@@ -1749,42 +1867,60 @@ const List = () => {
 
                                     {/* Row 1 */}
                                     <div className="flex gap-4">
-                                        <div className="w-1/2">
-                                            <label className="block text-[16px] font-semibold">First name</label>
-                                            <input
-                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                placeholder="Enter first name"
-                                                disabled={isPrefilled} // Disable if pre-filled from existing parent data
-                                                value={parent.parentFirstName}
-                                                onChange={(e) => {
-                                                    // Remove numbers if typed or pasted
-                                                    const value = e.target.value.replace(/\d/g, "");
-                                                    handleParentChange(index, "parentFirstName", value);
-                                                }}
-                                                onKeyPress={(e) => {
-                                                    if (/\d/.test(e.key)) e.preventDefault(); // block typing numbers
-                                                }}
-                                            />
-                                        </div>
+                                         <div className="w-1/2">
+                                             <label className="block text-[16px] font-semibold">First name</label>
+                                             <input
+                                                 id={`parent-${index}-parentFirstName`}
+                                                 className={`w-full mt-2 border ${parentErrors[index]?.parentFirstName ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                                                 placeholder="Enter first name"
+                                                 disabled={isPrefilled} // Disable if pre-filled from existing parent data
+                                                 value={parent.parentFirstName}
+                                                 onChange={(e) => {
+                                                     // Remove numbers if typed or pasted
+                                                     const value = e.target.value.replace(/\d/g, "");
+                                                     handleParentChange(index, "parentFirstName", value);
+                                                     if (parentErrors[index]?.parentFirstName) {
+                                                         const newErrs = [...parentErrors];
+                                                         newErrs[index].parentFirstName = null;
+                                                         setParentErrors(newErrs);
+                                                     }
+                                                 }}
+                                                 onKeyPress={(e) => {
+                                                     if (/\d/.test(e.key)) e.preventDefault(); // block typing numbers
+                                                 }}
+                                             />
+                                             {parentErrors[index]?.parentFirstName && (
+                                                 <p className="text-red-500 text-sm mt-1">{parentErrors[index].parentFirstName}</p>
+                                             )}
+                                         </div>
 
-                                        <div className="w-1/2">
-                                            <label className="block text-[16px] font-semibold">Last name</label>
-                                            <input
-                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                placeholder="Enter last name"
-                                                disabled={isPrefilled} // Disable if pre-filled from existing parent data
-                                                value={parent.parentLastName}
-                                                onChange={(e) => {
-                                                    // Remove numbers if typed or pasted
-                                                    const value = e.target.value.replace(/\d/g, "");
-                                                    handleParentChange(index, "parentLastName", value);
-                                                }}
-                                                onKeyPress={(e) => {
-                                                    if (/\d/.test(e.key)) e.preventDefault(); // block typing numbers
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
+                                         <div className="w-1/2">
+                                             <label className="block text-[16px] font-semibold">Last name</label>
+                                             <input
+                                                 id={`parent-${index}-parentLastName`}
+                                                 className={`w-full mt-2 border ${parentErrors[index]?.parentLastName ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                                                 placeholder="Enter last name"
+                                                 disabled={isPrefilled} // Disable if pre-filled from existing parent data
+                                                 value={parent.parentLastName}
+                                                 onChange={(e) => {
+                                                     // Remove numbers if typed or pasted
+                                                     const value = e.target.value.replace(/\d/g, "");
+                                                     handleParentChange(index, "parentLastName", value);
+                                                     if (parentErrors[index]?.parentLastName) {
+                                                         const newErrs = [...parentErrors];
+                                                         newErrs[index].parentLastName = null;
+                                                         setParentErrors(newErrs);
+                                                     }
+                                                 }}
+                                                 onKeyPress={(e) => {
+                                                     if (/\d/.test(e.key)) e.preventDefault(); // block typing numbers
+                                                 }}
+                                             />
+                                             {parentErrors[index]?.parentLastName && (
+                                                 <p className="text-red-500 text-sm mt-1">{parentErrors[index].parentLastName}</p>
+                                             )}
+                                         </div>
+                                     </div>
 
 
                                     {/* Row 2 */}
@@ -1792,34 +1928,52 @@ const List = () => {
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Email</label>
                                             <input
+                                                id={`parent-${index}-parentEmail`}
                                                 type="email"
-                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                                className={`w-full mt-2 border ${parentErrors[index]?.parentEmail ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                                                 placeholder="Enter email address"
                                                 disabled={isPrefilled} // Disable if pre-filled from existing parent data
                                                 value={parent.parentEmail}
 
-                                                onChange={(e) => handleParentChange(index, "parentEmail", e.target.value)}
+                                                onChange={(e) => {
+                                                    handleParentChange(index, "parentEmail", e.target.value);
+                                                    if (parentErrors[index]?.parentEmail) {
+                                                        const newErrs = [...parentErrors];
+                                                        newErrs[index].parentEmail = null;
+                                                        setParentErrors(newErrs);
+                                                    }
+                                                }}
                                             />
+                                            {parentErrors[index]?.parentEmail && (
+                                                <p className="text-red-500 text-sm mt-1">{parentErrors[index].parentEmail}</p>
+                                            )}
                                         </div>
-                                        <div className="w-1/2">
+                                        <div className="w-1/2" id={`parent-${index}-parentPhoneNumber`}>
                                             <label className="block text-[16px] font-semibold">Phone number</label>
                                             <PhoneNumberInput
                                                 value={parent.parentPhoneNumber}
-                                                onChange={(fullNumber) =>
-                                                    handleParentChange(index, "parentPhoneNumber", fullNumber)
-                                                }
+                                                onChange={(fullNumber) => {
+                                                    handleParentChange(index, "parentPhoneNumber", fullNumber);
+                                                    if (parentErrors[index]?.parentPhoneNumber) {
+                                                        const newErrs = [...parentErrors];
+                                                        newErrs[index].parentPhoneNumber = null;
+                                                        setParentErrors(newErrs);
+                                                    }
+                                                }}
 
                                                 placeholder="Enter phone number"
+                                                error={parentErrors[index]?.parentPhoneNumber}
                                             />
-
-
+                                            {parentErrors[index]?.parentPhoneNumber && (
+                                                <p className="text-red-500 text-sm mt-1">{parentErrors[index].parentPhoneNumber}</p>
+                                            )}
                                         </div>
                                     </div>
 
                                     {/* Row 3 */}
                                     <div className="flex flex-col gap-4">
                                         {/* Interest Reason */}
-                                        <div className="w-full">
+                                        <div className="w-full" id={`parent-${index}-interestReason`}>
                                             <label className="block text-[16px] font-semibold">
                                                 What’s the main reason you’re interested in Samba Soccer Schools?
                                             </label>
@@ -1830,10 +1984,15 @@ const List = () => {
                                                         type="text"
                                                         placeholder="Please specify"
                                                         value={parent.interestReason || ""}
-                                                        onChange={(e) =>
-                                                            handleParentChange(index, "interestReason", e.target.value)
-                                                        }
-                                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 pr-28 text-base"
+                                                        onChange={(e) => {
+                                                            handleParentChange(index, "interestReason", e.target.value);
+                                                            if (parentErrors[index]?.interestReason) {
+                                                                const newErrs = [...parentErrors];
+                                                                newErrs[index].interestReason = null;
+                                                                setParentErrors(newErrs);
+                                                            }
+                                                        }}
+                                                        className={`w-full mt-2 border ${parentErrors[index]?.interestReason ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 pr-28 text-base`}
                                                     />
 
                                                     {/* Back Button */}
@@ -1865,8 +2024,25 @@ const List = () => {
                                                             handleParentChange(index, "interestReason", selected.value);
                                                             handleParentChange(index, "isCustomReason", false);
                                                         }
+                                                        if (parentErrors[index]?.interestReason) {
+                                                            const newErrs = [...parentErrors];
+                                                            newErrs[index].interestReason = null;
+                                                            setParentErrors(newErrs);
+                                                        }
+                                                    }}
+                                                    styles={{
+                                                        control: (base) => ({
+                                                            ...base,
+                                                            borderColor: parentErrors[index]?.interestReason ? '#EF4444' : base.borderColor,
+                                                            '&:hover': {
+                                                                borderColor: parentErrors[index]?.interestReason ? '#EF4444' : base.borderColor
+                                                            }
+                                                        })
                                                     }}
                                                 />
+                                            )}
+                                            {parentErrors[index]?.interestReason && (
+                                                <p className="text-red-500 text-sm mt-1">{parentErrors[index].interestReason}</p>
                                             )}
                                         </div>
 
@@ -1888,7 +2064,7 @@ const List = () => {
                                         </div>
                                     </div>
                                     <div className="flex gap-4">
-                                        <div className="w-1/2">
+                                        <div className="w-1/2" id={`parent-${index}-relationToChild`}>
                                             <label className="block text-[16px] font-semibold">Relation to child</label>
                                             <Select
                                                 options={relationOptions}
@@ -1899,12 +2075,29 @@ const List = () => {
                                                 value={relationOptions.find(
                                                     (o) => o.value === parent.relationToChild
                                                 )}
-                                                onChange={(selected) =>
-                                                    handleParentChange(index, "relationToChild", selected.value)
-                                                }
+                                                onChange={(selected) => {
+                                                    handleParentChange(index, "relationToChild", selected.value);
+                                                    if (parentErrors[index]?.relationToChild) {
+                                                        const newErrs = [...parentErrors];
+                                                        newErrs[index].relationToChild = null;
+                                                        setParentErrors(newErrs);
+                                                    }
+                                                }}
+                                                styles={{
+                                                    control: (base) => ({
+                                                        ...base,
+                                                        borderColor: parentErrors[index]?.relationToChild ? '#EF4444' : base.borderColor,
+                                                        '&:hover': {
+                                                            borderColor: parentErrors[index]?.relationToChild ? '#EF4444' : base.borderColor
+                                                        }
+                                                    })
+                                                }}
                                             />
+                                            {parentErrors[index]?.relationToChild && (
+                                                <p className="text-red-500 text-sm mt-1">{parentErrors[index].relationToChild}</p>
+                                            )}
                                         </div>
-                                        <div className="w-1/2">
+                                        <div className="w-1/2" id={`parent-${index}-howDidYouHear`}>
                                             <label className="block text-[16px] font-semibold">How did you hear about us?</label>
                                             <Select
                                                 options={hearOptions}
@@ -1913,10 +2106,27 @@ const List = () => {
                                                 // isDisabled={isPrefilled}
                                                 classNamePrefix="react-select"
                                                 value={hearOptions.find((o) => o.value === parent.howDidYouHear)}
-                                                onChange={(selected) =>
-                                                    handleParentChange(index, "howDidYouHear", selected.value)
-                                                }
+                                                onChange={(selected) => {
+                                                    handleParentChange(index, "howDidYouHear", selected.value);
+                                                    if (parentErrors[index]?.howDidYouHear) {
+                                                        const newErrs = [...parentErrors];
+                                                        newErrs[index].howDidYouHear = null;
+                                                        setParentErrors(newErrs);
+                                                    }
+                                                }}
+                                                styles={{
+                                                    control: (base) => ({
+                                                        ...base,
+                                                        borderColor: parentErrors[index]?.howDidYouHear ? '#EF4444' : base.borderColor,
+                                                        '&:hover': {
+                                                            borderColor: parentErrors[index]?.howDidYouHear ? '#EF4444' : base.borderColor
+                                                        }
+                                                    })
+                                                }}
                                             />
+                                            {parentErrors[index]?.howDidYouHear && (
+                                                <p className="text-red-500 text-sm mt-1">{parentErrors[index].howDidYouHear}</p>
+                                            )}
                                         </div>
                                     </div>
                                 </motion.div>
@@ -1943,63 +2153,99 @@ const List = () => {
 
                             <div className="flex gap-4">
                                 <div className="w-1/2">
-                                    <label className="block text-[16px] font-semibold">First name</label>
+                                    <label className="block text-[16px] font-semibold">First name (optional)</label>
                                     <input
-                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                        id="emergencyFirstName"
+                                        className={`w-full mt-2 border ${emergencyErrors.emergencyFirstName ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                                         placeholder="Enter first name"
                                         value={emergency.emergencyFirstName}
-                                        onChange={e =>
+                                        onChange={e => {
                                             setEmergency(prev => ({
                                                 ...prev,
                                                 emergencyFirstName: e.target.value
-                                            }))
-                                        }
+                                            }));
+                                            if (emergencyErrors.emergencyFirstName) {
+                                                setEmergencyErrors({ ...emergencyErrors, emergencyFirstName: null });
+                                            }
+                                        }}
                                     />
+                                    {emergencyErrors.emergencyFirstName && (
+                                        <p className="text-red-500 text-sm mt-1">{emergencyErrors.emergencyFirstName}</p>
+                                    )}
                                 </div>
                                 <div className="w-1/2">
-                                    <label className="block text-[16px] font-semibold">Last name</label>
+                                    <label className="block text-[16px] font-semibold">Last name (optional)</label>
                                     <input
-                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                        id="emergencyLastName"
+                                        className={`w-full mt-2 border ${emergencyErrors.emergencyLastName ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                                         placeholder="Enter last name"
                                         value={emergency.emergencyLastName}
-                                        onChange={e =>
+                                        onChange={e => {
                                             setEmergency(prev => ({
                                                 ...prev,
                                                 emergencyLastName: e.target.value
-                                            }))
-                                        }
+                                            }));
+                                            if (emergencyErrors.emergencyLastName) {
+                                                setEmergencyErrors({ ...emergencyErrors, emergencyLastName: null });
+                                            }
+                                        }}
                                     />
+                                    {emergencyErrors.emergencyLastName && (
+                                        <p className="text-red-500 text-sm mt-1">{emergencyErrors.emergencyLastName}</p>
+                                    )}
                                 </div>
                             </div>
 
                             <div className="flex gap-4">
-                                <div className="w-1/2">
-                                    <label className="block text-[16px] font-semibold">Phone number</label>
+                                <div className="w-1/2" id="emergencyPhoneNumber">
+                                    <label className="block text-[16px] font-semibold">Phone number (optional)</label>
 
                                     <PhoneNumberInput
                                         value={emergency.emergencyPhoneNumber}
-                                        onChange={(fullNumber) =>
-                                            setEmergency(prev => ({ ...prev, emergencyPhoneNumber: fullNumber }))
-                                        }
+                                        onChange={(fullNumber) => {
+                                            setEmergency(prev => ({ ...prev, emergencyPhoneNumber: fullNumber }));
+                                            if (emergencyErrors.emergencyPhoneNumber) {
+                                                setEmergencyErrors({ ...emergencyErrors, emergencyPhoneNumber: null });
+                                            }
+                                        }}
 
                                         placeholder="Enter phone number"
+                                        error={emergencyErrors.emergencyPhoneNumber}
                                     />
+                                    {emergencyErrors.emergencyPhoneNumber && (
+                                        <p className="text-red-500 text-sm mt-1">{emergencyErrors.emergencyPhoneNumber}</p>
+                                    )}
                                 </div>
-                                <div className="w-1/2">
-                                    <label className="block text-[16px] font-semibold">Relation to child</label>
+                                <div className="w-1/2" id="emergencyRelation">
+                                    <label className="block text-[16px] font-semibold">Relation to child (optional)</label>
                                     <Select
                                         options={relationOptions}
                                         value={relationOptions.find(option => option.value === emergency.emergencyRelation)}
-                                        onChange={selectedOption =>
+                                        onChange={selectedOption => {
                                             setEmergency(prev => ({
                                                 ...prev,
                                                 emergencyRelation: selectedOption?.value || ""
-                                            }))
-                                        }
+                                            }));
+                                            if (emergencyErrors.emergencyRelation) {
+                                                setEmergencyErrors({ ...emergencyErrors, emergencyRelation: null });
+                                            }
+                                        }}
                                         placeholder="Select Relation"
                                         className="mt-2"
                                         classNamePrefix="react-select"
+                                        styles={{
+                                            control: (base) => ({
+                                                ...base,
+                                                borderColor: emergencyErrors.emergencyRelation ? '#EF4444' : base.borderColor,
+                                                '&:hover': {
+                                                    borderColor: emergencyErrors.emergencyRelation ? '#EF4444' : base.borderColor
+                                                }
+                                            })
+                                        }}
                                     />
+                                    {emergencyErrors.emergencyRelation && (
+                                        <p className="text-red-500 text-sm mt-1">{emergencyErrors.emergencyRelation}</p>
+                                    )}
                                 </div>
                             </div>
                         </div>

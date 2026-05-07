@@ -6,6 +6,7 @@ import Attendance from "../../all-members/See Details/Attendance";
 import FailedPayments from "../../all-members/See Details/FailedPayments";
 import General from "../../all-members/See Details/General";
 import Credits from "../../all-members/See Details/Credits";
+import { showSuccess, showError, showWarning } from '../../../../../../utils/swalHelper';
 
 const SeeDetailsAccount = () => {
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -82,23 +83,27 @@ const SeeDetailsAccount = () => {
             alert("Please fill in amount and description");
             return;
         }
+
         const token = localStorage.getItem("adminToken");
 
         setIsSubmitting(true);
 
-        // Basic validation for card details if stripe is selected
-        if (paymentSource === 'stripe') {
-            const cleanCard = paymentData.cardNumber.replace(/\s/g, '');
+        // Stripe card validation
+        if (paymentSource === "stripe") {
+            const cleanCard = paymentData.cardNumber.replace(/\s/g, "");
+
             if (cleanCard.length !== 16) {
                 alert("Please enter a valid 16-digit card number");
                 setIsSubmitting(false);
                 return;
             }
+
             if (!/^\d{2}\/\d{2}$/.test(paymentData.expiryDate)) {
                 alert("Please enter expiry date in MM/YY format");
                 setIsSubmitting(false);
                 return;
             }
+
             if (paymentData.cvc.length < 3) {
                 alert("Please enter a valid CVC");
                 setIsSubmitting(false);
@@ -113,35 +118,61 @@ const SeeDetailsAccount = () => {
         const raw = JSON.stringify({
             description: paymentData.description,
             amount: Number(paymentData.amount),
-            paymentMethod: paymentSource === 'stripe' ? 'card' : paymentSource,
+            paymentMethod:
+                paymentSource === "stripe" ? "card" : paymentSource,
             paymentTiming: paymentTiming,
-            paymentDate: paymentTiming === 'specific' ? paymentData.paymentDate : null,
-            ...(paymentSource === 'stripe' && {
+            paymentDate:
+                paymentTiming === "specific"
+                    ? paymentData.paymentDate
+                    : null,
+
+            ...(paymentSource === "stripe" && {
                 cardNumber: paymentData.cardNumber,
                 expiryDate: paymentData.expiryDate,
                 cvc: paymentData.cvc,
-                cardholderName: paymentData.cardholderName
-            })
+                cardholderName: paymentData.cardholderName,
+            }),
         });
 
         const requestOptions = {
             method: "POST",
             headers: myHeaders,
             body: raw,
-            redirect: "follow"
+            redirect: "follow",
         };
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/book-membership/${itemId}/one-off-payment`, requestOptions);
-            const result = await response.text();
-            console.log(result);
-            alert("Payment processed successfully!");
-            setShowPaymentModal(false);
-            // Optionally refresh data
-            if (itemId) serviceHistoryMembership(itemId);
+            const response = await fetch(
+                `${API_BASE_URL}/api/admin/book-membership/${itemId}/one-off-payment`,
+                requestOptions
+            );
+
+            const result = await response.json();
+
+            console.log("API Response:", result);
+
+            // Success response
+            if (response.ok && (result.success === true || result.status === true)) {
+                showSuccess(result.message || "Payment processed successfully!");
+
+                setShowPaymentModal(false);
+
+                // Refresh data
+                if (itemId) {
+                    serviceHistoryMembership(itemId);
+                }
+            } else {
+                // Error response from API
+                showError(
+                    result.message ||
+                    result.error ||
+                    "Failed to process payment."
+                );
+            }
         } catch (error) {
-            console.error(error);
-            alert("Failed to process payment. Please try again.");
+            console.error("Payment Error:", error);
+
+            showError("Failed to process payment. Please try again.");
         } finally {
             setIsSubmitting(false);
         }
@@ -241,19 +272,16 @@ const SeeDetailsAccount = () => {
                                 <div>
                                     <label className="block text-[16px] font-medium text-[#282829] mb-2">Amount</label>
                                     <div className="relative">
-                                        <select
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 font-medium">
+                                            <span>£</span>
+                                        </div>
+                                        <input
+                                            type="number"
                                             value={paymentData.amount}
                                             onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
-                                            className="w-full p-4 bg-white border border-[#E5E7EB] rounded-2xl appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        >
-                                            <option value="">Select amount</option>
-                                            <option value="10">£10.00</option>
-                                            <option value="20">£20.00</option>
-                                            <option value="45">£45.00</option>
-                                        </select>
-                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
-                                        </div>
+                                            className="w-full p-4 pl-10 bg-white border border-[#E5E7EB] rounded-2xl appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="0.00"
+                                        />
                                     </div>
                                 </div>
 
@@ -281,7 +309,18 @@ const SeeDetailsAccount = () => {
                                             <div className="w-6 h-6 border-2 border-[#E5E7EB] rounded-full peer-checked:border-[#237FEA] transition-all"></div>
                                             <div className="absolute w-3 h-3 bg-[#237FEA] rounded-full scale-0 peer-checked:scale-100 transition-transform"></div>
                                         </div>
-                                        <span className="text-[16px] font-medium text-[#282829]">Make the payment now</span>
+                                        <div className="flex flex-col">
+                                            <span className="text-[16px] font-medium text-[#282829]">Make the payment now</span>
+                                            {paymentTiming === "now" && (
+                                                <span className="text-sm text-gray-500 mt-1">
+                                                    Estimated charge date: {(() => {
+                                                        const d = new Date();
+                                                        d.setDate(d.getDate() + 5);
+                                                        return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+                                                    })()}
+                                                </span>
+                                            )}
+                                        </div>
                                     </label>
 
                                     <label className="flex items-center gap-3 cursor-pointer group">
@@ -304,6 +343,11 @@ const SeeDetailsAccount = () => {
                                             <label className="block text-sm font-medium text-gray-600 mb-1">Select Date</label>
                                             <input
                                                 type="date"
+                                                min={(() => {
+                                                    const d = new Date();
+                                                    d.setDate(d.getDate() + 5);
+                                                    return d.toISOString().split('T')[0];
+                                                })()}
                                                 value={paymentData.paymentDate}
                                                 onChange={(e) => setPaymentData({ ...paymentData, paymentDate: e.target.value })}
                                                 className="w-full p-4 bg-white border border-[#E5E7EB] rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-[#282829]"
@@ -319,7 +363,14 @@ const SeeDetailsAccount = () => {
                                             { id: 'accesspaysuite', label: 'Accesspaysuite' },
                                             { id: 'goacardless', label: 'Goacardless' },
                                             { id: 'stripe', label: 'Card via Stripe' }
-                                        ].map((source) => (
+                                        ].filter(source => {
+                                            const hasAccessPay = serviceHistory?.payments?.some(p => p.paymentType === "accesspaysuite" && p.paymentCategory === "recurring");
+                                            const hasGoCardless = serviceHistory?.payments?.some(p => p.paymentType === "bank" && p.paymentCategory === "recurring");
+
+                                            if (source.id === 'accesspaysuite' && hasGoCardless && !hasAccessPay) return false;
+                                            if (source.id === 'goacardless' && hasAccessPay) return false;
+                                            return true;
+                                        }).map((source) => (
                                             <label key={source.id} className="flex items-center gap-3 cursor-pointer group">
                                                 <div className="relative flex items-center justify-center">
                                                     <input
@@ -415,7 +466,7 @@ const SeeDetailsAccount = () => {
                                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                                         Processing...
                                     </>
-                                ) : 'Add Credits'}
+                                ) : 'Create Payment'}
                             </button>
                         </div>
                     </div>

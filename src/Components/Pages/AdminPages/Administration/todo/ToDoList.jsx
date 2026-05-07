@@ -18,43 +18,43 @@ export default function TodoList() {
 
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const { fetchToDoList, toDoList } = useToDoListTemplate();
-const getServiceTypePath = (serviceType) => {
-    if (!serviceType) return "";
-    const type = serviceType.toLowerCase();
-    if (type === "weekly class membership") return "membership";
-    if (type === "weekly class trial") return "trial";
-    if (type === "holiday camp") return "holiday";
-    if (type === "birthday party") return "birthdayparty";
-    if (type === "one to one") return "onetoone";
-    return type;
-};
-const getBookingId = (item) => {
-    const type = item.serviceType?.toLowerCase();
-    if (type === "weekly class membership") return item.bookingId || null;
-    if (type === "weekly class trial") return item.bookingId || null;
-    if (type === "holiday camp") return item.holidayBookingId || null;
-    if (type === "birthday party") return item.birthdayPartyBookingId || null;
-    if (type === "one to one") return item.oneToOneBookingId || null;
-    return item.bookingId || null;
-};
+    const getServiceTypePath = (serviceType) => {
+        if (!serviceType) return "";
+        const type = serviceType.toLowerCase();
+        if (type === "weekly class membership") return "membership";
+        if (type === "weekly class trial") return "trial";
+        if (type === "holiday camp") return "holiday";
+        if (type === "birthday party") return "birthdayparty";
+        if (type === "one to one") return "onetoone";
+        return type;
+    };
+    const getBookingId = (item) => {
+        const type = item.serviceType?.toLowerCase();
+        if (type === "weekly class membership") return item.bookingId || null;
+        if (type === "weekly class trial") return item.bookingId || null;
+        if (type === "holiday camp") return item.holidayBookingId || null;
+        if (type === "birthday party") return item.birthdayPartyBookingId || null;
+        if (type === "one to one") return item.oneToOneBookingId || null;
+        return item.bookingId || null;
+    };
     const formatTasks = (data) => {
-    return Object.values(data || {}).flat().map(item => ({
-        ...item,
-        type: item.feedbackType ? 'feedback' : (item.type || 'task'),
-        title: item.category || item.title || "Feedback",
-        description: item.notes || item.description || "",
-        assignedAdmins: item.assignedAgents || item.assignedAdmins || [],
-        attachments: item.attachments || [],
-        status: item.status === "not_resolved" ? "to_do" : (item.status === "resolved" ? "completed" : (item.status === "to-do" ? "to_do" : (item.status || "to_do"))),
-        parentAccount: item.creator ? { id: item.creator.id, name: `${item.creator.firstName || ''} ${item.creator.lastName || ''}`.trim() } : null,
-        creator: item.createdByDetails || item.creator || null,
-        priority: item.priority || "high",
-        createdAt: item.created_at || item.createdAt,
-        updatedAt: item.updated_at || item.updatedAt,
-        bookingId:getBookingId(item) || null,        // ✅ add this
-        serviceType: getServiceTypePath(item.serviceType) || null,    // ✅ add this
-    }));
-};
+        return Object.values(data || {}).flat().map(item => ({
+            ...item,
+            type: item.feedbackType ? 'feedback' : (item.type || 'task'),
+            title: item.category || item.title || "Feedback",
+            description: item.notes || item.description || "",
+            assignedAdmins: item.assignedAgents || item.assignedAdmins || [],
+            attachments: item.attachments || [],
+            status: item.status === "not_resolved" ? "to_do" : (item.status === "resolved" ? "completed" : (item.status === "to-do" ? "to_do" : (item.status || "to_do"))),
+            parentAccount: item.creator ? { id: item.creator.id, name: `${item.creator.firstName || ''} ${item.creator.lastName || ''}`.trim() } : null,
+            creator: item.createdByDetails || item.creator || null,
+            priority: item.priority || "high",
+            createdAt: item.created_at || item.createdAt,
+            updatedAt: item.updated_at || item.updatedAt,
+            bookingId: getBookingId(item) || null,        // ✅ add this
+            serviceType: getServiceTypePath(item.serviceType) || null,    // ✅ add this
+        }));
+    };
 
     useEffect(() => {
         setTaskData(formatTasks(toDoList));
@@ -391,7 +391,7 @@ const getBookingId = (item) => {
 
             {openNewTask && <CreateTaskModal members={Members} onClose={handleCloseNewTask} />}
             {openViewTask && (
-                <ViewTaskModal task={selectedTask} open={open} setOpen={setOpen} onClose={handleCloseViewTask} />
+                <ViewTaskModal task={selectedTask} open={open} setOpen={setOpen} onClose={handleCloseViewTask} activeTab={activeTab} />
             )}
         </div>
     );
@@ -406,7 +406,7 @@ function FilterModal({
     setSelectedAdmins,
     setSelectedPriority
 }) {
-    const priorities = ["high","medium","low"];
+    const priorities = ["high", "medium", "low"];
 
 
     const toggleAdmin = (id) => {
@@ -595,7 +595,7 @@ function TaskCard({ task, onClick }) {
                                 href={`/weekly-classes/account-information?id=${task.bookingId}&serviceType=${task.serviceType}`}
                                 className="text-sm  hover:underline flex items-center gap-1"
                             >
-                                <img src="/reportsIcons/share.png" className="w-4" /> Parent: {task.parentAccount.name || task.parentAccount}
+                                <button className='cursor-pointer bg-[#237FEA] text-white rounded-lg hover:bg-blue-600 py-1 px-2'>See Profile</button>
                             </a>
                         </div>
                     ) : (
@@ -634,7 +634,7 @@ function CreateTaskModal({ members, onClose }) {
     const [createdAt] = useState(new Date());
     const [updatedAt, setUpdatedAt] = useState(new Date());
 
-    const priorityOptions = ["high","medium","low" ];
+    const priorityOptions = ["high", "medium", "low"];
 
     const [selectedMembers, setSelectedMembers] = useState([]);
 
@@ -1022,7 +1022,7 @@ const AssignModal = ({ close, selectedMembers, setSelectedMembers, memberOptions
 };
 
 
-function ViewTaskModal({ task, open, setOpen, onClose }) {
+function ViewTaskModal({ task, open, setOpen, onClose, activeTab }) {
     if (!task) return null;
     const { adminInfo, setAdminInfo } = useNotification();
 
@@ -1136,47 +1136,50 @@ function ViewTaskModal({ task, open, setOpen, onClose }) {
                         </div>
 
                         {/* =========================== ATTACHMENTS =========================== */}
-                        <div className="bg-white rounded-2xl py-4">
-                            <button
-                                onClick={() => toggle("attachments")}
-                                className="flex justify-between items-center w-full px-5 py-3 border-b border-[#E2E1E5]"
-                            >
-                                <span className="font-medium text-[16px]">Attachments</span>
-                                <ChevronDown size={18} className={`transition-transform ${open === "attachments" ? "rotate-180" : ""}`} />
-                            </button>
+                        {activeTab !== "feedback" && (
 
-                            {open === "attachments" && (
-                                <div className="p-4">
+                            <div className="bg-white rounded-2xl py-4">
+                                <button
+                                    onClick={() => toggle("attachments")}
+                                    className="flex justify-between items-center w-full px-5 py-3 border-b border-[#E2E1E5]"
+                                >
+                                    <span className="font-medium text-[16px]">Attachments</span>
+                                    <ChevronDown size={18} className={`transition-transform ${open === "attachments" ? "rotate-180" : ""}`} />
+                                </button>
 
-                                    {/* Preview */}
-                                    {uploadedFiles.length > 0 && (
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                                            {uploadedFiles.map((item, index) => (
-                                                <div key={index} className="relative border rounded-md p-2 bg-white shadow-sm">
-                                                    <button
-                                                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
-                                                        onClick={() =>
-                                                            setUploadedFiles(uploadedFiles.filter((_, i) => i !== index))
-                                                        }
-                                                    >
-                                                        ✕
-                                                    </button>
+                                {open === "attachments" && (
+                                    <div className="p-4">
 
-                                                    {/\.(jpg|jpeg|png|gif|webp)$/i.test(item.url) ? (
-                                                        <img src={item.url} className="w-full h-24 object-cover rounded" />
-                                                    ) : (
-                                                        <div className="flex flex-col items-center justify-center h-24">
-                                                            <img src={item.url} className="w-10 mb-2" />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                        {/* Preview */}
+                                        {uploadedFiles.length > 0 && (
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                                                {uploadedFiles.map((item, index) => (
+                                                    <div key={index} className="relative border rounded-md p-2 bg-white shadow-sm">
+                                                        <button
+                                                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+                                                            onClick={() =>
+                                                                setUploadedFiles(uploadedFiles.filter((_, i) => i !== index))
+                                                            }
+                                                        >
+                                                            ✕
+                                                        </button>
 
-                                </div>
-                            )}
-                        </div>
+                                                        {/\.(jpg|jpeg|png|gif|webp)$/i.test(item.url) ? (
+                                                            <img src={item.url} className="w-full h-24 object-cover rounded" />
+                                                        ) : (
+                                                            <div className="flex flex-col items-center justify-center h-24">
+                                                                <img src={item.url} className="w-10 mb-2" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* =========================== COMMENT =========================== */}
                         <div className="bg-white rounded-2xl py-4">
@@ -1184,7 +1187,7 @@ function ViewTaskModal({ task, open, setOpen, onClose }) {
                                 onClick={() => toggle("comment")}
                                 className="flex justify-between items-center w-full px-5 py-3 border-b border-[#E2E1E5]"
                             >
-                                <span className="font-medium text-[16px]">Comment</span>
+                                <span className="font-medium text-[16px]">{activeTab == "feedback" ? "Notes" : "Comment"}</span>
                                 <ChevronDown size={18} className={`transition-transform ${open === "comment" ? "rotate-180" : ""}`} />
                             </button>
 

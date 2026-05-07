@@ -779,14 +779,6 @@ const AddtoWaitingList = () => {
         el.focus();
       }
 
-      // 🔥 Prepare error message
-      const errorMessages = Object.values(newErrors);
-
-      showError(
-        "Error",
-        errorMessages[0] || "Please fill all required fields"
-      );
-
       return;
     }
 
@@ -989,12 +981,17 @@ const AddtoWaitingList = () => {
       }
       if (!s.studentLastName?.trim()) {
         newErrors[`studentLastName-${index}`] = "Last name required";
+        if (!firstErrorField) firstErrorField = `studentLastName-${index}`;
       }
       if (!s.dateOfBirth) {
         newErrors[`dob-${index}`] = "DOB required";
       }
       if (!s.gender) {
         newErrors[`gender-${index}`] = "Gender required";
+      }
+      if (!s.medicalInformation?.trim()) {
+        newErrors[`medicalInformation-${index}`] = "Medical info required (write 'None' if applicable)";
+        if (!firstErrorField) firstErrorField = `medicalInformation-${index}`;
       }
     });
 
@@ -1004,15 +1001,32 @@ const AddtoWaitingList = () => {
         newErrors[`parentFirstName-${index}`] = "Parent first name required";
         if (!firstErrorField) firstErrorField = `parentFirstName-${index}`;
       }
-
       if (!p.parentLastName?.trim()) {
         newErrors[`parentLastName-${index}`] = "Parent last name required";
         if (!firstErrorField) firstErrorField = `parentLastName-${index}`;
       }
       if (!p.parentEmail?.trim()) {
         newErrors[`parentEmail-${index}`] = "Parent email required";
+        if (!firstErrorField) firstErrorField = `parentEmail-${index}`;
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.parentEmail)) {
         newErrors[`parentEmail-${index}`] = "Enter a valid email address";
+        if (!firstErrorField) firstErrorField = `parentEmail-${index}`;
+      }
+      if (!p.parentPhoneNumber?.trim()) {
+        newErrors[`parentPhoneNumber-${index}`] = "Phone required";
+        if (!firstErrorField) firstErrorField = `parentPhoneNumber-${index}`;
+      }
+      if (!p.interestReason) {
+        newErrors[`interestReason-${index}`] = "Selection required";
+        if (!firstErrorField) firstErrorField = `interestReason-${index}`;
+      }
+      if (!p.relationToChild) {
+        newErrors[`relationToChild-${index}`] = "Relation required";
+        if (!firstErrorField) firstErrorField = `relationToChild-${index}`;
+      }
+      if (!p.howDidYouHear) {
+        newErrors[`howDidYouHear-${index}`] = "Selection required";
+        if (!firstErrorField) firstErrorField = `howDidYouHear-${index}`;
       }
     });
 
@@ -1022,11 +1036,26 @@ const AddtoWaitingList = () => {
       if (!firstErrorField) firstErrorField = "level";
     }
 
+    // Key Info
+
+
     // Emergency
     if (!emergency.sameAsAbove) {
       if (!emergency.emergencyFirstName?.trim()) {
-        newErrors["emergencyFirstName"] = "Required";
+        newErrors["emergencyFirstName"] = "First name required";
         if (!firstErrorField) firstErrorField = "emergencyFirstName";
+      }
+      if (!emergency.emergencyLastName?.trim()) {
+        newErrors["emergencyLastName"] = "Last name required";
+        if (!firstErrorField) firstErrorField = "emergencyLastName";
+      }
+      if (!emergency.emergencyPhoneNumber?.trim()) {
+        newErrors["emergencyPhoneNumber"] = "Phone required";
+        if (!firstErrorField) firstErrorField = "emergencyPhoneNumber";
+      }
+      if (!emergency.emergencyRelation) {
+        newErrors["emergencyRelation"] = "Relation required";
+        if (!firstErrorField) firstErrorField = "emergencyRelation";
       }
     }
 
@@ -1267,6 +1296,9 @@ const AddtoWaitingList = () => {
                           clearError(`studentFirstName-${index}`);
                         }}
                       />
+                      {errors[`studentFirstName-${index}`] && (
+                        <p className="text-red-500 text-xs mt-1">{errors[`studentFirstName-${index}`]}</p>
+                      )}
                     </div>
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">Last name</label>
@@ -1282,6 +1314,9 @@ const AddtoWaitingList = () => {
                         value={student.studentLastName}
 
                       />
+                      {errors[`studentLastName-${index}`] && (
+                        <p className="text-red-500 text-xs mt-1">{errors[`studentLastName-${index}`]}</p>
+                      )}
                     </div>
                   </div>
 
@@ -1306,6 +1341,9 @@ const AddtoWaitingList = () => {
                         maxLength={10}
 
                       />
+                      {errors[`dob-${index}`] && (
+                        <p className="text-red-500 text-xs mt-1">{errors[`dob-${index}`]}</p>
+                      )}
                     </div>
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">Age</label>
@@ -1325,7 +1363,7 @@ const AddtoWaitingList = () => {
                       <label className="block text-[16px] font-semibold">Gender</label>
                       <Select
                         inputId={`gender-${index}`}
-                        className="w-full mt-2 text-base"
+                        className={`w-full mt-2 text-base ${errors[`gender-${index}`] ? "border-red-500 rounded-xl" : ""}`}
                         classNamePrefix="react-select"
                         placeholder="Select gender"
                         value={genderOptions.find((option) => option.value === student.gender) || null}
@@ -1335,6 +1373,9 @@ const AddtoWaitingList = () => {
                         }}
                         options={genderOptions}
                       />
+                      {errors[`gender-${index}`] && (
+                        <p className="text-red-500 text-xs mt-1">{errors[`gender-${index}`]}</p>
+                      )}
                     </div>
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">
@@ -1343,11 +1384,19 @@ const AddtoWaitingList = () => {
 
                       <input
                         type="text"
+                        id={`medicalInformation-${index}`}
                         placeholder="Enter medical info"
                         value={student.medicalInformation || ""}
-                        onChange={(e) => handleInputChange(index, "medicalInformation", e.target.value)}
-                        className="mt-2 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onChange={(e) => {
+                          handleInputChange(index, "medicalInformation", e.target.value);
+                          clearError(`medicalInformation-${index}`);
+                        }}
+                        className={`mt-2 w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
+                        ${errors[`medicalInformation-${index}`] ? "border-red-500" : "border-gray-300"}`}
                       />
+                      {errors[`medicalInformation-${index}`] && (
+                        <p className="text-red-500 text-xs mt-1">{errors[`medicalInformation-${index}`]}</p>
+                      )}
 
                     </div>
                   </div>
@@ -1465,6 +1514,9 @@ const AddtoWaitingList = () => {
                           if (!/[A-Za-z\s]/.test(e.key)) e.preventDefault();
                         }}
                       />
+                      {errors[`parentFirstName-${index}`] && (
+                        <p className="text-red-500 text-xs mt-1">{errors[`parentFirstName-${index}`]}</p>
+                      )}
                     </div>
 
                     <div className="w-1/2">
@@ -1486,6 +1538,9 @@ const AddtoWaitingList = () => {
                           if (!/[A-Za-z\s]/.test(e.key)) e.preventDefault();
                         }}
                       />
+                      {errors[`parentLastName-${index}`] && (
+                        <p className="text-red-500 text-xs mt-1">{errors[`parentLastName-${index}`]}</p>
+                      )}
                     </div>
                   </div>
 
@@ -1507,18 +1562,27 @@ const AddtoWaitingList = () => {
                         }
                         }
                       />
+                      {errors[`parentEmail-${index}`] && (
+                        <p className="text-red-500 text-xs mt-1">{errors[`parentEmail-${index}`]}</p>
+                      )}
                     </div>
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">Phone number</label>
 
-                      <PhoneNumberInput
-                        value={parent.parentPhoneNumber}
-                        onChange={(fullNumber) =>
-                          handleParentChange(index, "parentPhoneNumber", fullNumber)
-                        }
-
-                        placeholder="Enter phone number"
-                      />
+                      <div className={errors[`parentPhoneNumber-${index}`] ? "border border-red-500 rounded-xl bg-red-50" : ""}>
+                        <PhoneNumberInput
+                          id={`parentPhoneNumber-${index}`}
+                          value={parent.parentPhoneNumber}
+                          onChange={(fullNumber) => {
+                            handleParentChange(index, "parentPhoneNumber", fullNumber);
+                            clearError(`parentPhoneNumber-${index}`);
+                          }}
+                          placeholder="Enter phone number"
+                        />
+                      </div>
+                      {errors[`parentPhoneNumber-${index}`] && (
+                        <p className="text-red-500 text-xs mt-1">{errors[`parentPhoneNumber-${index}`]}</p>
+                      )}
 
                     </div>
                   </div>
@@ -1535,12 +1599,15 @@ const AddtoWaitingList = () => {
                         <div className="relative">
                           <input
                             type="text"
+                            id={`interestReason-${index}`}
                             placeholder="Please specify"
                             value={parent.interestReason || ""}
-                            onChange={(e) =>
-                              handleParentChange(index, "interestReason", e.target.value)
-                            }
-                            className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 pr-28 text-base"
+                            onChange={(e) => {
+                              handleParentChange(index, "interestReason", e.target.value);
+                              clearError(`interestReason-${index}`);
+                            }}
+                            className={`w-full mt-2 border rounded-xl px-4 py-3 pr-28 text-base
+                            ${errors[`interestReason-${index}`] ? "border-red-500" : "border-gray-300"}`}
                           />
 
                           {/* Back Button */}
@@ -1557,6 +1624,7 @@ const AddtoWaitingList = () => {
                         </div>
                       ) : (
                         <Select
+                          inputId={`interestReason-${index}`}
                           options={interestReasonOptions}
                           placeholder="Select a reason"
                           className="mt-2"
@@ -1565,6 +1633,7 @@ const AddtoWaitingList = () => {
                             (o) => o.value === parent.interestReason
                           )}
                           onChange={(selected) => {
+                            clearError(`interestReason-${index}`);
                             if (selected.value === "Other") {
                               handleParentChange(index, "interestReason", "");
                               handleParentChange(index, "isCustomReason", true);
@@ -1573,7 +1642,16 @@ const AddtoWaitingList = () => {
                               handleParentChange(index, "isCustomReason", false);
                             }
                           }}
+                          styles={{
+                            control: (base) => ({
+                              ...base,
+                              borderColor: errors[`interestReason-${index}`] ? "#ef4444" : base.borderColor,
+                            }),
+                          }}
                         />
+                      )}
+                      {errors[`interestReason-${index}`] && (
+                        <p className="text-red-500 text-xs mt-1">{errors[`interestReason-${index}`]}</p>
                       )}
                     </div>
 
@@ -1598,28 +1676,50 @@ const AddtoWaitingList = () => {
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">Relation to child</label>
                       <Select
+                        inputId={`relationToChild-${index}`}
                         options={relationOptions}
                         placeholder="Select Relation"
                         className="mt-2"
                         classNamePrefix="react-select"
                         value={relationOptions.find((o) => o.value === parent.relationToChild)}
-                        onChange={(selected) =>
-                          handleParentChange(index, "relationToChild", selected.value)
-                        }
+                        onChange={(selected) => {
+                          handleParentChange(index, "relationToChild", selected.value);
+                          clearError(`relationToChild-${index}`);
+                        }}
+                        styles={{
+                          control: (base) => ({
+                            ...base,
+                            borderColor: errors[`relationToChild-${index}`] ? "#ef4444" : base.borderColor,
+                          }),
+                        }}
                       />
+                      {errors[`relationToChild-${index}`] && (
+                        <p className="text-red-500 text-xs mt-1">{errors[`relationToChild-${index}`]}</p>
+                      )}
                     </div>
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">How did you hear about us?</label>
                       <Select
+                        inputId={`howDidYouHear-${index}`}
                         options={hearOptions}
                         placeholder="Select from drop down"
                         className="mt-2"
                         classNamePrefix="react-select"
                         value={hearOptions.find((o) => o.value === parent.howDidYouHear)}
-                        onChange={(selected) =>
-                          handleParentChange(index, "howDidYouHear", selected.value)
-                        }
+                        onChange={(selected) => {
+                          handleParentChange(index, "howDidYouHear", selected.value);
+                          clearError(`howDidYouHear-${index}`);
+                        }}
+                        styles={{
+                          control: (base) => ({
+                            ...base,
+                            borderColor: errors[`howDidYouHear-${index}`] ? "#ef4444" : base.borderColor,
+                          }),
+                        }}
                       />
+                      {errors[`howDidYouHear-${index}`] && (
+                        <p className="text-red-500 text-xs mt-1">{errors[`howDidYouHear-${index}`]}</p>
+                      )}
                     </div>
                   </div>
                 </motion.div>
@@ -1648,7 +1748,8 @@ const AddtoWaitingList = () => {
                 <div className="w-1/2">
                   <label className="block text-[16px] font-semibold">First name</label>
                   <input
-                    className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                    id="emergencyFirstName"
+                    className={`w-full mt-2 border ${errors["emergencyFirstName"] ? "border-red-500" : "border-gray-300"} rounded-xl px-4 py-3 text-base`}
                     placeholder="Enter first name"
                     value={emergency.emergencyFirstName}
                     onChange={e =>
@@ -1658,11 +1759,15 @@ const AddtoWaitingList = () => {
                       }))
                     }
                   />
+                  {errors["emergencyFirstName"] && (
+                    <p className="text-red-500 text-xs mt-1">{errors["emergencyFirstName"]}</p>
+                  )}
                 </div>
                 <div className="w-1/2">
                   <label className="block text-[16px] font-semibold">Last name</label>
                   <input
-                    className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                    id="emergencyLastName"
+                    className={`w-full mt-2 border ${errors["emergencyLastName"] ? "border-red-500" : "border-gray-300"} rounded-xl px-4 py-3 text-base`}
                     placeholder="Enter last name"
                     value={emergency.emergencyLastName}
                     onChange={e =>
@@ -1672,6 +1777,9 @@ const AddtoWaitingList = () => {
                       }))
                     }
                   />
+                  {errors["emergencyLastName"] && (
+                    <p className="text-red-500 text-xs mt-1">{errors["emergencyLastName"]}</p>
+                  )}
                 </div>
               </div>
 
@@ -1679,6 +1787,7 @@ const AddtoWaitingList = () => {
                 <div className="w-1/2">
                   <label className="block text-[16px] font-semibold">Phone number</label>
                   <PhoneNumberInput
+                    id="emergencyPhoneNumber"
                     value={emergency.emergencyPhoneNumber}
                     onChange={(fullNumber) =>
                       setEmergency(prev => ({ ...prev, emergencyPhoneNumber: fullNumber }))
@@ -1686,11 +1795,14 @@ const AddtoWaitingList = () => {
 
                     placeholder="Enter phone number"
                   />
-
+                  {errors["emergencyPhoneNumber"] && (
+                    <p className="text-red-500 text-xs mt-1">{errors["emergencyPhoneNumber"]}</p>
+                  )}
                 </div>
                 <div className="w-1/2">
                   <label className="block text-[16px] font-semibold">Relation to child</label>
                   <Select
+                    inputId="emergencyRelation"
                     options={relationOptions}
                     value={relationOptions.find(option => option.value === emergency.emergencyRelation)}
                     onChange={selectedOption =>
@@ -1700,13 +1812,16 @@ const AddtoWaitingList = () => {
                       }))
                     }
                     placeholder="Select Relation"
-                    className="mt-2"
+                    className={`mt-2 ${errors["emergencyRelation"] ? "border-red-500 rounded-xl" : ""}`}
                     classNamePrefix="react-select"
                   />
+                  {errors["emergencyRelation"] && (
+                    <p className="text-red-500 text-xs mt-1">{errors["emergencyRelation"]}</p>
+                  )}
                 </div>
               </div>
             </div>
-            <div className="w-full py-3 px-5 border border-[#ccc] rounded-2xl my-10 react-select-container text-[20px] bg-white flex items-center justify-between">
+            <div id="level" className="w-full py-3 px-5 border border-[#ccc] rounded-2xl my-10 react-select-container text-[20px] bg-white flex items-center justify-between">
               <label className=" font-semibold  flex-1">
                 Level of interest
               </label>
@@ -1727,6 +1842,9 @@ const AddtoWaitingList = () => {
                 ))}
               </div>
             </div>
+            {errors["level"] && (
+              <p className="text-red-500 text-sm mt-[-30px] mb-[20px] ml-5">{errors["level"]}</p>
+            )}
 
             {/* Premium Key Information Accordion */}
             <motion.div
@@ -1770,6 +1888,7 @@ const AddtoWaitingList = () => {
                   >
                     <div className="p-8 pt-0 relative border-t border-gray-50">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative pt-6">
+
                         {waitingListKeyInfo ? (
                           renderContent(JSON.parse(waitingListKeyInfo))
                         ) : (

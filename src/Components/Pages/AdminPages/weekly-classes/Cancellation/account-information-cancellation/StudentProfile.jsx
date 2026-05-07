@@ -103,7 +103,7 @@ const StudentProfile = ({ StudentProfile }) => {
     };
 
 
-   
+
     const [currentPage, setCurrentPage] = useState(1);
     const commentsPerPage = 5; // Number of comments per page
 
@@ -359,7 +359,7 @@ const StudentProfile = ({ StudentProfile }) => {
                                         Student information{" "}
                                         {student.studentStatus && (
                                             <span className={`capitalize ${getStatusColor(student?.studentStatus)}`}>
-                                                ({student?.studentStatus})
+                                                ({student?.studentStatus?.replace(/_/g, " ")})
                                             </span>
                                         )}
                                     </h2>
@@ -502,7 +502,7 @@ const StudentProfile = ({ StudentProfile }) => {
                         adminInfo={adminInfo}
                         comment={comment}
                         setComment={setComment}
-                                                handleSubmitComment={() => handleSubmitComment(payload, commentData)}
+                        handleSubmitComment={() => handleSubmitComment(payload, commentData)}
 
                         loadingComment={loadingComment}
                         commentsList={commentsList}
@@ -547,8 +547,8 @@ const StudentProfile = ({ StudentProfile }) => {
                             <div className="flex items-center gap-4">
                                 <img
                                     src={
-                                        (status === 'request_to_cancel' || status === 'cancelled') && bookedBy?.profile
-                                            ? `${API_BASE_URL}/${bookedBy?.profile}`
+                                        StudentProfile?.bookedByAdmin?.profile || StudentProfile?.bookedBy?.profile
+                                            ? `${StudentProfile?.bookedByAdmin?.profile || StudentProfile?.bookedBy?.profile}`
                                             : "https://cdn-icons-png.flaticon.com/512/147/147144.png"
                                     }
                                     alt="avatar"

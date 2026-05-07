@@ -709,8 +709,8 @@ const ParentProfile = ({ profile }) => {
                             <div className="flex items-center gap-4">
                                 <img
                                     src={
-                                        bookedBy?.profile
-                                            ? `${API_BASE_URL}/${bookedBy?.profile}`
+                                        profile?.bookedByAdmin?.profile
+                                            ? `${profile?.bookedByAdmin?.profile}`
                                             : "https://cdn-icons-png.flaticon.com/512/147/147144.png"
                                     }
                                     alt="avatar"
@@ -1373,7 +1373,7 @@ const ParentProfile = ({ profile }) => {
 
                             <div className="space-y-4 px-6 pb-6 pt-4">
                                 {/* Current Class */}
-                                   <div>
+                                <div>
                                     <label className="block text-[16px] font-semibold">Venue</label>
                                     <input
                                         type="text"
@@ -1393,7 +1393,7 @@ const ParentProfile = ({ profile }) => {
                                 </div>
 
                                 {/* Venue */}
-                            
+
 
                                 {/* Select New Class */}
                                 <div>

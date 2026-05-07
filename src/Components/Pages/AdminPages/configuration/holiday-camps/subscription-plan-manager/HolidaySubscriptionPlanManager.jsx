@@ -4,7 +4,7 @@ import { Check } from "lucide-react";
 import Loader from '../../../contexts/Loader';
 import { usePermission } from '../../../Common/permission';
 import { useHolidayPayments } from '../../../contexts/HolidayPaymentContext';
-import { showConfirm, showError } from '../../../../../../utils/swalHelper';
+import { showConfirm, showError, showSuccess } from '../../../../../../utils/swalHelper';
 import { useGlobalSearch } from '../../../contexts/GlobalSearchContext';
 const HolidaySubscriptionPlanManager = () => {
   const { fetchGroups, groups, deleteGroup, fetchGroupById, selectedGroup, loading } = useHolidayPayments();
@@ -12,7 +12,7 @@ const HolidaySubscriptionPlanManager = () => {
   const [openForm, setOpenForm] = useState(false);
   const [checkedIds, setCheckedIds] = useState([]);
   const [previewShowModal, setPreviewShowModal] = useState(false);
-const { searchQuery } = useGlobalSearch();
+  const { searchQuery } = useGlobalSearch();
 
   useEffect(() => {
     const getPackages = async () => {
@@ -57,35 +57,35 @@ const { searchQuery } = useGlobalSearch();
       if (result.isConfirmed) {
         try {
           await deleteGroup(id); // from usePayments()
-          showError("Group deleted successfully");
+          showSuccess("Group deleted successfully");
         } catch (err) {
           showError("Failed to delete the group.");
         }
       }
     });
   }
- 
+
   const filteredGroups = React.useMemo(() => {
-  if (!searchQuery) return groups;
+    if (!searchQuery) return groups;
 
-  const query = searchQuery.toLowerCase();
+    const query = searchQuery.toLowerCase();
 
-  return groups.filter((group) => {
-    const plansText = group.holidayPaymentPlans
-      ?.map(p => `${p.title} ${p.price} ${p.interval}`)
-      .join(" ") || "";
+    return groups.filter((group) => {
+      const plansText = group.holidayPaymentPlans
+        ?.map(p => `${p.title} ${p.price} ${p.interval}`)
+        .join(" ") || "";
 
-    const combinedText = [
-      group.name,
-      group.createdAt,
-      plansText
-    ]
-      .join(" ")
-      .toLowerCase();
+      const combinedText = [
+        group.name,
+        group.createdAt,
+        plansText
+      ]
+        .join(" ")
+        .toLowerCase();
 
-    return combinedText.includes(query);
-  });
-}, [groups, searchQuery]);
+      return combinedText.includes(query);
+    });
+  }, [groups, searchQuery]);
   function unescapeHTML(escapedStr) {
     const doc = new DOMParser().parseFromString(escapedStr, "text/html");
     return doc.documentElement.textContent;
@@ -109,7 +109,7 @@ const { searchQuery } = useGlobalSearch();
   const canCreate = checkPermission({ module: 'payment-group', action: 'create' });
   const canEdit = checkPermission({ module: 'payment-group', action: 'update' });
   const canDelete = checkPermission({ module: 'payment-group', action: 'delete' });
-   if (loading) {
+  if (loading) {
     return (
       <>
         <Loader />
@@ -120,7 +120,7 @@ const { searchQuery } = useGlobalSearch();
     <div className={`p-4 md:p-6 ${previewShowModal ? 'max-w-[1045px]' : 'max-w-full'} bg-gray-50 `}>
 
       {previewShowModal && (
-         <>
+        <>
           <h2
             onClick={() => setPreviewShowModal(false)}
             className="text-xl md:text-[28px] font-semibold flex items-center gap-2 md:gap-3 cursor-pointer hover:opacity-80 transition-opacity mb-4 duration-200">

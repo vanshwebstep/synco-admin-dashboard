@@ -78,61 +78,110 @@ const DynamicTable = ({
 
   const finalData = useGrouped ? groupedData : flattenedData;
   const searchableKeys = ["name", "email", "phone"]; // customize
-console.log("finalData before search", searchQuery);
-const searchedData = useMemo(() => {
-  if (!searchQuery?.trim()) return finalData;
 
-  const queryWords = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
+  const searchedData = useMemo(() => {
+    if (!searchQuery?.trim()) return finalData;
 
-  return finalData.filter((row) => {
-    const venueName = (
-      row?.venue?.name ||
-      row?.address ||
-      row?.parent?.venue?.name ||
-      row?.parent?.address ||
-      ""
-    ).toLowerCase();
+    const queryWords = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
 
-    const parentPhones = (row?.parents || [])
-      .map(p => p?.parentPhoneNumber || "")
-      .join(" ");
+    return finalData.filter((row) => {
+      // ── venue / address ────────────────────────────────────────
+      const venueName = (
+        row?.venue?.name ||
+        row?.venue?.area ||
+        row?.parent?.venue?.name ||
+        row?.parent?.venue?.area ||
+        row?.address ||
+        row?.parent?.address ||
+        ""
+      ).toLowerCase();
 
-    const normalizedPhones = parentPhones.replace(/[^\d]/g, "");
+      // ── parents list ───────────────────────────────────────────
+      const parentsList =
+        row?.parents?.length
+          ? row.parents
+          : row?.parent?.parents?.length
+            ? row.parent.parents
+            : [];
 
-    const parentInfo = (row?.parents || [])
-      .map(p =>
-        `${p?.parentFirstName || ""} ${p?.parentLastName || ""} ${p?.parentEmail || ""}`
-      )
-      .join(" ")
-      .toLowerCase();
+      // ── parent phone (only for 6+ digit queries) ───────────────
+      const normalizedPhones = parentsList
+        .map((p) => (p?.parentPhoneNumber || "").replace(/[^\d]/g, ""))
+        .join(" ");
 
-    const studentInfo = row?.student
-      ? `${row.student.studentFirstName || ""} ${row.student.studentLastName || ""}`
-      : (row?.students || [])
-          .map(s => `${s.studentFirstName || ""} ${s.studentLastName || ""}`)
+      // ── parent info (name, email) ──────────────────────────────
+      const parentInfo = parentsList
+        .map((p) =>
+          [p?.parentFirstName, p?.parentLastName, p?.parentEmail]
+            .filter(Boolean)
+            .join(" ")
+        )
+        .join(" ")
+        .toLowerCase();
+
+      // ── student info (names) ───────────────────────────────────
+      const studentInfo = row?.student
+        ? [row.student.studentFirstName, row.student.studentLastName]
+          .filter(Boolean)
+          .join(" ")
+        : (row?.students || [])
+          .map((s) =>
+            [s?.studentFirstName, s?.studentLastName]
+              .filter(Boolean)
+              .join(" ")
+          )
           .join(" ");
 
-    const searchString = `
-      ${studentInfo}
-      ${parentInfo}
-      ${venueName}
-    `.toLowerCase();
+      // ── student age ────────────────────────────────────────────
+      const rawAge =
+        row?.student?.age ??
+        row?.students?.[0]?.age ??
+        row?.parent?.students?.[0]?.age ??
+        null;
 
-    return queryWords.every(word => {
-      const cleanWord = word.trim().toLowerCase();
+      const ageStr =
+        rawAge !== null && rawAge !== undefined && rawAge !== ""
+          ? String(rawAge)
+          : "";
 
-      // 🔢 number search (phone)
-      if (/^\d+$/.test(cleanWord)) {
-        return normalizedPhones.includes(cleanWord);
-      }
+      // ── booking/id ─────────────────────────────────────────────
+      const idStr = String(row?.bookingId || row?.id || "").toLowerCase();
 
-      // 🔤 text search (names etc)
-      return searchString.includes(cleanWord);
+      // ── combined searchable text ───────────────────────────────
+      const searchString = [studentInfo, parentInfo, venueName, idStr]
+        .join(" ")
+        .toLowerCase();
+
+      // split into whole-word tokens
+      const tokens = searchString
+        .split(/[\s@.,_\-+]+/)
+        .filter(Boolean);
+
+      // ── match every query word ─────────────────────────────────
+      return queryWords.every((word) => {
+        const clean = word.trim().toLowerCase();
+        if (!clean) return true;
+
+        // 1. Phone matching (6+ digits)
+        if (/^\d{6,}$/.test(clean)) {
+          return normalizedPhones.includes(clean);
+        }
+
+        // 2. Exact age match
+        if (ageStr && ageStr === clean) return true;
+
+        // 3. Token-based matching
+        return tokens.some((token) => {
+          // If both are numeric, require exact match (prevents "7" matching "71")
+          if (/^\d+$/.test(clean) && /^\d+$/.test(token)) {
+            return token === clean;
+          }
+          // Otherwise, prefix match (e.g., "don" matches "donald")
+          return token.startsWith(clean);
+        });
+      });
     });
-  });
-}, [finalData, searchQuery]);
-console.log("finalData", finalData);
-console.log("searchedData", searchedData);
+  }, [finalData, searchQuery]);
   /* =============================
      Pagination
   ============================== */
@@ -279,7 +328,7 @@ console.log("searchedData", searchedData);
                   colSpan={columns.length}
                   className="text-center p-4 text-gray-500"
                 >
-                  Data not found
+                  No results found
                 </td>
               </tr>
             )}

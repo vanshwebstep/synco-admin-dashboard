@@ -743,8 +743,8 @@ const StudentProfile = ({ StudentProfile }) => {
                             <div className="flex items-center gap-4">
                                 <img
                                     src={
-                                        (status === 'pending' || status === 'attended') && bookedBy?.profile
-                                            ? `${API_BASE_URL}/${bookedBy?.profile}`
+                                        StudentProfile?.bookedByAdmin?.profile || StudentProfile?.bookedBy?.profile
+                                            ? `${StudentProfile?.bookedByAdmin?.profile || StudentProfile?.bookedBy?.profile}`
                                             : "https://cdn-icons-png.flaticon.com/512/147/147144.png"
                                     }
                                     alt="avatar"

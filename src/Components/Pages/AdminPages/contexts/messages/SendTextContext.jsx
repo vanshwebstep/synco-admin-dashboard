@@ -111,7 +111,7 @@ export const TextProvider = ({ children }) => {
             });
             const result = await response.json();
             if (!response.ok) throw new Error(result.message || "Failed to send text");
-            await showSuccess("Success", "Text sent successfully");
+            await showSuccess("Success", result.message || "Text sent successfully");
             closeTextPopup();
         } catch (err) {
             await callbacks.showError("Error", err.message);

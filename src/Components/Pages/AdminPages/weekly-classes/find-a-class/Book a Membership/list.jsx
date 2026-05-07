@@ -416,6 +416,28 @@ const List = () => {
         relationToChild: '', howDidYouHear: '', isCustomReason: false
     }]);
 
+    const [fieldErrors, setFieldErrors] = useState({});
+    const clearError = (name) => {
+        setFieldErrors((prev) => {
+            const newErrors = { ...prev };
+            delete newErrors[name];
+            return newErrors;
+        });
+    };
+    const fieldClass = (key) =>
+        `w-full mt-2 border rounded-xl px-4 py-3 text-base focus:outline-none ${fieldErrors[key] ? "border-red-500 bg-red-50" : "border-gray-300"
+        }`;
+
+    const ErrorMsg = ({ name }) =>
+        fieldErrors[name] ? (
+            <div className="text-red-500 text-sm mt-1 ml-1">{fieldErrors[name]}</div>
+        ) : null;
+
+    const studentRefs = useRef([]);
+    const parentRefs = useRef([]);
+    const emergencyRef = useRef(null);
+    const infoRef = useRef(null);
+
     const finalClassId = selectedClassId || classId || TrialData?.classScheduleId || TrialData?.students?.[0]?.classSchedule?.id;
 
     const allPaymentPlans =
@@ -531,6 +553,7 @@ const List = () => {
             }
         }
     };
+
     const isEmpty =
         comesFrom === "" || comesFrom === null || comesFrom === undefined;
 
@@ -538,30 +561,7 @@ const List = () => {
         ? allClasses?.map((cls) => ({ value: cls.id, label: cls.className }))
         : classesWithCapacity?.map((cls) => ({ value: cls.id, label: cls.className }));
 
-    const validationCheck = () => {
-        for (let i = 0; i < students.length; i++) {
-            const s = students[i];
-            if (!s.studentFirstName) { showError("Required Fields", `Student ${i + 1}: First name is required`); return false; }
-            if (!s.studentLastName) { showError("Required Fields", `Student ${i + 1}: Last name is required`); return false; }
-            if (!s.dateOfBirth) { showError("Required Fields", `Student ${i + 1}: Date of Birth is required`); return false; }
-            if (s.selectedClassData && Number(s.selectedClassData.capacity) === 0) {
-                showError("Class Full", `Student ${i + 1}: Please select a class which has available capacity`); return false;
-            }
-            if (!s.gender) { showError("Required Fields", `Student ${i + 1}: Gender is required`); return false; }
-            if (!s.medicalInformation) { showError("Required Fields", `Student ${i + 1}: Medical Information is required`); return false; }
-            if (i !== 0 && !comesFrom && !s.selectedClassId) { showError("Required Fields", `Student ${i + 1}: Please select class`); return false; }
-        }
-        for (let i = 0; i < parents.length; i++) {
-            const p = parents[i];
-            if (!p.parentFirstName) { showError("Required Fields", `Parent ${i + 1}: First name is required`); return false; }
-            if (!p.parentLastName) { showError("Required Fields", `Parent ${i + 1}: Last name is required`); return false; }
-            if (!p.parentEmail) { showError("Required Fields", `Parent ${i + 1}: Email is required`); return false; }
-            if (!p.parentPhoneNumber) { showError("Required Fields", `Parent ${i + 1}: Phone number is required`); return false; }
-            if (!p.relationToChild) { showError("Required Fields", `Parent ${i + 1}: Relation is required`); return false; }
-            if (!p.howDidYouHear) { showError("Required Fields", `Parent ${i + 1}: Please select how you heard about us`); return false; }
-        }
-        return true;
-    };
+
 
     const handlePlanChange = (plan) => {
         setMembershipPlan(plan);
@@ -659,7 +659,7 @@ const List = () => {
                 setIsBooked(false);
                 await fetchFindClassID(finalClassId);
                 await fetchKeyInfo();
-                if (startmembership === "startmembership") {
+                if (startmembership === "startmembership" || comesFrom == "cancellation") {
                     await fetchVenues();
                 }
             }
@@ -691,7 +691,71 @@ const List = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [fromDate, setFromDate] = useState(new Date(currentDate.getFullYear(), currentDate.getMonth(), 11));
     const [toDate, setToDate] = useState(null);
+    const validationCheck = () => {
+        const newErrors = {};
+        if (!membershipPlan) newErrors["membershipPlan"] = "Membership Plan is required";
+        if (!selectedDate) newErrors["selectedDate"] = "Start date is required";
 
+        for (let i = 0; i < students.length; i++) {
+            const s = students[i];
+            if (!s.studentFirstName?.trim()) newErrors[`student_${i}_studentFirstName`] = "First name is required";
+            if (!s.studentLastName?.trim()) newErrors[`student_${i}_studentLastName`] = "Last name is required";
+            if (!s.dateOfBirth) newErrors[`student_${i}_dateOfBirth`] = "Date of Birth is required";
+            if (!s.gender) newErrors[`student_${i}_gender`] = "Gender is required";
+            if (!s.medicalInformation?.trim()) newErrors[`student_${i}_medicalInformation`] = "Medical info required (write 'None' if applicable)";
+            if (i !== 0 && !comesFrom && !s.selectedClassId) newErrors[`student_${i}_selectedClassId`] = "Please select a class";
+            if (s.selectedClassData && Number(s.selectedClassData.capacity) === 0) {
+                newErrors[`student_${i}_selectedClassId`] = "Selected class has no available capacity";
+            }
+        }
+
+        for (let i = 0; i < parents.length; i++) {
+            const p = parents[i];
+            if (!p.parentFirstName?.trim()) newErrors[`parent_${i}_parentFirstName`] = "First name is required";
+            if (!p.parentLastName?.trim()) newErrors[`parent_${i}_parentLastName`] = "Last name is required";
+            if (!p.parentEmail?.trim()) newErrors[`parent_${i}_parentEmail`] = "Email is required";
+            else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.parentEmail)) newErrors[`parent_${i}_parentEmail`] = "Enter a valid email address";
+            if (!p.parentPhoneNumber?.trim()) newErrors[`parent_${i}_parentPhoneNumber`] = "Phone number is required";
+            if (!p.interestReason) newErrors[`parent_${i}_interestReason`] = "Selection required";
+            if (!p.relationToChild) newErrors[`parent_${i}_relationToChild`] = "Relation is required";
+            if (!p.howDidYouHear) newErrors[`parent_${i}_howDidYouHear`] = "Please select how you heard about us";
+        }
+
+        if (!emergency.emergencyFirstName?.trim()) newErrors["emergency_emergencyFirstName"] = "First name is required";
+        if (!emergency.emergencyLastName?.trim()) newErrors["emergency_emergencyLastName"] = "Last name is required";
+        if (!emergency.emergencyPhoneNumber?.trim()) newErrors["emergency_emergencyPhoneNumber"] = "Phone number is required";
+        if (!emergency.emergencyRelation) newErrors["emergency_emergencyRelation"] = "Relation is required";
+
+
+        setFieldErrors(newErrors);
+
+        if (Object.keys(newErrors).length > 0) {
+            // Scroll to first error
+            const firstKey = Object.keys(newErrors)[0];
+            const parts = firstKey.split("_");
+
+            setTimeout(() => {
+                if (newErrors.membershipPlan || newErrors.selectedDate) {
+                    infoRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                } else if (parts[0] === "student") {
+                    const idx = Number(parts[1]);
+                    studentRefs.current[idx]?.scrollIntoView({ behavior: "smooth", block: "center" });
+                } else if (parts[0] === "parent") {
+                    const idx = Number(parts[1]);
+                    parentRefs.current[idx]?.scrollIntoView({ behavior: "smooth", block: "center" });
+                } else if (parts[0] === "emergency") {
+                    emergencyRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+            }, 100);
+
+            return false;
+        }
+
+        return true;
+    };
+    console.log('membershipPlan', membershipPlan, selectedDate)
+    console.log('validationCheck', validationCheck)
+    console.log('errros', errors, fieldErrors)
     const month = currentDate.getMonth();
     const year = currentDate.getFullYear();
     const hasInitialized = useRef(false);
@@ -740,6 +804,8 @@ const List = () => {
         return `${year}-${month}-${day}`;
     };
 
+
+    console.log('errrors', errors)
     const getDaysArray = () => {
         const startDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -950,10 +1016,6 @@ const List = () => {
         }
     };
     const handleSubmit = async (finalpayload) => {
-        if (!selectedDate) {
-            showWarning("Membership Date Required", "Please select a membership date before submitting.");
-            return;
-        }
         console.log('finalpayload', finalpayload)
         const filteredPayment = Object.fromEntries(
             Object.entries(payment || {}).filter(
@@ -978,20 +1040,6 @@ const List = () => {
         }
 
 
-        const missingClass = students.some(
-            (s, i) => {
-                if (i === 0 || comesFrom) return false;
-                return !s.selectedClassData && !s?.classSchedule?.id;
-            }
-        );
-        console.log('students', students)
-
-        console.log('missingClass', students)
-
-        if (missingClass) {
-            showWarning("Class Required", "Please select class for all students");
-            return;
-        }
         setIsSubmitting(true);
         const amountToSend = calculateAmount(selectedDate);
         const proRataToSend = pricingBreakdown.isFullMonthCharge
@@ -1564,13 +1612,13 @@ const List = () => {
 
             <div className="md:flex w-full gap-4">
                 {/* ── LEFT COLUMN ── */}
-                <div className="md:min-w-[508px] md:max-w-[508px] text-base space-y-5">
+                <div className="md:min-w-[508px] md:max-w-[508px] text-base space-y-5" ref={infoRef}>
                     <div className="space-y-3 bg-white p-6 rounded-3xl shadow-sm">
                         <h2 className="text-[24px] font-semibold">Information</h2>
                         <div>
                             <label className="text-base font-semibold">Venue</label>
                             <div className="relative mt-2">
-                                {startmembership === "startmembership" ? (
+                                {startmembership === "startmembership" || comesFrom == "cancellation" ? (
                                     <select
                                         value={selectedVenue?.id || ""}
                                         onChange={(e) => {
@@ -1614,9 +1662,24 @@ const List = () => {
                         </div>
                         <div className="mb-5">
                             <label className="text-base font-semibold">Membership Plan</label>
-                            <Select options={paymentPlanOptions} value={membershipPlan} onChange={handlePlanChange}
+                            <Select options={paymentPlanOptions} value={membershipPlan}
+                                onChange={(plan) => {
+                                    handlePlanChange(plan);
+                                    clearError("membershipPlan");
+                                }}
                                 placeholder="Choose Plan" className="mt-2" classNamePrefix="react-select" isClearable isDisabled={!numberOfStudents}
+                                styles={{
+                                    control: (base, state) => ({
+                                        ...base,
+                                        borderColor: fieldErrors["membershipPlan"] ? "#ef4444" : base.borderColor,
+                                        "&:hover": {
+                                            borderColor: fieldErrors["membershipPlan"] ? "#ef4444" : base.borderColor,
+                                        },
+                                        boxShadow: state.isFocused && fieldErrors["membershipPlan"] ? "0 0 0 1px #ef4444" : base.boxShadow,
+                                    }),
+                                }}
                             />
+                            <ErrorMsg name="membershipPlan" />
                         </div>
                         {singleClassSchedulesOnly?.venue?.starterPack && comesFrom !== 'cancellation' && (
                             <div className="mb-5">
@@ -1657,7 +1720,7 @@ const List = () => {
                     </div>
 
                     {/* Calendar */}
-                    <div className="space-y-3 bg-white p-6 rounded-3xl shadow-sm">
+                    <div className={`space-y-3 bg-white p-6 rounded-3xl shadow-sm ${fieldErrors["selectedDate"] ? "border-2 border-red-500 bg-red-50" : ""}`}>
                         <h2 className="text-[24px] font-semibold">Select start date</h2>
                         <div className="rounded p-4 mt-6 text-center text-base w-full max-w-md mx-auto">
                             <div className="flex justify-center gap-5 items-center mb-3">
@@ -1701,7 +1764,12 @@ const List = () => {
                                                 const isPastAvailable = isAvailable && current < todayDate;
                                                 return (
                                                     <div key={i} className="relative group">
-                                                        <div onClick={() => isAvailable && handleDateClick(date)}
+                                                        <div onClick={() => {
+                                                            if (isAvailable) {
+                                                                handleDateClick(date);
+                                                                clearError("selectedDate");
+                                                            }
+                                                        }}
                                                             className={`w-8 h-8 flex text-[18px] items-center justify-center mx-auto text-base rounded-full ${!membershipPlan ? "cursor-not-allowed opacity-40 bg-white" : isPastAvailable ? "bg-red-200 text-red-700 cursor-not-allowed" : isAvailable ? "cursor-pointer bg-sky-200" : "cursor-not-allowed opacity-40 bg-white"} ${isSelected ? "selectedDate text-white font-bold" : ""}`}
                                                         >
                                                             {date.getDate()}
@@ -1817,6 +1885,7 @@ const List = () => {
                         <div className="space-y-10">
                             {students.map((student, index) => (
                                 <motion.div key={index} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: index * 0.1 }}
+                                    ref={(el) => (studentRefs.current[index] = el)}
                                     className="bg-white p-6 rounded-3xl shadow-sm space-y-6 relative"
                                 >
                                     {students.length > 1 && (
@@ -1826,26 +1895,38 @@ const List = () => {
                                     <div className="flex gap-4">
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">First name</label>
-                                            <input className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base" placeholder="Enter first name"
+                                            <input className={fieldClass(`student_${index}_studentFirstName`)} placeholder="Enter first name"
                                                 value={student.studentFirstName}
-                                                onChange={(e) => handleInputChange(index, 'studentFirstName', e.target.value)}
+                                                onChange={(e) => {
+                                                    handleInputChange(index, 'studentFirstName', e.target.value);
+                                                    clearError(`student_${index}_studentFirstName`);
+                                                }}
                                             />
+                                            <ErrorMsg name={`student_${index}_studentFirstName`} />
                                         </div>
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Last name</label>
-                                            <input className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base" placeholder="Enter last name"
+                                            <input className={fieldClass(`student_${index}_studentLastName`)} placeholder="Enter last name"
                                                 value={student.studentLastName}
-                                                onChange={(e) => handleInputChange(index, 'studentLastName', e.target.value)}
+                                                onChange={(e) => {
+                                                    handleInputChange(index, 'studentLastName', e.target.value);
+                                                    clearError(`student_${index}_studentLastName`);
+                                                }}
                                             />
+                                            <ErrorMsg name={`student_${index}_studentLastName`} />
                                         </div>
                                     </div>
                                     <div className="flex gap-4">
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Date of Birth</label>
-                                            <input type="text" value={student.dateOfBirth || ""} onChange={(e) => handleDOBChange(index, e.target.value)}
+                                            <input type="text" value={student.dateOfBirth || ""} onChange={(e) => {
+                                                handleDOBChange(index, e.target.value);
+                                                clearError(`student_${index}_dateOfBirth`);
+                                            }}
                                                 placeholder="DD/MM/YYYY (e.g. 15/10/2026)" maxLength={10}
-                                                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                                className={fieldClass(`student_${index}_dateOfBirth`)}
                                             />
+                                            <ErrorMsg name={`student_${index}_dateOfBirth`} />
                                         </div>
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Age</label>
@@ -1857,28 +1938,66 @@ const List = () => {
                                     <div className="flex gap-4">
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Gender</label>
-                                            <Select className="w-full mt-2 text-base" classNamePrefix="react-select" placeholder="Select gender"
+                                            <Select
+                                                className="w-full mt-2 text-base"
+                                                classNamePrefix="react-select"
+                                                placeholder="Select gender"
                                                 value={genderOptions.find((option) => option.value === student.gender) || null}
-                                                onChange={(selectedOption) => handleInputChange(index, "gender", selectedOption ? selectedOption.value : "")}
+                                                onChange={(selectedOption) => {
+                                                    handleInputChange(index, "gender", selectedOption ? selectedOption.value : "");
+                                                    clearError(`student_${index}_gender`);
+                                                }}
                                                 options={genderOptions}
+                                                styles={{
+                                                    control: (base, state) => ({
+                                                        ...base,
+                                                        borderColor: fieldErrors[`student_${index}_gender`] ? "#ef4444" : base.borderColor,
+                                                        "&:hover": {
+                                                            borderColor: fieldErrors[`student_${index}_gender`] ? "#ef4444" : base.borderColor,
+                                                        },
+                                                        boxShadow: state.isFocused && fieldErrors[`student_${index}_gender`] ? "0 0 0 1px #ef4444" : base.boxShadow,
+                                                    }),
+                                                }}
                                             />
+                                            <ErrorMsg name={`student_${index}_gender`} />
                                         </div>
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Medical information</label>
                                             <input type="text" placeholder="Enter medical info" value={student.medicalInformation || ""}
-                                                onChange={(e) => handleInputChange(index, "medicalInformation", e.target.value)}
-                                                className="mt-2 w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                onChange={(e) => {
+                                                    handleInputChange(index, "medicalInformation", e.target.value);
+                                                    clearError(`student_${index}_medicalInformation`);
+                                                }}
+                                                className={fieldClass(`student_${index}_medicalInformation`)}
                                             />
+                                            <ErrorMsg name={`student_${index}_medicalInformation`} />
                                         </div>
                                     </div>
                                     <div className="flex gap-4">
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Class</label>
-                                            <Select className="w-full mt-2 text-base" classNamePrefix="react-select" placeholder="Select class"
+                                            <Select
+                                                className="w-full mt-2 text-base"
+                                                classNamePrefix="react-select"
+                                                placeholder="Select class"
                                                 options={venueClassOptions}
                                                 value={venueClassOptions.find((opt) => opt.value === student.selectedClassId) || null}
-                                                onChange={(option) => handleStudentClassChange(index, option)}
+                                                onChange={(option) => {
+                                                    handleStudentClassChange(index, option);
+                                                    clearError(`student_${index}_selectedClassId`);
+                                                }}
+                                                styles={{
+                                                    control: (base, state) => ({
+                                                        ...base,
+                                                        borderColor: fieldErrors[`student_${index}_selectedClassId`] ? "#ef4444" : base.borderColor,
+                                                        "&:hover": {
+                                                            borderColor: fieldErrors[`student_${index}_selectedClassId`] ? "#ef4444" : base.borderColor,
+                                                        },
+                                                        boxShadow: state.isFocused && fieldErrors[`student_${index}_selectedClassId`] ? "0 0 0 1px #ef4444" : base.boxShadow,
+                                                    }),
+                                                }}
                                             />
+                                            <ErrorMsg name={`student_${index}_selectedClassId`} />
                                         </div>
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Time</label>
@@ -1896,6 +2015,7 @@ const List = () => {
                         <div className="space-y-6">
                             {parents.map((parent, index) => (
                                 <motion.div key={parent.id} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: index * 0.1 }}
+                                    ref={(el) => (parentRefs.current[index] = el)}
                                     className={`bg-white mb-10 p-6 rounded-3xl shadow-sm space-y-6 relative ${students.length < 1 ? "" : "mt-10"}`}
                                 >
                                     <div className="flex justify-between items-start">
@@ -1914,35 +2034,53 @@ const List = () => {
                                     <div className="flex gap-4">
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">First name</label>
-                                            <input className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base" placeholder="Enter first name"
+                                            <input className={fieldClass(`parent_${index}_parentFirstName`)} placeholder="Enter first name"
                                                 value={parent.parentFirstName}
-                                                onChange={(e) => handleParentChange(index, "parentFirstName", e.target.value.replace(/[^A-Za-z\s]/g, ""))}
+                                                onChange={(e) => {
+                                                    handleParentChange(index, "parentFirstName", e.target.value.replace(/[^A-Za-z\s]/g, ""));
+                                                    clearError(`parent_${index}_parentFirstName`);
+                                                }}
                                                 onKeyPress={(e) => { if (!/[A-Za-z\s]/.test(e.key)) e.preventDefault(); }}
                                             />
+                                            <ErrorMsg name={`parent_${index}_parentFirstName`} />
                                         </div>
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Last name</label>
-                                            <input className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base" placeholder="Enter last name"
+                                            <input className={fieldClass(`parent_${index}_parentLastName`)} placeholder="Enter last name"
                                                 value={parent.parentLastName}
-                                                onChange={(e) => handleParentChange(index, "parentLastName", e.target.value.replace(/[^A-Za-z\s]/g, ""))}
+                                                onChange={(e) => {
+                                                    handleParentChange(index, "parentLastName", e.target.value.replace(/[^A-Za-z\s]/g, ""));
+                                                    clearError(`parent_${index}_parentLastName`);
+                                                }}
                                                 onKeyPress={(e) => { if (!/[A-Za-z\s]/.test(e.key)) e.preventDefault(); }}
                                             />
+                                            <ErrorMsg name={`parent_${index}_parentLastName`} />
                                         </div>
                                     </div>
                                     <div className="flex gap-4">
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Email</label>
-                                            <input type="email" className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base" placeholder="Enter email address"
+                                            <input type="email" className={fieldClass(`parent_${index}_parentEmail`)} placeholder="Enter email address"
                                                 value={parent.parentEmail}
-                                                onChange={(e) => handleParentChange(index, "parentEmail", e.target.value)}
+                                                onChange={(e) => {
+                                                    handleParentChange(index, "parentEmail", e.target.value);
+                                                    clearError(`parent_${index}_parentEmail`);
+                                                }}
                                             />
+                                            <ErrorMsg name={`parent_${index}_parentEmail`} />
                                         </div>
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Phone number</label>
-                                            <PhoneNumberInput value={parent.parentPhoneNumber}
-                                                onChange={(fullNumber) => handleParentChange(index, "parentPhoneNumber", fullNumber)}
-                                                placeholder="Enter phone number"
-                                            />
+                                            <div className={fieldErrors[`parent_${index}_parentPhoneNumber`] ? "border border-red-500 rounded-xl bg-red-50" : ""}>
+                                                <PhoneNumberInput value={parent.parentPhoneNumber}
+                                                    onChange={(fullNumber) => {
+                                                        handleParentChange(index, "parentPhoneNumber", fullNumber);
+                                                        clearError(`parent_${index}_parentPhoneNumber`);
+                                                    }}
+                                                    placeholder="Enter phone number"
+                                                />
+                                            </div>
+                                            <ErrorMsg name={`parent_${index}_parentPhoneNumber`} />
                                         </div>
                                     </div>
                                     <div className="flex flex-col gap-4">
@@ -1951,22 +2089,41 @@ const List = () => {
                                             {parent.isCustomReason ? (
                                                 <div className="relative">
                                                     <input type="text" placeholder="Please specify" value={parent.interestReason || ""}
-                                                        onChange={(e) => handleParentChange(index, "interestReason", e.target.value)}
-                                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 pr-28 text-base"
+                                                        onChange={(e) => {
+                                                            handleParentChange(index, "interestReason", e.target.value);
+                                                            clearError(`parent_${index}_interestReason`);
+                                                        }}
+                                                        className={fieldClass(`parent_${index}_interestReason`)}
                                                     />
                                                     <button type="button" onClick={() => { handleParentChange(index, "interestReason", ""); handleParentChange(index, "isCustomReason", false); }}
                                                         className="absolute right-3 top-3/5 -translate-y-1/2 text-sm text-blue-600 font-medium"
                                                     >Select</button>
                                                 </div>
                                             ) : (
-                                                <Select options={interestReasonOptions} placeholder="Select a reason" className="mt-2" classNamePrefix="react-select"
+                                                <Select
+                                                    options={interestReasonOptions}
+                                                    placeholder="Select a reason"
+                                                    className="mt-2"
+                                                    classNamePrefix="react-select"
                                                     value={interestReasonOptions.find((o) => o.value === parent.interestReason)}
                                                     onChange={(selected) => {
+                                                        clearError(`parent_${index}_interestReason`);
                                                         if (selected.value === "Other") { handleParentChange(index, "interestReason", ""); handleParentChange(index, "isCustomReason", true); }
                                                         else { handleParentChange(index, "interestReason", selected.value); handleParentChange(index, "isCustomReason", false); }
                                                     }}
+                                                    styles={{
+                                                        control: (base, state) => ({
+                                                            ...base,
+                                                            borderColor: fieldErrors[`parent_${index}_interestReason`] ? "#ef4444" : base.borderColor,
+                                                            "&:hover": {
+                                                                borderColor: fieldErrors[`parent_${index}_interestReason`] ? "#ef4444" : base.borderColor,
+                                                            },
+                                                            boxShadow: state.isFocused && fieldErrors[`parent_${index}_interestReason`] ? "0 0 0 1px #ef4444" : base.boxShadow,
+                                                        }),
+                                                    }}
                                                 />
                                             )}
+                                            <ErrorMsg name={`parent_${index}_interestReason`} />
                                         </div>
                                         <div className="w-full">
                                             <label className="block text-[16px] font-semibold">Tell us a bit more (optional)</label>
@@ -1979,17 +2136,53 @@ const List = () => {
                                     <div className="flex gap-4">
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Relation to child</label>
-                                            <Select options={relationOptions} placeholder="Select Relation" className="mt-2" classNamePrefix="react-select"
+                                            <Select
+                                                options={relationOptions}
+                                                placeholder="Select Relation"
+                                                className="mt-2"
+                                                classNamePrefix="react-select"
                                                 value={relationOptions.find((o) => o.value === parent.relationToChild)}
-                                                onChange={(selected) => handleParentChange(index, "relationToChild", selected.value)}
+                                                onChange={(selected) => {
+                                                    handleParentChange(index, "relationToChild", selected.value);
+                                                    clearError(`parent_${index}_relationToChild`);
+                                                }}
+                                                styles={{
+                                                    control: (base, state) => ({
+                                                        ...base,
+                                                        borderColor: fieldErrors[`parent_${index}_relationToChild`] ? "#ef4444" : base.borderColor,
+                                                        "&:hover": {
+                                                            borderColor: fieldErrors[`parent_${index}_relationToChild`] ? "#ef4444" : base.borderColor,
+                                                        },
+                                                        boxShadow: state.isFocused && fieldErrors[`parent_${index}_relationToChild`] ? "0 0 0 1px #ef4444" : base.boxShadow,
+                                                    }),
+                                                }}
                                             />
+                                            <ErrorMsg name={`parent_${index}_relationToChild`} />
                                         </div>
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">How did you hear about us?</label>
-                                            <Select options={hearOptions} placeholder="Select from drop down" className="mt-2" classNamePrefix="react-select"
+                                            <Select
+                                                options={hearOptions}
+                                                placeholder="Select from drop down"
+                                                className="mt-2"
+                                                classNamePrefix="react-select"
                                                 value={hearOptions.find((o) => o.value === parent.howDidYouHear)}
-                                                onChange={(selected) => handleParentChange(index, "howDidYouHear", selected.value)}
+                                                onChange={(selected) => {
+                                                    handleParentChange(index, "howDidYouHear", selected.value);
+                                                    clearError(`parent_${index}_howDidYouHear`);
+                                                }}
+                                                styles={{
+                                                    control: (base, state) => ({
+                                                        ...base,
+                                                        borderColor: fieldErrors[`parent_${index}_howDidYouHear`] ? "#ef4444" : base.borderColor,
+                                                        "&:hover": {
+                                                            borderColor: fieldErrors[`parent_${index}_howDidYouHear`] ? "#ef4444" : base.borderColor,
+                                                        },
+                                                        boxShadow: state.isFocused && fieldErrors[`parent_${index}_howDidYouHear`] ? "0 0 0 1px #ef4444" : base.boxShadow,
+                                                    }),
+                                                }}
                                             />
+                                            <ErrorMsg name={`parent_${index}_howDidYouHear`} />
                                         </div>
                                     </div>
                                 </motion.div>
@@ -1997,7 +2190,7 @@ const List = () => {
                         </div>
 
                         {/* Emergency Contact */}
-                        <div className="bg-white p-6 rounded-3xl shadow-sm space-y-6">
+                        <div className="bg-white p-6 rounded-3xl shadow-sm space-y-6" ref={emergencyRef}>
                             <h2 className="text-[20px] font-semibold">Emergency contact details</h2>
                             <div className="flex items-center gap-2">
                                 <input type="checkbox" checked={emergency.sameAsAbove}
@@ -2008,33 +2201,65 @@ const List = () => {
                             <div className="flex gap-4">
                                 <div className="w-1/2">
                                     <label className="block text-[16px] font-semibold">First name</label>
-                                    <input className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base" placeholder="Enter first name"
+                                    <input className={fieldClass("emergency_emergencyFirstName")} placeholder="Enter first name"
                                         value={emergency.emergencyFirstName}
-                                        onChange={e => setEmergency(prev => ({ ...prev, emergencyFirstName: e.target.value }))}
+                                        onChange={e => {
+                                            setEmergency(prev => ({ ...prev, emergencyFirstName: e.target.value }));
+                                            clearError("emergency_emergencyFirstName");
+                                        }}
                                     />
+                                    <ErrorMsg name="emergency_emergencyFirstName" />
                                 </div>
                                 <div className="w-1/2">
                                     <label className="block text-[16px] font-semibold">Last name</label>
-                                    <input className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base" placeholder="Enter last name"
+                                    <input className={fieldClass("emergency_emergencyLastName")} placeholder="Enter last name"
                                         value={emergency.emergencyLastName}
-                                        onChange={e => setEmergency(prev => ({ ...prev, emergencyLastName: e.target.value }))}
+                                        onChange={e => {
+                                            setEmergency(prev => ({ ...prev, emergencyLastName: e.target.value }));
+                                            clearError("emergency_emergencyLastName");
+                                        }}
                                     />
+                                    <ErrorMsg name="emergency_emergencyLastName" />
                                 </div>
                             </div>
                             <div className="flex gap-4">
                                 <div className="w-1/2">
                                     <label className="block text-[16px] font-semibold">Phone number</label>
-                                    <PhoneNumberInput value={emergency.emergencyPhoneNumber}
-                                        onChange={(fullNumber) => setEmergency(prev => ({ ...prev, emergencyPhoneNumber: fullNumber }))}
-                                        placeholder="Enter phone number"
-                                    />
+                                    <div className={fieldErrors["emergency_emergencyPhoneNumber"] ? "border border-red-500 rounded-xl bg-red-50" : ""}>
+                                        <PhoneNumberInput value={emergency.emergencyPhoneNumber}
+                                            onChange={(fullNumber) => {
+                                                setEmergency(prev => ({ ...prev, emergencyPhoneNumber: fullNumber }));
+                                                clearError("emergency_emergencyPhoneNumber");
+                                            }}
+                                            placeholder="Enter phone number"
+                                        />
+                                    </div>
+                                    <ErrorMsg name="emergency_emergencyPhoneNumber" />
                                 </div>
                                 <div className="w-1/2">
                                     <label className="block text-[16px] font-semibold">Relation to child</label>
-                                    <Select options={relationOptions} value={relationOptions.find(option => option.value === emergency.emergencyRelation)}
-                                        onChange={selectedOption => setEmergency(prev => ({ ...prev, emergencyRelation: selectedOption?.value || "" }))}
-                                        placeholder="Select Relation" className="mt-2" classNamePrefix="react-select"
+                                    <Select
+                                        options={relationOptions}
+                                        value={relationOptions.find(option => option.value === emergency.emergencyRelation)}
+                                        onChange={selectedOption => {
+                                            setEmergency(prev => ({ ...prev, emergencyRelation: selectedOption?.value || "" }));
+                                            clearError("emergency_emergencyRelation");
+                                        }}
+                                        placeholder="Select Relation"
+                                        className="mt-2"
+                                        classNamePrefix="react-select"
+                                        styles={{
+                                            control: (base, state) => ({
+                                                ...base,
+                                                borderColor: fieldErrors["emergency_emergencyRelation"] ? "#ef4444" : base.borderColor,
+                                                "&:hover": {
+                                                    borderColor: fieldErrors["emergency_emergencyRelation"] ? "#ef4444" : base.borderColor,
+                                                },
+                                                boxShadow: state.isFocused && fieldErrors["emergency_emergencyRelation"] ? "0 0 0 1px #ef4444" : base.boxShadow,
+                                            }),
+                                        }}
                                     />
+                                    <ErrorMsg name="emergency_emergencyRelation" />
                                 </div>
                             </div>
                         </div>
@@ -2062,10 +2287,16 @@ const List = () => {
                                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.4, ease: "easeInOut" }}>
                                         <div className="p-8 pt-0 relative border-t border-gray-50">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative pt-6">
-                                                {membershipKeyInfo
-                                                    ? renderContent(JSON.parse(membershipKeyInfo))
-                                                    : <div className="text-gray-500 italic py-4 col-span-2 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">No key information available for this service.</div>
-                                                }
+                                                {membershipKeyInfo ? (
+                                                    <>
+                                                        {renderContent(JSON.parse(membershipKeyInfo))}
+
+                                                    </>
+                                                ) : (
+                                                    <div className="text-gray-500 italic py-4 col-span-2 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                                        No key information available for this service.
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </motion.div>
@@ -2086,14 +2317,10 @@ const List = () => {
                             >Cancel</button>
                             <button type="button"
                                 onClick={() => {
-                                    if (!membershipPlan || !selectedDate) {
-                                        let msg = !membershipPlan && !selectedDate ? "Please select Membership Plan and Date" : !membershipPlan ? "Please select Membership Plan" : "Please select Date";
-                                        showError("Required Fields", msg); return;
-                                    }
                                     if (!validationCheck()) return;
                                     setShowPopup(true);
                                 }}
-                                className={`text-white font-semibold text-[18px] px-6 py-3 rounded-lg ${isBooked ? "bg-green-600 border-green-600 cursor-default" : isSubmitting || (membershipPlan && selectedDate) ? "bg-[#237FEA] border border-[#237FEA]" : "bg-gray-400 border-gray-400 cursor-not-allowed"}`}
+                                className={`text-white font-semibold text-[18px] px-6 py-3 rounded-lg ${isBooked ? "bg-green-600 border-green-600 cursor-default" : "bg-[#237FEA] border border-[#237FEA]"}`}
                             >
                                 {isBooked ? "Booked" : isSubmitting ? "Submitting..." : "Setup Direct Debit"}
                             </button>

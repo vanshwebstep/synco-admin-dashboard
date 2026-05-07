@@ -19,6 +19,21 @@ const AddPaymentPlanGroup = () => {
     const [editIndex, setEditIndex] = useState(null);
     const [isViewMode, setIsViewMode] = useState(false);
     const [submitloading, setSubmitLoading] = useState(false);
+    const [groupErrors, setGroupErrors] = useState({});
+    const [planErrors, setPlanErrors] = useState({});
+
+    const groupNameRef = useRef(null);
+    const descriptionRef = useRef(null);
+    const selectedPlansRef = useRef(null);
+
+    const planRefs = {
+        title: useRef(null),
+        price: useRef(null),
+        priceLesson: useRef(null),
+        interval: useRef(null),
+        duration: useRef(null),
+        students: useRef(null),
+    };
 
     const [groupName, setGroupName] = useState('');
     const [previewShowModal, setPreviewShowModal] = useState(false);
@@ -186,12 +201,20 @@ const AddPaymentPlanGroup = () => {
 
     console.log('Form Data:', formData);
 
-    if (!title || !price || !interval || !priceLesson || !duration || !students) {
-        console.log('❌ Missing required fields');
-        showWarning(
-            "Missing Fields",
-            "Please fill in all required fields: Title, Price, Interval, Duration, and Number of Students."
-        );
+    const errors = {};
+    if (!title) errors.title = "Title is required";
+    if (!price) errors.price = "Price is required";
+    if (!priceLesson) errors.priceLesson = "Price per lesson is required";
+    if (!interval) errors.interval = "Interval is required";
+    if (!duration) errors.duration = "Duration is required";
+    if (!students) errors.students = "Number of students is required";
+
+    setPlanErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+        const firstError = Object.keys(errors)[0];
+        planRefs[firstError].current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        planRefs[firstError].current?.focus();
         return;
     }
 
@@ -368,6 +391,7 @@ const AddPaymentPlanGroup = () => {
         setOpenForm(false);
         setIsViewMode(false);
         setEditIndex(null);
+        setPlanErrors({});
 
         setFormData({
             title: '',
@@ -559,19 +583,22 @@ const AddPaymentPlanGroup = () => {
                                     onSubmit={(e) => {
                                         e.preventDefault();
 
-                                        // --- VALIDATION USING swalHelper ONLY ---
-                                        if (!groupName.trim()) {
-                                            showWarning("Group Name Missing", "Please enter a Payment Plan Group Name.");
-                                            return;
-                                        }
+                                        const errors = {};
+                                        if (!groupName.trim()) errors.groupName = "Membership Plan Group Name is required";
+                                        if (!description.trim()) errors.description = "Description is required";
+                                        if (selectedPlans.length === 0) errors.selectedPlans = "Please select at least one Membership Plan";
 
-                                        if (!description.trim()) {
-                                            showWarning("Description Missing", "Please enter a description.");
-                                            return;
-                                        }
+                                        setGroupErrors(errors);
 
-                                        if (selectedPlans.length === 0) {
-                                            showWarning("No Plans Selected", "Please select at least one Membership Plan.");
+                                        if (Object.keys(errors).length > 0) {
+                                            const firstError = Object.keys(errors)[0];
+                                            const refMap = {
+                                                groupName: groupNameRef,
+                                                description: descriptionRef,
+                                                selectedPlans: selectedPlansRef
+                                            };
+                                            refMap[firstError].current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                            refMap[firstError].current?.focus();
                                             return;
                                         }
 
@@ -590,13 +617,21 @@ const AddPaymentPlanGroup = () => {
                                             Membership Plan Group Name
                                         </label>
                                         <input
+                                            ref={groupNameRef}
                                             value={groupName}
-                                            onChange={(e) => setGroupName(e.target.value)}
+                                            onChange={(e) => {
+                                                setGroupName(e.target.value);
+                                                if (groupErrors.groupName) {
+                                                    setGroupErrors({ ...groupErrors, groupName: null });
+                                                }
+                                            }}
                                             type="text"
-
                                             placeholder="Enter Group Name"
-                                            className="w-full px-4  text-[#282829] font-semibold py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className={`w-full px-4 text-[#282829] font-semibold py-3 border ${groupErrors.groupName ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500`}
                                         />
+                                        {groupErrors.groupName && (
+                                            <p className="text-red-500 text-sm mt-1">{groupErrors.groupName}</p>
+                                        )}
                                     </div>
 
                                     {/* Description */}
@@ -605,24 +640,31 @@ const AddPaymentPlanGroup = () => {
                                             Description
                                         </label>
                                         <input
-
+                                            ref={descriptionRef}
                                             value={description}
-                                            onChange={(e) => setDescription(e.target.value)}
+                                            onChange={(e) => {
+                                                setDescription(e.target.value);
+                                                if (groupErrors.description) {
+                                                    setGroupErrors({ ...groupErrors, description: null });
+                                                }
+                                            }}
                                             type="text"
-
                                             placeholder="Add Internal reference"
-                                            className="w-full  text-[#282829] px-4 font-semibold py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className={`w-full text-[#282829] px-4 font-semibold py-3 border ${groupErrors.description ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500`}
                                         />
+                                        {groupErrors.description && (
+                                            <p className="text-red-500 text-sm mt-1">{groupErrors.description}</p>
+                                        )}
                                     </div>
 
                                     {/* Payment Plans */}
-                                    <div className="w-full space-y-3">
+                                    <div className="w-full space-y-3" ref={selectedPlansRef}>
                                         <label className="block text-[18px] font-semibold text-[#282829]">
                                             Membership Plan
                                         </label>
 
                                         {/* Selected summary */}
-                                        <div className="w-full mb-5 px-4 font-semibold py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <div className={`w-full mb-5 px-4 font-semibold py-3 border ${groupErrors.selectedPlans ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500`}>
                                             {selectedPlans.map((plan, idx) => (
                                                 <div
                                                     key={plan.id || idx}
@@ -671,7 +713,12 @@ const AddPaymentPlanGroup = () => {
                                         <Select
                                             options={sortedOptions}
                                             value={selectedOptions}
-                                            onChange={handleSelectChange}
+                                            onChange={(selected) => {
+                                                handleSelectChange(selected);
+                                                if (groupErrors.selectedPlans) {
+                                                    setGroupErrors({ ...groupErrors, selectedPlans: null });
+                                                }
+                                            }}
                                             isMulti
                                             placeholder="Select Membership plans..."
                                             closeMenuOnSelect={false}
@@ -685,13 +732,13 @@ const AddPaymentPlanGroup = () => {
                                                     ...base,
                                                     minHeight: "52px",
                                                     borderRadius: "12px",
-                                                    borderColor: state.isFocused ? "#3B82F6" : "#E5E7EB",
+                                                    borderColor: groupErrors.selectedPlans ? "#EF4444" : state.isFocused ? "#3B82F6" : "#E5E7EB",
                                                     boxShadow: state.isFocused ? "0 0 0 2px rgba(59,130,246,0.4)" : "none",
                                                     padding: "0 6px",
                                                     fontWeight: 600,
                                                     cursor: "pointer",
                                                     "&:hover": {
-                                                        borderColor: "#3B82F6",
+                                                        borderColor: groupErrors.selectedPlans ? "#EF4444" : "#3B82F6",
                                                     },
                                                 }),
 
@@ -747,6 +794,9 @@ const AddPaymentPlanGroup = () => {
                                                 }),
                                             }}
                                         />
+                                        {groupErrors.selectedPlans && (
+                                            <p className="text-red-500 text-sm mt-1">{groupErrors.selectedPlans}</p>
+                                        )}
 
                                     </div>
 
@@ -853,97 +903,129 @@ const AddPaymentPlanGroup = () => {
                                                         </label>
 
                                                         {field.name === "interval" ? (
-                                                            <Select
-                                                                disabled={isViewMode}
-                                                                options={field.options.map((opt) => ({ label: opt, value: opt }))}
-                                                                value={
-                                                                    formData.interval
-                                                                        ? { label: formData.interval, value: formData.interval }
-                                                                        : null
-                                                                }
-                                                                onChange={(selected) =>
-                                                                    setFormData({ ...formData, interval: selected.value })
-                                                                }
-                                                                className="text-[18px] font-semibold"
-                                                                classNamePrefix="react-select"
-                                                                styles={{
-                                                                    control: (provided) => ({
-                                                                        ...provided,
-                                                                        borderRadius: "0.5rem",
-                                                                        padding: "4px",
-                                                                        borderColor: "#E5E7EB", // gray-200
-                                                                        boxShadow: "none",
-                                                                        "&:hover": { borderColor: "#3B82F6" } // blue-500
-                                                                    }),
-                                                                    dropdownIndicator: (provided) => ({
-                                                                        ...provided,
-                                                                        display: "none" // hides arrow icon
-                                                                    }),
-                                                                    indicatorSeparator: () => ({ display: "none" })
-                                                                }}
-                                                                placeholder=""
-                                                            />
-                                                        ) : field.name === "duration" && formData.interval ? (
-                                                            <select
-                                                                value={formData.duration}
-                                                                onChange={(e) =>
-                                                                    setFormData({ ...formData, duration: e.target.value })
-                                                                }
-                                                                className="w-full px-4 py-3 font-semibold text-[18px] text-[#282829]  border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-transparent"
-                                                            >
-                                                                <option value="" disabled>
-                                                                    Select Duration
-                                                                </option>
-                                                                {durationOptions.map((opt) => (
-                                                                    <option key={opt.value} value={opt.value}>
-                                                                        {opt.label}
-                                                                    </option>
-                                                                ))}
-                                                            </select>
-                                                        ) : field.type === "number" ? (
-                                                            <input
-                                                                type="text"
-                                                            
-                                                                disabled={isViewMode}
-                                                                value={formData[field.name]}
-                                                                onChange={(e) => {
-                                                                    const value = e.target.value;
-
-                                                                    // Allow only valid price format for price fields
-                                                                    if (priceFields.includes(field.name)) {
-                                                                        if (/^\d*\.?\d{0,2}$/.test(value)) {
-                                                                            setFormData({ ...formData, [field.name]: value });
+                                                            <div ref={planRefs.interval}>
+                                                                <Select
+                                                                    disabled={isViewMode}
+                                                                    options={field.options.map((opt) => ({ label: opt, value: opt }))}
+                                                                    value={
+                                                                        formData.interval
+                                                                            ? { label: formData.interval, value: formData.interval }
+                                                                            : null
+                                                                    }
+                                                                    onChange={(selected) => {
+                                                                        setFormData({ ...formData, interval: selected.value });
+                                                                        if (planErrors.interval) {
+                                                                            setPlanErrors({ ...planErrors, interval: null });
                                                                         }
-                                                                        return;
-                                                                    }
+                                                                    }}
+                                                                    className="text-[18px] font-semibold"
+                                                                    classNamePrefix="react-select"
+                                                                    styles={{
+                                                                        control: (provided, state) => ({
+                                                                            ...provided,
+                                                                            borderRadius: "0.5rem",
+                                                                            padding: "4px",
+                                                                            borderColor: planErrors.interval ? "#EF4444" : state.isFocused ? "#3B82F6" : "#E5E7EB",
+                                                                            boxShadow: "none",
+                                                                            "&:hover": { borderColor: planErrors.interval ? "#EF4444" : "#3B82F6" }
+                                                                        }),
+                                                                        dropdownIndicator: (provided) => ({
+                                                                            ...provided,
+                                                                            display: "none"
+                                                                        }),
+                                                                        indicatorSeparator: () => ({ display: "none" })
+                                                                    }}
+                                                                    placeholder=""
+                                                                />
+                                                                {planErrors.interval && (
+                                                                    <p className="text-red-500 text-sm mt-1">{planErrors.interval}</p>
+                                                                )}
+                                                            </div>
+                                                        ) : field.name === "duration" && formData.interval ? (
+                                                            <div>
+                                                                <select
+                                                                    ref={planRefs.duration}
+                                                                    value={formData.duration}
+                                                                    onChange={(e) => {
+                                                                        setFormData({ ...formData, duration: e.target.value });
+                                                                        if (planErrors.duration) {
+                                                                            setPlanErrors({ ...planErrors, duration: null });
+                                                                        }
+                                                                    }}
+                                                                    className={`w-full px-4 py-3 font-semibold text-[18px] text-[#282829] border ${planErrors.duration ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-transparent`}
+                                                                >
+                                                                    <option value="" disabled>
+                                                                        Select Duration
+                                                                    </option>
+                                                                    {durationOptions.map((opt) => (
+                                                                        <option key={opt.value} value={opt.value}>
+                                                                            {opt.label}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                                {planErrors.duration && (
+                                                                    <p className="text-red-500 text-sm mt-1">{planErrors.duration}</p>
+                                                                )}
+                                                            </div>
+                                                        ) : field.type === "number" ? (
+                                                            <div>
+                                                                <input
+                                                                    ref={planRefs[field.name]}
+                                                                    type="text"
+                                                                    disabled={isViewMode}
+                                                                    value={formData[field.name]}
+                                                                    onChange={(e) => {
+                                                                        const value = e.target.value;
+                                                                        if (planErrors[field.name]) {
+                                                                            setPlanErrors({ ...planErrors, [field.name]: null });
+                                                                        }
 
-                                                                    // Normal text fields
-                                                                    setFormData({ ...formData, [field.name]: value });
-                                                                }}
-                                                                onPaste={(e) => {
-                                                                    const paste = e.clipboardData.getData("text");
+                                                                        // Allow only valid price format for price fields
+                                                                        if (priceFields.includes(field.name)) {
+                                                                            if (/^\d*\.?\d{0,2}$/.test(value)) {
+                                                                                setFormData({ ...formData, [field.name]: value });
+                                                                            }
+                                                                            return;
+                                                                        }
 
-                                                                    if (
-                                                                        priceFields.includes(field.name) &&
-                                                                        !/^\d*\.?\d{0,2}$/.test(paste)
-                                                                    ) {
-                                                                        e.preventDefault();
-                                                                    }
-                                                                }}
-                                                                className="w-full px-4 py-3 font-semibold text-[18px] text-[#282829]
-               border border-gray-200 rounded-lg focus:outline-none
-               focus:ring-2 focus:ring-blue-500 appearance-none bg-transparent"
-                                                            />
+                                                                        // Normal text fields
+                                                                        setFormData({ ...formData, [field.name]: value });
+                                                                    }}
+                                                                    onPaste={(e) => {
+                                                                        const paste = e.clipboardData.getData("text");
+
+                                                                        if (
+                                                                            priceFields.includes(field.name) &&
+                                                                            !/^\d*\.?\d{0,2}$/.test(paste)
+                                                                        ) {
+                                                                            e.preventDefault();
+                                                                        }
+                                                                    }}
+                                                                    className={`w-full px-4 py-3 font-semibold text-[18px] text-[#282829] border ${planErrors[field.name] ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-transparent`}
+                                                                />
+                                                                {planErrors[field.name] && (
+                                                                    <p className="text-red-500 text-sm mt-1">{planErrors[field.name]}</p>
+                                                                )}
+                                                            </div>
                                                         ) : (
-                                                            <input
-                                                                type="text"
-                                                                value={formData[field.name]}
-                                                                disabled={isViewMode}
-                                                                onChange={(e) =>
-                                                                    setFormData({ ...formData, [field.name]: e.target.value })
-                                                                }
-                                                                className="w-full  text-[#282829] px-4 py-3 font-semibold text-[18px] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-transparent"
-                                                            />
+                                                            <div>
+                                                                <input
+                                                                    ref={planRefs[field.name]}
+                                                                    type="text"
+                                                                    value={formData[field.name]}
+                                                                    disabled={isViewMode}
+                                                                    onChange={(e) => {
+                                                                        setFormData({ ...formData, [field.name]: e.target.value });
+                                                                        if (planErrors[field.name]) {
+                                                                            setPlanErrors({ ...planErrors, [field.name]: null });
+                                                                        }
+                                                                    }}
+                                                                    className={`w-full text-[#282829] px-4 py-3 font-semibold text-[18px] border ${planErrors[field.name] ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-transparent`}
+                                                                />
+                                                                {planErrors[field.name] && (
+                                                                    <p className="text-red-500 text-sm mt-1">{planErrors[field.name]}</p>
+                                                                )}
+                                                            </div>
                                                         )}
                                                     </div>
                                                 );
