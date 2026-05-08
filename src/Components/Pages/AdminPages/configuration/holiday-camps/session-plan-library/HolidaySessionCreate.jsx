@@ -43,6 +43,8 @@ const HolidaySessionCreate = () => {
     const [player, setPlayer] = useState('');
     const [skillOfTheDay, setSkillOfTheDay] = useState('');
     const [descriptionSession, setDescriptionSession] = useState('');
+    const [errors, setErrors] = useState({});
+    const [planErrors, setPlanErrors] = useState({});
     const [isProcessing, setIsProcessing] = useState(false);
     const [previewShowModal, setPreviewShowModal] = useState(false);
     const { fetchExercises, sessionGroup, groups, updateDiscount, createSessionExercise, deleteExercise, duplicatePlan, setLoading, updateSessionExercise, selectedGroup, loading, createGroup, selectedExercise, exercises, updateGroup, setExercises, createSessionGroup } = useHolidaySessionPlan();
@@ -241,12 +243,29 @@ const HolidaySessionCreate = () => {
         });
     };
 
+    const validateForm = () => {
+        const newErrors = {};
+        if (!groupNameSection?.trim()) newErrors.groupNameSection = "Group name is required.";
+        if (!player?.trim()) newErrors.player = "Player is required.";
+        if (!skillOfTheDay?.trim()) newErrors.skillOfTheDay = "Skill of the day is required.";
+        if (!descriptionSession?.trim()) newErrors.descriptionSession = "Description is required.";
+        if (selectedPlans.length === 0) newErrors.selectedPlans = "Please select at least one exercise.";
+
+        setErrors(newErrors);
+        return newErrors;
+    };
+
     const handleCreateSession = (finalSubmit = false) => {
         if (isProcessing) return;
 
-
-        if (!groupNameSection || !player || !skillOfTheDay || !descriptionSession || selectedPlans.length === 0) {
-            showWarning("Missing Fields", "Please fill out all required fields before proceeding.");
+        const validationErrors = validateForm();
+        if (Object.keys(validationErrors).length > 0) {
+            const firstErrorField = Object.keys(validationErrors)[0];
+            const element = document.getElementsByName(firstErrorField)[0] || document.getElementById(firstErrorField);
+            if (element) {
+                element.scrollIntoView({ behavior: "smooth", block: "center" });
+                element.focus();
+            }
             return;
         }
 
@@ -682,33 +701,30 @@ const HolidaySessionCreate = () => {
             .trim();
     }
 
+    const validatePlanForm = () => {
+        const newPlanErrors = {};
+        if (!formData.title?.trim()) newPlanErrors.title = "Title is required.";
+        if (!formData.duration?.trim()) newPlanErrors.duration = "Duration is required.";
+        if (!formData.description?.trim() || formData.description === "<p><br></p>") newPlanErrors.description = "Description is required.";
+        if ((!formData.images || formData.images.length === 0) && (!formData.imageUrl || formData.imageUrl.length === 0)) {
+            newPlanErrors.images = "At least one image is required.";
+        }
+
+        setPlanErrors(newPlanErrors);
+        return newPlanErrors;
+    };
+
     const handleSavePlan = async () => {
         const { title, duration, description, images } = formData;
 
-
-        const showAlert = ({ type = "info", message = "", title = "" }) => {
-            if (type === "success") {
-                showSuccess(title || "Success", message);
-            } else if (type === "error") {
-                showError(title || "Error", message);
-            } else if (type === "warning") {
-                showWarning(title || "Warning", message);
-            } else {
-                showSuccess(title || "Info", message);
+        const planValidationErrors = validatePlanForm();
+        if (Object.keys(planValidationErrors).length > 0) {
+            const firstErrorField = Object.keys(planValidationErrors)[0];
+            const element = document.getElementsByName(firstErrorField)[0] || document.getElementById(firstErrorField);
+            if (element) {
+                element.scrollIntoView({ behavior: "smooth", block: "center" });
+                element.focus();
             }
-        };
-
-        // 🧩 Validation
-        if (!title?.trim()) {
-            showAlert({ type: "warning", message: "Title is required", title: "Missing Field" });
-            return;
-        }
-        if (!images) {
-            showAlert({ type: "warning", message: "Image is required", title: "Missing Field" });
-            return;
-        }
-        if (!duration?.trim()) {
-            showAlert({ type: "warning", message: "Duration is required", title: "Missing Field" });
             return;
         }
 
@@ -782,7 +798,7 @@ const HolidaySessionCreate = () => {
                 if (isEditMode) fetchGroupById();
 
 
-                showAlert({ type: "success", message: "Exercise updated successfully!", title: "Updated" });
+                showSuccess("Updated", "Exercise updated successfully!");
                 setEditIndex(null);
             }
 
@@ -803,14 +819,13 @@ const HolidaySessionCreate = () => {
                 const newExercise = res?.data?.data || res?.data;
                 if (!newExercise) throw new Error("Invalid API response");
 
-                showAlert({ type: "success", message: "Exercise saved successfully!", title: "Saved" });
+                showSuccess("Saved", "Exercise saved successfully!");
                 // you can optionally refresh group if needed
                 // fetchGroupById();
             }
 
             // ✅ Reset form and close modal
             setPhotoPreview([]);
-            setSelectedPlans([])
             setFormData({
                 title: "",
                 duration: "",
@@ -820,11 +835,7 @@ const HolidaySessionCreate = () => {
             setOpenForm(false);
         } catch (err) {
             console.error("❌ Error saving exercise:", err);
-            showAlert({
-                type: "error",
-                message: err?.message || "Something went wrong",
-                title: "Error",
-            });
+            showError("Error", err?.message || "Something went wrong");
         } finally {
             setRemovedImages([])
             setPlanLoading(false);
@@ -989,14 +1000,17 @@ const HolidaySessionCreate = () => {
                                         Group Name
                                     </label>
                                     <input
+                                        name="groupNameSection"
                                         value={groupNameSection}
-                                        onChange={(e) => setGroupNameSection(e.target.value)}
+                                        onChange={(e) => { setGroupNameSection(e.target.value); if (errors.groupNameSection) setErrors(prev => ({ ...prev, groupNameSection: null })); }}
                                         type="text"
-                                        required
                                         disabled={isEditMode}
                                         placeholder="Enter Group Name"
-                                        className={`w-full px-4 font-semibold text-[18px] py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isEditMode ? 'disabled cursor-not-allowed' : ''}`}
+                                        className={`w-full px-4 font-semibold text-[18px] py-3 border ${errors.groupNameSection ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${errors.groupNameSection ? 'focus:ring-red-500' : 'focus:ring-blue-500'} ${isEditMode ? 'disabled cursor-not-allowed' : ''}`}
                                     />
+                                    {errors.groupNameSection && (
+                                        <p className="text-sm text-red-500 mt-1">{errors.groupNameSection}</p>
+                                    )}
                                 </div>
                                 {/* Description */}
                                 <div>
@@ -1004,13 +1018,15 @@ const HolidaySessionCreate = () => {
                                         Player
                                     </label>
                                     <input
-
+                                        name="player"
                                         value={player}
-                                        onChange={(e) => setPlayer(e.target.value)}
+                                        onChange={(e) => { setPlayer(e.target.value); if (errors.player) setErrors(prev => ({ ...prev, player: null })); }}
                                         type="text"
-                                        requiredx
-                                        className="w-full px-4 font-semibold py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className={`w-full px-4 font-semibold py-3 border ${errors.player ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${errors.player ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
                                     />
+                                    {errors.player && (
+                                        <p className="text-sm text-red-500 mt-1">{errors.player}</p>
+                                    )}
                                 </div>
                                 <div className="flex w-full  gap-4 items-center">
                                     {/* Add Video */}
@@ -1072,12 +1088,15 @@ const HolidaySessionCreate = () => {
                                         Skill of the day
                                     </label>
                                     <input
+                                        name="skillOfTheDay"
                                         value={skillOfTheDay}
-                                        onChange={(e) => setSkillOfTheDay(e.target.value)}
+                                        onChange={(e) => { setSkillOfTheDay(e.target.value); if (errors.skillOfTheDay) setErrors(prev => ({ ...prev, skillOfTheDay: null })); }}
                                         type="text"
-                                        required
-                                        className="w-full px-4 font-semibold py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className={`w-full px-4 font-semibold py-3 border ${errors.skillOfTheDay ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${errors.skillOfTheDay ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
                                     />
+                                    {errors.skillOfTheDay && (
+                                        <p className="text-sm text-red-500 mt-1">{errors.skillOfTheDay}</p>
+                                    )}
                                 </div>
                                 <div className="flex w-full   gap-4 items-center">
                                     <button
@@ -1169,13 +1188,15 @@ const HolidaySessionCreate = () => {
                                         Description
                                     </label>
                                     <input
-
+                                        name="descriptionSession"
                                         value={descriptionSession}
-                                        onChange={(e) => setDescriptionSession(e.target.value)}
+                                        onChange={(e) => { setDescriptionSession(e.target.value); if (errors.descriptionSession) setErrors(prev => ({ ...prev, descriptionSession: null })); }}
                                         type="text"
-                                        required
-                                        className="w-full px-4 font-semibold py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className={`w-full px-4 font-semibold py-3 border ${errors.descriptionSession ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${errors.descriptionSession ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
                                     />
+                                    {errors.descriptionSession && (
+                                        <p className="text-sm text-red-500 mt-1">{errors.descriptionSession}</p>
+                                    )}
                                 </div>
 
                                 {/* Payment Plans */}
@@ -1198,9 +1219,9 @@ const HolidaySessionCreate = () => {
                                     {/* Selected Plans */}
                                     <div className="relative">
                                         <div
-
+                                            id="selectedPlans"
                                             onClick={() => setIsOpen(!isOpen)}
-                                            className="mt-4 space-y-2 border border-gray-200 px-4 py-3 rounded-lg max-h-28 overflow-auto"
+                                            className={`mt-4 space-y-2 border ${errors.selectedPlans ? 'border-red-500' : 'border-gray-200'} px-4 py-3 rounded-lg max-h-28 overflow-auto`}
                                         >
                                             {selectedPlans.length > 0 ? (
                                                 selectedPlans.map((plan, idx) => {
@@ -1209,7 +1230,7 @@ const HolidaySessionCreate = () => {
                                                             key={plan.id || idx}
                                                             className="flex items-center font-semibold justify-between"
                                                         >
-                                                            <span>{`${plan.duration || plan.data.duration}: ${plan.title || plan.label}`}</span>
+                                                            <span>{`${plan.duration || plan.data?.duration}: ${plan.title || plan.label}`}</span>
 
                                                             <div className="flex gap-2 i">
                                                                 <img
@@ -1281,6 +1302,9 @@ const HolidaySessionCreate = () => {
                                                 <div className="text-gray-400 italic py-3">  </div>
                                             )}
                                         </div>
+                                        {errors.selectedPlans && (
+                                            <p className="text-sm text-red-500 mt-1">{errors.selectedPlans}</p>
+                                        )}
 
                                         <AnimatePresence initial={false}>
                                             {isOpen && (
@@ -1409,11 +1433,14 @@ const HolidaySessionCreate = () => {
                                             <label className="block text-[18px]  font-semibold text-gray-700 mb-2">{field.label}</label>
                                             <input
                                                 type="text"
+                                                name={field.name}
                                                 value={formData[field.name]}
-                                                onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
-                                                className="w-full px-4 font-semibold text-[18px] py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                onChange={(e) => { setFormData({ ...formData, [field.name]: e.target.value }); if (planErrors[field.name]) setPlanErrors(prev => ({ ...prev, [field.name]: null })); }}
+                                                className={`w-full px-4 font-semibold text-[18px] py-3 border ${planErrors[field.name] ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${planErrors[field.name] ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
                                             />
-
+                                            {planErrors[field.name] && (
+                                                <p className="text-sm text-red-500 mt-1">{planErrors[field.name]}</p>
+                                            )}
                                         </div>
                                     ))}
 
@@ -1421,14 +1448,15 @@ const HolidaySessionCreate = () => {
                                         <label className="block text-[18px] font-semibold text-gray-700 mb-2">
                                             Description
                                         </label>
-                                        <div className="rounded-md border border-gray-300 bg-gray-100 p-1">
+                                        <div id="description" className={`rounded-md border ${planErrors.description ? 'border-red-500' : 'border-gray-300'} bg-gray-100 p-1`}>
                                             { /* bullist numlist  code */}
                                             <Editor
                                                 apiKey="sqe5er2lyngzjf0armhqaw1u7ffh0xgjyzmb7unv5irietwa"
                                                 value={formData.description}
-                                                onEditorChange={(content) =>
-                                                    setFormData({ ...formData, description: content })
-                                                }
+                                                onEditorChange={(content) => {
+                                                    setFormData({ ...formData, description: content });
+                                                    if (planErrors.description) setPlanErrors(prev => ({ ...prev, description: null }));
+                                                }}
                                                 init={{
                                                     menubar: false,
                                                     plugins: "lists advlist code",
@@ -1472,33 +1500,34 @@ const HolidaySessionCreate = () => {
                                                     },
                                                 }}
                                             />
-
-
-
-
-
                                         </div>
-
+                                        {planErrors.description && (
+                                            <p className="text-sm text-red-500 mt-1">{planErrors.description}</p>
+                                        )}
                                     </div>
 
                                     <div>
                                         <div className="w-full">
                                             <input
                                                 type="file"
+                                                name="images"
                                                 accept="image/*"
                                                 multiple
                                                 ref={fileInputRef}
-                                                onChange={handleImageChange}
+                                                onChange={(e) => { handleImageChange(e); if (planErrors.images) setPlanErrors(prev => ({ ...prev, images: null })); }}
                                                 style={{ display: "none" }}
                                             />
 
                                             <button
                                                 type="button"
                                                 onClick={() => fileInputRef.current?.click()}
-                                                className="flex w-full items-center justify-center gap-1 border border-blue-500 text-[#237FEA] px-4 py-2 rounded-lg font-semibold hover:bg-blue-50"
+                                                className={`flex w-full items-center justify-center gap-1 border ${planErrors.images ? 'border-red-500 text-red-500' : 'border-blue-500 text-[#237FEA]'} px-4 py-2 rounded-lg font-semibold hover:bg-blue-50`}
                                             >
                                                 Upload images
                                             </button>
+                                            {planErrors.images && (
+                                                <p className="text-sm text-red-500 mt-1">{planErrors.images}</p>
+                                            )}
 
                                             {/* Multiple Previews */}
                                             <div className="flex flex-wrap gap-3 mt-3">

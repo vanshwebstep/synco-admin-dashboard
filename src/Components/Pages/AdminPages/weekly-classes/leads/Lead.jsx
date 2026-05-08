@@ -106,6 +106,7 @@ const Lead = () => {
                 "Warning",
                 "One or more selected leads are already assigned to an agent."
             );
+            return;
         }
 
         fetchAllAgents();

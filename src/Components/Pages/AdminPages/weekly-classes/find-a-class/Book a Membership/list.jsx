@@ -468,9 +468,12 @@ const List = () => {
     const classesWithCapacity = Array.isArray(singleClassSchedulesOnly?.venueClasses)
         ? singleClassSchedulesOnly.venueClasses.filter((cls) => cls.capacity > 0)
         : [];
+
     const allClasses = Array.isArray(singleClassSchedulesOnly?.venueClasses)
         ? singleClassSchedulesOnly.venueClasses
         : [];
+    console.log('allClasses', allClasses)
+    console.log('classesWithCapacity', classesWithCapacity)
     const handleStudentClassChange = (index, selectedOption) => {
         setStudents((prev) => {
             const updated = [...prev];
@@ -2329,7 +2332,7 @@ const List = () => {
                         {/* ── POPUP ── */}
                         {showPopup && (
                             <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
-                                <div className="flex gap-6 px-6 py-12 max-h-[90%] w-8/12 overflow-hidden bg-[#FDFDFF]">
+                                <div className="flex gap-6 px-6 py-12 max-h-[90%] w-8/12 overflow-auto bg-[#FDFDFF]">
                                     {/* LEFT SUMMARY */}
                                     <div className="bg-[#F1F4FC] poppins rounded-xl w-[365px] text-sm text-gray-800">
                                         <div className="flex justify-center poppins rounded-t-2xl p-4 bg-[#003288]">

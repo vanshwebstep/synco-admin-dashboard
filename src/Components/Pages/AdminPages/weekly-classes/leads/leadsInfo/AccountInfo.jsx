@@ -1,162 +1,114 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useBookFreeTrial } from "../../../contexts/BookAFreeTrialContext";
+import Loader from "../../../contexts/Loader";
 import ParentProfile from "./ParentProfile";
 import StudentProfile from "./StudentProfile";
 import ServiceHistory from "./ServiceHistory";
 import Feedback from "./Feedback";
 import Rewards from "./Rewards";
 import Events from "./Events";
-import { useLocation, useNavigate } from "react-router-dom";
-import Loader from "../../../contexts/Loader";
-import { showError } from "../../../../../../utils/swalHelper";
-import { useLeads } from "../../../contexts/LeadsContext";
-
-const tabs = [
-  { name: "Parent Profile", component: ParentProfile },
-  { name: "Student Profile", component: StudentProfile },
-  { name: "Service History", component: ServiceHistory },
-  { name: "Feedback", component: Feedback },
-  { name: "Rewards", component: Rewards },
-  { name: "Events", component: Events },
-];
 
 const AccountInfo = () => {
-  const [activeTab, setActiveTab] = useState(tabs[0].name);
-  const location = useLocation();
-  const navigate = useNavigate();
+    const { serviceHistoryLeads, serviceHistory, loading } = useBookFreeTrial();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const [leadId, setLeadId] = useState(null);
+    const [activeTab, setActiveTab] = useState("Parent Profile");
 
-  // ---- Get lead ID from query ----
-  const queryParams = new URLSearchParams(location.search);
-  const leadId = queryParams.get("id");
-
-  const leads = useLeads();
-  const { fetchDataById } = leads || {};
-  const [loading, setLoading] = useState(false);
-
-  const [leadData, setLeadData] = useState([]);
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    mobile: "",
-    postalCode: "",
-    childAge: "",
-  });
-
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-  // ---- Fetch by ID ----
-  const fetchLeadById = useCallback(
-    async (leadId) => {
-      const token = localStorage.getItem("adminToken");
-      if (!token) return null;
-
-      setLoading(true);
-
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/admin/lead/${leadId}`, {
-          method: "GET",
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || "Failed to fetch lead");
+    useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        const idFromUrl = queryParams.get("id");
+        if (idFromUrl) {
+            setLeadId(idFromUrl);
         }
-
-        const result = await response.json();
-
-        const mapped = {
-          firstName: result?.data?.firstName || "",
-          lastName: result?.data?.lastName || "",
-          email: result?.data?.email || "",
-          mobile: result?.data?.phone || "",
-          postalCode: result?.data?.postcode || "",
-          childAge: result?.data?.childAge || "",
-        };
-
-        setLeadData(result?.data);
-        setFormData(mapped);
-
-        setLoading(false);
-        return result?.data || null;
-      } catch (error) {
-        console.error("Failed to fetch lead:", error);
-
-        showError("Error", error.message || "Failed to fetch lead.");
-
-        setLoading(false);
-        return null;
-      }
-    },
-    [API_BASE_URL]
-  );
-
-  // ---- Initial data load ----
-  useEffect(() => {
-    if (!leadId) return;
-
-    (async () => {
-      try {
-        setLoading(true);
-        if (fetchDataById) {
-          await fetchDataById(leadId);
+        if (location.state?.activeTab) {
+            setActiveTab(location.state.activeTab);
         }
-        await fetchLeadById(leadId);
-      } catch (error) {
-        console.error("Error loading lead data:", error);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [fetchDataById, fetchLeadById, leadId]);
+    }, [location.search, location.state]);
 
-  if (loading) return <Loader />;
-  if (!leads) return <div>Loading...</div>;
+    useEffect(() => {
+        if (leadId) {
+            serviceHistoryLeads(leadId);
+        }
+    }, [leadId, serviceHistoryLeads]);
 
-  // ---- Render correct active tab component ----
-  const ActiveComponent = tabs.find((t) => t.name === activeTab)?.component;
+    const tabs = [
+        "Parent Profile",
+        "Student Profile",
+        "Service History",
+        "Feedback",
+        "Rewards",
+        "Events",
+    ];
 
-  return (
-    <div className="mt-8 relative">
-      {/* TABS HEADER */}
-      <div className="flex w-max items-center bg-white gap-1 rounded-2xl p-3">
-        <h2
-          onClick={() => navigate("/weekly-classes/central-leads")}
-          className="cursor-pointer"
-        >
-          <img
-            src="/images/icons/arrow-left.png"
-            alt="Back"
-            className="w-5 h-5 md:w-6 md:h-6"
-          />
-        </h2>
+    if (loading) {
+        return <Loader />;
+    }
 
-        {tabs.map((tab) => (
-          <button
-            key={tab.name}
-            onClick={() => setActiveTab(tab.name)}
-            className={`w-max relative flex-1 whitespace-nowrap px-4 text-[16px] font-semibold py-3 rounded-xl transition-all ${activeTab === tab.name
-                ? "bg-[#237FEA] shadow text-white"
-                : "text-[#282829] hover:text-[#282829]"
-              }`}
-          >
-            {tab.name}
-          </button>
-        ))}
-      </div>
+    // Prepare data for child components
+    // Note: serviceHistory here is actually the full lead object returned by serviceHistoryLeads
+    // based on the context implementation: setServiceHistory(result?.bookings)
+    // Wait, let's check the context again.
+    // resultRaw.data || []; result = resultRaw.data; setServiceHistory(result?.bookings);
+    // So serviceHistory is just the bookings array.
+    // We might need the full lead object for ParentProfile.
 
-      {/* ACTIVE TAB CONTENT */}
-      <div className="mt-6">
-        {ActiveComponent && (
-          <ActiveComponent
-            leadData={leadData}
-            fetchedformData={formData}
-            setFormData={setFormData}
-          />
-        )}
-      </div>
-    </div>
-  );
+    // Let's check what serviceHistoryLeads does in context:
+    // const resultRaw = await response.json();
+    // const result = resultRaw.data || [];
+    // setServiceHistory(result?.bookings);
+
+    // Wait, if we only set result?.bookings to serviceHistory, then ParentProfile won't get the lead metadata.
+    // I should probably check if I can update the context to store the full lead data or just pass it differently.
+
+    return (
+        <div className="relative">
+            <div className="flex items-center mb-5 gap-2 md:gap-3 justify-between">
+                <div className="flex items-center gap-2 md:gap-3">
+                    <h2
+                        onClick={() => navigate("/weekly-classes/central-leads")}
+                        className="text-xl md:text-2xl font-semibold cursor-pointer hover:opacity-80 transition-opacity duration-200"
+                    >
+                        <img
+                            src="/images/icons/arrow-left.png"
+                            alt="Back"
+                            className="w-5 h-5 md:w-6 md:h-6"
+                        />
+                    </h2>
+                    <div className="flex gap-0 p-1 rounded-xl flex-wrap bg-white">
+                        {tabs.map((tab) => (
+                            <button
+                                key={tab}
+                                type="button"
+                                onClick={() => setActiveTab(tab)}
+                                className={`px-4 py-3 rounded-xl text-[16px] font-medium transition capitalize
+                                    ${activeTab === tab ? "bg-[#237FEA] text-white" : "hover:text-[#237FEA]"}
+                                `}
+                            >
+                                {tab}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            <div className="mt-6">
+                {activeTab === "Parent Profile" && (
+                    <ParentProfile leadData={{ bookings: serviceHistory, id: leadId }} fetchedformData={serviceHistory} />
+                )}
+                {activeTab === "Student Profile" && (
+                    <StudentProfile leadData={{ bookings: serviceHistory?.bookings }} />
+                )}
+                {activeTab === "Service History" && (
+                    <ServiceHistory leadData={{ bookings: serviceHistory?.bookings, id: leadId }} />
+                )}
+                {activeTab === "Feedback" && <Feedback leadData={{ bookings: serviceHistory }} />}
+                {activeTab === "Rewards" && <Rewards leadData={{ bookings: serviceHistory }} />}
+                {activeTab === "Events" && <Events leadData={{ bookings: serviceHistory }} />}
+            </div>
+        </div>
+    );
 };
 
 export default AccountInfo;

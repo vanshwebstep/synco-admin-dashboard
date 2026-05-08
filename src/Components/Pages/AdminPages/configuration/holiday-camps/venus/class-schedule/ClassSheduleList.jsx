@@ -239,14 +239,15 @@ const ClassSheduleList = () => {
 
     const [openForm, setOpenForm] = useState(false);
 
-    const handleDeleteClick = (item) => {
-        showConfirm(`Are you sure you want to delete ${item.className}?`, "This action cannot be undone.").then((result) => {
-        }).then((result) => {
-            if (result.isConfirmed) {
-                deleteClassSchedule(item); // only called after confirmation
+    const handleDeleteClick = async (item) => {
+        const result = await showConfirm(
+            `Are you sure you want to delete ${item.className}?`,
+            "This action cannot be undone."
+        );
 
-            }
-        });
+        if (result.isConfirmed) {
+            await deleteClassSchedule(item.id);
+        }
     };
 
 
@@ -393,7 +394,7 @@ const ClassSheduleList = () => {
 
                                                     <img
                                                         className=" w-6 h-6 cursor-pointer"
-                                                        onClick={() => handleDeleteClick(item.id)}
+                                                        onClick={() => handleDeleteClick(item)}
                                                         src="/images/icons/deleteIcon.png"
                                                         alt="Delete"
                                                     />

@@ -60,6 +60,7 @@ const ParentProfile = (fetchedData) => {
             parentLastName: parent.parentLastName,
             parentEmail: parent.parentEmail,
             parentPhoneNumber: parent.phone,
+            postalCode: parent.postcode,
             relationToChild: parent.relationToChild
           }));
 
@@ -586,7 +587,7 @@ const ParentProfile = (fetchedData) => {
                 <input
                   type="text"
                   name="postalCode"
-                  value={formData.postalCode || ''}
+                  value={formData.postcode || ''}
                   onChange={handleInputChange}
                   placeholder="Enter postal code"
                   className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-3"
@@ -655,7 +656,7 @@ const ParentProfile = (fetchedData) => {
 
               <div className="border-b border-[#495362] pb-3">
                 <p className="text-white text-[18px] font-semibold">Nearest Venue</p>
-                {fetchedData?.leadData?.nearestVenues?.map((v, index) => (
+                {formData.nearestVenues?.map((v, index) => (
                   <span
                     key={index}
                     className="inline-block bg-blue-500 text-white text-xs px-2 py-1 rounded-md mt-1 mr-1"
@@ -669,8 +670,8 @@ const ParentProfile = (fetchedData) => {
               <div className="border-b border-[#495362] pb-3">
                 <p className="text-white text-[18px] font-semibold">Date lead was added</p>
 
-                <p className="text-[16px] mt-1 text-[#BDC0C3]">{fetchedData?.leadData?.createdAt
-                  ? new Date(fetchedData.leadData.createdAt).toLocaleString("en-US", {
+                <p className="text-[16px] mt-1 text-[#BDC0C3]">{formData.createdAt
+                  ? new Date(formData.createdAt).toLocaleString("en-US", {
                     month: "short",
                     day: "numeric",
                     year: "numeric",
@@ -683,13 +684,13 @@ const ParentProfile = (fetchedData) => {
 
               <div className="border-b border-[#495362] pb-3">
                 <p className="text-white text-[18px] font-semibold">Source</p>
-                <p className="text-[16px] mt-1 text-[#BDC0C3]">{fetchedData?.leadData?.status || 'N/A'}</p>
+                <p className="text-[16px] mt-1 text-[#BDC0C3]">{formData.status || 'N/A'}</p>
               </div>
 
               <div className="border-b border-[#495362] pb-3">
                 <p className="text-white text-[18px] font-semibold">Last Contact Date</p>
-                <p className="text-[16px] mt-1 text-[#BDC0C3]">{fetchedData?.leadData?.updatedAt
-                  ? new Date(fetchedData.leadData.createdAt).toLocaleString("en-US", {
+                <p className="text-[16px] mt-1 text-[#BDC0C3]">{formData.updatedAt
+                  ? new Date(formData.updatedAt).toLocaleString("en-US", {
                     month: "short",
                     day: "numeric",
                     year: "numeric",
@@ -702,7 +703,7 @@ const ParentProfile = (fetchedData) => {
 
               <div>
                 <p className="text-white text-[18px] font-semibold">Current status</p>
-                <p className="text-[16px] mt-1 text-[#BDC0C3] font-semibold">{fetchedData?.leadData?.bookings?.[0]?.status || fetchedData?.leadData?.status || 'N/A'}</p>
+                <p className="text-[16px] capitalize mt-1 text-[#BDC0C3] font-semibold">{formData?.bookings?.[0]?.status || formData?.status || 'N/A'}</p>
               </div>
             </div>
 

@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { FaEllipsisV } from "react-icons/fa";
 import { RxCross2 } from "react-icons/rx";
 import Select from "react-select";
-import { Check, Plus } from "lucide-react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, Plus, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 
 
@@ -20,6 +20,17 @@ const renderImage = (type) => {
   return images[type] || "/images/icons/crown.png";
 };
 
+const getServiceTypePath = (serviceType) => {
+  if (!serviceType) return "";
+  const type = serviceType.toLowerCase();
+  if (type === "weekly class membership") return "membership";
+  if (type === "weekly class trial") return "trial";
+  if (type === "holiday camp") return "holiday";
+  if (type === "birthday party") return "birthdayparty";
+  if (type === "one to one") return "onetoone";
+  return type;
+};
+
 // Render field helper
 const renderField = (label, value) => {
   return (
@@ -30,7 +41,9 @@ const renderField = (label, value) => {
   );
 };
 
-const BookingCard = ({ booking }) => {
+const BookingCard = ({ booking, leadId }) => {
+  const navigate = useNavigate();
+  const serviceTypeForUrl = getServiceTypePath(booking?.serviceType || "");
   const statusColors = {
     active: "bg-green-500 text-white",
     cancelled: "bg-red-500 text-white",
@@ -88,108 +101,212 @@ const BookingCard = ({ booking }) => {
       </div>
 
       {/* Details */}
-      <div className="bg-[#FCF9F6] rounded-2xl p-4 mt-4">
-        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-8 gap-4 mb-4`}>
-          {booking.serviceType === "weekly class membership" && (
+      <div className="bg-[#FCF9F6] relative rounded-2xl p-4 mt-4">
+        <div className={`grid grid-cols-1 relative ${booking.status == "waiting list" ? "sm:grid-cols-5" : "sm:grid-cols-2 lg:grid-cols-7"} gap-4 mb-4`}>
+
+          {booking.status === "waiting list" && (
+            <>
+              {renderField("Students", booking?.totalStudents)}
+              {renderField("Venue", booking?.venue?.name)}
+              {renderField("ID", booking?.bookingId)}
+              {renderField("Date Of Booking", formatPrettyDate(booking?.createdAt))}
+              {renderField("Booking Source", booking?.bookedByAdmin ? `${booking.bookedByAdmin.firstName} ${booking.bookedByAdmin.lastName}` : "-")}
+            </>
+          )}
+
+          {booking.status !== "waiting list" && booking.serviceType === "weekly class membership" && (
             <>
               {renderField("Membership Plan", booking?.paymentPlan?.title)}
               {renderField("Students", booking?.totalStudents)}
-              {renderField("Venue", booking?.venue.name)}
-              {renderField("KGo/Cardless ID", booking?.payments?.merchantRef || booking?.payments[0]?.merchantRef)}
-              {renderField("Monthly Price", booking?.paymentPlan.price)}
+              {renderField("Venue", booking?.venue?.name)}
+              {renderField("KGo/Cardless ID", booking?.payments?.merchantRef || booking?.payments?.[0]?.merchantRef || booking?.bookingId)}
+              {renderField("Monthly Price", booking?.paymentPlan?.price)}
               {renderField("Date Of Booking", booking?.startDate)}
-              {renderField("Progress", "-")}
-              {renderField("Booking Source", booking?.paymentPlanId)}
+              {renderField("Booking Source", booking?.bookedByAdmin ? `${booking.bookedByAdmin.firstName} ${booking.bookedByAdmin.lastName}` : "-")}
             </>
           )}
-          {booking.serviceType == "weekly class trial" && (
+          {booking.status !== "waiting list" && booking.serviceType == "weekly class trial" && (
             <>
               {renderField("Date of trial", booking?.trialDate)}
               {renderField("Students", booking?.totalStudents)}
-              {renderField("Venue", booking?.venue.name)}
-              {/* {renderField("ID", booking?.paymentPlanId)} */}
+              {renderField("Venue", booking?.venue?.name)}
+              {renderField("ID", booking?.bookingId)}
+
               {renderField("Trial Attempt", booking?.attempt)}
               {renderField("Date Of Booking", formatPrettyDate(booking?.createdAt))}
-              {renderField("Booking Source", booking?.assignedAgent ? booking?.assignedAgent?.firstName + ' ' + booking?.assignedAgent?.lastName : "-")}
+              {renderField("Booking Source", booking?.bookedByAdmin ? `${booking.bookedByAdmin.firstName} ${booking.bookedByAdmin.lastName}` : "-")}
             </>
           )}
 
-          {booking.serviceType === "Birthday Party Booking" && (
+          {["Birthday Party Booking", "birthday party"].includes(booking.serviceType) && (
             <>
-              {renderField("Package", booking.package)}
-              {renderField("Price Paid", booking.pricePaid)}
-              {renderField("Stripe Transaction ID", booking.stripeID)}
-              {renderField("Date of Booking", booking.bookingDate)}
-              {renderField("Date of Party", booking.partyDate)}
-              {renderField("Coach", booking.coach)}
-              {renderField("Booking Source", booking.source)}
+              {renderField("Package", booking?.packageInterest)}
+              {renderField("Price Paid", booking?.booking?.payment?.amount)}
+              {renderField("Stripe Transaction ID", booking?.booking?.payment?.stripePaymentIntentId)}
+              {renderField("Date of Booking", formatPrettyDate(booking?.booking?.createdAt))}
+              {renderField("Date of Party", formatPrettyDate(booking?.partyDate))}
+              {renderField("Coach", booking?.booking?.coach ? `${booking.booking.coach.firstName} ${booking.booking.coach.lastName}` : "-")}
+              {renderField("Booking Source", booking?.source)}
             </>
           )}
 
-          {booking.serviceType === "One to One Booking" && (
+          {["One to One Booking", "one to one"].includes(booking.serviceType) && (
             <>
-              {renderField("Package", booking.package)}
-              {renderField("Students", booking.students)}
-              {renderField("Price Paid", booking.pricePaid)}
-              {renderField("Stripe Transaction ID", booking.stripeID)}
-              {renderField("Date of Booking", booking.bookingDate)}
-              {renderField("Venue", booking.venue)}
-              {renderField("Coach", booking.coach)}
-              {renderField("Booking Source", booking.source)}
+              {renderField("Package", booking?.packageInterest)}
+              {renderField("Students", booking?.booking?.totalStudents)}
+              {renderField("Price Paid", booking?.booking?.payment?.amount)}
+              {renderField("Stripe Transaction ID", booking?.booking?.payment?.stripeChargeDetails?.id)}
+              {renderField("Date of Booking", booking?.booking?.date)}
+              {renderField("Venue", booking?.booking?.address)}
+              {renderField("Coach", booking?.booking?.coach ? `${booking.booking.coach.firstName} ${booking.booking.coach.lastName}` : "-")}
+              {renderField("Booking Source", booking?.source)}
             </>
           )}
 
           {booking.serviceType === "Holiday Camp" && (
             <>
-              {renderField("Camp", booking.camp)}
-              {renderField("Students", booking.students)}
-              {renderField("Price Paid", booking.pricePaid)}
-              {renderField("Stripe Transaction ID", booking.stripeID)}
-              {renderField("Date of Booking", booking.bookingDate)}
-              {renderField("Venue", booking.venue)}
-              {renderField("Discount", booking.discount)}
-              {renderField("Coach", booking.coach)}
-              {renderField("Booking Source", booking.source)}
+              {renderField("Camp", booking?.holidayCamp?.name)}
+              {renderField("Students", booking?.totalStudents)}
+              {renderField("Price Paid", booking?.payment?.amount)}
+              {renderField("Stripe Transaction ID", booking?.payment?.gatewayResponse?.id)}
+              {renderField("Date of Booking", booking?.holidayCamp?.holidayCampDates?.[0]?.startDate)}
+              {renderField("Venue", booking?.holidayVenue?.name)}
+              {renderField("Discount", booking?.discount?.code)}
+              {renderField("Coach", booking?.bookedByAdmin?.firstName)}
+              {renderField("Booking Source", booking?.marketingChannel)}
             </>
           )}
 
           {booking.serviceType === "Merchandise" && (
             <>
-              {renderField("Item", booking.item)}
-              {renderField("Quantity", booking.quantity)}
-              {renderField("Price Paid", booking.pricePaid)}
-              {renderField("Transaction ID", booking.transactionID)}
-              {renderField("Date of Booking", booking.bookingDate)}
-              {renderField("Discount", booking.discount)}
-              {renderField("Fulfillment Status", booking.fulfillment)}
-              {renderField("Booking Source", booking.source)}
+              {renderField("Item", booking?.item)}
+              {renderField("Quantity", booking?.quantity)}
+              {renderField("Price Paid", booking?.pricePaid)}
+              {renderField("Transaction ID", booking?.transactionID)}
+              {renderField("Date of Booking", booking?.bookingDate)}
+              {renderField("Discount", booking?.discount)}
+              {renderField("Fulfillment Status", booking?.fulfillment)}
+              {renderField("Booking Source", booking?.source)}
             </>
           )}
         </div>
 
         {/* Buttons */}
+        <button className="ml-auto text-gray-500 hover:text-gray-800 absolute top-8 right-4">
+          <FaEllipsisV />
+        </button>
         <div className="flex gap-3">
-          <button className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50">
+          <button
+            onClick={() =>
+              navigate(
+                `/weekly-classes/central-leads/see-details?id=${booking?.id || ""}&serviceType=${booking?.bookingType === "waiting list"
+                  ? "waiting"
+                  : serviceTypeForUrl
+                }&leadId=${leadId || ""}`,
+                {
+                  state: {
+                    itemId: booking?.id,
+                    serviceType:
+                      booking?.bookingType === "waiting list"
+                        ? "waiting"
+                        : serviceTypeForUrl,
+                    memberInfo: booking?.status || "allMembers",
+                    defaultTab: "General",
+                    leadId,
+                  },
+                }
+              )
+            }
+            className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50"
+          >
             See details
           </button>
-          {booking.type !== "Merchandise" && (
+
+          {booking?.serviceType !== "Merchandise" && (
             <>
-              <button className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50">
+              <button
+                onClick={() =>
+                  navigate(
+                    `/weekly-classes/central-leads/see-details?id=${booking?.id || ""}&serviceType=${booking?.bookingType === "waiting list"
+                      ? "waiting"
+                      : serviceTypeForUrl
+                    }&leadId=${leadId || ""}`,
+                    {
+                      state: {
+                        itemId: booking?.id,
+                        serviceType:
+                          booking?.bookingType === "waiting list"
+                            ? "waiting"
+                            : serviceTypeForUrl,
+                        memberInfo: "allMembers",
+                        defaultTab: "History of Payments",
+                        leadId,
+                      },
+                    }
+                  )
+                }
+                className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50"
+              >
                 See payments
               </button>
-              {booking.students && (
-                <button className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50">
-                  Attendance
-                </button>
-              )}
+
+              <button
+                onClick={() =>
+                  navigate(
+                    `/weekly-classes/central-leads/see-details?id=${booking?.id || ""}&serviceType=${booking?.bookingType === "waiting list"
+                      ? "waiting"
+                      : serviceTypeForUrl
+                    }&leadId=${leadId || ""}`,
+                    {
+                      state: {
+                        itemId: booking?.id,
+                        serviceType:
+                          booking?.bookingType === "waiting list"
+                            ? "waiting"
+                            : serviceTypeForUrl,
+                        memberInfo: "allMembers",
+                        defaultTab: "Credits",
+                        leadId,
+                      },
+                    }
+                  )
+                }
+                className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50"
+              >
+                Credits
+              </button>
+
+              <button
+                onClick={() =>
+                  navigate(
+                    `/weekly-classes/central-leads/see-details?id=${booking?.id || ""}&serviceType=${booking?.bookingType === "waiting list"
+                      ? "waiting"
+                      : serviceTypeForUrl
+                    }&leadId=${leadId || ""}`,
+                    {
+                      state: {
+                        itemId: booking?.id,
+                        serviceType:
+                          booking?.bookingType === "waiting list"
+                            ? "waiting"
+                            : serviceTypeForUrl,
+                        memberInfo: "allMembers",
+                        defaultTab: "Attendance",
+                        leadId,
+                      },
+                    }
+                  )
+                }
+                className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50"
+              >
+                Attendance
+              </button>
             </>
           )}
-          <button className="ml-auto text-gray-500 hover:text-gray-800">
-            <FaEllipsisV />
-          </button>
+
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 
@@ -401,7 +518,7 @@ const ServiceHistory = (bookingData) => {
 
       <div className="min-h-screen">
         {bookings.map((booking, index) => (
-          <BookingCard key={index} booking={booking} />
+          <BookingCard key={index} booking={booking} leadId={bookingData?.leadData?.id} />
         ))}
 
         {/* Modal */}

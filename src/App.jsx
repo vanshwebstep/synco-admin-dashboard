@@ -117,6 +117,7 @@ import BirthdayReports from './Components/Pages/AdminPages/birthday-parties/Repo
 import AccountMainBirthDay from './Components/Pages/AdminPages/birthday-parties/Sales/Info/AccountMainBirthday.jsx';
 import SeeDetailsAccountBirthday from './Components/Pages/AdminPages/birthday-parties/Sales/Info/SeeDetailsAccountBirthday.jsx';
 import SeeDetailsAccountWeekly from './Components/Pages/AdminPages/weekly-classes/account-information/SeeDetails/SeeDetailsAccount.jsx';
+import SeeDetailsLeads from './Components/Pages/AdminPages/weekly-classes/leads/leadsInfo/SeeDetails.jsx';
 import BookACamp from './Components/Pages/AdminPages/holiday-camps/BookACamp.jsx';
 import StudentCamp from './Components/Pages/AdminPages/holiday-camps/StudentCamp.jsx';
 import AccountMainHoliday from './Components/Pages/AdminPages/holiday-camps/accountInfo/AccountMainHoliday.jsx';
@@ -692,6 +693,17 @@ const AppRoutes = () => {
             </GlobalSearchProvider>
           </ProtectedRoute>
         </LeadsContextProvider>
+      } />
+      <Route path="/weekly-classes/central-leads/see-details" element={
+        <ProtectedRoute>
+          <GlobalSearchProvider>
+            <AdminLayout>
+              <RoleBasedRoute>
+                <SeeDetailsLeads />
+              </RoleBasedRoute>
+            </AdminLayout>
+          </GlobalSearchProvider>
+        </ProtectedRoute>
       } />
       <Route path="/reports/weekly-classes" element={
         <ProtectedRoute>

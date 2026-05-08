@@ -52,18 +52,20 @@ const HolidaySubscriptionPlanManager = () => {
   };
 
   const handleDelete = async (id) => {
-    showConfirm("Are you sure you want to delete this group? This action cannot be undone.").then(async (result) => {
+    const result = await showConfirm(
+      "Are you sure?",
+      "Are you sure you want to delete this group? This action cannot be undone."
+    );
 
-      if (result.isConfirmed) {
-        try {
-          await deleteGroup(id); // from usePayments()
-          showSuccess("Group deleted successfully");
-        } catch (err) {
-          showError("Failed to delete the group.");
-        }
+    if (result.isConfirmed) {
+      try {
+        await deleteGroup(id); // from usePayments()
+        showSuccess("Group deleted successfully");
+      } catch (err) {
+        showError("Failed to delete the group.");
       }
-    });
-  }
+    }
+  };
 
   const filteredGroups = React.useMemo(() => {
     if (!searchQuery) return groups;

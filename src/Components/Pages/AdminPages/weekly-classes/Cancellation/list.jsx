@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { FiSearch } from "react-icons/fi";
 import { ChevronLeft, Loader2, ChevronRight } from "lucide-react";
 import Select from "react-select";
@@ -32,6 +32,13 @@ const CancellationList = () => {
 
     const [active, setActive] = useState("request"); // default selected
     const [showFilter, setShowFilter] = useState(false);
+    const [showAgentPopup, setShowAgentPopup] = useState(null);
+    const [agentsLoading, setAgentsLoading] = useState(null);
+    const [agentsData, setAgentsData] = useState([]);
+    const [selectedAdminId, setSelectedAdminId] = useState(null);
+    const [showPopup, setShowPopup] = useState(false);
+    const [savedAgent, setSavedAgent] = useState([]);
+    const popupRef = useRef(null);
 
     const buttons = [
         { key: "request", label: "Request to Cancel" },
@@ -46,16 +53,107 @@ const CancellationList = () => {
         }
     }, [location.state]);
 
-    const { fetchFullCancellations, fetchRequestToCancellations, fetchAllCancellations, statsFreeTrial, bookFreeTrials, setSearchTerm, bookedByAdmin, searchTerm, loading, selectedVenue, setSelectedVenue, myVenues, sendRequestTomail, sendAllmail, sendFullTomail } = useBookFreeTrial() || {};
+    const { fetchFullCancellations, fetchRequestToCancellations, fetchAllCancellations, statsFreeTrial, bookFreeTrials, setSearchTerm, bookedByAdmin, searchTerm, loading, selectedVenue, setSelectedVenue, myVenues } = useBookFreeTrial() || {};
+    const isWebsiteSourceSelected = useMemo(() => {
+        if (!selectedStudents || selectedStudents.length === 0) return true;
+        return (bookFreeTrials || [])
+            .filter(trial => selectedStudents?.includes(trial?.id))
+            .every(s => s?.source?.trim()?.toLowerCase() === "website");
+    }, [bookFreeTrials, selectedStudents]);
+    const fetchAllAgents = useCallback(async () => {
+        const token = localStorage.getItem("adminToken");
+        if (!token) return;
 
-    const toggleSelect = (studentId) => {
-        setSelectedStudents((prev) =>
-            prev.includes(studentId)
-                ? prev.filter((id) => id !== studentId) // remove if already selected
-                : [...prev, studentId] // add if not selected
-        );
+        setAgentsLoading(true);
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/get-agents`, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            const resultRaw = await response.json();
+            const result = resultRaw.data || {};
+            // Assuming the agents array is directly in data
+            setAgentsData(result || []);
+            setShowAgentPopup(true); // Show popup after fetching
+        } catch (error) {
+            console.error("Failed to fetch agents:", error);
+            alert("Failed to fetch agents.");
+        } finally {
+            setAgentsLoading(false);
+        }
+    }, []);
+    const handleAgentSubmit = async (id) => {
+        const token = localStorage.getItem("adminToken");
+        if (!token) {
+            return showError("Not authorized.");
+        }
+        if (!selectedStudents || selectedStudents.length === 0) {
+            return showWarning("Please select at least one student.");
+        }
+
+        setAgentsLoading(true);
+
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/api/admin/book/free-trials/assign-booking`,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        bookingIds: selectedStudents,
+                        agentId: id,
+                    }),
+                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result?.message || "Failed to assign booking");
+            }
+
+            showSuccess("Booking assigned successfully!");
+
+            fetchRequestToCancellations();
+            setSelectedStudents([]);
+
+        } catch (error) {
+            console.error("Error assigning booking:", error);
+            showError(error.message || "Something went wrong.");
+        } finally {
+            setAgentsLoading(false);
+        }
     };
-    console.log('statsFreeTrial', statsFreeTrial)
+    const handleClick = () => {
+        if (selectedStudents.length === 0) {
+            showWarning("Warning", 'Please select at least 1 student');
+            return;
+        }
+        const matchedStudents = (bookFreeTrials || []).filter(
+            trial =>
+                selectedStudents?.includes(trial?.id) &&
+                trial?.assignedAgentId != null
+        );
+
+        const hasAssignedStudents = matchedStudents.some(
+            s => s?.status === "assigned"
+        );
+
+        if (hasAssignedStudents) {
+            showWarning(
+                "Warning",
+                "One or more selected students are already assigned to an agent. Please deselect them to proceed."
+            );
+            return;
+        }
+        fetchAllAgents();
+    };
     const sendText = async (id) => {
         setTextLoading(true);
 
@@ -97,17 +195,17 @@ const CancellationList = () => {
     };
     const exportFreeTrials = () => {
         const dataToExport = [];
-        console.log('bookFreeTrials', bookFreeTrials)
         bookFreeTrials?.forEach((item) => {
-            if (selectedStudents.length > 0 && !selectedStudents.includes(item.bookingId)) return;
+            const bookingId = item.id || item.bookingId;
+            if (selectedStudents.length > 0 && !selectedStudents.includes(bookingId)) return;
 
-            item.students.forEach((student) => {
+            (item.students || []).forEach((student) => {
                 dataToExport.push({
-                    Name: `${student.studentFirstName} ${student?.studentLastName}`,
+                    Name: `${student.studentFirstName} ${student?.studentLastName || ""}`,
                     Age: student.age,
                     Venue: item.venue?.name || "-",
-                    'Date of Booking': new Date(item.createdAt || item.trialDate).toLocaleDateString(),
-                    'Date of Trial': new Date(item.trialDate).toLocaleDateString(),
+                    'Date of Booking': item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "-",
+                    'Date of Trial': item.trialDate ? new Date(item.trialDate).toLocaleDateString() : "-",
                     Source: item.parents?.[0]?.howDidYouHear || "-",
                     Attempts: "0",
                     Status: item.status,
@@ -115,7 +213,7 @@ const CancellationList = () => {
             });
         });
 
-        if (!dataToExport.length) return alert('No data to export');
+        if (!dataToExport.length) return showWarning("No Data", 'No data to export');
 
         const worksheet = XLSX.utils.json_to_sheet(dataToExport);
         const workbook = XLSX.utils.book_new();
@@ -248,13 +346,11 @@ const CancellationList = () => {
         }
     };
 
-    const modalRef = useRef(null);
-    const PRef = useRef(null);
-    const stats = [
+    const stats = useMemo(() => [
         {
             title: "Total Request",
             value: statsFreeTrial?.totalRequests?.value || "0",
-            icon: "/DashboardIcons/🔢.png", // Replace with actual SVG if needed
+            icon: "/DashboardIcons/🔢.png",
             change: statsFreeTrial?.totalRequests?.change != null
                 ? `${statsFreeTrial.totalRequests.change}`
                 : "0%",
@@ -263,11 +359,8 @@ const CancellationList = () => {
         },
         {
             title: "Avg.Tenure",
-            value:
-                statsFreeTrial?.avgTenure?.value || statsFreeTrial?.avgTenure?.value
-                    ? `${statsFreeTrial?.avgTenure?.value ?? ""} `.trim()
-                    : "0",
-            subValue: `${statsFreeTrial?.avgTenure?.change ?? ""} `,
+            value: statsFreeTrial?.avgTenure?.value ? `${statsFreeTrial.avgTenure.value}`.trim() : "0",
+            subValue: `${statsFreeTrial?.avgTenure?.change ?? ""}`,
             icon: "/DashboardIcons/📊.png",
             color: "text-green-500",
             bg: "bg-[#F3FAFD]"
@@ -281,7 +374,8 @@ const CancellationList = () => {
                 : "0%",
             color: "text-green-500",
             bg: "bg-[#F0F9F9]"
-        }, {
+        },
+        {
             title: "Common Reason",
             value: statsFreeTrial?.commonReason?.value || "0",
             icon: "/DashboardIcons/💬.png",
@@ -291,12 +385,9 @@ const CancellationList = () => {
             color: "text-green-500",
             bg: "bg-[#FEF6FB]"
         },
-
         {
-            title: "High Risk Age Group ",
-            value:
-                statsFreeTrial?.highestRiskAgeGroup?.value ? `${statsFreeTrial?.highestRiskAgeGroup?.value ?? ""}`.trim()
-                    : "0",
+            title: "High Risk Age Group",
+            value: statsFreeTrial?.highestRiskAgeGroup?.value ? `${statsFreeTrial.highestRiskAgeGroup.value}`.trim() : "0",
             subValue: statsFreeTrial?.highestRiskAgeGroup?.change != null
                 ? `${statsFreeTrial.highestRiskAgeGroup.change}`
                 : "0%",
@@ -304,7 +395,7 @@ const CancellationList = () => {
             color: "text-green-500",
             bg: "bg-[#F3FAFD]"
         },
-    ];
+    ], [statsFreeTrial]);
     const applyFilter = () => {
         const forAttend = checkedStatuses.request_to_cancel || "";
         const forNotAttend = checkedStatuses.cancelled || "";
@@ -366,41 +457,11 @@ const CancellationList = () => {
         }
     };
 
-    const getStatusBadge = (status) => {
-        const s = status.toLowerCase();
-        let styles =
-            "bg-red-100 text-red-500"; // default fallback
-        if (s === "attended" || s === "active")
-            styles = "bg-yellow-100 text-yellow-600";
-        else if (s === "pending") styles = "bg-yellow-100 text-yellow-600";
-        else if (s === "frozen") styles = "bg-blue-100 text-blue-600";
-        else if (s === "waiting list") styles = "bg-gray-200 text-gray-700";
-
-        return (
-            <div
-                className={`flex text-center justify-center rounded-lg p-1 gap-2 ${styles} capitalize`}
-            >
-                {status}
-            </div>
-        );
-    };
-
-    const [showPopup, setShowPopup] = useState(false);
-    const [tempSelectedAgent, setTempSelectedAgent] = useState(null);
-    const [savedAgent, setSavedAgent] = useState([]);
-    const popupRef = useRef(null);
-
-    const agents = Array(6).fill({
-        name: "Jaffar",
-        avatar: "https://i.ibb.co/ZVPd9vJ/jaffar.png", // Replace with real image or asset
-    });
-
     // Close popup if clicked outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (popupRef.current && !popupRef.current.contains(event.target)) {
                 setShowPopup(false);
-                setTempSelectedAgent(savedAgent); // Reset to saved
             }
         };
 
@@ -441,190 +502,100 @@ const CancellationList = () => {
     // console.log('statsFreeTrial', statsFreeTrial)
     const { checkPermission } = usePermission();
 
-    const canServicehistory =
-        checkPermission({ module: 'service-history', action: 'view-listing' })
-
-    const fullCancellationTable = [
-        {
-            header: "Parent Name",
-            key: "name",
-            selectable: true, // ✅ checkbox + parent name
-            render: (item) =>
-                `${item.parents?.[0]?.parentFirstName || ""} ${item.parents?.[0]?.parentLastName || ""}`,
-        },
-        {
-            header: "No. Of Students",
-            render: (item) => item.totalStudents || item.students?.length || 0,
-        },
-        {
-            header: "Venue",
-            render: (item) => item.venue?.name || "-",
-        },
-        {
-            header: "Membership Start Date",
-            render: (item) =>
-                item.startDate ? new Date(item.startDate).toLocaleDateString() : "-",
-        },
-        {
-            header: "Membership End Date",
-            render: (item) =>
-                item.endDate ? new Date(item.endDate).toLocaleDateString() : "-",
-        },
-
-        {
-            header: "Membership Plan",
-            render: (item) => item.paymentPlan?.title || "-",
-        },
-        {
-            header: "Life Cycle",
-            render: (item) => {
-                if (!item.paymentPlan) return "-";
-                const { duration, interval } = item.paymentPlan;
-                const intervalLabel = duration === 1 ? interval : `${interval}s`; // singular or plural
-                return `${duration} ${intervalLabel}`;
-            },
-        },
-        {
-            header: "Reason",
-            render: (item) => (
-                <div
-                    className={`flex text-center justify-center rounded-lg p-1 gap-2 ${item.status?.toLowerCase() === "cancelled"
-                        ? "bg-yellow-100 text-yellow-600"
-                        : item.status?.toLowerCase() === "pending"
-                            ? "bg-yellow-100 text-yellow-600"
-                            : "bg-yellow-100 text-yellow-600"
-                        } capitalize`}
-                >
-                    {item.cancelReason || 'Other'}
-                </div>
-            ),
-        },
-    ];
-    const requestCancellationTable = [
-        {
-            header: "Parent Name",
-            key: "name",
-            selectable: true, // ✅ checkbox + parent name
-            render: (item) =>
-                `${item.parents?.[0]?.parentFirstName || ""} ${item.parents?.[0]?.parentLastName || ""}`,
-        },
-        {
-            header: "No. Of Students",
-            render: (item) => item.totalStudents || item.students?.length || 0,
-        },
-        {
-            header: "Venue",
-            render: (item) => item.venue?.name || "-",
-        },
-        {
-            header: "Membership Start Date",
-            render: (item) =>
-                item.startDate
-                    ? new Date(item.startDate).toLocaleDateString()
-                    : new Date(item.createdAt).toLocaleDateString(),
-        },
-        {
-            header: "Request Date",
-            render: (item) =>
-                item.cancelDate ? new Date(item.cancelDate).toLocaleDateString() : "-",
-        },
-        {
-            header: "Membership Plan",
-            render: (item) => item.paymentPlan?.title || "-",
-        },
-        {
-            header: "Tenure",
-            render: (item) => {
-                if (!item.paymentPlan) return "-";
-                const { duration, interval } = item.paymentPlan;
-                const intervalLabel = duration === 1 ? interval : `${interval}s`; // singular or plural
-                return `${duration} ${intervalLabel}`;
-            },
-        },
-        {
-            header: "Reason",
-            render: (item) => (
-                <div
-                    className={`flex text-center justify-center rounded-lg p-1 gap-2 ${item.status?.toLowerCase() === "cancelled"
-                        ? "bg-[#eda6001f] text-[#EDA600]"
-                        : item.status?.toLowerCase() === "pending"
-                            ? "bg-[#eda6001f] text-[#EDA600]"
-                            : "bg-yellow-100 text-yellow-600"
-                        } capitalize`}
-                >
-                    {item.cancelReason || 'Other'}
-                </div>
-            ),
-        },
-    ];
-    const allCancellationTable = [
-        {
-            header: "Parent Name",
-            key: "name",
-            selectable: true, // ✅ checkbox + parent name
-            render: (item) =>
-                `${item.parents?.[0]?.parentFirstName || ""} ${item.parents?.[0]?.parentLastName || ""}`,
-        },
-        {
-            header: "No. Of Students",
-            render: (item) => item.totalStudents || item.students?.length || 0,
-        },
-        {
-            header: "Venue",
-            render: (item) => item.venue?.name || "-",
-        },
-        {
-            header: "Membership Start Date",
-            render: (item) =>
-                item.startDate
-                    ? new Date(item.startDate).toLocaleDateString()
-                    : new Date(item.createdAt).toLocaleDateString(),
-        },
-        {
-            header: "Request Date",
-            render: (item) =>
-                item.cancelDate ? new Date(item.cancelDate).toLocaleDateString() : "-",
-        },
-        {
-            header: "Membership Plan",
-            render: (item) => item.paymentPlan?.title || "-",
-        },
-        {
-            header: "Tenure",
-            render: (item) => {
-                if (!item.paymentPlan) return "-";
-                const { duration, interval } = item.paymentPlan;
-                const intervalLabel = duration === 1 ? interval : `${interval}s`; // singular or plural
-                return `${duration} ${intervalLabel}`;
-            },
-        },
-        {
-            header: "Reason",
-            render: (item) => (
-                <div
-                    className={`flex text-center justify-center rounded-lg p-1 gap-2 ${item.status?.toLowerCase() === "cancelled"
-                        ? "bg-yellow-100 text-yellow-600"
-                        : item.status?.toLowerCase() === "pending"
-                            ? "bg-yellow-100 text-yellow-600"
-                            : "bg-yellow-100 text-yellow-600"
-                        } capitalize`}
-                >
-                    {item.cancelReason || 'Other'}
-                </div>
-            ),
-        },
-    ];
-
     useEffect(() => {
         if (isFilterApplied) {
             setIsFilterApplied(false)
         }
-    })
+    }, [isFilterApplied]);
+    const canServicehistory =
+        checkPermission({ module: 'service-history', action: 'view-listing' })
+
+    const commonColumns = [
+        {
+            header: "Parent Name",
+            key: "name",
+            selectable: true,
+            render: (item) =>
+                `${item.parents?.[0]?.parentFirstName || ""} ${item.parents?.[0]?.parentLastName || ""}`,
+        },
+        {
+            header: "No. Of Students",
+            render: (item) => item.totalStudents || item.students?.length || 0,
+        },
+        {
+            header: "Venue",
+            render: (item) => item.venue?.name || "-",
+        },
+        {
+            header: "Membership Start Date",
+            render: (item) =>
+                item.startDate
+                    ? new Date(item.startDate).toLocaleDateString()
+                    : item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "-",
+        },
+    ];
+
     const currentColumns = useMemo(() => {
-        if (active === "request") return requestCancellationTable;
-        if (active === "full") return fullCancellationTable;
-        if (active === "all") return allCancellationTable;
-        return fullCancellationTable; // fallback
+        if (active === "full") {
+            return [
+                ...commonColumns,
+                {
+                    header: "Membership End Date",
+                    render: (item) => item.endDate ? new Date(item.endDate).toLocaleDateString() : "-",
+                },
+                {
+                    header: "Membership Plan",
+                    render: (item) => item.paymentPlan?.title || "-",
+                },
+                {
+                    header: "Life Cycle",
+                    render: (item) => {
+                        if (!item.paymentPlan) return "-";
+                        const { duration, interval } = item.paymentPlan;
+                        const intervalLabel = duration === 1 ? interval : `${interval}s`;
+                        return `${duration} ${intervalLabel}`;
+                    },
+                },
+                {
+                    header: "Reason",
+                    render: (item) => (
+                        <div className="flex text-center justify-center rounded-lg p-1 gap-2 bg-yellow-100 text-yellow-600 capitalize">
+                            {item.cancelReason || 'Other'}
+                        </div>
+                    ),
+                },
+            ];
+        }
+
+        const additionalCols = active === "request" || active === "all" ? [
+            {
+                header: "Request Date",
+                render: (item) => item.cancelDate ? new Date(item.cancelDate).toLocaleDateString() : "-",
+            },
+            {
+                header: "Membership Plan",
+                render: (item) => item.paymentPlan?.title || "-",
+            },
+            {
+                header: "Tenure",
+                render: (item) => {
+                    if (!item.paymentPlan) return "-";
+                    const { duration, interval } = item.paymentPlan;
+                    const intervalLabel = duration === 1 ? interval : `${interval}s`;
+                    return `${duration} ${intervalLabel}`;
+                },
+            },
+            {
+                header: "Reason",
+                render: (item) => (
+                    <div className={`flex text-center justify-center rounded-lg p-1 gap-2 ${active === "request" ? "bg-[#eda6001f] text-[#EDA600]" : "bg-yellow-100 text-yellow-600"} capitalize`}>
+                        {item.cancelReason || 'Other'}
+                    </div>
+                ),
+            },
+        ] : [];
+
+        return [...commonColumns, ...additionalCols];
     }, [active]);
 
     let cancelType = "";
@@ -666,8 +637,14 @@ const CancellationList = () => {
                                 <div className="flex justify-end items-center gap-2">
                                     <div className="bg-white min-w-[38px] min-h-[38px]   border border-gray-300 p-2 rounded-full flex items-center justify-center"> <Filter size={16} className='cursor-pointer' onClick={() => setShowFilter(!showFilter)} />
                                     </div>
-                                    <div className="bg-white min-w-[38px] min-h-[38px]   border border-gray-300 p-2 rounded-full flex items-center justify-center"> <img onClick={() => navigate("/weekly-classes/find-a-class")}
-                                        src="/DashboardIcons/user-add-02.png" alt="" className="cursor-pointer" />
+                                    <div className="bg-white min-w-[38px] min-h-[38px]   border border-gray-300 p-2 rounded-full flex items-center justify-center">
+                                        <img
+                                            onClick={isWebsiteSourceSelected ? handleClick : undefined}
+                                            src="/DashboardIcons/user-add-02.png"
+                                            alt=""
+                                            className={`${isWebsiteSourceSelected ? "cursor-pointer" : "opacity-40 cursor-not-allowed"
+                                                }`}
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -784,14 +761,31 @@ const CancellationList = () => {
                                                 <span>{label}</span>
                                             </label>
                                         ))}
-
+                                        <label className="flex items-center gap-2 mt-2 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={savedAgent?.length > 0}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setShowPopup(true);
+                                                    } else {
+                                                        setSavedAgent([]);
+                                                        setTempSelectedAgents([]);
+                                                    }
+                                                }}
+                                                className="hidden peer"
+                                            />
+                                            <span className="w-5 h-5 inline-flex text-gray-500 items-center justify-center border border-[#717073] rounded-sm bg-transparent peer-checked:text-white peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-colors">
+                                                <Check className="w-4 h-4 transition-all" strokeWidth={3} />
+                                            </span>
+                                            <span className="font-semibold text-[16px]">Booked By</span>
+                                        </label>
                                     </div>
                                 </div>
                                 {showPopup && (
                                     <div
-                                        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+                                        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100]"
                                         onClick={() => {
-                                            // click outside → reset everything
                                             setShowPopup(false);
                                             setSavedAgent([]);
                                             setTempSelectedAgents([]);
@@ -799,65 +793,63 @@ const CancellationList = () => {
                                     >
                                         <div
                                             ref={popupRef}
-                                            className="bg-white rounded-2xl p-6 w-[300px] space-y-4 shadow-lg"
-                                            onClick={(e) => e.stopPropagation()} // prevent closing when clicking inside
+                                            className="bg-white rounded-[32px] p-8 w-[380px] shadow-2xl"
+                                            onClick={(e) => e.stopPropagation()}
                                         >
-                                            <h2 className="text-lg font-semibold">Select agent(s)</h2>
-                                            <div className="space-y-3 max-h-72 overflow-y-auto">
+                                            <h2 className="text-[22px] font-bold mb-6 text-[#1A1A1A]">Select agent</h2>
+                                            
+                                            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                                                 {bookedByAdmin.map((admin, index) => {
                                                     const isSelected = tempSelectedAgents.some(
                                                         (a) => a.id === admin.id
                                                     );
 
                                                     return (
-                                                        <label key={index} className="flex items-center gap-3 cursor-pointer">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={isSelected}
-                                                                onChange={() => {
-                                                                    if (isSelected) {
-                                                                        setTempSelectedAgents((prev) =>
-                                                                            prev.filter((a) => a.id !== admin.id)
-                                                                        );
-                                                                    } else {
-                                                                        setTempSelectedAgents((prev) => [
-                                                                            ...prev,
-                                                                            { id: admin.id, firstName: admin.firstName, lastName: admin.lastName },
-                                                                        ]);
-                                                                    }
-                                                                }}
-                                                                className="hidden peer"
-                                                            />
-                                                            <span className="w-4 h-4 border rounded peer-checked:bg-blue-600 peer-checked:border-blue-600 flex items-center justify-center">
-                                                                {isSelected && (
-                                                                    <svg
-                                                                        className="w-3 h-3 text-white"
-                                                                        fill="none"
-                                                                        stroke="currentColor"
-                                                                        strokeWidth={2}
-                                                                        viewBox="0 0 24 24"
-                                                                    >
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                                                    </svg>
-                                                                )}
-                                                            </span>
-                                                            <img
-                                                                src={admin.profile ? `${API_BASE_URL}${admin.profile}` : "/members/dummyuser.png"}
-                                                                alt={`${admin.firstName} ${admin.lastName && admin.lastName !== 'null' ? ` ${admin.lastName}` : ''}`}
-                                                                className="w-8 h-8 rounded-full"
-                                                            />
-                                                            <span>
-                                                                {admin?.firstName || admin?.lastName
-                                                                    ? `${admin?.firstName ?? ""}${admin.lastName && admin.lastName !== 'null' ? ` ${admin.lastName}` : ''}`.trim()
-                                                                    : "N/A"}
-                                                            </span>
+                                                        <label key={index} className="flex items-center gap-4 cursor-pointer group">
+                                                            <div className="relative flex items-center justify-center">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={isSelected}
+                                                                    onChange={() => {
+                                                                        if (isSelected) {
+                                                                            setTempSelectedAgents((prev) =>
+                                                                                prev.filter((a) => a.id !== admin.id)
+                                                                            );
+                                                                        } else {
+                                                                            setTempSelectedAgents((prev) => [
+                                                                                ...prev,
+                                                                                { id: admin.id, firstName: admin.firstName, lastName: admin.lastName },
+                                                                            ]);
+                                                                        }
+                                                                    }}
+                                                                    className="peer hidden"
+                                                                />
+                                                                <div className="w-6 h-6 border-2 border-gray-200 rounded-md peer-checked:bg-[#237FEA] peer-checked:border-[#237FEA] transition-all flex items-center justify-center">
+                                                                    <Check className={`w-4 h-4 text-white transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0'}`} strokeWidth={4} />
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 rounded-full border-2 border-[#E8F3FF] overflow-hidden">
+                                                                    <img
+                                                                        src={admin.profile ? `${API_BASE_URL}${admin.profile}` : "/members/dummyuser.png"}
+                                                                        alt=""
+                                                                        className="w-full h-full object-cover"
+                                                                    />
+                                                                </div>
+                                                                <span className="text-[17px] font-semibold text-[#333]">
+                                                                    {admin?.firstName || admin?.lastName
+                                                                        ? `${admin?.firstName ?? ""}${admin.lastName && admin.lastName !== 'null' ? ` ${admin.lastName}` : ''}`.trim()
+                                                                        : "N/A"}
+                                                                </span>
+                                                            </div>
                                                         </label>
                                                     );
                                                 })}
                                             </div>
 
                                             <button
-                                                className="w-full bg-blue-600 text-white rounded-md py-2 font-medium"
+                                                className="w-full bg-[#237FEA] text-white rounded-2xl py-4 mt-8 font-bold text-lg hover:bg-blue-600 transition shadow-lg shadow-blue-200 disabled:opacity-50"
                                                 onClick={handleNext}
                                                 disabled={tempSelectedAgents.length === 0}
                                             >
@@ -1068,8 +1060,103 @@ const CancellationList = () => {
                 )}
 
             </div>
+            {
+                showAgentPopup && (
+                    <div
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100]"
+                        onClick={() => {
+                            setShowAgentPopup(false);
+                            setSelectedAdminId(null);
+                        }}
+                    >
+                        <div
+                            className="bg-white rounded-[32px] p-8 w-[380px] shadow-2xl"
+                            onClick={(e) => e.stopPropagation()}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="admin-list-title"
+                        >
+                            <h2
+                                id="admin-list-title"
+                                className="text-[22px] font-bold mb-6 text-[#1A1A1A]"
+                            >
+                                Select agent
+                            </h2>
 
+                            {agentsLoading ? (
+                                <div className="flex justify-center py-10">
+                                    <Loader2 className="w-8 h-8 animate-spin text-[#237FEA]" />
+                                </div>
+                            ) : agentsData.length > 0 ? (
+                                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                    {agentsData.map((admin) => {
+                                        const isSelected = selectedAdminId === admin.id;
+                                        return (
+                                            <div
+                                                key={admin.id}
+                                                onClick={() => setSelectedAdminId(admin.id)}
+                                                className={`flex items-center gap-4 p-2 rounded-2xl cursor-pointer transition-all group ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+                                            >
+                                                <div className="relative flex items-center justify-center">
+                                                    <div className={`w-6 h-6 border-2 rounded-full transition-all flex items-center justify-center ${isSelected ? 'bg-[#237FEA] border-[#237FEA]' : 'border-gray-200'}`}>
+                                                        <div className={`w-2 h-2 bg-white rounded-full transition-transform ${isSelected ? 'scale-100' : 'scale-0'}`} />
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full border-2 border-[#E8F3FF] overflow-hidden">
+                                                        <img
+                                                            src={admin.profile ? `${API_BASE_URL}${admin.profile}` : "/members/dummyuser.png"}
+                                                            alt=""
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    </div>
+                                                    <span className={`text-[17px] font-semibold transition-colors ${isSelected ? 'text-[#237FEA]' : 'text-[#333]'}`}>
+                                                        {admin.firstName} {admin.lastName}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <p className="text-center text-gray-500 py-10">No agents found.</p>
+                            )}
+
+                            <div className="flex flex-col gap-3 mt-8">
+                                <button
+                                    disabled={!selectedAdminId}
+                                    onClick={() => {
+                                        if (selectedAdminId) {
+                                            handleAgentSubmit(selectedAdminId);
+                                            setShowAgentPopup(false);
+                                        } else {
+                                            showWarning("Please select an agent before submitting.");
+                                        }
+                                    }}
+                                    className="w-full bg-[#237FEA] text-white rounded-2xl py-4 font-bold text-lg hover:bg-blue-600 transition shadow-lg shadow-blue-200 disabled:opacity-50"
+                                    type="button"
+                                >
+                                    Assign
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setShowAgentPopup(false);
+                                        setSelectedAdminId(null);
+                                    }}
+                                    className="w-full py-2 text-gray-500 font-semibold hover:text-gray-700 transition"
+                                    type="button"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
         </div >
+
+
     )
 }
 

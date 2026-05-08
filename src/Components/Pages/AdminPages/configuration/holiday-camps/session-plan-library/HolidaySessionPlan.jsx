@@ -112,7 +112,7 @@ const HolidaySessionPlan = () => {
     );
 
     if (result.isConfirmed) {
-      deleteSessionGroup(weekId);
+      await deleteSessionGroup(weekId);
       showSuccess('Deleted!', 'The group has been deleted.');
     }
   };
@@ -148,8 +148,8 @@ const HolidaySessionPlan = () => {
     );
 
     if (result.isConfirmed) {
-      deleteSessionlevel(id, level);
-      showSuccess('Deleted!', 'The group has been deleted.');
+      await deleteSessionlevel(id, level);
+      showSuccess('Deleted!', 'The level has been deleted.');
     }
   };
   const handleEditGroupNameOnly = (weekId, currentTitle) => {

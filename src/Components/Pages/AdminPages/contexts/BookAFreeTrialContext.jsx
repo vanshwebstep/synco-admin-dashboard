@@ -1013,6 +1013,44 @@ export const BookFreeTrialProvider = ({ children }) => {
       setLoading(false);
     }
   }, []);
+  const serviceHistoryLeads = useCallback(async (ID) => {
+    const token = localStorage.getItem("adminToken");
+    if (!token) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/admin/lead/${ID}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const resultRaw = await response.json();
+
+      // Check API-level error
+      if (!resultRaw.status) {
+        throw new Error(resultRaw.message || "Failed to fetch booking info");
+      }
+
+      const result = resultRaw.data || [];
+
+      console.log('result', result)
+      setServiceHistory(result);
+    } catch (err) {
+      console.error("Failed to fetch booking info:", err);
+      setError(err.message || "Something went wrong");
+      setServiceHistory([]); // clear previous data if error
+    } finally {
+      setLoading(false);
+    }
+  }, []);
   const createBookMembership = async (bookFreeMembershipData, leadId) => {
     setLoading(true);
 
@@ -1128,11 +1166,14 @@ export const BookFreeTrialProvider = ({ children }) => {
     }
   };
   const fetchComments = useCallback(async (commentData, commentBy) => {
+
+    console.log('commentData', commentData)
+    console.log('commentBy', commentBy)
     const token = localStorage.getItem("adminToken");
     if (!token) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/comment/list?commentType=${commentData.commentType}&serviceType=${commentData.serviceType}&${commentBy || 'commentBy'}=${commentData[commentBy]}`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/comment/list?commentType=${commentData.commentType}&serviceType=${commentData.serviceType}&${commentBy || 'commentBy'}=${commentData?.commentBy || commentData?.commentByLead}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -3061,7 +3102,7 @@ export const BookFreeTrialProvider = ({ children }) => {
         setIsBooked, isBooked,
         fetchMembershipSalesLoading, createMembershipWaitinglist, parentData, setLoadingComment, loadingComment, handleSubmitComment, setParentData, setComment, comment, setCommentsList, commentsList, createBookLeads, createBookBirthday, addToWaitingList, setaddToWaitingList, showCancelTrial, setshowCancelTrial
 
-        , fetchMembershipByParent
+        , fetchMembershipByParent, serviceHistoryLeads
       }}>
       {children}
     </BookFreeTrialContext.Provider>

@@ -341,7 +341,7 @@ const WaitingList = () => {
             value: statsFreeTrial?.topReferrer?.name || "0",
             icon: "/DashboardIcons/🏆.png", // Replace with actual SVG if needed
             change: statsFreeTrial?.topReferrer?.percentage != null
-                ? `${statsFreeTrial.topReferrer?.percentage}%`
+                ? `${statsFreeTrial.topReferrer?.percentage}`
                 : "0%",
             color: "text-green-500",
             bg: "bg-[#F3FAF5]"
@@ -351,7 +351,7 @@ const WaitingList = () => {
             value: statsFreeTrial?.totalOnWaitingList?.totalOnWaitingList || "0",
             icon: "/DashboardIcons/📋.png",
             change: statsFreeTrial?.totalOnWaitingList?.percentage != null
-                ? `${statsFreeTrial.totalOnWaitingList?.percentage}%`
+                ? `${statsFreeTrial.totalOnWaitingList?.percentage}`
                 : "0%",
             color: "text-green-500",
             bg: "bg-[#FEF6FB]"
@@ -360,7 +360,7 @@ const WaitingList = () => {
             title: "Avg. Interest Level",
             value: statsFreeTrial?.avgInterest?.avgInterest,
             change: statsFreeTrial?.avgInterest?.percentage != null
-                ? `${statsFreeTrial.avgInterest?.percentage}%`
+                ? `${statsFreeTrial.avgInterest?.percentage}`
                 : "0%",
             icon: "/DashboardIcons/📈.png",
             color: "text-green-500",
@@ -372,7 +372,7 @@ const WaitingList = () => {
             value: statsFreeTrial?.avgDaysWaiting?.avgDaysWaiting || "0",
             icon: "/DashboardIcons/⏱️.png",
             change: statsFreeTrial?.avgDaysWaiting?.percentage != null
-                ? `${statsFreeTrial.avgDaysWaiting?.percentage}%`
+                ? `${statsFreeTrial.avgDaysWaiting?.percentage}`
                 : "0%",
             color: "text-green-500",
             bg: "bg-[#F0F9F9]"
@@ -382,7 +382,7 @@ const WaitingList = () => {
             value: statsFreeTrial?.mostRequestedVenue?.name || "0",
             icon: "/DashboardIcons/📍.png",
             change: statsFreeTrial?.mostRequestedVenue?.percentage != null
-                ? `${statsFreeTrial.mostRequestedVenue.percentage}%`
+                ? `${statsFreeTrial.mostRequestedVenue.percentage}`
                 : "0%",
             color: "text-green-500",
             bg: "bg-[#FEF6FB]"

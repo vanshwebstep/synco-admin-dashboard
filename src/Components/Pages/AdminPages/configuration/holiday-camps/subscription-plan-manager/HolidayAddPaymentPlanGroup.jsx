@@ -18,6 +18,8 @@ const HolidayAddPaymentPlanGroup = () => {
     const [submitloading, setSubmitLoading] = useState(false);
 
     const [groupName, setGroupName] = useState('');
+    const [errors, setErrors] = useState({});
+    const [planErrors, setPlanErrors] = useState({});
     const [previewShowModal, setPreviewShowModal] = useState(false);
     const { fetchPackages, groups, createPackage, fetchGroupById, loading, createGroup, selectedGroup, packages, updateGroup } = useHolidayPayments();
     const [selectedPlans, setSelectedPlans] = useState([]);
@@ -120,7 +122,28 @@ const HolidayAddPaymentPlanGroup = () => {
             plan.title.toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [searchTerm]);
+    const validateMainForm = () => {
+        const newErrors = {};
+        if (!groupName.trim()) newErrors.groupName = "Group name is required.";
+        if (!description.trim()) newErrors.description = "Description is required.";
+        if (selectedPlans.length === 0) newErrors.selectedPlans = "Please select at least one payment plan.";
+
+        setErrors(newErrors);
+        return newErrors;
+    };
+
     const handleCreateGroup = async () => {
+        const validationErrors = validateMainForm();
+        if (Object.keys(validationErrors).length > 0) {
+            const firstErrorField = Object.keys(validationErrors)[0];
+            const element = document.getElementsByName(firstErrorField)[0] || document.getElementById(firstErrorField);
+            if (element) {
+                element.scrollIntoView({ behavior: "smooth", block: "center" });
+                element.focus();
+            }
+            return;
+        }
+
         setSubmitLoading(true); // start loader
         const ids = selectedPlans.map(plan => plan.id).join(',');
         const payload = {
@@ -139,6 +162,17 @@ const HolidayAddPaymentPlanGroup = () => {
     };
 
     const handleUpdateGroup = async () => {
+        const validationErrors = validateMainForm();
+        if (Object.keys(validationErrors).length > 0) {
+            const firstErrorField = Object.keys(validationErrors)[0];
+            const element = document.getElementsByName(firstErrorField)[0] || document.getElementById(firstErrorField);
+            if (element) {
+                element.scrollIntoView({ behavior: "smooth", block: "center" });
+                element.focus();
+            }
+            return;
+        }
+
         setSubmitLoading(true); // start loader
         const ids = selectedPlans.map(plan => plan.id).join(',');
         const payload = {
@@ -157,13 +191,25 @@ const HolidayAddPaymentPlanGroup = () => {
     };
 
     const handleSavePlan = async () => {
-
-
         const { title, price, interval, duration, joiningFee, students } = formData;
+        const newPlanErrors = {};
 
-        // ✅ Validation
-        if (!title || !price || !interval || !duration || !students || !joiningFee) {
-            showError("Error", "Please fill in all required fields: Title, Price, Interval, Duration, Number of Students, and Joining Fee.");
+        if (!title) newPlanErrors.title = "Title is required.";
+        if (!price) newPlanErrors.price = "Price is required.";
+        if (!interval) newPlanErrors.interval = "Interval is required.";
+        if (!duration) newPlanErrors.duration = "Duration is required.";
+        if (!students) newPlanErrors.students = "Number of students is required.";
+        if (!joiningFee) newPlanErrors.joiningFee = "Joining fee is required.";
+
+        setPlanErrors(newPlanErrors);
+
+        if (Object.keys(newPlanErrors).length > 0) {
+            const firstErrorField = Object.keys(newPlanErrors)[0];
+            const element = document.getElementsByName(firstErrorField)[0] || document.getElementById(firstErrorField);
+            if (element) {
+                element.scrollIntoView({ behavior: "smooth", block: "center" });
+                element.focus();
+            }
             return;
         }
 
@@ -182,7 +228,6 @@ const HolidayAddPaymentPlanGroup = () => {
 
         try {
             await createPackage(newPlan);
-
             showSuccess("Success", "Plan saved successfully!");
 
             // Clear form
@@ -196,7 +241,7 @@ const HolidayAddPaymentPlanGroup = () => {
                 termsAndCondition: '',
                 HolidayCampPackage: ''
             });
-
+            setPlanErrors({});
             setPackageDetails('');
             setTerms('');
             setOpenForm(false);
@@ -293,14 +338,7 @@ const HolidayAddPaymentPlanGroup = () => {
                             <div className="rounded-2xl w-full md:p-12 ">
                                 <form
                                     onSubmit={(e) => {
-                                        e.preventDefault(); // prevents page refresh
-
-                                        // ✅ Check if at least one plan is selected
-                                        if (selectedPlans.length === 0) {
-                                            showError("Error", "Please select at least one Payment Plans.");
-                                            return;
-                                        }
-
+                                        e.preventDefault();
                                         if (id && selectedGroup) {
                                             handleUpdateGroup();
                                         } else {
@@ -309,40 +347,41 @@ const HolidayAddPaymentPlanGroup = () => {
                                     }}
                                     className="mx-auto space-y-4"
                                 >
-                                    {/* Group Name */}
                                     <div>
                                         <label className="block text-base  font-semibold text-gray-700 mb-2">
                                             Payment Plan Group Name
                                         </label>
                                         <input
+                                            name="groupName"
                                             value={groupName}
                                             onChange={(e) => setGroupName(e.target.value)}
                                             type="text"
-                                            required
                                             placeholder="Enter Group Name"
-                                            className="w-full px-4 font-semibold text-base py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className={`w-full px-4 font-semibold text-base py-3 border ${errors.groupName ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${errors.groupName ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
                                         />
+                                        {errors.groupName && (
+                                            <p className="text-sm text-red-500 mt-1">{errors.groupName}</p>
+                                        )}
                                     </div>
 
-                                    {/* Description */}
                                     <div>
                                         <label className="block text-base  font-semibold text-gray-700 mb-2">
                                             Description
                                         </label>
                                         <input
-
+                                            name="description"
                                             value={description}
                                             onChange={(e) => setDescription(e.target.value)}
                                             type="text"
-                                            required
                                             placeholder="Add Internal  reference"
-                                            className="w-full px-4 font-semibold py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className={`w-full px-4 font-semibold py-3 border ${errors.description ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${errors.description ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
                                         />
+                                        {errors.description && (
+                                            <p className="text-sm text-red-500 mt-1">{errors.description}</p>
+                                        )}
                                     </div>
 
-                                    {/* Payment Plans */}
                                     <div className="w-full">
-                                        {/* Label - Clickable to toggle options */}
                                         <div
                                             className="flex items-center justify-between cursor-pointer mb-2"
                                             onClick={() => setIsOpen(!isOpen)}
@@ -353,14 +392,10 @@ const HolidayAddPaymentPlanGroup = () => {
 
                                         </div>
 
-                                        {/* Animated Collapsible Plan Select Area */}
-
-
-                                        {/* Selected Plans */}
-
                                         <div
+                                            id="selectedPlans"
                                             onClick={() => setIsOpen(!isOpen)}
-                                            className="mt-4 space-y-2 border border-gray-200 px-4 py-3 rounded-lg"
+                                            className={`mt-4 space-y-2 border ${errors.selectedPlans ? 'border-red-500' : 'border-gray-200'} px-4 py-3 rounded-lg cursor-pointer`}
                                         >
                                             {selectedPlans.length > 0 ? (
                                                 selectedPlans.map((plan, idx) => (
@@ -376,7 +411,7 @@ const HolidayAddPaymentPlanGroup = () => {
                                                         <button
                                                             type="button"
                                                             onClick={(e) => {
-                                                                e.stopPropagation(); // Prevents triggering setIsOpen
+                                                                e.stopPropagation();
                                                                 handleRemovePlan(idx);
                                                             }}
                                                             className="text-gray-500 hover:text-red-500"
@@ -389,6 +424,9 @@ const HolidayAddPaymentPlanGroup = () => {
                                                 <div className="text-gray-400 italic">No plans selected</div>
                                             )}
                                         </div>
+                                        {errors.selectedPlans && (
+                                            <p className="text-sm text-red-500 mt-1">{errors.selectedPlans}</p>
+                                        )}
 
                                         <AnimatePresence initial={false}>
                                             {isOpen && (
@@ -397,7 +435,7 @@ const HolidayAddPaymentPlanGroup = () => {
                                                     animate={{ height: "auto", opacity: 1 }}
                                                     exit={{ height: 0, opacity: 0 }}
                                                     transition={{ duration: 0.3 }}
-                                                    className="transition-all" // remove "overflow-hidden"
+                                                    className="transition-all"
                                                 >
                                                     <div className="w-full my-4">
                                                         <Select
@@ -409,19 +447,17 @@ const HolidayAddPaymentPlanGroup = () => {
                                                             placeholder="Select Payment Plans ..."
                                                             className="react-select-container"
                                                             classNamePrefix="react-select"
-
-                                                            menuPortalTarget={document.body} // 🔥 THIS FIXES OVERFLOW
+                                                            menuPortalTarget={document.body}
                                                             styles={{
                                                                 control: (base, state) => ({
                                                                     ...base,
                                                                     borderRadius: "14px",
                                                                     border: "1px solid",
-                                                                    borderColor: state.isFocused ? "#3b82f6" : "#e5e7eb", // Blue-500 or Gray-200
+                                                                    borderColor: state.isFocused ? "#3b82f6" : "#e5e7eb",
                                                                     boxShadow: state.isFocused
                                                                         ? "0 0 0 3px rgba(59, 130, 246, 0.2)"
                                                                         : "0 1px 2px rgba(0,0,0,0.05)",
                                                                     transition: "all 0.2s ease",
-
                                                                     padding: "4px 8px",
                                                                     backgroundColor: "#fff",
                                                                     fontSize: "15px",
@@ -434,11 +470,10 @@ const HolidayAddPaymentPlanGroup = () => {
                                                                 }),
                                                                 placeholder: (base) => ({
                                                                     ...base,
-                                                                    color: "#9ca3af", // gray-400
+                                                                    color: "#9ca3af",
                                                                     fontSize: "15px",
                                                                     fontWeight: 400,
                                                                 }),
-
                                                                 option: (base, state) => ({
                                                                     ...base,
                                                                     backgroundColor: state.isSelected
@@ -456,14 +491,14 @@ const HolidayAddPaymentPlanGroup = () => {
                                                                 multiValue: (base) => ({
                                                                     ...base,
                                                                     borderRadius: "10px",
-                                                                    backgroundColor: "#eff6ff", // blue-50
+                                                                    backgroundColor: "#eff6ff",
                                                                     padding: "2px 8px",
                                                                     display: "flex",
                                                                     alignItems: "center",
                                                                 }),
                                                                 multiValueLabel: (base) => ({
                                                                     ...base,
-                                                                    color: "#1d4ed8", // blue-700
+                                                                    color: "#1d4ed8",
                                                                     fontWeight: 500,
                                                                     fontSize: "14px",
                                                                 }),
@@ -484,12 +519,10 @@ const HolidayAddPaymentPlanGroup = () => {
                                                                         ? "rotate(180deg)"
                                                                         : "rotate(0deg)",
                                                                 }),
-
                                                                 indicatorSeparator: () => ({ display: "none" }),
                                                                 menuPortal: (base) => ({
                                                                     ...base,
                                                                     zIndex: 9999,
-                                                                    // or explicitly match the Select control
                                                                 }),
                                                                 menu: (base) => ({
                                                                     ...base,
@@ -506,8 +539,6 @@ const HolidayAddPaymentPlanGroup = () => {
                                                             hideSelectedOptions={false}
                                                             isClearable
                                                         />
-
-
                                                     </div>
                                                 </motion.div>
                                             )}
@@ -523,7 +554,6 @@ const HolidayAddPaymentPlanGroup = () => {
                                             Add Payment Plans
                                         </button>
                                     }
-                                    {/* Footer Buttons */}
                                     <div className="flex flex-wrap flex-col-reverse gap-4 md:flex-row md:items-center md:justify-end md:gap-4">
 
                                         {selectedPlans.length > 0 && (
@@ -570,7 +600,6 @@ const HolidayAddPaymentPlanGroup = () => {
                                     >
                                         &times;
                                     </button>
-                                    {/* Add your form content here */}
                                     <div className="text-[24px] font-semibold mb-4">Payment Plans</div>
                                     {[
                                         { label: "Title", name: "title", type: "text" },
@@ -585,7 +614,6 @@ const HolidayAddPaymentPlanGroup = () => {
                                         { label: "Number of Students", name: "students", type: "number" },
                                         { label: "Joining Fee (£)", name: "joiningFee", type: "number" }
                                     ].map((field) => {
-                                        // Duration options for dropdown
                                         let durationOptions = [];
                                         if (field.name === "duration") {
                                             if (formData.interval === "Month") {
@@ -613,106 +641,119 @@ const HolidayAddPaymentPlanGroup = () => {
                                                 </label>
 
                                                 {field.name === "interval" ? (
-                                                    <Select
-                                                        options={field.options.map((opt) => ({ label: opt, value: opt }))}
-                                                        value={
-                                                            formData.interval
-                                                                ? { label: formData.interval, value: formData.interval }
-                                                                : null
-                                                        }
-                                                        onChange={(selected) =>
-                                                            setFormData({ ...formData, interval: selected.value })
-                                                        }
-                                                        className="text-base font-semibold"
-                                                        classNamePrefix="react-select"
-                                                        styles={{
-                                                            control: (provided) => ({
-                                                                ...provided,
-                                                                borderRadius: "0.5rem",
-                                                                padding: "4px",
-                                                                borderColor: "#E5E7EB", // gray-200
-                                                                boxShadow: "none",
-                                                                "&:hover": { borderColor: "#3B82F6" } // blue-500
-                                                            }),
-                                                            dropdownIndicator: (provided) => ({
-                                                                ...provided,
-                                                                display: "none" // hides arrow icon
-                                                            }),
-                                                            indicatorSeparator: () => ({ display: "none" })
-                                                        }}
-                                                        placeholder=""
-                                                    />
+                                                    <div id="interval">
+                                                        <Select
+                                                            options={field.options.map((opt) => ({ label: opt, value: opt }))}
+                                                            value={
+                                                                formData.interval
+                                                                    ? { label: formData.interval, value: formData.interval }
+                                                                    : null
+                                                            }
+                                                            onChange={(selected) =>
+                                                                setFormData({ ...formData, interval: selected.value })
+                                                            }
+                                                            className="text-base font-semibold"
+                                                            classNamePrefix="react-select"
+                                                            styles={{
+                                                                control: (provided) => ({
+                                                                    ...provided,
+                                                                    borderRadius: "0.5rem",
+                                                                    padding: "4px",
+                                                                    borderColor: planErrors.interval ? 'red' : "#E5E7EB",
+                                                                    boxShadow: "none",
+                                                                    "&:hover": { borderColor: planErrors.interval ? 'red' : "#3B82F6" }
+                                                                }),
+                                                                dropdownIndicator: (provided) => ({
+                                                                    ...provided,
+                                                                    display: "none"
+                                                                }),
+                                                                indicatorSeparator: () => ({ display: "none" })
+                                                            }}
+                                                            placeholder=""
+                                                        />
+                                                        {planErrors.interval && (
+                                                            <p className="text-sm text-red-500 mt-1">{planErrors.interval}</p>
+                                                        )}
+                                                    </div>
                                                 ) : field.name === "duration" && formData.interval ? (
-                                                    <select
-                                                        value={formData.duration}
-                                                        onChange={(e) =>
-                                                            setFormData({ ...formData, duration: e.target.value })
-                                                        }
-                                                        className="w-full px-4 py-3 font-semibold text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-transparent"
-                                                    >
-                                                        <option value="" disabled>
-                                                            Select Duration
-                                                        </option>
-                                                        {durationOptions.map((opt) => (
-                                                            <option key={opt.value} value={opt.value}>
-                                                                {opt.label}
+                                                    <div>
+                                                        <select
+                                                            name="duration"
+                                                            value={formData.duration}
+                                                            onChange={(e) =>
+                                                                setFormData({ ...formData, duration: e.target.value })
+                                                            }
+                                                            className={`w-full px-4 py-3 font-semibold text-base border ${planErrors.duration ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${planErrors.duration ? 'focus:ring-red-500' : 'focus:ring-blue-500'} appearance-none bg-transparent`}
+                                                        >
+                                                            <option value="" disabled>
+                                                                Select Duration
                                                             </option>
-                                                        ))}
-                                                    </select>
+                                                            {durationOptions.map((opt) => (
+                                                                <option key={opt.value} value={opt.value}>
+                                                                    {opt.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                        {planErrors.duration && (
+                                                            <p className="text-sm text-red-500 mt-1">{planErrors.duration}</p>
+                                                        )}
+                                                    </div>
                                                 ) : field.type === "number" ? (
-                                                    <input
-                                                        type="text"
-                                                        value={formData[field.name]}
-                                                        onChange={(e) => {
-                                                            const value = e.target.value;
-
-                                                            // Allow only valid price format for price fields
-                                                            if (priceFields.includes(field.name)) {
-                                                                if (/^\d*\.?\d{0,2}$/.test(value)) {
-                                                                    setFormData({ ...formData, [field.name]: value });
+                                                    <div>
+                                                        <input
+                                                            type="text"
+                                                            name={field.name}
+                                                            value={formData[field.name]}
+                                                            onChange={(e) => {
+                                                                const value = e.target.value;
+                                                                if (priceFields.includes(field.name)) {
+                                                                    if (/^\d*\.?\d{0,2}$/.test(value)) {
+                                                                        setFormData({ ...formData, [field.name]: value });
+                                                                    }
+                                                                    return;
                                                                 }
-                                                                return;
-                                                            }
-
-                                                            // Normal text fields
-                                                            setFormData({ ...formData, [field.name]: value });
-                                                        }}
-                                                        onPaste={(e) => {
-                                                            const paste = e.clipboardData.getData("text");
-
-                                                            if (
-                                                                priceFields.includes(field.name) &&
-                                                                !/^\d*\.?\d{0,2}$/.test(paste)
-                                                            ) {
-                                                                e.preventDefault();
-                                                            }
-                                                        }}
-                                                        className="w-full px-4 py-3 font-semibold text-[18px] text-[#282829]
-               border border-gray-200 rounded-lg focus:outline-none
-               focus:ring-2 focus:ring-blue-500 appearance-none bg-transparent"
-                                                    />
+                                                                setFormData({ ...formData, [field.name]: value });
+                                                            }}
+                                                            onPaste={(e) => {
+                                                                const paste = e.clipboardData.getData("text");
+                                                                if (
+                                                                    priceFields.includes(field.name) &&
+                                                                    !/^\d*\.?\d{0,2}$/.test(paste)
+                                                                ) {
+                                                                    e.preventDefault();
+                                                                }
+                                                            }}
+                                                            className={`w-full px-4 py-3 font-semibold text-[18px] text-[#282829] border ${planErrors[field.name] ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${planErrors[field.name] ? 'focus:ring-red-500' : 'focus:ring-blue-500'} appearance-none bg-transparent`}
+                                                        />
+                                                        {planErrors[field.name] && (
+                                                            <p className="text-sm text-red-500 mt-1">{planErrors[field.name]}</p>
+                                                        )}
+                                                    </div>
                                                 ) : (
-                                                    <input
-                                                        type="text"
-                                                        value={formData[field.name]}
-                                                        onChange={(e) =>
-                                                            setFormData({ ...formData, [field.name]: e.target.value })
-                                                        }
-                                                        className="w-full px-4 py-3 font-semibold text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-transparent"
-                                                    />
+                                                    <div>
+                                                        <input
+                                                            type="text"
+                                                            name={field.name}
+                                                            value={formData[field.name]}
+                                                            onChange={(e) =>
+                                                                setFormData({ ...formData, [field.name]: e.target.value })
+                                                            }
+                                                            className={`w-full px-4 py-3 font-semibold text-base border ${planErrors[field.name] ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${planErrors[field.name] ? 'focus:ring-red-500' : 'focus:ring-blue-500'} appearance-none bg-transparent`}
+                                                        />
+                                                        {planErrors[field.name] && (
+                                                            <p className="text-sm text-red-500 mt-1">{planErrors[field.name]}</p>
+                                                        )}
+                                                    </div>
                                                 )}
                                             </div>
                                         );
                                     })}
 
-
-
-
                                     <div className="mb-4 relative">
                                         <label className="block text-base font-semibold text-gray-700 mb-2">
                                             Holiday Camps Package Details
                                         </label>
-                                        <div className="rounded-md border border-gray-300 bg-gray-100 p-1">
+                                        <div className={`rounded-md border p-1 ${planErrors.HolidayCampPackage ? 'border-red-500' : 'border-gray-300'}`}>
                                             <Editor
                                                 apiKey="sqe5er2lyngzjf0armhqaw1u7ffh0xgjyzmb7unv5irietwa"
                                                 value={formData.HolidayCampPackage}
@@ -725,64 +766,31 @@ const HolidayAddPaymentPlanGroup = () => {
                                                     toolbar: 'fontsizeselect capitalize bold italic underline alignleft aligncenter alignjustify',
                                                     height: 200,
                                                     branding: false,
-                                                    content_style: `
-  body {
-    background-color: #f3f4f6;
- font-family: "Poppins", sans-serif !important;
-    font-size: 1rem;
-    padding: 0px; /* reduced padding */
-    color: #111827;
-  }
-
-  * {
-    font-family:"Poppins", sans-serif !important;
-  }
-`,
+                                                    content_style: `body { background-color: #f3f4f6; font-family: "Poppins", sans-serif !important; font-size: 1rem; padding: 0px; color: #111827; } * { font-family:"Poppins", sans-serif !important; }`,
                                                     setup: (editor) => {
-                                                        // Custom capitalize button
-                                                        editor.ui.registry.addIcon(
-                                                            'capitalize-icon',
-                                                            '<img src="/images/icons/smallcaps.png" style="width:16px;height:16px;" />'
-                                                        );
+                                                        editor.ui.registry.addIcon('capitalize-icon', '<img src="/images/icons/smallcaps.png" style="width:16px;height:16px;" />');
                                                         editor.ui.registry.addButton('capitalize', {
                                                             icon: 'capitalize-icon',
                                                             tooltip: 'Capitalize Text',
                                                             onAction: () => {
-                                                                editor.formatter.register('capitalize', {
-                                                                    inline: 'span',
-                                                                    styles: { textTransform: 'capitalize' },
-                                                                });
+                                                                editor.formatter.register('capitalize', { inline: 'span', styles: { textTransform: 'capitalize' } });
                                                                 editor.formatter.toggle('capitalize');
                                                             },
-                                                        });
-
-                                                        // Remove className from content on init
-                                                        editor.on('BeforeSetContent', (e) => {
-                                                            if (e.content) {
-                                                                e.content = e.content.replace(/\sclass="[^"]*"/g, '');
-                                                            }
-                                                        });
-
-                                                        // Also clean pasted content
-                                                        editor.on('PastePostProcess', (e) => {
-                                                            e.node.innerHTML = e.node.innerHTML.replace(/\sclass="[^"]*"/g, '');
                                                         });
                                                     },
                                                 }}
                                             />
-
-
                                         </div>
+                                        {planErrors.HolidayCampPackage && <p className="text-sm text-red-500 mt-1">{planErrors.HolidayCampPackage}</p>}
                                     </div>
 
                                     <div className="mb-4 relative">
                                         <label className="block text-base font-semibold text-gray-700 mb-2">
                                             Terms & Conditions
                                         </label>
-                                        <div className="rounded-md border border-gray-300 bg-gray-100 p-1">
+                                        <div className={`rounded-md border p-1 ${planErrors.termsAndCondition ? 'border-red-500' : 'border-gray-300'}`}>
                                             <Editor
                                                 apiKey="sqe5er2lyngzjf0armhqaw1u7ffh0xgjyzmb7unv5irietwa"
-
                                                 value={formData.termsAndCondition}
                                                 onEditorChange={(content) =>
                                                     setFormData({ ...formData, termsAndCondition: content })
@@ -790,65 +798,37 @@ const HolidayAddPaymentPlanGroup = () => {
                                                 init={{
                                                     menubar: false,
                                                     plugins: 'lists advlist',
-                                                    toolbar:
-                                                        'fontsizeselect capitalize bold italic underline alignleft aligncenter alignjustify',
+                                                    toolbar: 'fontsizeselect capitalize bold italic underline alignleft aligncenter alignjustify',
                                                     height: 200,
                                                     branding: false,
-                                                    content_style: `
-  body {
-    background-color: #f3f4f6;
- font-family: "Poppins", sans-serif !important;
-    font-size: 1rem;
-    padding: 0px; /* reduced padding */
-    color: #111827;
-  }
-
-  * {
-    font-family:"Poppins", sans-serif !important;
-  }
-`,
+                                                    content_style: `body { background-color: #f3f4f6; font-family: "Poppins", sans-serif !important; font-size: 1rem; padding: 0px; color: #111827; } * { font-family:"Poppins", sans-serif !important; }`,
                                                     setup: (editor) => {
-                                                        // Register custom icon
-                                                        editor.ui.registry.addIcon(
-                                                            'capitalize-icon',
-                                                            '<img src="/images/icons/smallcaps.png" style="width:16px;height:16px;" />'
-                                                        );
-
-                                                        // Register and add button
+                                                        editor.ui.registry.addIcon('capitalize-icon', '<img src="/images/icons/smallcaps.png" style="width:16px;height:16px;" />');
                                                         editor.ui.registry.addButton('capitalize', {
                                                             icon: 'capitalize-icon',
                                                             tooltip: 'Capitalize Text',
                                                             onAction: () => {
-                                                                editor.formatter.register('capitalize', {
-                                                                    inline: 'span',
-                                                                    styles: { textTransform: 'capitalize' },
-                                                                });
-
+                                                                editor.formatter.register('capitalize', { inline: 'span', styles: { textTransform: 'capitalize' } });
                                                                 editor.formatter.toggle('capitalize');
                                                             },
                                                         });
                                                     },
                                                 }}
-                                                onInit={(evt, editor) => {
-                                                }}
                                             />
                                         </div>
+                                        {planErrors.termsAndCondition && <p className="text-sm text-red-500 mt-1">{planErrors.termsAndCondition}</p>}
                                     </div>
 
                                     <div className="text-right">
                                         <button
+                                            type="button"
                                             onClick={handleSavePlan}
                                             disabled={isSavePlan}
-                                            className={`bg-[#237FEA] text-white mt-5 min-w-50 font-semibold px-6 py-2 rounded-lg 
-        ${isSavePlan ? 'bg-gray-400 cursor-not-allowed' : 'hover:bg-blue-700'}`}
+                                            className={`w-full bg-[#237FEA] text-white text-[16px] font-semibold py-3 rounded-lg mt-6 ${isSavePlan ? 'opacity-50' : 'hover:bg-blue-700'}`}
                                         >
-                                            {isSavePlan ? 'Saving...' : 'Save Plan'}
+                                            {isSavePlan ? "Saving..." : "Add Plan"}
                                         </button>
-
                                     </div>
-
-
-
                                 </motion.div>
                             )}
                         </AnimatePresence>

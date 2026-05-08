@@ -22,12 +22,15 @@ import { useEmail } from '../../../contexts/messages/SendEmailContext';
 import { useCancelMembership } from '../../../contexts/messages/CancelMembershipContext';
 import PhoneNumberInput from '../../../Common/PhoneNumberInput';
 import { useTextPopup } from '../../../contexts/messages/SendTextContext';
+import { useRevertMembership } from '../../../contexts/RevertMembershipContext';
 
 const ParentProfile = (stateData) => {
     const profile = stateData?.stateData || {};
-
+    console.log("ParentProfile Data:", { stateData, profile });
+    const { openRevertPopup } = useRevertMembership();
+    console.log("useRevertMembership Context:", { openRevertPopup });
     const navigate = useNavigate();
-    const { serviceHistoryMembership } = useBookFreeTrial();
+    const { profileMembership } = useBookFreeTrial();
     const [textloading, setTextLoading] = useState(null);
     const { openEmailPopup } = useEmail();
     const { openTextPopup } = useTextPopup();
@@ -112,7 +115,6 @@ const ParentProfile = (stateData) => {
     }, [location.state]);
     // ── Extra info rows for the right panel (service-specific) ───────────────
 
-    console.log("Location state:", location.state.memberInfo);
     const renderExtraInfoRows = () => {
         if (isBirthdayParty) {
             return (
@@ -370,6 +372,14 @@ const ParentProfile = (stateData) => {
     };
     const [parents, setParents] = useState(profile?.parents || []);
     const [students, setStudents] = useState(profile?.students || []);
+    const [selectedStudents, setSelectedStudents] = useState([]);
+
+    // Sync state when profile data arrives
+    useEffect(() => {
+        if (profile?.parents) setParents(profile.parents);
+        if (profile?.students) setStudents(profile.students);
+        if (profile?.emergency) setEmergencyContacts(profile.emergency);
+    }, [profile]);
 
     // Unified handler for DatePicker
     const handleDateChange = (date, field, stateSetter) => {
@@ -407,6 +417,13 @@ const ParentProfile = (stateData) => {
                 studentTransfers: newTransfers
             };
         });
+    };
+    const handleStudentSelect = (student) => {
+        setSelectedStudents((prev) =>
+            prev.some((s) => s.id === student.id)
+                ? prev.filter((s) => s.id !== student.id)
+                : [...prev, student]
+        );
     };
 
 
@@ -655,7 +672,7 @@ const ParentProfile = (stateData) => {
             throw error;
         } finally {
             // navigate(`/weekly-classes/all-members/list`);
-            await serviceHistoryMembership(bookingId);
+            await profileMembership(bookingId);
             setTextLoading(false);
         }
     };
@@ -1407,6 +1424,8 @@ const ParentProfile = (stateData) => {
                                                 Cancel Membership
                                             </button>
                                         )}
+
+
                                     </div>
                                 </div>
 
@@ -1787,6 +1806,18 @@ const ParentProfile = (stateData) => {
                                                             Cancel Membership
                                                         </button>
                                                     )}
+                                                    {
+                                                        (profile?.status === "active" || status === "request_to_cancel") &&
+                                                        profile?.students?.some((s) => s.studentStatus === "request_to_cancel") && (
+                                                            <button
+                                                                onClick={() => { console.log('Revert click', id); openRevertPopup(id, profile?.students); }}
+
+                                                                // onClick={() => handleRevertMembership(id)}
+                                                                className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                                            >
+                                                                Revert Membership
+                                                            </button>
+                                                        )}
 
                                                     {!profile?.paymentPlan && profile?.classSchedule?.capacity !== 0 && status !== 'active' && status !== "request_to_cancel" && (
                                                         <button
@@ -1870,9 +1901,7 @@ const ParentProfile = (stateData) => {
 
                                                 </>
                                             )}
-
-
-                                            {location.state?.memberInfo == "cancellation" ? (
+                                            {location.state?.memberInfo == "cancellation" || location.state?.memberInfo == "cancelled" ? (
                                                 <button
                                                     onClick={handleReinstateMembership}
                                                     className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
@@ -1886,6 +1915,10 @@ const ParentProfile = (stateData) => {
                                                 </button>
                                             )
                                                 : null}
+
+
+
+
                                         </div>
                                     )}
 
@@ -1893,6 +1926,8 @@ const ParentProfile = (stateData) => {
                                 </div>
                             </>
                 }
+
+
                 {addToWaitingList && (
                     <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
                         <div className="bg-white rounded-2xl w-[541px] max-h-[90%] overflow-y-auto relative scrollbar-hide">
@@ -2234,7 +2269,10 @@ const ParentProfile = (stateData) => {
                         <div className="bg-white rounded-2xl w-[541px] max-h-[90%] overflow-y-auto relative scrollbar-hide">
                             <button
                                 className="absolute top-4 left-4 p-2"
-                                onClick={() => setshowCancelTrial(false)}
+                                onClick={() => {
+                                    setshowCancelTrial(false);
+                                    setSelectedStudents([]);
+                                }}
                             >
                                 <img src="/images/icons/cross.png" alt="Close" />
                             </button>
@@ -2244,6 +2282,44 @@ const ParentProfile = (stateData) => {
                             </div>
 
                             <div className="space-y-4 px-6 pb-6 pt-4">
+                                <div>
+                                    <label className="block text-[16px] font-semibold">
+                                        Select Students to Cancel
+                                    </label>
+
+                                    <div className="mt-3 space-y-2">
+                                        {studentsList.map((student) => {
+                                            const isCancelled = student.studentStatus === "cancelled";
+
+                                            return (
+                                                <label
+                                                    key={student.id}
+                                                    className={`flex items-center space-x-3 ${isCancelled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        disabled={isCancelled}
+                                                        checked={selectedStudents.some((s) => s.id === student.id)}
+                                                        onChange={() =>
+                                                            !isCancelled &&
+                                                            handleStudentSelect({
+                                                                id: student.id,
+                                                                studentFirstName: student.studentFirstName,
+                                                                studentLastName: student.studentLastName,
+                                                            })
+                                                        }
+                                                        className="w-4 h-4"
+                                                    />
+
+                                                    <span className="text-[15px]">
+                                                        {student.studentFirstName} {student.studentLastName}
+                                                        {isCancelled && " (Already Cancelled)"}
+                                                    </span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
                                 <div>
                                     <label className="block text-[16px] font-semibold">
                                         Cancellation Type
@@ -2354,6 +2430,12 @@ const ParentProfile = (stateData) => {
                                 <div className="flex justify-end gap-4 pt-4">
                                     <button
                                         onClick={() => {
+                                            // Validation: at least one student selected
+                                            if (selectedStudents.length === 0) {
+                                                showWarning("Validation Error", "Please select at least one student to cancel.");
+                                                return;
+                                            }
+
                                             // Validation: cancellation type
                                             if (!cancelData.cancellationType) {
                                                 showWarning("Validation Error", "Please select a cancellation type.");
@@ -2378,8 +2460,9 @@ const ParentProfile = (stateData) => {
                                             // ✅ All validations passed → close modal immediately
 
                                             setshowCancelTrial(false)
+                                            setSelectedStudents([])
                                             // 🔥 Then call API (don’t wait for response)
-                                            cancelMembershipSubmit(cancelData, "allMembers");
+                                            cancelMembershipSubmit(cancelData, "allMembers", selectedStudents, location.state?.memberInfo);
                                         }}
                                         className="w-1/2 bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
                                     >

@@ -2355,7 +2355,7 @@ const StudentProfile = ({ profile }) => {
                           )}
                           {requestToCancelStudents?.length > 0 && canCancelTrial && (
                             <button
-                              onClick={() => openRevertPopup(id)}
+                              onClick={() => openRevertPopup(id, students)}
                               className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
                             >
                               Revert Membership

@@ -21,29 +21,37 @@ const Create = ({ groups, termGroup }) => {
   const [showSubDropdown, setShowSubDropdown] = useState(false);
   const [selectedSub, setSelectedSub] = useState(null);
   const [selectedTermIds, setSelectedTermIds] = useState([]);
+  const [errors, setErrors] = useState({});
   const validateForm = () => {
-    if (!formData.area?.trim()) return 'Area is required';
-    if (!formData.name?.trim()) return 'Name of Venue is required';
-    if (!formData.address?.trim()) return 'Address is required';
-    if (!formData.facility) return 'Please select Facility (Indoor/Outdoor)';
-    if (formData.hasParking && !formData.parkingNote?.trim()) return 'Please add a Parking Note';
-    if (formData.isCongested && !formData.howToEnterFacility?.trim()) return 'Please add a Congestion Note';
-    if (selectedTermIds.length === 0) return 'Please select at least one Camp Date Linkage';
-    return null; // ✅ valid
+    const newErrors = {};
+    if (!formData.area?.trim()) newErrors.area = 'Area is required';
+    if (!formData.name?.trim()) newErrors.name = 'Name of Venue is required';
+    if (!formData.address?.trim()) newErrors.address = 'Address is required';
+    if (!formData.facility) newErrors.facility = 'Please select Facility (Indoor/Outdoor)';
+    if (formData.hasParking && !formData.parkingNote?.trim()) newErrors.parkingNote = 'Please add a Parking Note';
+    if (formData.isCongested && !formData.howToEnterFacility?.trim()) newErrors.howToEnterFacility = 'Please add a Congestion Note';
+    if (!selectedTermIds || (Array.isArray(selectedTermIds) && selectedTermIds.length === 0)) {
+      newErrors.holidayCampId = 'Please select at least one Camp Date Linkage';
+    }
+
+    setErrors(newErrors);
+    return newErrors;
   };
 
   const handleSubmit = () => {
-    const err = validateForm();
-    if (err) {
-      showError('Validation Error', err);
-      
-      return; // stop here
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      const firstErrorField = Object.keys(validationErrors)[0];
+      const element = document.getElementsByName(firstErrorField)[0] || document.getElementById(firstErrorField);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        element.focus();
+      }
+      return;
     }
 
     // Success flow
     createVenues(formData);
-
-
   };
 
 
@@ -61,10 +69,15 @@ const Create = ({ groups, termGroup }) => {
 
 
   const handleUpdate = (id) => {
-    const err = validateForm();
-    if (err) {
-      showError('Validation Error', err);
-      return; // stop here, don't close
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      const firstErrorField = Object.keys(validationErrors)[0];
+      const element = document.getElementsByName(firstErrorField)[0] || document.getElementById(firstErrorField);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        element.focus();
+      }
+      return;
     }
 
     // Normalize holidayCampIds
@@ -247,8 +260,11 @@ console.log("Final holidayCampId:", holidayCampId);
             name="area"
             value={formData.area}
             onChange={handleInputChange}
-            className="w-full border border-[#E2E1E5] rounded-xl p-4 text-sm"
+            className={`w-full border ${errors.area ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl p-4 text-sm focus:outline-none focus:ring-2 ${errors.area ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
           />
+          {errors.area && (
+            <p className="text-xs text-red-500 mt-1">{errors.area}</p>
+          )}
         </div>
 
         <div>
@@ -258,8 +274,11 @@ console.log("Final holidayCampId:", holidayCampId);
             name="name"
             value={formData.name}
             onChange={handleInputChange}
-            className="w-full border border-[#E2E1E5] rounded-xl p-4 text-sm"
+            className={`w-full border ${errors.name ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl p-4 text-sm focus:outline-none focus:ring-2 ${errors.name ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
           />
+          {errors.name && (
+            <p className="text-xs text-red-500 mt-1">{errors.name}</p>
+          )}
         </div>
 
         <div>
@@ -269,13 +288,17 @@ console.log("Final holidayCampId:", holidayCampId);
             name="address"
             value={formData.address}
             onChange={handleInputChange}
-            className="w-full border border-[#E2E1E5] rounded-xl p-4 text-sm"
+            className={`w-full border ${errors.address ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl p-4 text-sm focus:outline-none focus:ring-2 ${errors.address ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
           />
+          {errors.address && (
+            <p className="text-xs text-red-500 mt-1">{errors.address}</p>
+          )}
         </div>
 
-        <div>
+        <div id="facility">
           <label className="block font-semibold text-[16px] pb-2">Facility</label>
           <Select
+            inputId="facility"
             name="facility"
             value={facilityOptions.find(option => option.value === formData.facility)}
             onChange={(selectedOption) =>
@@ -287,7 +310,19 @@ console.log("Final holidayCampId:", holidayCampId);
             options={facilityOptions}
             className="w-full text-sm"
             classNamePrefix="react-select"
+            styles={{
+              control: (base) => ({
+                ...base,
+                borderColor: errors.facility ? 'red' : base.borderColor,
+                '&:hover': {
+                  borderColor: errors.facility ? 'red' : base.borderColor,
+                },
+              }),
+            }}
           />
+          {errors.facility && (
+            <p className="text-xs text-red-500 mt-1">{errors.facility}</p>
+          )}
         </div>
 
         <div className="flex py-2 items-center justify-between gap-6">
@@ -350,8 +385,11 @@ console.log("Final holidayCampId:", holidayCampId);
               value={formData.parkingNote}
               onChange={handleInputChange}
               placeholder="Add a parking note"
-              className="w-full border bg-[#FAFAFA] border-[#E2E1E5] rounded-xl p-4 text-sm"
+              className={`w-full border bg-[#FAFAFA] ${errors.parkingNote ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl p-4 text-sm focus:outline-none focus:ring-2 ${errors.parkingNote ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
             />
+            {errors.parkingNote && (
+              <p className="text-xs text-red-500 mt-1">{errors.parkingNote}</p>
+            )}
           </div>
         )}
 
@@ -362,10 +400,13 @@ console.log("Final holidayCampId:", holidayCampId);
             name="howToEnterFacility"
             value={formData.howToEnterFacility}
             onChange={handleInputChange}
-            className="w-full border bg-[#FAFAFA] border-[#E2E1E5] rounded-xl p-4 text-sm"
+            className={`w-full border bg-[#FAFAFA] ${errors.howToEnterFacility ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl p-4 text-sm focus:outline-none focus:ring-2 ${errors.howToEnterFacility ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
             rows={3}
             placeholder="Add notes"
           />
+          {errors.howToEnterFacility && (
+            <p className="text-xs text-red-500 mt-1">{errors.howToEnterFacility}</p>
+          )}
         </div>
 
 
@@ -373,20 +414,23 @@ console.log("Final holidayCampId:", holidayCampId);
         <div className="space-y-6 max-w-md">
 
           {/* Camp Date */}
-          <div className="w-full max-w-xl">
+          <div id="holidayCampId" className="w-full max-w-xl">
             <label className="block font-semibold text-[16px] pb-2">
               Holiday Camp Date Linkage
             </label>
             <div
               onClick={() => setShowTermDropdown(!showTermDropdown)}
-              className="w-full border border-[#E2E1E5] rounded-xl p-4 text-sm text-[#717073] bg-white relative cursor-pointer 
+              className={`w-full border ${errors.holidayCampId ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl p-4 text-sm text-[#717073] bg-white relative cursor-pointer 
   after:content-[''] after:absolute after:right-4 after:top-1/2 after:-translate-y-1/2 
-  after:w-2 after:h-2 after:border-r-2 after:border-b-2 after:border-[#717073] after:rotate-45"
+  after:w-2 after:h-2 after:border-r-2 after:border-b-2 after:border-[#717073] after:rotate-45`}
             >
               {labels.length > 0
                 ? labels.join(", ")
                 : "Select Camp Date Group"}
             </div>
+            {errors.holidayCampId && (
+              <p className="text-xs text-red-500 mt-1">{errors.holidayCampId}</p>
+            )}
 
             <AnimatePresence>
               {showTermDropdown && (

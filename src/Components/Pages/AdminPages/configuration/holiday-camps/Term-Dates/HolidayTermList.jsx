@@ -24,16 +24,17 @@ const HolidayTermList = () => {
     }));
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!id) return;
 
-    showConfirm(
+    const result = await showConfirm(
       "Are you sure?",
-      "This action will delete the Term Group.",
-      () => {
-        deleteCampDate(id);
-      }
+      "This action will delete the Holiday Camp dates."
     );
+
+    if (result.isConfirmed) {
+      await deleteCampDate(id);
+    }
   };
 
   const formatDate = (dateStr) => {

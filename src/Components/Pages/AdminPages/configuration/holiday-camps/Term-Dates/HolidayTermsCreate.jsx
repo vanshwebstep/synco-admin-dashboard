@@ -35,6 +35,8 @@ const HolidayTermsCreate = () => {
     const [sessionsMap, setSessionsMap] = useState([]);
     const [savedTermIds, setSavedTermIds] = useState(new Set());
     const [isMapping, setIsMapping] = useState(false);
+    const [errors, setErrors] = useState({});
+    const [mappingErrors, setMappingErrors] = useState({});
     const navigate = useNavigate();
 
     const { createHolidayCamp, updateHolidayCampDate, selectedTerm, myGroupData, setMyGroupData, setSelectedTermGroup, selectedTermGroup, fetchHolidayCampDate, termData, fetchCampDateId, loading } = useHolidayTerm();
@@ -169,9 +171,21 @@ const HolidayTermsCreate = () => {
         }
     }, [id, selectedTerm]);
     console.log('selectedTerm', selectedTerm)
+    const validateGroupName = () => {
+        const newErrors = {};
+        if (!groupName?.trim()) newErrors.groupName = "Please enter a name for the term camp";
+        setErrors(prev => ({ ...prev, ...newErrors }));
+        return newErrors;
+    };
+
     const handleGroupNameSave = async () => {
-        if (!groupName.trim()) {
-            showError("Error", "Please enter a name for the term camp");
+        const groupErrors = validateGroupName();
+        if (Object.keys(groupErrors).length > 0) {
+            const element = document.getElementsByName("groupName")[0];
+            if (element) {
+                element.scrollIntoView({ behavior: "smooth", block: "center" });
+                element.focus();
+            }
             return;
         }
 
@@ -274,20 +288,27 @@ const HolidayTermsCreate = () => {
     };
 
 
-    const handleSaveMappings = () => {
-        // If empty
+    const validateMappings = () => {
+        const newErrors = {};
         if (!sessionMappings.length) {
-            showError("Error", "Please add at least one session mapping.");
-            return;
+            newErrors.mappings = "Please add at least one session mapping.";
+        } else {
+            const incomplete = sessionMappings.some(mapping => !mapping.sessionPlanId);
+            if (incomplete) {
+                newErrors.mappings = "Please fill all session mappings completely.";
+            }
         }
+        setMappingErrors(newErrors);
+        return newErrors;
+    };
 
-        // Validate fields
-        const isValid = sessionMappings.every(
-            (mapping) => mapping.sessionDate && mapping.sessionPlanId
-        );
-
-        if (!isValid) {
-            showError("Error", "Please fill all session mappings completely.");
+    const handleSaveMappings = () => {
+        const mErrors = validateMappings();
+        if (Object.keys(mErrors).length > 0) {
+            const element = document.getElementById("mapping-section");
+            if (element) {
+                element.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
             return;
         }
 
@@ -314,24 +335,31 @@ const HolidayTermsCreate = () => {
     };
     console.log('myGroupData', myGroupData)
 
+    const validateCamp = () => {
+        const newErrors = {};
+        if (!holidayTerms.startDate) newErrors.startDate = "Start date is required.";
+        if (!holidayTerms.endDate) newErrors.endDate = "End date is required.";
+        if (sessionMappings.length === 0 || sessionMappings.some(mapping => !mapping.sessionPlanId)) {
+            newErrors.sessionMappings = "Please map all sessions before saving.";
+        }
+        setErrors(prev => ({ ...prev, ...newErrors }));
+        return newErrors;
+    };
+
     const handleSaveCamp = async () => {
+        const campErrors = validateCamp();
+        if (Object.keys(campErrors).length > 0) {
+            const firstErrorField = Object.keys(campErrors)[0];
+            const element = document.getElementsByName(firstErrorField)[0] || document.getElementById(firstErrorField);
+            if (element) {
+                element.scrollIntoView({ behavior: "smooth", block: "center" });
+                element.focus();
+            }
+            return;
+        }
 
         if (id && !selectedTerm) {
             console.error("Missing termGroupId");
-            return;
-        }
-
-        if (!holidayTerms.startDate || !holidayTerms.endDate) {
-            showError("Error", "Please fill all required fields for the term");
-            return;
-        }
-
-        // Validate session mappings
-        if (
-            sessionMappings.length === 0 ||
-            sessionMappings.some(mapping => !mapping.sessionPlanId)
-        ) {
-            showError("Error", "Please map all sessions before saving the term");
             return;
         }
 
@@ -436,14 +464,18 @@ const HolidayTermsCreate = () => {
                             </div>
                             <input
                                 type="text"
+                                name="groupName"
                                 placeholder="Enter Holiday Camp Name"
                                 value={groupName}
-                                onChange={(e) => setGroupName(e.target.value)}
-                                className={`md:w-1/2 px-4 font-semibold text-base py-3 border border-gray-200 rounded-lg 
-focus:outline-none focus:ring-2 focus:ring-blue-500 
+                                onChange={(e) => { setGroupName(e.target.value); if (errors.groupName) setErrors(prev => ({ ...prev, groupName: null })); }}
+                                className={`md:w-1/2 px-4 font-semibold text-base py-3 border ${errors.groupName ? 'border-red-500' : 'border-gray-200'} rounded-lg 
+focus:outline-none focus:ring-2 ${errors.groupName ? 'focus:ring-red-500' : 'focus:ring-blue-500'} 
 ${(id || myGroupData?.id) && !isEditMode ? 'cursor-not-allowed' : ''}`}
                                 disabled={(id || myGroupData?.id) && !isEditMode}
                             />
+                            {errors.groupName && (
+                                <p className="text-sm text-red-500 mt-1">{errors.groupName}</p>
+                            )}
 
 
                             {(id || myGroupData?.id) && isEditMode && (
@@ -517,14 +549,14 @@ ${(id || myGroupData?.id) && !isEditMode ? 'cursor-not-allowed' : ''}`}
                                     >
 
                                         <div className="md:flex gap-4 px-2 mb-5 justify-between">
-                                            <div className="w-full">
+                                            <div className="w-full" id="startDate">
                                                 <label className="block text-base font-semibold text-gray-700 mb-2">
                                                     Start Date
                                                 </label>
                                                 <DatePicker
                                                     selected={holidayTerms.startDate}
-                                                    onChange={(date) => handleDateChange('startDate', date)}
-                                                    className={`w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base ${id && !isEdit ? 'cursor-not-allowed' : ''}`}
+                                                    onChange={(date) => { handleDateChange('startDate', date); if (errors.startDate) setErrors(prev => ({ ...prev, startDate: null })); }}
+                                                    className={`w-full mt-2 border ${errors.startDate ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base ${id && !isEdit ? 'cursor-not-allowed' : ''}`}
                                                     showYearDropdown
                                                     scrollableYearDropdown
                                                     yearDropdownItemNumber={100}
@@ -534,16 +566,19 @@ ${(id || myGroupData?.id) && !isEditMode ? 'cursor-not-allowed' : ''}`}
                                                     disabled={id && !isEdit}
                                                     minDate={new Date()}  // disable past dates before today
                                                 />
+                                                {errors.startDate && (
+                                                    <p className="text-sm text-red-500 mt-1">{errors.startDate}</p>
+                                                )}
                                             </div>
 
-                                            <div className="w-full">
+                                            <div className="w-full" id="endDate">
                                                 <label className="block text-base font-semibold text-gray-700 mb-2">
                                                     End Date
                                                 </label>
                                                 <DatePicker
                                                     selected={holidayTerms.endDate}
-                                                    onChange={(date) => handleDateChange('endDate', date)}
-                                                    className={`w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base ${id && !isEdit ? 'cursor-not-allowed' : ''}`}
+                                                    onChange={(date) => { handleDateChange('endDate', date); if (errors.endDate) setErrors(prev => ({ ...prev, endDate: null })); }}
+                                                    className={`w-full mt-2 border ${errors.endDate ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base ${id && !isEdit ? 'cursor-not-allowed' : ''}`}
                                                     showYearDropdown
                                                     scrollableYearDropdown
 
@@ -554,6 +589,9 @@ ${(id || myGroupData?.id) && !isEditMode ? 'cursor-not-allowed' : ''}`}
                                                     withPortal
                                                     minDate={holidayTerms.startDate || new Date()}  // disable dates before start date or today
                                                 />
+                                                {errors.endDate && (
+                                                    <p className="text-sm text-red-500 mt-1">{errors.endDate}</p>
+                                                )}
                                             </div>
                                         </div>
 
@@ -585,13 +623,17 @@ ${(id || myGroupData?.id) && !isEditMode ? 'cursor-not-allowed' : ''}`}
                                             <div className="w-full md:block hidden" />
                                             <div className="w-full md:flex items-center gap-2 space-y-2 md:space-y-0">
                                                 <button
+                                                    id="sessionMappings"
                                                     className={`flex whitespace-nowrap px-2 md:w-5/12 w-full items-center justify-center gap-1 
-        border border-blue-500 text-[#237FEA] hover:bg-blue-50
-        px-6 py-2 rounded-lg text-[14px] font-semibold`}
+                                        border ${errors.sessionMappings ? 'border-red-500 text-red-500' : 'border-blue-500 text-[#237FEA]'} hover:bg-blue-50
+                                        px-6 py-2 rounded-lg text-[14px] font-semibold`}
                                                     onClick={handleMapClick}
                                                 >
                                                     Map Session
                                                 </button>
+                                                {errors.sessionMappings && (
+                                                    <p className="text-sm text-red-500 mt-1">{errors.sessionMappings}</p>
+                                                )}
 
 
                                                 <button
@@ -643,7 +685,10 @@ ${(id || myGroupData?.id) && !isEditMode ? 'cursor-not-allowed' : ''}`}
                                 transition={{ duration: 0.3 }}
                                 className="rounded-2xl mb-5 bg-white md:p-6"
                             >
-                                <div className="border border-gray-200 rounded-3xl px-4 py-3">
+                                <div id="mapping-section" className={`border ${mappingErrors.mappings ? 'border-red-500' : 'border-gray-200'} rounded-3xl px-4 py-3`}>
+                                    {mappingErrors.mappings && (
+                                        <p className="text-sm text-red-500 mb-2 font-semibold">{mappingErrors.mappings}</p>
+                                    )}
                                     <div className="md:flex items-center justify-between mb-2">
                                         <label className="block text-[22px] font-semibold">
                                             {groupName || 'N/A'}
@@ -682,7 +727,7 @@ ${(id || myGroupData?.id) && !isEditMode ? 'cursor-not-allowed' : ''}`}
                                                 <SessionPlanSelect
                                                     idx={index}
                                                     value={session.sessionPlanId}
-                                                    onChange={handleMappingChange}
+                                                    onChange={(idx, field, val) => { handleMappingChange(idx, field, val); if (mappingErrors.mappings) setMappingErrors({}); }}
                                                     usedSessionPlans={sessionMappings.map(s => s.sessionPlanId)}
                                                 />
                                             </div>

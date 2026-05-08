@@ -30,6 +30,7 @@ const HolidayDiscountCreate = () => {
         endDatetime: "null",
         appliesTo: []
     });
+    const [errors, setErrors] = useState({});
 
     const token = localStorage.getItem("adminToken");
 
@@ -126,8 +127,37 @@ const HolidayDiscountCreate = () => {
             code: type === "code" ? "" : prev.code, // clear when switching to manual
         }));
     };
+    const validate = () => {
+        const newErrors = {};
+        if (!formData.type) newErrors.type = "Discount type is required.";
+        if (formData.type === "code" && !formData.code?.trim()) newErrors.code = "Discount code is required.";
+        if (!formData.valueType) newErrors.valueType = "Value type is required.";
+        if (!formData.value) newErrors.value = "Value is required.";
+        if (!formData.appliesTo || formData.appliesTo.length === 0) newErrors.appliesTo = "Please select at least one application category.";
+        if (!formData.startDate) newErrors.startDate = "Start date is required.";
+        if (!formData.startTime) newErrors.startTime = "Start time is required.";
+        if (showEnd) {
+            if (!formData.endDate) newErrors.endDate = "End date is required.";
+            if (!formData.endTime) newErrors.endTime = "End time is required.";
+        }
+
+        setErrors(newErrors);
+        return newErrors;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const validationErrors = validate();
+        if (Object.keys(validationErrors).length > 0) {
+            const firstErrorField = Object.keys(validationErrors)[0];
+            const element = document.getElementsByName(firstErrorField)[0] || document.getElementById(firstErrorField);
+            if (element) {
+                element.scrollIntoView({ behavior: "smooth", block: "center" });
+                element.focus();
+            }
+            return;
+        }
 
         const payload = {
             ...formData,
@@ -205,7 +235,7 @@ const HolidayDiscountCreate = () => {
                 {/* Left Side: Form */}
                 <div className="w-full lg:w-8/12 space-y-6">
                     {/* Amount off products */}
-                    <div className="bg-white rounded-3xl p-6 shadow">
+                        <div id="type" className="bg-white rounded-3xl p-6 shadow">
                         <h4 className="text-base font-semibold mb-2">Amount off products</h4>
 
                         {/* Checkbox-looking radio logic */}
@@ -214,7 +244,7 @@ const HolidayDiscountCreate = () => {
                             <input
                                 type="checkbox"
                                 checked={formData.type === "code"}
-                                onChange={() => handleTypeSelect("code")}
+                                onChange={() => { handleTypeSelect("code"); setErrors(prev => ({ ...prev, type: null })); }}
                             />
                             Discount Code
                         </div>
@@ -223,10 +253,13 @@ const HolidayDiscountCreate = () => {
                             <input
                                 type="checkbox"
                                 checked={formData.type === "automatic"}
-                                onChange={() => handleTypeSelect("automatic")}
+                                onChange={() => { handleTypeSelect("automatic"); setErrors(prev => ({ ...prev, type: null })); }}
                             />
                             Automatic Discount
                         </div>
+                        {errors.type && (
+                            <p className="text-sm text-red-500 mb-2">{errors.type}</p>
+                        )}
 
                         {/* Discount Code Input */}
                         <div>
@@ -235,6 +268,7 @@ const HolidayDiscountCreate = () => {
                             <div className="flex flex-col md:flex-row gap-4 w-full">
                                 <input
                                     type="text"
+                                    name="code"
                                     value={formData.code}
                                     disabled={formData.type === "automatic"}
                                     onChange={(e) =>
@@ -248,7 +282,7 @@ const HolidayDiscountCreate = () => {
                                     className={`w-full md:flex-1 border rounded-xl px-3 py-3 
         ${formData.type === "automatic"
                                             ? "bg-gray-100 cursor-not-allowed"
-                                            : "border-[#E2E1E5]"}`}
+                                            : errors.code ? "border-red-500" : "border-[#E2E1E5]"} focus:outline-none focus:ring-2 ${errors.code ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
                                 />
 
                                 <button
@@ -263,6 +297,9 @@ const HolidayDiscountCreate = () => {
                                     Generate
                                 </button>
                             </div>
+                            {errors.code && (
+                                <p className="text-sm text-red-500 mt-1">{errors.code}</p>
+                            )}
                         </div>
 
 
@@ -270,27 +307,27 @@ const HolidayDiscountCreate = () => {
                     </div>
 
                     {/* Value Section */}
-                    <div className="bg-white rounded-3xl p-6 shadow">
+                    <div id="valueType" className="bg-white rounded-3xl p-6 shadow">
                         <h4 className="text-base font-semibold mb-4">Value</h4>
                         <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 mb-6 w-full">
                             <button
                                 type="button"
-                                onClick={() => handleToggle("percentage")}
+                                onClick={() => { handleToggle("percentage"); setErrors(prev => ({ ...prev, valueType: null })); }}
                                 className={`py-2 px-4 rounded-xl text-[16px] transition w-full md:w-auto ${formData.valueType === "percentage"
                                     ? "bg-[#237FEA] text-white hover:bg-blue-700"
                                     : "bg-[#F5F5F5] text-black hover:bg-gray-200"
-                                    }`}
+                                    } ${errors.valueType ? 'border-red-500 border' : ''}`}
                             >
                                 Percentage
                             </button>
 
                             <button
                                 type="button"
-                                onClick={() => handleToggle("fixed")}
+                                onClick={() => { handleToggle("fixed"); setErrors(prev => ({ ...prev, valueType: null })); }}
                                 className={`py-2 px-4 rounded-xl text-[16px] transition w-full md:w-auto ${formData.valueType === "fixed"
                                     ? "bg-[#237FEA] text-white hover:bg-blue-700"
                                     : "bg-[#F5F5F5] text-black hover:bg-gray-200"
-                                    }`}
+                                    } ${errors.valueType ? 'border-red-500 border' : ''}`}
                             >
                                 Fixed amount
                             </button>
@@ -298,102 +335,114 @@ const HolidayDiscountCreate = () => {
                             <div className="relative w-full md:max-w-[200px]">
                                 <input
                                     type="text"
+                                    name="value"
                                     value={formData.value}
                                     onChange={handleInputChange}
-                                    className="w-full bg-white border border-gray-200 py-2 px-3 rounded-xl text-[16px] pr-8"
+                                    className={`w-full bg-white border ${errors.value ? 'border-red-500' : 'border-gray-200'} py-2 px-3 rounded-xl text-[16px] pr-8 focus:outline-none focus:ring-2 ${errors.value ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
                                 />
                                 <img
                                     className="absolute top-3 right-3 w-4 h-4"
                                     src="/images/icons/percentIcon.png"
                                     alt="%"
                                 />
+                                {errors.value && (
+                                    <p className="text-sm text-red-500 mt-1">{errors.value}</p>
+                                )}
                             </div>
                         </div>
+                        {errors.valueType && (
+                            <p className="text-sm text-red-500 mb-4">{errors.valueType}</p>
+                        )}
 
 
                         {/* Apply To Section */}
-                        <h4 className="text-base font-semibold mb-4">Apply to</h4>
-                        <div className="space-y-3">
-                            <label className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    className="w-4 h-4"
-                                    checked={formData.appliesTo.includes("weekly_classes")}
-                                    onChange={() => handleCheckboxChange("weekly_classes")}
-                                />
-                                Weekly classes
-                            </label>
+                        <div id="appliesTo">
+                            <h4 className="text-base font-semibold mb-4">Apply to</h4>
+                            <div className="space-y-3">
+                                <label className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        className="w-4 h-4"
+                                        checked={formData.appliesTo.includes("weekly_classes")}
+                                        onChange={() => handleCheckboxChange("weekly_classes")}
+                                    />
+                                    Weekly classes
+                                </label>
 
-                            {formData.appliesTo.includes("weekly_classes") && (
-                                <div className="pl-6 space-y-2">
-                                    <label className="flex items-center gap-2">
-                                        <input
-                                            type="radio"
-                                            name="weeklyOption"
-                                            value="joining_fee"
-                                            checked={formData.appliesTo.includes("joining_fee")}
-                                            onChange={(e) => handleWeeklyRadioChange(e.target.value)}
-                                        />
-                                        Starter Pack
-                                    </label>
-                                    <label className="flex items-center gap-2">
-                                        <input
-                                            type="radio"
-                                            name="weeklyOption"
-                                            value="per_rate_lessons"
-                                            checked={formData.appliesTo.includes("per_rate_lessons")}
-                                            onChange={(e) => handleWeeklyRadioChange(e.target.value)}
-                                        />
-                                        Per Rate Lessons
-                                    </label>
+                                {formData.appliesTo.includes("weekly_classes") && (
+                                    <div className="pl-6 space-y-2">
+                                        <label className="flex items-center gap-2">
+                                            <input
+                                                type="radio"
+                                                name="weeklyOption"
+                                                value="joining_fee"
+                                                checked={formData.appliesTo.includes("joining_fee")}
+                                                onChange={(e) => handleWeeklyRadioChange(e.target.value)}
+                                            />
+                                            Starter Pack
+                                        </label>
+                                        <label className="flex items-center gap-2">
+                                            <input
+                                                type="radio"
+                                                name="weeklyOption"
+                                                value="per_rate_lessons"
+                                                checked={formData.appliesTo.includes("per_rate_lessons")}
+                                                onChange={(e) => handleWeeklyRadioChange(e.target.value)}
+                                            />
+                                            Per Rate Lessons
+                                        </label>
 
-                                </div>
-                            )}
+                                    </div>
+                                )}
 
-                            <label className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    className="w-4 h-4"
-                                    checked={formData.appliesTo.includes("one_to_one")}
-                                    onChange={() => handleCheckboxChange("one_to_one")}
-                                />
-                                One to one
-                            </label>
+                                <label className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        className="w-4 h-4"
+                                        checked={formData.appliesTo.includes("one_to_one")}
+                                        onChange={() => handleCheckboxChange("one_to_one")}
+                                    />
+                                    One to one
+                                </label>
 
-                            <label className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    className="w-4 h-4"
-                                    checked={formData.appliesTo.includes("holiday_camp")}
-                                    onChange={() => handleCheckboxChange("holiday_camp")}
-                                />
-                                Holiday camp
-                            </label>
+                                <label className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        className="w-4 h-4"
+                                        checked={formData.appliesTo.includes("holiday_camp")}
+                                        onChange={() => handleCheckboxChange("holiday_camp")}
+                                    />
+                                    Holiday camp
+                                </label>
 
-                            <label className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    className="w-4 h-4"
-                                    checked={formData.appliesTo.includes("birthday_party")}
-                                    onChange={() => handleCheckboxChange("birthday_party")}
-                                />
-                                Birthday party
-                            </label>
-                            <hr className="text-gray-200 my-5" />
-                            <label className="flex items-center gap-2 mt-4">
-                                <input
-                                    type="checkbox"
-                                    className="w-4 h-4"
-                                    checked={formData.applyOncePerOrder}
-                                    onChange={(e) =>
-                                        setFormData((prev) => ({
-                                            ...prev,
-                                            applyOncePerOrder: e.target.checked,
-                                        }))
-                                    }
-                                />
-                                Apply discount once per order
-                            </label>
+                                <label className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        className="w-4 h-4"
+                                        checked={formData.appliesTo.includes("birthday_party")}
+                                        onChange={() => handleCheckboxChange("birthday_party")}
+                                    />
+                                    Birthday party
+                                </label>
+                                {errors.appliesTo && (
+                                    <p className="text-sm text-red-500 mt-2">{errors.appliesTo}</p>
+                                )}
+                                <hr className="text-gray-200 my-5" />
+                                <label className="flex items-center gap-2 mt-4">
+                                    <input
+                                        type="checkbox"
+                                        className="w-4 h-4"
+                                        checked={formData.applyOncePerOrder}
+                                        onChange={(e) =>
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                applyOncePerOrder: e.target.checked,
+                                            }))
+                                        }
+                                    />
+                                    Apply discount once per order
+                                </label>
+                            </div>
                         </div>
                     </div>
 
@@ -467,17 +516,22 @@ const HolidayDiscountCreate = () => {
                             <div className="flex flex-col w-full md:w-3/12">
                                 <label className="text-sm font-medium mb-1">Start Date</label>
                                 <DatePicker
+                                    name="startDate"
                                     selected={formData.startDate}
                                     onChange={(date) => setFormData({ ...formData, startDate: date })}
                                     dateFormat="P"
                                     minDate={new Date()}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-xl"
+                                    className={`w-full px-3 py-2 border ${errors.startDate ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 ${errors.startDate ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
                                     withPortal
                                 />
+                                {errors.startDate && (
+                                    <p className="text-sm text-red-500 mt-1">{errors.startDate}</p>
+                                )}
                             </div>
                             <div className="flex flex-col w-full md:w-3/12">
                                 <label className="text-sm font-medium mb-1">Start Time</label>
                                 <DatePicker
+                                    name="startTime"
                                     selected={formData.startTime}
                                     onChange={(time) => setFormData({ ...formData, startTime: time })}
                                     showTimeSelect
@@ -485,9 +539,12 @@ const HolidayDiscountCreate = () => {
                                     timeIntervals={15}
                                     dateFormat="h:mm aa"
                                     timeCaption="Time"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-xl"
+                                    className={`w-full px-3 py-2 border ${errors.startTime ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 ${errors.startTime ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
                                     withPortal
                                 />
+                                {errors.startTime && (
+                                    <p className="text-sm text-red-500 mt-1">{errors.startTime}</p>
+                                )}
                             </div>
                         </div>
 
@@ -515,18 +572,23 @@ const HolidayDiscountCreate = () => {
                                         <div className="flex flex-col w-full md:w-3/12">
                                             <label className="text-sm font-medium mb-1">End Date</label>
                                             <DatePicker
+                                                name="endDate"
                                                 selected={formData.endDate}
                                                 onChange={(date) => setFormData({ ...formData, endDate: date })}
                                                 dateFormat="P"
                                                 minDate={formData.startDate || new Date()}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-xl"
+                                                className={`w-full px-3 py-2 border ${errors.endDate ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 ${errors.endDate ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
                                                 disabled={!formData.startDate}
                                                 withPortal
                                             />
+                                            {errors.endDate && (
+                                                <p className="text-sm text-red-500 mt-1">{errors.endDate}</p>
+                                            )}
                                         </div>
                                         <div className="flex flex-col w-full md:w-3/12">
                                             <label className="text-sm font-medium mb-1">End Time</label>
                                             <DatePicker
+                                                name="endTime"
                                                 selected={formData.endTime}
                                                 onChange={handleEndTimeChange}
                                                 showTimeSelect
@@ -534,10 +596,13 @@ const HolidayDiscountCreate = () => {
                                                 timeIntervals={15}
                                                 dateFormat="h:mm aa"
                                                 timeCaption="Time"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-xl"
+                                                className={`w-full px-3 py-2 border ${errors.endTime ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 ${errors.endTime ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
                                                 x disabled={!formData.endDate}
                                                 withPortal
                                             />
+                                            {errors.endTime && (
+                                                <p className="text-sm text-red-500 mt-1">{errors.endTime}</p>
+                                            )}
                                         </div>
                                     </div>
                                 </motion.div>

@@ -91,13 +91,16 @@ const HolidayVenueList = () => {
   };
 
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     setOpenForm(null);
-    showConfirm('Are you sure?', 'This action will permanently delete the venue.').then((result) => {
-      if (result.isConfirmed) {
-        deleteVenue(id); // Call your delete function here
-      }
-    });
+    const result = await showConfirm(
+      'Are you sure?',
+      'This action will permanently delete the venue.'
+    );
+
+    if (result.isConfirmed) {
+      await deleteVenue(id);
+    }
   };
 
 

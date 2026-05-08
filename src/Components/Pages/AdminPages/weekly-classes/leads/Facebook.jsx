@@ -433,8 +433,17 @@ const Facebook = () => {
 
               return (
                 <React.Fragment key={i}>
-                  <tr onClick={() => navigate(`/weekly-classes/central-leads/accont-info?id=${lead.id}`)} className="border-b border-[#EFEEF2] hover:bg-gray-50 transition cursor-pointer">
-                    <td className="py-3 px-4 font-semibold whitespace-nowrap">
+                  <tr
+                    onClick={() => {
+                      if (lead?.leadStatus.includes("booked")) {
+                        navigate(`/weekly-classes/central-leads/accont-info?id=${lead.id}`);
+                      }
+                    }}
+                    className={`border-b border-[#EFEEF2] hover:bg-gray-50 ${lead?.leadStatus.includes("booked")
+                      ? "cursor-pointer"
+                      : "cursor-not-allowed"
+                      } transition`}
+                  >                    <td className="py-3 px-4 font-semibold whitespace-nowrap">
                       <div className="flex items-center gap-3">
                         <button
                           onClick={(e) => toggleCheckbox(lead.id, e)}
@@ -465,8 +474,8 @@ const Facebook = () => {
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
-                        <span className="bg-[#FBEECE] text-[#EDA600] min-w-25 text-center  px-5 py-1.5 rounded-xl text-xs font-semibold">
-                          {lead.leadStatus}
+                        <span className="bg-[#FBEECE] capitalize text-[#EDA600] min-w-25 text-center  px-5 py-1.5 rounded-xl text-xs font-semibold">
+                          {lead.leadStatus.replace(/_/g, ' ')}
                         </span>
                         <button onClick={(e) => toggleExpand(lead.id, e)}>
                           {isExpanded ? (

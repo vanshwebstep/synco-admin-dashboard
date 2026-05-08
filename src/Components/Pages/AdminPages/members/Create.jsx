@@ -102,48 +102,18 @@ const Create = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    // console.log("❌ Missing fisselds:", formData);
-    // Email validation
-    if (!formData.email || !emailRegex.test(formData.email)) {
-      // console.log("❌ Missing fields:", formData);
-      showError("Invalid Email", "Please enter a valid email address.");
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      const firstErrorField = Object.keys(validationErrors)[0];
+      const element = document.getElementsByName(firstErrorField)[0] || document.getElementById(firstErrorField);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        element.focus();
+      }
       return;
     }
-    if (isFranchisee && (!formData.gcFranchiseToken?.trim() || !formData.stripeKey?.trim())) {
-      showWarning("Missing Information", "Both API Key and Stripe Key are required for Franchisee role.");
-      return;
-    }
-    // console.log("❌ Misdss:", formData);
-    if (isCoach) {
-      const missingDocs = Object.entries(coachDocs)
-        .filter(([_, file]) => !file)
-        .map(([key]) => key.replace(/_/g, " "));
 
-      if (missingDocs.length > 0) {
-        showWarning("Missing Coach Documents", `Please upload: ${missingDocs.join(", ")}`);
-        return;
-      }
-    }
-
-    if (validate()) {
-      // console.log("❌ Misdsdsdsss:", formData);
-
-      if (
-        !formData.firstName ||
-        !formData.position ||
-        !formData.phoneNumber ||
-        !formData.email ||
-        !formData.password ||
-        !formData.role?.value
-      ) {
-        // console.log("❌ Missing fields:", formData);
-
-        showWarning("Missing Information", "Please fill out all required fields before submitting.");
-        return;
-      }
-
-      const data = new FormData();
+    const data = new FormData();
       data.append("firstName", formData.firstName);
 
       if (formData.lastName) {
@@ -214,13 +184,48 @@ const Create = () => {
         console.error("Error creating member:", error);
         showError("Network Error", error.message || "An error occurred while submitting the form.");
       }
-    }
   };
 
   const validate = () => {
     const newErrors = {};
-    const password = formData.password;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+    if (!formData.fullName?.trim() && !formData.firstName?.trim()) {
+      newErrors.fullName = "Full name is required.";
+    }
+    if (!formData.position?.trim()) {
+      newErrors.position = "Position is required.";
+    }
+    if (!formData.phoneNumber) {
+      newErrors.phoneNumber = "Phone number is required.";
+    }
+    if (!formData.email) {
+      newErrors.email = "Email is required.";
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = "Invalid email address.";
+    }
+    if (!formData.role?.value) {
+      newErrors.role = "Role is required.";
+    }
+
+    if (isFranchisee) {
+      if (!formData.gcFranchiseToken?.trim()) {
+        newErrors.gcFranchiseToken = "GC Franchise Token is required.";
+      }
+      if (!formData.stripeKey?.trim()) {
+        newErrors.stripeKey = "Stripe Key is required.";
+      }
+    }
+
+    if (isCoach) {
+      const missingDocs = Object.entries(coachDocs)
+        .filter(([_, file]) => !file);
+      if (missingDocs.length > 0) {
+        newErrors.coachDocs = "All coach documents are required.";
+      }
+    }
+
+    const password = formData.password;
     if (!password) {
       newErrors.password = "Password is required.";
     } else if (password.length < 6) {
@@ -230,9 +235,9 @@ const Create = () => {
     } else if (!/\d/.test(password)) {
       newErrors.password = "Password must contain at least one number.";
     }
-    // console.log('newErrors', newErrors)
+
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return newErrors;
   };
 
   const handleCoachDocChange = (e) => {
@@ -273,10 +278,11 @@ const Create = () => {
               value={formData.fullName}
               onChange={handleInputChange}
               onBlur={handleFullNameSplit} // split when user leaves the field
-              className="w-full border border-[#E2E1E5] rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full border ${errors.fullName ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 ${errors.fullName ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
             />
-
-
+            {errors.fullName && (
+              <p className="text-sm text-red-500 mt-1">{errors.fullName}</p>
+            )}
           </div>
 
 
@@ -293,8 +299,11 @@ const Create = () => {
               }}
               value={formData.position}
               onChange={handleInputChange}
-              className="w-full border border-[#E2E1E5] rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full border ${errors.position ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 ${errors.position ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
             />
+            {errors.position && (
+              <p className="text-sm text-red-500 mt-1">{errors.position}</p>
+            )}
           </div>
 
           <div>
@@ -320,13 +329,17 @@ const Create = () => {
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              className="w-full border border-[#E2E1E5] rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full border ${errors.email ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 ${errors.email ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
             />
+            {errors.email && (
+              <p className="text-sm text-red-500 mt-1">{errors.email}</p>
+            )}
           </div>
 
-          <div>
+          <div id="role">
             <label className="">Role</label>
             <CreatableSelect
+              inputId="role"
               options={roleOptions}
               value={formData.role}
               onChange={handleRoleChange}
@@ -346,8 +359,19 @@ const Create = () => {
               placeholder=""
               classNamePrefix="react-select"
               components={customComponents} // 👈 apply custom components
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  borderColor: errors.role ? 'red' : base.borderColor,
+                  '&:hover': {
+                    borderColor: errors.role ? 'red' : base.borderColor,
+                  },
+                }),
+              }}
             />
-
+            {errors.role && (
+              <p className="text-sm text-red-500 mt-1">{errors.role}</p>
+            )}
           </div>
           {isFranchisee && (
             <div className="grid grid-cols-1 gap-4">
@@ -363,9 +387,12 @@ const Create = () => {
                       gcFranchiseToken: e.target.value,
                     }))
                   }
-                  className="w-full border border-[#E2E1E5] rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full border ${errors.gcFranchiseToken ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 ${errors.gcFranchiseToken ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
                   placeholder="Enter GC Franchise Token"
                 />
+                {errors.gcFranchiseToken && (
+                  <p className="text-sm text-red-500 mt-1">{errors.gcFranchiseToken}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-semibold text-[#282829]">Stripe Key</label>
@@ -379,20 +406,23 @@ const Create = () => {
                       stripeKey: e.target.value,
                     }))
                   }
-                  className="w-full border border-[#E2E1E5] rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full border ${errors.stripeKey ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 ${errors.stripeKey ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
                   placeholder="Enter Stripe Key"
                 />
+                {errors.stripeKey && (
+                  <p className="text-sm text-red-500 mt-1">{errors.stripeKey}</p>
+                )}
               </div>
             </div>
           )}
           {isCoach && (
-            <div className="space-y-5">
+            <div id="coachDocs" className="space-y-5">
               <div>
                 <label>FA Level 1</label>
                 <input
                   type="file"
                   name="fa_level_1"
-                  className="w-full border border-[#E2E1E5] rounded-xl px-3 py-2 mt-1 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full border ${errors.coachDocs ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 pr-10 focus:outline-none focus:ring-2 ${errors.coachDocs ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
                   onChange={handleCoachDocChange}
                 />
               </div>
@@ -401,7 +431,7 @@ const Create = () => {
                 <label>Futsal Level 1 Qualification</label>
                 <input
                   type="file"
-                  className="w-full border border-[#E2E1E5] rounded-xl px-3 py-2 mt-1 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full border ${errors.coachDocs ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 pr-10 focus:outline-none focus:ring-2 ${errors.coachDocs ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
                   name="futsal_level_1_qualification"
                   onChange={handleCoachDocChange}
                 />
@@ -411,7 +441,7 @@ const Create = () => {
                 <label>First Aid</label>
                 <input
                   type="file"
-                  className="w-full border border-[#E2E1E5] rounded-xl px-3 py-2 mt-1 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full border ${errors.coachDocs ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 pr-10 focus:outline-none focus:ring-2 ${errors.coachDocs ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
 
                   name="first_aid"
                   onChange={handleCoachDocChange}
@@ -422,12 +452,15 @@ const Create = () => {
                 <label>Futsal Level 1</label>
                 <input
                   type="file"
-                  className="w-full border border-[#E2E1E5] rounded-xl px-3 py-2 mt-1 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full border ${errors.coachDocs ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 pr-10 focus:outline-none focus:ring-2 ${errors.coachDocs ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
 
                   name="futsal_level_1"
                   onChange={handleCoachDocChange}
                 />
               </div>
+              {errors.coachDocs && (
+                <p className="text-sm text-red-500 mt-1">{errors.coachDocs}</p>
+              )}
             </div>
           )}
           <div className="relative">
@@ -439,7 +472,7 @@ const Create = () => {
               name="password"
               value={formData.password}
               onChange={handleInputChange}
-              className="w-full border border-[#E2E1E5] rounded-xl px-3 py-2 mt-1 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full border ${errors.password ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 pr-10 focus:outline-none focus:ring-2 ${errors.password ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
             />
             <button
               type="button"
