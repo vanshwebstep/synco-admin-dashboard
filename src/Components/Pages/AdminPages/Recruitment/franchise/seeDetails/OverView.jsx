@@ -7,12 +7,16 @@ import { IoMdCheckmarkCircle } from "react-icons/io";
 import Select from "react-select";
 import { useSearchParams } from "react-router-dom";
 import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+import { detectCountryFromPhone, stripDialCode } from '../../../../../../utils/phoneHelper';
 
 import { useRecruitmentTemplate } from '../../../contexts/RecruitmentContext';
 import { useVenue } from '../../../contexts/VenueContext';
 import Loader from '../../../contexts/Loader';
-import { showConfirm, showError, showSuccess } from '../../../../../../utils/swalHelper';
+import { showConfirm, showError, showSuccess, showWarning } from '../../../../../../utils/swalHelper';
 import Comments from '../../../Common/Comments';
+import { useEmail } from '../../../contexts/messages/SendEmailContext';
+import { useTextPopup } from '../../../contexts/messages/SendTextContext';
 const dateOptions = [
   { value: "2025-01-01", label: "Jan 01 2025" },
   { value: "2025-01-02", label: "Jan 02 2025" },
@@ -22,11 +26,7 @@ const regionalManagerOptions = [
   { value: "manager2", label: "Manager 2" },
   { value: "manager3", label: "Manager 3" },
 ];
-const payRateOptions = [
-  { value: "10", label: "₹10 / hr" },
-  { value: "20", label: "₹20 / hr" },
-  { value: "30", label: "₹30 / hr" },
-];
+
 const venueOptions = [
   { value: "venue1", label: "Venue 1" },
   { value: "venue2", label: "Venue 2" },
@@ -85,6 +85,7 @@ const OverView = ({ steps, setSteps }) => {
     capitalAvailable: "",
     discoveryDay: [],
   });
+  const [errors, setErrors] = useState({});
 
 
   const { fetchCoachRecruitmentById, fetchFranchiseRecruitmentById, recuritmentDataById, sendOfferMail, sendFranchiseMail, rejectFranchise, createFranchiseRecruitmentById } = useRecruitmentTemplate() || {};
@@ -103,6 +104,8 @@ const OverView = ({ steps, setSteps }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const commentsPerPage = 5; // Number of comments per page
   const { adminInfo } = useNotification();
+  const { openEmailPopup } = useEmail();
+  const { openTextPopup } = useTextPopup();
   const discoveryDayRaw = recuritmentDataById?.candidateProfile?.discoveryDay;
 
   // Convert string → array
@@ -147,6 +150,17 @@ const OverView = ({ steps, setSteps }) => {
           : [];
     } catch { parsedVenues = []; }
 
+    let dialCode = "+44";
+    let countryCode = "gb";
+    let phone = data.phoneNumber || "";
+
+    const detected = detectCountryFromPhone(phone);
+    if (detected) {
+      dialCode = detected.dialCode;
+      countryCode = detected.countryCode;
+      phone = stripDialCode(phone);
+    }
+
     return {
       firstName: data.firstName || "",
       surname: data.lastName || "",
@@ -154,33 +168,55 @@ const OverView = ({ steps, setSteps }) => {
       dob: data.dob || "",
       age: data.age || "",
       email: data.email || "",
-      phone: data.phoneNumber || "",
-      discoveryDayDate: discoveryDayArray?.[0]?.day || "",
+      dialCode,
+      phone,
+      countryCode,
+      discoveryDayDate: discoveryDayArray?.[0]?.date || "",
       discoveryDayTime: discoveryDayArray?.[0]?.time || "",
       postcode: data.postcode || "",
       howDidYouHear: data.candidateProfile?.howDidYouHear || "Indeed",
-      location: data.candidateProfile?.location || "",
-      capitalAvailable: data.candidateProfile?.capitalAvailable || "",
-      ageGroup: data.candidateProfile?.ageGroupExperience || "",
-      vehicle:
-        data.candidateProfile?.accessToOwnVehicle === true
-          ? "Yes"
-          : data.candidateProfile?.accessToOwnVehicle === false
-            ? "No"
-            : "",
-      qualification: data.candidateProfile?.whichQualificationYouHave || "",
-      experience: data.candidateProfile?.footballExperience || "",
-      venues: parsedVenues,
-      coverNote: data.candidateProfile?.coverNote || "",
+      location: data.desiredFranchiseLocation || "",
+      capitalAvailable: data.liquidCapital || "",
+      coverNote: data.message || "",
+      venues: [],
     };
   };
 
   // Initialize
   const [form, setForm] = useState(getInitialForm(recuritmentDataById));
+  console.log(form, 'form');
 
   // Update whenever candidate changes
   useEffect(() => {
+    if (!recuritmentDataById) return;
+
     setForm(getInitialForm(recuritmentDataById));
+
+    const p = recuritmentDataById.candidateProfile;
+    setTelephoneCall({
+      date: p?.telephoneCallSetupDate || "",
+      time: p?.telephoneCallSetupTime || "",
+      reminder: p?.telephoneCallSetupReminder || "",
+      email: p?.telephoneCallSetupEmail || "",
+      scores: {
+        telePhoneCallDeliveryCommunicationSkill: p?.telePhoneCallDeliveryCommunicationSkill ?? null,
+        telePhoneCallDeliveryPassionCoaching: p?.telePhoneCallDeliveryPassionCoaching ?? null,
+        telePhoneCallDeliveryExperience: p?.telePhoneCallDeliveryExperience ?? null,
+        telePhoneCallDeliveryKnowledgeOfSSS: p?.telePhoneCallDeliveryKnowledgeOfSSS ?? null,
+      },
+    });
+    setRecruitmentData({
+      telephoneCallSetupDate: p?.telephoneCallSetupDate || "",
+      telephoneCallSetupTime: p?.telephoneCallSetupTime || "",
+      telephoneCallSetupReminder: p?.telephoneCallSetupReminder || "",
+      telephoneCallSetupEmail: p?.telephoneCallSetupEmail || "",
+    });
+    setTelephoneCallDelivery({
+      telePhoneCallDeliveryCommunicationSkill: p?.telePhoneCallDeliveryCommunicationSkill ?? null,
+      telePhoneCallDeliveryPassionCoaching: p?.telePhoneCallDeliveryPassionCoaching ?? null,
+      telePhoneCallDeliveryExperience: p?.telePhoneCallDeliveryExperience ?? null,
+      telePhoneCallDeliveryKnowledgeOfSSS: p?.telePhoneCallDeliveryKnowledgeOfSSS ?? null,
+    });
   }, [recuritmentDataById]);
 
 
@@ -219,10 +255,10 @@ const OverView = ({ steps, setSteps }) => {
 
   const fetchComments = useCallback(async () => {
     const token = localStorage.getItem("adminToken");
-    if (!token) return;
+    if (!token || !id) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/book-membership/comment/list`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/comment/list?commentType=recruitment&serviceType=recruitment&commentByRecruitmentLead=${id}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -235,21 +271,24 @@ const OverView = ({ steps, setSteps }) => {
     } catch (error) {
       console.error("Failed to fetch comments:", error);
       showError("Error", "Failed to fetch comments. Please try again later.");
-
     }
-  }, []);
-
+  }, [API_BASE_URL, id]);
 
   const handleSubmitComment = async (e) => {
     const token = localStorage.getItem("adminToken");
     e.preventDefault();
+
+    if (!comment.trim() || !id) return;
 
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
     myHeaders.append("Authorization", `Bearer ${token}`);
 
     const raw = JSON.stringify({
-      "comment": comment
+      "comment": comment,
+      "commentType": "recruitment",
+      "serviceType": "recruitment",
+      "commentByRecruitmentLead": Number(id)
     });
 
     const requestOptions = {
@@ -262,28 +301,55 @@ const OverView = ({ steps, setSteps }) => {
     try {
       setLoadingComment(true);
 
-
-      const response = await fetch(`${API_BASE_URL}/api/admin/book-membership/comment/create`, requestOptions);
+      const response = await fetch(`${API_BASE_URL}/api/admin/comment/create`, requestOptions);
 
       const result = await response.json();
 
       if (!response.ok) {
         showError("Error", "Failed to Add Comment");
-
         return;
       }
 
-
-      // showSuccess("Comment Created", " Comment has been  added successfully!");
       setComment('');
       fetchComments();
     } catch (error) {
-      console.error("Error creating member:", error);
+      console.error("Error creating comment:", error);
       showError("Error", "Network Error");
     } finally {
       setLoadingComment(false);
     }
   }
+
+  const handleSendEmail = () => {
+    if (form.email) {
+      const token = localStorage.getItem("adminToken");
+      openEmailPopup(
+        [form.email],
+        "/api/admin/send-manual-email",
+        { token, showError, showSuccess }
+      );
+    } else {
+      showWarning("No Email Found", "This candidate does not have a valid email address.");
+    }
+  };
+
+  const handleSendText = () => {
+    if (form.phone) {
+      const recipient = {
+        name: `${form.firstName || ""} ${form.surname || ""}`.trim(),
+        phone: recuritmentDataById.phoneNumber
+      };
+      const token = localStorage.getItem("adminToken");
+      openTextPopup(
+        [recipient],
+        "/api/admin/send-manual-text",
+        { token, showError, showSuccess }
+      );
+    } else {
+      showWarning("No Phone Number", "This candidate does not have a valid phone number.");
+    }
+  };
+
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -291,8 +357,8 @@ const OverView = ({ steps, setSteps }) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const selectedVenueNames = venues
-    .filter(v => form.venues.includes(v.id))
+  const selectedVenueNames = (venues || [])
+    .filter(v => form.venues?.includes(v.id))
     .map(v => v.name);
   const handleVenueChange = (id) => {
     setForm((prev) => ({
@@ -301,6 +367,19 @@ const OverView = ({ steps, setSteps }) => {
         ? prev.venues.filter((x) => x !== id)
         : [...prev.venues, id],
     }));
+  };
+
+  const getStatusStyles = (status) => {
+    switch (status?.toLowerCase()) {
+      case "recruited":
+        return "text-[#34AE56] bg-[#E5F2EA]";
+      case "pending":
+        return "text-[#B38F00] bg-[#FFF7CC]";   // yellow tone
+      case "rejected":
+        return "text-[#D11A2A] bg-[#FFE5E8]";   // red tone
+      default:
+        return "text-gray-600 bg-gray-200";
+    }
   };
 
   // steps 
@@ -409,118 +488,17 @@ const OverView = ({ steps, setSteps }) => {
     telePhoneCallDeliveryKnowledgeOfSSS: null,
   });
 
-  useEffect(() => {
-    // If no candidate, reset to empty/defaults
-    if (!recuritmentDataById) {
-      setForm({
-        firstName: "",
-        surname: "",
-        status: "",
-        dob: "",
-        age: "",
-        email: "",
-        phone: "",
-        discoveryDayDate: "",
-        discoveryDayTime: "",
-        postcode: "",
-        howDidYouHear: "Indeed",
-        location: "",
-        capitalAvailable: "",
-        ageGroup: "",
-        vehicle: "",
-        qualification: "",
-        experience: "",
-        venues: [],
-        coverNote: "",
-      });
-      return;
-    }
 
-    // Parse venues safely
-    const venueWorkRaw = recuritmentDataById?.candidateProfile?.availableVenueWork;
-    let parsedVenues = [];
-    try {
-      parsedVenues = Array.isArray(venueWorkRaw)
-        ? venueWorkRaw
-        : venueWorkRaw
-          ? JSON.parse(venueWorkRaw)
-          : [];
-    } catch (e) {
-      parsedVenues = [];
-    }
-
-    // Parse discovery day safely
-    const discoveryDayRaw = recuritmentDataById?.candidateProfile?.discoveryDay;
-    let discoveryDayArray = [];
-    if (typeof discoveryDayRaw === "string") {
-      try { discoveryDayArray = JSON.parse(discoveryDayRaw); } catch { discoveryDayArray = []; }
-    } else if (Array.isArray(discoveryDayRaw)) {
-      discoveryDayArray = discoveryDayRaw;
-    }
-
-    setForm({
-      firstName: recuritmentDataById.firstName || "",
-      surname: recuritmentDataById.lastName || "",
-      status: recuritmentDataById.status || "",
-      dob: recuritmentDataById.dob || "",
-      age: recuritmentDataById.age || "",
-      email: recuritmentDataById.email || "",
-      phone: recuritmentDataById.phoneNumber || "",
-      discoveryDayDate: discoveryDayArray?.[0]?.day || "",
-      discoveryDayTime: discoveryDayArray?.[0]?.time || "",
-      postcode: recuritmentDataById.postcode || "",
-      howDidYouHear: recuritmentDataById?.candidateProfile?.howDidYouHear || "Indeed",
-      location: recuritmentDataById?.candidateProfile?.location || "",
-      capitalAvailable: recuritmentDataById?.candidateProfile?.capitalAvailable || "",
-      ageGroup: recuritmentDataById?.candidateProfile?.ageGroupExperience || "",
-      vehicle:
-        recuritmentDataById?.candidateProfile?.accessToOwnVehicle === true
-          ? "Yes"
-          : recuritmentDataById?.candidateProfile?.accessToOwnVehicle === false
-            ? "No"
-            : "",
-      qualification: recuritmentDataById?.candidateProfile?.whichQualificationYouHave || "",
-      experience: recuritmentDataById?.candidateProfile?.footballExperience || "",
-      venues: parsedVenues,
-      coverNote: recuritmentDataById?.candidateProfile?.coverNote || "",
-    });
-    setTelephoneCall({
-      date: recuritmentDataById?.candidateProfile?.telephoneCallSetupDate || "",
-      time: recuritmentDataById?.candidateProfile?.telephoneCallSetupTime || "",
-      reminder: recuritmentDataById?.candidateProfile?.telephoneCallSetupReminder || "",
-      email: recuritmentDataById?.candidateProfile?.telephoneCallSetupEmail || "",
-      scores: {
-        telePhoneCallDeliveryCommunicationSkill: recuritmentDataById?.candidateProfile?.telePhoneCallDeliveryCommunicationSkill ?? null,
-        telePhoneCallDeliveryPassionCoaching: recuritmentDataById?.candidateProfile?.telePhoneCallDeliveryPassionCoaching ?? null,
-        telePhoneCallDeliveryExperience: recuritmentDataById?.candidateProfile?.telePhoneCallDeliveryExperience ?? null,
-        telePhoneCallDeliveryKnowledgeOfSSS: recuritmentDataById?.candidateProfile?.telePhoneCallDeliveryKnowledgeOfSSS ?? null,
-      },
-    });
-    setRecruitmentData({
-      telephoneCallSetupDate: recuritmentDataById?.candidateProfile?.telephoneCallSetupDate || "",
-      telephoneCallSetupTime: recuritmentDataById?.candidateProfile?.telephoneCallSetupTime || "",
-      telephoneCallSetupReminder: recuritmentDataById?.candidateProfile?.telephoneCallSetupReminder || "",
-      telephoneCallSetupEmail: recuritmentDataById?.candidateProfile?.telephoneCallSetupEmail || "",
-    });
-
-    setTelephoneCallDelivery({
-      telePhoneCallDeliveryCommunicationSkill: recuritmentDataById?.candidateProfile?.telePhoneCallDeliveryCommunicationSkill ?? null,
-      telePhoneCallDeliveryPassionCoaching: recuritmentDataById?.candidateProfile?.telePhoneCallDeliveryPassionCoaching ?? null,
-      telePhoneCallDeliveryExperience: recuritmentDataById?.candidateProfile?.telePhoneCallDeliveryExperience ?? null,
-      telePhoneCallDeliveryKnowledgeOfSSS: recuritmentDataById?.candidateProfile?.telePhoneCallDeliveryKnowledgeOfSSS ?? null,
-    });
-  }, [recuritmentDataById]);
   // ✅ will re-run if data changes
   useEffect(() => {
     const p = recuritmentDataById?.candidateProfile;
 
     if (!p) {
-      // Reset all steps to pending & disabled
       setSteps(prev =>
         prev.map(step => ({
           ...step,
           status: "pending",
-          isEnabled: false,
+          isEnabled: step.id === 1,
           resultPercent: undefined,
           resultStatus: undefined,
         }))
@@ -530,33 +508,106 @@ const OverView = ({ steps, setSteps }) => {
 
     setSteps(prev =>
       prev.map(step => {
+        const isStep1Done = !!p.qualifyLead;
+        const isStep2Done = !!p.telephoneCallSetupDate?.trim();
+        const isStep3Done = !!p.telePhoneCallDeliveryCommunicationSkill;
+        const isStep4Done = (p.discoveryDay && JSON.parse(p.discoveryDay || "[]").length > 0);
+        const isStep5Done = !!p.result;
+
+        let isEnabled = false;
         switch (step.id) {
           case 1:
-            return { ...step, status: p.qualifyLead ? "completed" : "pending", isEnabled: true };
+            isEnabled = true;
+            break;
           case 2:
-            return { ...step, status: p.telephoneCallSetupDate?.trim() ? "completed" : "pending", isEnabled: !!p.telephoneCallSetupDate?.trim() };
+            isEnabled = isStep1Done;
+            break;
           case 3:
-            return { ...step, status: p.telePhoneCallDeliveryCommunicationSkill ? "completed" : "pending", isEnabled: true };
+            isEnabled = isStep2Done;
+            break;
           case 4:
-            return { ...step, status: "completed", isEnabled: true };
+            isEnabled = isStep3Done;
+            break;
           case 5:
-            if (p.result) {
+            isEnabled = isStep4Done;
+            break;
+          default:
+            isEnabled = false;
+        }
+
+        switch (step.id) {
+          case 1:
+            return { ...step, status: isStep1Done ? "completed" : "pending", isEnabled };
+          case 2:
+            return {
+              ...step,
+              status: isStep2Done ? "completed" : "pending",
+              isEnabled
+            };
+          case 3:
+            return {
+              ...step,
+              status: isStep3Done ? "completed" : "pending",
+              isEnabled
+            };
+          case 4:
+            return {
+              ...step,
+              status: isStep4Done ? "completed" : "pending",
+              isEnabled
+            };
+          case 5:
+            if (isStep5Done) {
               return {
                 ...step,
                 status: "completed",
                 resultPercent: recuritmentDataById.telephoneCallScorePercentage + "%",
                 resultStatus: p.result === "passed" ? "Passed" : "Failed",
-                isEnabled: true,
+                isEnabled,
               };
             } else {
-              return { ...step, status: "pending", isEnabled: false };
+              return { ...step, status: "pending", isEnabled };
             }
           default:
             return step;
         }
       })
     );
+
+    // Sync other states
+    setTelephoneCall({
+      date: p.telephoneCallSetupDate || "",
+      time: p.telephoneCallSetupTime || "",
+      reminder: p.telephoneCallSetupReminder || "",
+      email: p.telephoneCallSetupEmail || "",
+      scores: {
+        communication: p.telePhoneCallDeliveryCommunicationSkill,
+        passion: p.telePhoneCallDeliveryPassionCoaching,
+        experience: p.telePhoneCallDeliveryExperience,
+        knowledge: p.telePhoneCallDeliveryKnowledgeOfSSS,
+      },
+    });
+
+    setTelephoneCallDelivery({
+      telePhoneCallDeliveryCommunicationSkill: p.telePhoneCallDeliveryCommunicationSkill,
+      telePhoneCallDeliveryPassionCoaching: p.telePhoneCallDeliveryPassionCoaching,
+      telePhoneCallDeliveryExperience: p.telePhoneCallDeliveryExperience,
+      telePhoneCallDeliveryKnowledgeOfSSS: p.telePhoneCallDeliveryKnowledgeOfSSS,
+    });
+
+    setPayload({
+      qualifyLead: p.qualifyLead,
+      telephoneCallSetupDate: p.telephoneCallSetupDate,
+      telephoneCallSetupTime: p.telephoneCallSetupTime,
+      telephoneCallSetupReminder: p.telephoneCallSetupReminder,
+      telephoneCallSetupEmail: p.telephoneCallSetupEmail,
+      telePhoneCallDeliveryCommunicationSkill: p.telePhoneCallDeliveryCommunicationSkill,
+      telePhoneCallDeliveryPassionCoaching: p.telePhoneCallDeliveryPassionCoaching,
+      telePhoneCallDeliveryExperience: p.telePhoneCallDeliveryExperience,
+      telePhoneCallDeliveryKnowledgeOfSSS: p.telePhoneCallDeliveryKnowledgeOfSSS,
+    });
   }, [recuritmentDataById]);
+
 
   const handleSendOfferMail = async (id) => {
     await sendOfferMail(id);
@@ -578,6 +629,25 @@ const OverView = ({ steps, setSteps }) => {
     }
   };
   const submitScorecard = () => {
+    const {
+      telePhoneCallDeliveryCommunicationSkill,
+      telePhoneCallDeliveryPassionCoaching,
+      telePhoneCallDeliveryExperience,
+      telePhoneCallDeliveryKnowledgeOfSSS
+    } = telephoneCallDelivery;
+
+    const newErrors = {};
+    if (telePhoneCallDeliveryCommunicationSkill === null) newErrors.communication = "Rating required";
+    if (telePhoneCallDeliveryPassionCoaching === null) newErrors.passion = "Rating required";
+    if (telePhoneCallDeliveryExperience === null) newErrors.experience = "Rating required";
+    if (telePhoneCallDeliveryKnowledgeOfSSS === null) newErrors.knowledge = "Rating required";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setErrors({});
     setPayload(prev => ({ ...prev, ...telephoneCallDelivery }));
 
     updateStepStatus(3, "completed");
@@ -633,6 +703,17 @@ const OverView = ({ steps, setSteps }) => {
     );
   };
   const confirmTelephoneCall = () => {
+    const newErrors = {};
+    if (!telephoneCall.date) newErrors.date = "Date is required";
+    if (!telephoneCall.time) newErrors.time = "Time is required";
+    if (!telephoneCall.reminder) newErrors.reminder = "Reminder is required";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setErrors({});
     setPayload(prev => ({
       ...prev,
       telephoneCallSetupDate: telephoneCall.date,
@@ -646,47 +727,60 @@ const OverView = ({ steps, setSteps }) => {
   const handleSubmit = async () => {
     if (isSubmitting) return;
 
+    const result = await showConfirm(
+      "Are you sure?",
+      "Please confirm updating this recruitment lead.",
+      "Yes, Update Lead"
+    );
+
+    if (!result.isConfirmed) return;
+
     setIsSubmitting(true);
 
     try {
-      console.log("Submit Payload:", form);
+      const token = localStorage.getItem("adminToken");
+      const payloadMain = {
+        recruitmentLeadId: Number(id),
+        qualifyLead: !!payload.qualifyLead,
 
-      if (comesfrom === "franchise") {
-        const payloadMain = {
-          recruitmentLeadId: id,
-          howDidYouHear: form.howDidYouHear,
-          location: form.location,
-          capitalAvailable: form.capitalAvailable,
-          coverNote: form.coverNote,
-          qualifyLead: payload.qualifyLead,
+        telephoneCallSetupDate: telephoneCall.date,
+        telephoneCallSetupTime: telephoneCall.time,
+        telephoneCallSetupReminder: telephoneCall.reminder,
 
-          telephoneCallSetupDate: recruitmentData.telephoneCallSetupDate,
-          telephoneCallSetupTime: recruitmentData.telephoneCallSetupTime,
-          telephoneCallSetupReminder: recruitmentData.telephoneCallSetupReminder,
+        telePhoneCallDeliveryCommunicationSkill: telephoneCallDelivery.telePhoneCallDeliveryCommunicationSkill,
+        telePhoneCallDeliveryPassionCoaching: telephoneCallDelivery.telePhoneCallDeliveryPassionCoaching,
+        telePhoneCallDeliveryExperience: telephoneCallDelivery.telePhoneCallDeliveryExperience,
+        telePhoneCallDeliveryKnowledgeOfSSS: telephoneCallDelivery.telePhoneCallDeliveryKnowledgeOfSSS,
 
-          telePhoneCallDeliveryCommunicationSkill:
-            payload.telePhoneCallDeliveryCommunicationSkill,
-          telePhoneCallDeliveryPassionCoaching:
-            payload.telePhoneCallDeliveryPassionCoaching,
-          telePhoneCallDeliveryExperience:
-            payload.telePhoneCallDeliveryExperience,
-          telePhoneCallDeliveryKnowledgeOfSSS:
-            payload.telePhoneCallDeliveryKnowledgeOfSSS,
+        discoveryDay: [
+          {
+            date: form.discoveryDayDate,
+            time: form.discoveryDayTime,
+          },
+        ],
+      };
 
-          discoveryDay: [
-            {
-              day: form.discoveryDayDate,
-              time: form.discoveryDayTime,
-            },
-          ],
-        };
+      const response = await fetch(`${API_BASE_URL}/api/admin/franchise/candidate-profile/update`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payloadMain),
+      });
 
-        await createFranchiseRecruitmentById(payloadMain);
-      } else {
-        console.log("Submit Payload in else:", form);
+      const resultData = await response.json();
+
+      if (!response.ok) {
+        showError("Error", resultData.message || "Failed to update profile");
+        return;
       }
+
+      showSuccess("Success", "Recruitment profile updated successfully");
+      fetchFranchiseRecruitmentById(id);
     } catch (error) {
       console.error("Submit failed:", error);
+      showError("Error", "Network error occurred");
     } finally {
       setIsSubmitting(false);
     }
@@ -696,12 +790,11 @@ const OverView = ({ steps, setSteps }) => {
 
   return (
     <>
-      {/* <button className="p-3 text-[#34AE56] font-bold bg-[#E5F2EA] px-10 absolute right-0 top-0 rounded-2xl">
-        Recruited
-      </button> */}
-      {/* <button className="p-3 text-white font-bold bg-[#D95858] px-10 absolute right-0 top-0 rounded-2xl">
-        Rejected
-      </button> */}
+      <button
+        className={`p-3 capitalize font-bold px-10 absolute right-0 top-0 rounded-2xl ${getStatusStyles(form.status)}`}
+      >
+        {form.status}
+      </button>
       <div className='flex gap-8'>
         <div className="md:w-8/12">
 
@@ -729,7 +822,7 @@ const OverView = ({ steps, setSteps }) => {
                   className="input border border-[#E2E1E5]  rounded-xl w-full p-3" placeholder="John" />
               </div>
 
-              <div className="space-y-1">
+              {/* <div className="space-y-1">
                 <label className="text-[16px] font-semibold block">Date of Birth</label>
                 <input type="date"
                   disabled={!!form.dob}
@@ -745,7 +838,7 @@ const OverView = ({ steps, setSteps }) => {
                   value={form.age}
                   onChange={(e) => handleChange("age", e.target.value)}
                   className="input border border-[#E2E1E5]  rounded-xl w-full p-3" placeholder="25" />
-              </div>
+              </div> */}
 
               <div className="space-y-1">
                 <label className="text-[16px] font-semibold block">Email</label>
@@ -760,10 +853,10 @@ const OverView = ({ steps, setSteps }) => {
                 <label className="text-[16px] font-semibold block">Phone number</label>
                 <div className="flex items-center border border-gray-300 rounded-xl px-4 py-3">
                   <PhoneInput
-                    country="uk"
-                    value="+44"
+                    country={form.countryCode || "gb"}
+                    value={form.dialCode}
                     disableDropdown={true}
-                    disableCountryCode={true}
+                    disableCountryCode={false}
                     countryCodeEditable={false}
                     inputStyle={{
                       width: "0px",
@@ -775,7 +868,7 @@ const OverView = ({ steps, setSteps }) => {
                     }}
                     buttonClass="!bg-white !border-none !p-0"
                   />
-                  <input type="number"
+                  <input type="text"
                     disabled={!!form.phone}
                     value={form.phone}
                     onChange={(e) => handleChange("phone", e.target.value)}
@@ -783,16 +876,16 @@ const OverView = ({ steps, setSteps }) => {
                 </div>
               </div>
 
-              <div className="space-y-1">
+              {/* <div className="space-y-1">
                 <label className="text-[16px] font-semibold block">London Postcode</label>
                 <input type="text"
                   disabled={!!form.postcode}
                   value={form.postcode}
                   onChange={(e) => handleChange("postcode", e.target.value)}
                   className="input border border-[#E2E1E5]  rounded-xl w-full p-3" placeholder="SW15 0AB" />
-              </div>
+              </div> */}
 
-              <div className="space-y-1">
+              <div className="space-y-1 col-span-2">
                 <label className="text-[16px] font-semibold block">How did you hear about us?</label>
                 <select value={form.howDidYouHear}
                   disabled={!!form.howDidYouHear}
@@ -820,18 +913,19 @@ const OverView = ({ steps, setSteps }) => {
                 <label className="text-[16px] font-semibold block">Location</label>
                 <input type="text"
                   value={form.location}
+                  disabled
                   onChange={(e) => handleChange("location", e.target.value)}
-                  className="input border border-[#E2E1E5]  rounded-xl w-full p-3" placeholder="Chelesa" />
+                  className="input border border-[#E2E1E5] bg-gray-100 cursor-not-allowed rounded-xl w-full p-3" placeholder="Chelesa" />
               </div>
 
               <div className="space-y-1">
                 <label className="text-[16px] font-semibold block">Capital available</label>
-                <input
-                  type="text"
-                  value={form.capitalAvailable ? `£${Number(form.capitalAvailable).toLocaleString()}` : ""}
-                  onChange={(e) => handleChange("capitalAvailable", e.target.value.replace(/[£,]/g, ""))}
-                  className="input border border-[#E2E1E5] rounded-xl w-full p-3"
-                  placeholder="£123,123"
+                <textarea
+                  disabled
+                  value={form.capitalAvailable}
+                  onChange={(e) => handleChange("capitalAvailable", e.target.value)}
+                  className="input border border-[#E2E1E5] bg-gray-100 cursor-not-allowed rounded-xl w-full p-3 h-24 resize-none"
+                  placeholder="Capital available"
                 />
               </div>
 
@@ -849,34 +943,26 @@ const OverView = ({ steps, setSteps }) => {
 
             <textarea
               name="coverNote" value={form.coverNote}
-              onChange={(e) => handleChange("coverNote", e.target.value)} className="input mt-1 border border-[#E2E1E5]   bg-[#FAFAFA] rounded-xl w-full p-3 h-32 resize-none"
+              disabled
+              onChange={(e) => handleChange("coverNote", e.target.value)} className="input mt-1 border border-[#E2E1E5] bg-gray-100 cursor-not-allowed rounded-xl w-full p-3 h-32 resize-none"
               placeholder="Cover Note"
             ></textarea>
           </div>
-          {form.status !== 'recruited' && (
-            <button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className={`bg-[#237FEA] mt-2 p-3 rounded-xl text-white hover:bg-[#237FEA] ${isSubmitting ? "opacity-60 cursor-not-allowed" : ""
-                }`}
-            >
-              {isSubmitting ? "Submitting..." : "Submit"}
-            </button>
-          )}
+
 
 
           {/* comments */}
 
           <Comments
-                  adminInfo={adminInfo}
-                  comment={comment}
-                  setComment={setComment}
-                  handleSubmitComment={handleSubmitComment}
-                  loadingComment={loadingComment}
-                  commentsList={commentsList}
-                  currentComments={currentComments}
-                  formatTimeAgo={formatTimeAgo}
-                />
+            adminInfo={adminInfo}
+            comment={comment}
+            setComment={setComment}
+            handleSubmitComment={handleSubmitComment}
+            loadingComment={loadingComment}
+            commentsList={commentsList}
+            currentComments={currentComments}
+            formatTimeAgo={formatTimeAgo}
+          />
         </div>
 
         <div className="md:w-4/12  space-y-6">
@@ -903,7 +989,12 @@ const OverView = ({ steps, setSteps }) => {
 
                     {/* HEADER */}
                     <div className="flex justify-between items-center">
-                      <p className="font-semibold">{step.title}</p>
+                      <div>
+                        <p className="font-semibold">{step.title}</p>
+                        {step.id === 4 && form.discoveryDayDate && (
+                          <p className="text-gray-400 text-sm">{form.discoveryDayDate}</p>
+                        )}
+                      </div>
 
                       {step.status !== "completed" && (
                         <button
@@ -956,12 +1047,11 @@ const OverView = ({ steps, setSteps }) => {
                     {/* PRIMARY STEP BUTTON */}
                     {step.buttonText && (
                       <button
-                        disabled={recruitedMode}
                         className="mt-3 flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-xl text-sm"
                         onClick={() => {
                           if (step.id === 2) toggleOpenStep(step.id);
                           if (step.id === 3) setRateOpen(true);
-                          if (step.id === 4) setOpenCandidateStatusModal(true);
+                          if (step.id === 4) setOpenDiscoverDayModal(true);
                         }}
                       >
                         {step.buttonText}
@@ -973,37 +1063,53 @@ const OverView = ({ steps, setSteps }) => {
                     {step.id === 2 && step.isOpen && step.isEnabled && (
                       <div className="bg-gray-50 rounded-xl p-4 mt-3 space-y-3">
                         <div className="grid grid-cols-2 gap-3">
-                          <input
-                            type="date"
-                            disabled={recruitedMode}
-                            value={telephoneCall.date}
-                            className="border rounded-xl p-2"
-                            onChange={(e) =>
-                              setTelephoneCall({ ...telephoneCall, date: e.target.value })
-                            }
-                          />
+                          <div className="flex flex-col">
+                            <input
+                              type="date"
+                              disabled={recruitedMode}
+                              value={telephoneCall.date}
+                              className={`border rounded-xl p-2 ${errors.date ? "border-red-500" : ""}`}
+                              onChange={(e) => {
+                                setTelephoneCall({ ...telephoneCall, date: e.target.value });
+                                setErrors(prev => ({ ...prev, date: "" }));
+                              }}
+                            />
+                            {errors.date && <span className="text-red-500 text-xs mt-1">{errors.date}</span>}
+                          </div>
 
-                          <input
-                            type="time"
-                            disabled={recruitedMode}
-                            value={telephoneCall.time}
-                            className="border rounded-xl p-2"
-                            onChange={(e) =>
-                              setTelephoneCall({ ...telephoneCall, time: e.target.value })
-                            }
-                          />
+                          <div className="flex flex-col">
+                            <input
+                              type="time"
+                              disabled={recruitedMode}
+                              value={telephoneCall.time}
+                              className={`border rounded-xl p-2 ${errors.time ? "border-red-500" : ""}`}
+                              onChange={(e) => {
+                                setTelephoneCall({ ...telephoneCall, time: e.target.value });
+                                setErrors(prev => ({ ...prev, time: "" }));
+                              }}
+                            />
+                            {errors.time && <span className="text-red-500 text-xs mt-1">{errors.time}</span>}
+                          </div>
                         </div>
 
-                        <input
-                          type="email"
-                          disabled={recruitedMode}
-                          value={telephoneCall.email}
-                          className="border rounded-xl p-2 w-full"
-                          placeholder="Candidate email"
-                          onChange={(e) =>
-                            setTelephoneCall({ ...telephoneCall, email: e.target.value })
-                          }
-                        />
+                        <div className="flex flex-col">
+                          <select
+                            disabled={recruitedMode}
+                            value={telephoneCall.reminder}
+                            className={`border rounded-xl p-2 w-full bg-white ${errors.reminder ? "border-red-500" : ""}`}
+                            onChange={(e) => {
+                              setTelephoneCall({ ...telephoneCall, reminder: e.target.value });
+                              setErrors(prev => ({ ...prev, reminder: "" }));
+                            }}
+                          >
+                            <option value="">When do you want to be reminded?</option>
+                            <option value="10 min before">10 min before</option>
+                            <option value="30 min before">30 min before</option>
+                            <option value="1 hour before">1 hour before</option>
+                            <option value="1 day before">1 day before</option>
+                          </select>
+                          {errors.reminder && <span className="text-red-500 text-xs mt-1">{errors.reminder}</span>}
+                        </div>
 
                         <button
                           disabled={recruitedMode}
@@ -1046,62 +1152,7 @@ const OverView = ({ steps, setSteps }) => {
               })}
             </div>
 
-            {/* SCORECARD MODAL */}
-            {rateOpen && (
-              <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="bg-white rounded-2xl w-full max-w-lg p-6"
-                >
-                  <h3 className="text-lg font-semibold mb-4">Call Scorecard</h3>
 
-                  {["communication", "passion", "experience", "knowledge"].map((key) => (
-                    <div key={key} className="mb-4">
-                      <p className="capitalize font-semibold mb-2">{key}</p>
-
-                      {[1, 2, 3, 4, 5].map((n) => (
-                        <label key={n} className="mr-4">
-                          <input
-                            type="radio"
-                            checked={telephoneCall.scores[key] === n}
-                            onChange={() => {
-                              setTelephoneCall(prev => ({
-                                ...prev,
-                                scores: { ...prev.scores, [key]: n },
-                              }));
-
-                              const map = {
-                                communication: "telePhoneCallDeliveryCommunicationSkill",
-                                passion: "telePhoneCallDeliveryPassionCoaching",
-                                experience: "telePhoneCallDeliveryExperience",
-                                knowledge: "telePhoneCallDeliveryKnowledgeOfSSS",
-                              };
-
-                              setTelephoneCallDelivery(prev => ({
-                                ...prev,
-                                [map[key]]: n,
-                              }));
-                            }}
-                          />{" "}
-                          {n}
-                        </label>
-                      ))}
-                    </div>
-                  ))}
-
-                  <button
-                    className="w-full bg-blue-600 text-white py-2 rounded-xl"
-                    onClick={() => {
-                      toggleStep(3, "completed");
-                      setRateOpen(false);
-                    }}
-                  >
-                    Submit Scorecard
-                  </button>
-                </motion.div>
-              </div>
-            )}
           </div>
 
           <div className="bg-white p-6 rounded-2xl ">
@@ -1117,11 +1168,11 @@ const OverView = ({ steps, setSteps }) => {
           </div>
           <div className="bg-white p-6 rounded-2xl  space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => handleSendFranchiseMail(id)} className="flex items-center justify-center gap-2 border border-[#717073] rounded-xl py-3">
+              <button onClick={handleSendEmail} className="flex items-center justify-center gap-2 border border-[#717073] rounded-xl py-3">
                 <Mail size={18} /> <span>Send Email</span>
               </button>
 
-              <button className="flex items-center justify-center gap-2 border border-[#717073] rounded-xl py-3">
+              <button onClick={handleSendText} className="flex items-center justify-center gap-2 border border-[#717073] rounded-xl py-3">
                 <MessageSquare size={18} /> <span>Send Text</span>
               </button>
             </div>
@@ -1262,7 +1313,7 @@ const OverView = ({ steps, setSteps }) => {
                     {["Communication skill", "Passion for coaching", "Experience", "Knowledge of SSS"].map((label) => (
                       <div key={label} className="mb-6">
                         <p className="font-semibold mb-2 text-[#494949]">{label}</p>
-                        <div className="flex gap-4 text-[#494949]">
+                        <div className="flex gap-4 text-[#494949] flex-wrap">
                           {[1, 2, 3, 4, 5].map((num) => (
                             <label key={num} className="flex items-center gap-1 cursor-pointer">
                               <input
@@ -1270,17 +1321,19 @@ const OverView = ({ steps, setSteps }) => {
                                 name={label}
                                 value={num}
                                 checked={telephoneCallDelivery[scoreKeyMap[label]] === num}
-                                onChange={() =>
+                                onChange={() => {
                                   setTelephoneCallDelivery(prev => ({
                                     ...prev,
                                     [scoreKeyMap[label]]: num
-                                  }))
-                                }
+                                  }));
+                                  setErrors(prev => ({ ...prev, [label.split(' ')[0].toLowerCase()]: "" }));
+                                }}
                               />{" "}
                               {num}
                             </label>
                           ))}
                         </div>
+                        {errors[label.split(' ')[0].toLowerCase()] && <p className="text-red-500 text-xs mt-1">{errors[label.split(' ')[0].toLowerCase()]}</p>}
                       </div>
                     ))}
                   </div>
@@ -1501,6 +1554,16 @@ const OverView = ({ steps, setSteps }) => {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
+                  const newErrors = {};
+                  if (!form.discoveryDayDate) newErrors.discoveryDate = "Date is required";
+                  if (!form.discoveryDayTime) newErrors.discoveryTime = "Time is required";
+
+                  if (Object.keys(newErrors).length > 0) {
+                    setErrors(newErrors);
+                    return;
+                  }
+
+                  setErrors({});
                   updateStepStatus(4, "completed");
                   setOpenDiscoverDayModal(false);
                 }}
@@ -1515,9 +1578,13 @@ const OverView = ({ steps, setSteps }) => {
                       type="date"
                       name="discoveryDayDate"          // 👈 add this
                       value={form.discoveryDayDate}
-                      onChange={(e) => handleDateChange("discoveryDayDate", e.target.value)}
-                      className="border border-[#E2E1E5] w-full rounded-2xl p-3"
+                      onChange={(e) => {
+                        handleDateChange("discoveryDayDate", e.target.value);
+                        setErrors(prev => ({ ...prev, discoveryDate: "" }));
+                      }}
+                      className={`border ${errors.discoveryDate ? "border-red-500" : "#E2E1E5"} w-full rounded-2xl p-3`}
                     />
+                    {errors.discoveryDate && <p className="text-red-500 text-xs mt-1">{errors.discoveryDate}</p>}
                   </div>
 
                   <div className="mb-3">
@@ -1528,10 +1595,14 @@ const OverView = ({ steps, setSteps }) => {
                       type="time"
                       name="discoveryDayTime"          // 👈 add this
                       value={form.discoveryDayTime}
-                      onChange={(e) => handleDateChange("discoveryDayTime", e.target.value)}
+                      onChange={(e) => {
+                        handleDateChange("discoveryDayTime", e.target.value);
+                        setErrors(prev => ({ ...prev, discoveryTime: "" }));
+                      }}
 
-                      className="border border-[#E2E1E5] w-full rounded-2xl p-3"
+                      className={`border ${errors.discoveryTime ? "border-red-500" : "#E2E1E5"} w-full rounded-2xl p-3`}
                     />
+                    {errors.discoveryTime && <p className="text-red-500 text-xs mt-1">{errors.discoveryTime}</p>}
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-6">
@@ -1543,10 +1614,12 @@ const OverView = ({ steps, setSteps }) => {
                       Cancel
                     </button>
                     <button
+                      onClick={handleSubmit}
+                      disabled={form.status == 'recruited'}
                       type="submit"
-                      className="w-full p-3 border border-[#E2E1E5] bg-[#237FEA] text-white font-semibold rounded-2xl"
+                      className={`w-full p-3 border border-[#E2E1E5] ${form.status == 'recruited' ? "opacity-60 cursor-not-allowed" : ""} bg-[#237FEA] text-white font-semibold rounded-2xl`}
                     >
-                      Book
+                      {isSubmitting ? "Submitting..." : "Book"}
                     </button>
                   </div>
                 </fieldset>

@@ -19,6 +19,12 @@ export default function MusicPlayer() {
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [audioFile, setAudioFile] = useState(null);
     const [coverFile, setCoverFile] = useState(null);
+    const [errors, setErrors] = useState({});
+
+    const titleInputRef = useRef(null);
+    const audioLabelRef = useRef(null);
+    const coverLabelRef = useRef(null);
+
     console.log('currentTrack', currentTrack)
 
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -171,13 +177,24 @@ export default function MusicPlayer() {
     };
 
     const handleSaveUpload = async () => {
+        let newErrors = {};
+        let focusRef = null;
+
         if (!audioFile) {
-            showError("Error", "Please select an audio file");
-            return;
+            newErrors.audio = "Please select an audio file";
+            if (!focusRef) focusRef = audioLabelRef;
+        } 
+        
+        if (!coverFile) {
+            newErrors.cover = "Please select a cover photo";
+            if (!focusRef) focusRef = coverLabelRef;
         }
 
-        if (!coverFile) {
-            showError("Error", "Please select a cover photo");
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            if (focusRef && focusRef.current) {
+                focusRef.current.focus();
+            }
             return;
         }
 
@@ -214,6 +231,7 @@ export default function MusicPlayer() {
             setAudioFile(null);
             setCoverFile(null);
             setIsUploadModalOpen(false);
+            setErrors({});
 
             fetchData();
 
@@ -270,10 +288,17 @@ export default function MusicPlayer() {
     const handleEdit = (track) => {
         setTitle(track?.title);
         setId(track?.id);
+        setErrors({});
     }
 
     const handleUpdateTitle = async () => {
-
+        if (!title || !title.trim()) {
+            setErrors({ title: "Title is required" });
+            if (titleInputRef.current) {
+                titleInputRef.current.focus();
+            }
+            return;
+        }
 
         const token = localStorage.getItem("adminToken");
 
@@ -454,19 +479,25 @@ export default function MusicPlayer() {
                         <h3 className="text-lg font-semibold mb-4">Update Music Title</h3>
 
                         <input
+                            ref={titleInputRef}
                             type="text"
                             value={title}
-                            onChange={(e) => setTitle(e.target.value)}
+                            onChange={(e) => {
+                                setTitle(e.target.value);
+                                setErrors((prev) => ({ ...prev, title: '' }));
+                            }}
                             placeholder="Enter title"
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2 mb-4"
+                            className={`w-full border ${errors.title ? 'border-red-500 outline-none' : 'border-gray-200'} rounded-lg px-3 py-2 ${errors.title ? 'mb-1' : 'mb-4'}`}
                             autoFocus
                         />
+                        {errors.title && <p className="text-red-500 text-sm mb-4">{errors.title}</p>}
 
                         <div className="flex justify-end gap-3">
                             <button
                                 onClick={() => {
                                     setTitle('');
                                     setId('');
+                                    setErrors({});
                                 }}
                                 className="px-4 py-2 rounded-lg border-gray-200 border"
                             >
@@ -493,7 +524,10 @@ export default function MusicPlayer() {
                         <h2 className="text-lg font-semibold mb-4">Upload Music</h2>
 
                         {/* Audio */}
-                        <label className="w-full h-30 border-2 border-dashed border-gray-300 rounded-xl flex gap-3 justify-center items-center cursor-pointer text-gray-500 text-sm bg-gray-50"
+                        <label
+                            ref={audioLabelRef}
+                            tabIndex={0}
+                            className={`w-full h-30 border-2 border-dashed ${errors.audio ? 'border-red-500' : 'border-gray-300'} rounded-xl flex gap-3 justify-center items-center cursor-pointer text-gray-500 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500/50`}
                         >
                             <Upload size={16} />
                             {audioFile ? audioFile.name : "Choose Audio"}
@@ -501,12 +535,19 @@ export default function MusicPlayer() {
                                 hidden
                                 type="file"
                                 accept="audio/*"
-                                onChange={(e) => handleFileSelect(e, "audio")}
+                                onChange={(e) => {
+                                    handleFileSelect(e, "audio");
+                                    setErrors((prev) => ({ ...prev, audio: '' }));
+                                }}
                             />
                         </label>
+                        {errors.audio && <p className="text-red-500 text-sm mt-1">{errors.audio}</p>}
 
                         {/* Cover */}
-                        <label className="w-full h-30 my-4 border-2 border-dashed border-gray-300 rounded-xl flex gap-3 justify-center items-center cursor-pointer text-gray-500 text-sm bg-gray-50"
+                        <label
+                            ref={coverLabelRef}
+                            tabIndex={0}
+                            className={`w-full h-30 mt-4 border-2 border-dashed ${errors.cover ? 'border-red-500' : 'border-gray-300'} rounded-xl flex gap-3 justify-center items-center cursor-pointer text-gray-500 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500/50`}
                         >
                             <Upload size={16} />
                             {coverFile ? coverFile.name : "Cover Photo"}
@@ -514,16 +555,21 @@ export default function MusicPlayer() {
                                 hidden
                                 type="file"
                                 accept="image/*"
-                                onChange={(e) => handleFileSelect(e, "cover")}
+                                onChange={(e) => {
+                                    handleFileSelect(e, "cover");
+                                    setErrors((prev) => ({ ...prev, cover: '' }));
+                                }}
                             />
                         </label>
+                        {errors.cover && <p className="text-red-500 text-sm mt-1">{errors.cover}</p>}
 
-                        <div className="flex justify-end gap-3">
+                        <div className="flex justify-end gap-3 mt-4">
                             <button
                                 onClick={() => {
                                     setIsUploadModalOpen(false);
                                     setAudioFile(null);
                                     setCoverFile(null);
+                                    setErrors({});
                                 }}
                                 className="px-4 py-2 rounded-lg border border-gray-200"
                             >

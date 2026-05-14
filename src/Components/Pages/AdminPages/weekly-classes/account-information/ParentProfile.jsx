@@ -24,6 +24,7 @@ import { useTextPopup } from '../../contexts/messages/SendTextContext';
 import { useRevertMembership } from '../../contexts/RevertMembershipContext';
 import RevertMembershipPopup from '../../Common/RevertMembershipPoppup';
 import { useLocation } from "react-router-dom";
+import { DIAL_CODES, stripDialCode, detectCountryFromPhone as matchDialCode } from '../../../../../utils/phoneHelper';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: Normalize profile data so the component works for all service types:
@@ -249,31 +250,6 @@ const ParentProfile = ({ profile: rawProfile }) => {
         if (diff < 86400) return `${Math.floor(diff / 3600)} hour${Math.floor(diff / 3600) !== 1 ? 's' : ''} ago`;
         if (diff < 604800) return `${Math.floor(diff / 86400)} day${Math.floor(diff / 86400) !== 1 ? 's' : ''} ago`;
         return past.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-    };
-    const stripDialCode = (phoneNumber) => {
-        if (!phoneNumber) return "";
-
-        // Longest match pehle try karo
-        for (const { dialCode } of DIAL_CODES) {
-            if (phoneNumber.startsWith(dialCode)) {
-                return phoneNumber.slice(dialCode.length).trim();
-            }
-        }
-
-        // Fallback: agar koi match nahi + ke baad digits hain
-        const match = phoneNumber.match(/^\+\d{1,4}/);
-        if (match) return phoneNumber.slice(match[0].length).trim();
-
-        return phoneNumber;
-    };
-    const matchDialCode = (phone) => {
-        if (!phone) return null;
-        for (const entry of DIAL_CODES) {
-            if (phone.startsWith(entry.dialCode)) {
-                return entry;
-            }
-        }
-        return null;
     };
 
     const commentData = {
@@ -684,105 +660,6 @@ const ParentProfile = ({ profile: rawProfile }) => {
             setEditingEmergency(index);
         }
     };
-    const DIAL_CODES = [
-        { dialCode: "+1", countryCode: "us" },
-        { dialCode: "+7", countryCode: "ru" },
-        { dialCode: "+20", countryCode: "eg" },
-        { dialCode: "+27", countryCode: "za" },
-        { dialCode: "+30", countryCode: "gr" },
-        { dialCode: "+31", countryCode: "nl" },
-        { dialCode: "+32", countryCode: "be" },
-        { dialCode: "+33", countryCode: "fr" },
-        { dialCode: "+34", countryCode: "es" },
-        { dialCode: "+36", countryCode: "hu" },
-        { dialCode: "+39", countryCode: "it" },
-        { dialCode: "+40", countryCode: "ro" },
-        { dialCode: "+41", countryCode: "ch" },
-        { dialCode: "+43", countryCode: "at" },
-        { dialCode: "+44", countryCode: "gb" },
-        { dialCode: "+45", countryCode: "dk" },
-        { dialCode: "+46", countryCode: "se" },
-        { dialCode: "+47", countryCode: "no" },
-        { dialCode: "+48", countryCode: "pl" },
-        { dialCode: "+49", countryCode: "de" },
-        { dialCode: "+51", countryCode: "pe" },
-        { dialCode: "+52", countryCode: "mx" },
-        { dialCode: "+53", countryCode: "cu" },
-        { dialCode: "+54", countryCode: "ar" },
-        { dialCode: "+55", countryCode: "br" },
-        { dialCode: "+56", countryCode: "cl" },
-        { dialCode: "+57", countryCode: "co" },
-        { dialCode: "+58", countryCode: "ve" },
-        { dialCode: "+60", countryCode: "my" },
-        { dialCode: "+61", countryCode: "au" },
-        { dialCode: "+62", countryCode: "id" },
-        { dialCode: "+63", countryCode: "ph" },
-        { dialCode: "+64", countryCode: "nz" },
-        { dialCode: "+65", countryCode: "sg" },
-        { dialCode: "+66", countryCode: "th" },
-        { dialCode: "+81", countryCode: "jp" },
-        { dialCode: "+82", countryCode: "kr" },
-        { dialCode: "+84", countryCode: "vn" },
-        { dialCode: "+86", countryCode: "cn" },
-        { dialCode: "+90", countryCode: "tr" },
-        { dialCode: "+91", countryCode: "in" },
-        { dialCode: "+92", countryCode: "pk" },
-        { dialCode: "+93", countryCode: "af" },
-        { dialCode: "+94", countryCode: "lk" },
-        { dialCode: "+95", countryCode: "mm" },
-        { dialCode: "+98", countryCode: "ir" },
-        { dialCode: "+212", countryCode: "ma" },
-        { dialCode: "+213", countryCode: "dz" },
-        { dialCode: "+216", countryCode: "tn" },
-        { dialCode: "+218", countryCode: "ly" },
-        { dialCode: "+220", countryCode: "gm" },
-        { dialCode: "+221", countryCode: "sn" },
-        { dialCode: "+234", countryCode: "ng" },
-        { dialCode: "+254", countryCode: "ke" },
-        { dialCode: "+255", countryCode: "tz" },
-        { dialCode: "+256", countryCode: "ug" },
-        { dialCode: "+260", countryCode: "zm" },
-        { dialCode: "+263", countryCode: "zw" },
-        { dialCode: "+351", countryCode: "pt" },
-        { dialCode: "+352", countryCode: "lu" },
-        { dialCode: "+353", countryCode: "ie" },
-        { dialCode: "+354", countryCode: "is" },
-        { dialCode: "+355", countryCode: "al" },
-        { dialCode: "+356", countryCode: "mt" },
-        { dialCode: "+358", countryCode: "fi" },
-        { dialCode: "+359", countryCode: "bg" },
-        { dialCode: "+370", countryCode: "lt" },
-        { dialCode: "+371", countryCode: "lv" },
-        { dialCode: "+372", countryCode: "ee" },
-        { dialCode: "+380", countryCode: "ua" },
-        { dialCode: "+381", countryCode: "rs" },
-        { dialCode: "+385", countryCode: "hr" },
-        { dialCode: "+386", countryCode: "si" },
-        { dialCode: "+420", countryCode: "cz" },
-        { dialCode: "+421", countryCode: "sk" },
-        { dialCode: "+880", countryCode: "bd" },
-        { dialCode: "+960", countryCode: "mv" },
-        { dialCode: "+961", countryCode: "lb" },
-        { dialCode: "+962", countryCode: "jo" },
-        { dialCode: "+963", countryCode: "sy" },
-        { dialCode: "+964", countryCode: "iq" },
-        { dialCode: "+966", countryCode: "sa" },
-        { dialCode: "+967", countryCode: "ye" },
-        { dialCode: "+968", countryCode: "om" },
-        { dialCode: "+971", countryCode: "ae" },
-        { dialCode: "+972", countryCode: "il" },
-        { dialCode: "+973", countryCode: "bh" },
-        { dialCode: "+974", countryCode: "qa" },
-        { dialCode: "+975", countryCode: "bt" },
-        { dialCode: "+976", countryCode: "mn" },
-        { dialCode: "+977", countryCode: "np" },
-        { dialCode: "+992", countryCode: "tj" },
-        { dialCode: "+993", countryCode: "tm" },
-        { dialCode: "+994", countryCode: "az" },
-        { dialCode: "+995", countryCode: "ge" },
-        { dialCode: "+996", countryCode: "kg" },
-        { dialCode: "+998", countryCode: "uz" },
-    ].sort((a, b) => b.dialCode.length - a.dialCode.length); // longest first ✅
 
     const getStatusBgColor = (status) => {
         switch (status) {
@@ -1501,10 +1378,11 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                 <div className="flex gap-7">
                                     <button
                                         onClick={() => {
-                                            if (bookingId) {
-                                                sendOnetoOneMail(bookingId);
+                                            const parentEmails = profile?.parents?.map(p => p.parentEmail).filter(Boolean) || [];
+                                            if (parentEmails.length > 0) {
+                                                openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
                                             } else {
-                                                showWarning("Booking ID not found. Cannot send email.");
+                                                showWarning("No Email Found", "No parent email available to send email.");
                                             }
                                         }}
                                         className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 text-[#717073] font-medium hover:shadow-md transition-shadow duration-300"
@@ -1513,6 +1391,27 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                     </button>
 
                                     <button
+                                        onClick={() => {
+                                            const formattedParents = profile?.parents
+                                                ?.filter(p => p.parentPhoneNumber)
+                                                .map(p => ({
+                                                    name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
+                                                    phone: p.parentPhoneNumber
+                                                })) || [];
+
+                                            if (formattedParents.length > 0) {
+                                                openTextPopup(
+                                                    formattedParents,
+                                                    "/api/admin/send-manual-text",
+                                                    { token, showError, showSuccess }
+                                                );
+                                            } else {
+                                                showWarning(
+                                                    "No Phone Numbers",
+                                                    "No parent phone numbers available to send text."
+                                                );
+                                            }
+                                        }}
                                         className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium"
                                     >
                                         Send Text
@@ -1653,10 +1552,11 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                         <div className="flex gap-7">
                                             <button
                                                 onClick={() => {
-                                                    if (bookingId) {
-                                                        sendEmail();
+                                                    const parentEmails = profile?.parents?.map(p => p.parentEmail).filter(Boolean) || [];
+                                                    if (parentEmails.length > 0) {
+                                                        openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
                                                     } else {
-                                                        showWarning("No Booking ID", "No booking ID found to send email.");
+                                                        showWarning("No Email Found", "No parent email available to send email.");
                                                     }
                                                 }}
                                                 className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 text-[#717073] font-medium hover:shadow-md transition-shadow duration-300"
@@ -1666,10 +1566,24 @@ const ParentProfile = ({ profile: rawProfile }) => {
 
                                             <button
                                                 onClick={() => {
-                                                    if (bookingId) {
-                                                        sendText();
+                                                    const formattedParents = profile?.parents
+                                                        ?.filter(p => p.parentPhoneNumber)
+                                                        .map(p => ({
+                                                            name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
+                                                            phone: p.parentPhoneNumber
+                                                        })) || [];
+
+                                                    if (formattedParents.length > 0) {
+                                                        openTextPopup(
+                                                            formattedParents,
+                                                            "/api/admin/send-manual-text",
+                                                            { token, showError, showSuccess }
+                                                        );
                                                     } else {
-                                                        showWarning("No Booking ID", "No booking ID found to send email.");
+                                                        showWarning(
+                                                            "No Phone Numbers",
+                                                            "No parent phone numbers available to send text."
+                                                        );
                                                     }
                                                 }}
                                                 className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium"
@@ -1790,7 +1704,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                                 <div className="text-[20px] font-bold text-[#1F2937]">Account Status</div>
                                                 <div className="text-[16px] font-semibold text-[#1F2937]">Trials</div>
                                             </div>
-                                            <div className="bg-[#343A40] flex items-center gap-2  text-white text-[14px] px-3 py-2 rounded-xl">
+                                            <div className="w-max bg-[#343A40] flex items-center gap-2  text-white text-[14px] px-3 py-2 rounded-xl">
 
                                                 <div className="flex items-center gap-2">
                                                     {status === 'pending' && (
@@ -2150,7 +2064,27 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                                 </button>
                                                 <button
                                                     disabled={textloading}
-                                                    onClick={() => sendText([bookingId])}
+                                                    onClick={() => {
+                                                        const formattedParents = parents
+                                                            .filter(p => p.parentPhoneNumber)
+                                                            .map(p => ({
+                                                                name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
+                                                                phone: p.parentPhoneNumber
+                                                            }));
+
+                                                        if (formattedParents.length > 0) {
+                                                            openTextPopup(
+                                                                formattedParents,
+                                                                "/api/admin/send-manual-text",
+                                                                { token, showError, showSuccess }
+                                                            );
+                                                        } else {
+                                                            showWarning(
+                                                                "No Phone Numbers",
+                                                                "Selected parents do not have valid phone numbers."
+                                                            );
+                                                        }
+                                                    }}
                                                     className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium"
                                                 >
                                                     <img src="/images/icons/sendText.png" alt="" />

@@ -61,6 +61,57 @@ const BirthdayBookingForm = () => {
   const [country2, setCountry2] = useState("uk"); // default country
   const [dialCode, setDialCode] = useState("+44"); // store selected code silently
   const [dialCode2, setDialCode2] = useState("+44"); // store selected code silently
+  const [errors, setErrors] = useState({});
+
+  const validate = () => {
+    const newErrors = {};
+
+    // General Info
+    if (!address) newErrors.address = "Address is required";
+    if (!selectedDate) newErrors.selectedDate = "Date is required";
+    if (!time) newErrors.time = "Time is required";
+    if (!numberOfStudents) newErrors.numberOfStudents = "Capacity is required";
+    if (!selectedCoach) newErrors.selectedCoach = "Coach is required";
+    if (!selectedPackage) newErrors.selectedPackage = "Package is required";
+
+    // Students
+    students.forEach((student, index) => {
+      if (!student.studentFirstName) newErrors[`student_${index}_firstName`] = "First name is required";
+      if (!student.studentLastName) newErrors[`student_${index}_lastName`] = "Last name is required";
+      if (!student.dateOfBirth) newErrors[`student_${index}_dob`] = "DOB is required";
+      if (!student.gender) newErrors[`student_${index}_gender`] = "Gender is required";
+    });
+
+    // Parents
+    parents.forEach((parent, index) => {
+      if (!parent.parentFirstName) newErrors[`parent_${index}_firstName`] = "First name is required";
+      if (!parent.parentLastName) newErrors[`parent_${index}_lastName`] = "Last name is required";
+      if (!parent.parentEmail) newErrors[`parent_${index}_email`] = "Email is required";
+      else if (!/^\S+@\S+\.\S+$/.test(parent.parentEmail)) newErrors[`parent_${index}_email`] = "Invalid email";
+      if (!parent.phoneNumber) newErrors[`parent_${index}_phone`] = "Phone is required";
+      if (!parent.relationChild) newErrors[`parent_${index}_relation`] = "Relation is required";
+      if (!parent.howDidHear) newErrors[`parent_${index}_how`] = "Required";
+    });
+
+    // Emergency
+    if (!emergency.emergencyFirstName) newErrors.emergencyFirstName = "First name is required";
+    if (!emergency.emergencyLastName) newErrors.emergencyLastName = "Last name is required";
+    if (!emergency.emergencyPhoneNumber) newErrors.emergencyPhoneNumber = "Phone is required";
+    if (!emergency.emergencyRelation) newErrors.emergencyRelation = "Relation is required";
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      setTimeout(() => {
+        const firstError = document.querySelector(".text-red-500");
+        if (firstError) {
+          firstError.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 100);
+      return false;
+    }
+    return true;
+  };
 
   const handleChange = (value, data) => {
     // When library fires onChange, just update the dial code
@@ -688,11 +739,6 @@ const BirthdayBookingForm = () => {
   }
   // console.log('selectedDiscount', selectedDiscount)
   const handleSubmit = async () => {
-    if (!selectedDate) {
-      showWarning("Trial Date Required", "Please select a trial date before submitting.");
-      return;
-    }
-
     const filteredPayment = Object.fromEntries(
       Object.entries(payment || {}).filter(
         ([, value]) => value !== null && value !== "" && value !== undefined
@@ -1298,8 +1344,9 @@ const BirthdayBookingForm = () => {
                       setAddress(val);
                       fetchSuggestions(val, setAddressSuggestions);
                     }}
-                    className="w-full border border-gray-300 rounded-xl px-3 text-[16px] py-3 pl-9 focus:outline-none"
+                    className={`w-full border ${errors.address ? 'border-red-500' : 'border-gray-300'} rounded-xl px-3 text-[16px] py-3 pl-9 focus:outline-none`}
                   />
+                  {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
                   <FiSearch className="absolute left-3 top-4 text-[20px]" />
 
                   {/* 🔹 Dropdown suggestions */}
@@ -1328,12 +1375,13 @@ const BirthdayBookingForm = () => {
                 withPortal
                 selected={selectedDate}
                 onChange={(date) => setSelectedDate(date)}
-                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                className={`w-full mt-2 border ${errors.selectedDate ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                 showYearDropdown
                 scrollableYearDropdown
                 dateFormat="dd/MM/yyyy"
                 placeholderText="Select date"
               />
+              {errors.selectedDate && <p className="text-red-500 text-xs mt-1">{errors.selectedDate}</p>}
             </div>
             <div className="">
               <label htmlFor="" className="text-base font-semibold">Time </label>
@@ -1348,9 +1396,9 @@ const BirthdayBookingForm = () => {
                   timeCaption="Time"
                   dateFormat="h:mm aa"
                   placeholderText="Select time"
-                  className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                  className={`w-full mt-2 border ${errors.time ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                 />
-
+                {errors.time && <p className="text-red-500 text-xs mt-1">{errors.time}</p>}
               </div>
             </div>
             <div className="mb-5">
@@ -1368,9 +1416,9 @@ const BirthdayBookingForm = () => {
                     // Do nothing if invalid
                   }}
                   placeholder="Choose number of students"
-                  className="w-full border border-gray-300 rounded-xl px-3 text-[16px] py-3 focus:outline-none"
+                  className={`w-full border ${errors.numberOfStudents ? 'border-red-500' : 'border-gray-300'} rounded-xl px-3 text-[16px] py-3 focus:outline-none`}
                 />
-
+                {errors.numberOfStudents && <p className="text-red-500 text-xs mt-1">{errors.numberOfStudents}</p>}
               </div>
             </div>
             {/* <div className="mb-5">
@@ -1398,7 +1446,7 @@ const BirthdayBookingForm = () => {
             <div className="w-full">
               <label className="block text-[16px] font-semibold">Select a Coach </label>
               <Select
-                className="w-full mt-2 text-base"
+                className={`w-full mt-2 text-base ${errors.selectedCoach ? 'border border-red-500 rounded-xl' : ''}`}
                 classNamePrefix="react-select"
                 placeholder="Select a Coach"
                 value={Array.isArray(coachOptions) ? coachOptions.find((opt) => opt.value === selectedCoach) || null : null}
@@ -1408,11 +1456,12 @@ const BirthdayBookingForm = () => {
                 }}
                 options={coachOptions}
               />
+              {errors.selectedCoach && <p className="text-red-500 text-xs mt-1">{errors.selectedCoach}</p>}
             </div>
             <div className="w-full">
               <label className="block text-[16px] font-semibold">Package</label>
               <Select
-                className="w-full mt-2 text-base"
+                className={`w-full mt-2 text-base ${errors.selectedPackage ? 'border border-red-500 rounded-xl' : ''}`}
                 classNamePrefix="react-select"
                 placeholder={selectedCoach ? "Select a Package" : "Select a Coach first"}
                 isDisabled={!selectedCoach}
@@ -1420,6 +1469,7 @@ const BirthdayBookingForm = () => {
                 onChange={(opt) => setSelectedPackage(opt?.value || null)}
                 options={filteredPackages}
               />
+              {errors.selectedPackage && <p className="text-red-500 text-xs mt-1">{errors.selectedPackage}</p>}
             </div>
             <div className="w-full">
               <label className="block text-[16px] font-semibold">Apply discount</label>
@@ -1517,24 +1567,26 @@ const BirthdayBookingForm = () => {
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">First name</label>
                       <input
-                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                        className={`w-full mt-2 border ${errors[`student_${index}_firstName`] ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                         placeholder="Enter first name"
                         value={student.studentFirstName}
                         onChange={(e) =>
                           handleInputChange(index, 'studentFirstName', e.target.value)
                         }
                       />
+                      {errors[`student_${index}_firstName`] && <p className="text-red-500 text-xs mt-1">{errors[`student_${index}_firstName`]}</p>}
                     </div>
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">Last name</label>
                       <input
-                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                        className={`w-full mt-2 border ${errors[`student_${index}_lastName`] ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                         placeholder="Enter last name"
                         value={student.studentLastName}
                         onChange={(e) =>
                           handleInputChange(index, 'studentLastName', e.target.value)
                         }
                       />
+                      {errors[`student_${index}_lastName`] && <p className="text-red-500 text-xs mt-1">{errors[`student_${index}_lastName`]}</p>}
                     </div>
                   </div>
 
@@ -1548,7 +1600,7 @@ const BirthdayBookingForm = () => {
                         withPortal
                         selected={student.dateOfBirth}
                         onChange={(date) => handleDOBChange(index, date)}
-                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                        className={`w-full mt-2 border ${errors[`student_${index}_dob`] ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                         showYearDropdown
                         scrollableYearDropdown
                         yearDropdownItemNumber={100}
@@ -1558,6 +1610,7 @@ const BirthdayBookingForm = () => {
                         placeholderText="Select date of birth"
 
                       />
+                      {errors[`student_${index}_dob`] && <p className="text-red-500 text-xs mt-1">{errors[`student_${index}_dob`]}</p>}
                     </div>
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">Age</label>
@@ -1565,7 +1618,7 @@ const BirthdayBookingForm = () => {
                         type="text"
                         value={student.age}
                         readOnly
-                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base bg-gray-50"
                         placeholder="Automatic entry"
                       />
                     </div>
@@ -1578,7 +1631,7 @@ const BirthdayBookingForm = () => {
                       <label className="block text-[16px] font-semibold">Gender</label>
 
                       <Select
-                        className="w-full mt-2 text-base"
+                        className={`w-full mt-2 text-base ${errors[`student_${index}_gender`] ? 'border border-red-500 rounded-xl' : ''}`}
                         classNamePrefix="react-select"
                         placeholder="Select gender"
                         value={genderOptions.find((option) => option.value === student.gender) || null}
@@ -1588,6 +1641,7 @@ const BirthdayBookingForm = () => {
 
                         options={genderOptions}
                       />
+                      {errors[`student_${index}_gender`] && <p className="text-red-500 text-xs mt-1">{errors[`student_${index}_gender`]}</p>}
                     </div>
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">
@@ -1652,7 +1706,7 @@ const BirthdayBookingForm = () => {
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">First name</label>
                       <input
-                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                        className={`w-full mt-2 border ${errors[`parent_${index}_firstName`] ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                         placeholder="Enter first name"
                         value={parent.parentFirstName}
                         onChange={(e) => {
@@ -1664,12 +1718,13 @@ const BirthdayBookingForm = () => {
                           if (!/[A-Za-z\s]/.test(e.key)) e.preventDefault(); // block numbers & special chars
                         }}
                       />
+                      {errors[`parent_${index}_firstName`] && <p className="text-red-500 text-xs mt-1">{errors[`parent_${index}_firstName`]}</p>}
                     </div>
 
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">Last name</label>
                       <input
-                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                        className={`w-full mt-2 border ${errors[`parent_${index}_lastName`] ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                         placeholder="Enter last name"
                         value={parent.parentLastName}
                         onChange={(e) => {
@@ -1681,6 +1736,7 @@ const BirthdayBookingForm = () => {
                           if (!/[A-Za-z\s]/.test(e.key)) e.preventDefault(); // block numbers & special chars
                         }}
                       />
+                      {errors[`parent_${index}_lastName`] && <p className="text-red-500 text-xs mt-1">{errors[`parent_${index}_lastName`]}</p>}
                     </div>
                   </div>
 
@@ -1691,15 +1747,16 @@ const BirthdayBookingForm = () => {
                       <label className="block text-[16px] font-semibold">Email</label>
                       <input
                         type="email"
-                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                        className={`w-full mt-2 border ${errors[`parent_${index}_email`] ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                         placeholder="Enter email address"
                         value={parent.parentEmail}
                         onChange={(e) => handleParentChange(index, "parentEmail", e.target.value)}
                       />
+                      {errors[`parent_${index}_email`] && <p className="text-red-500 text-xs mt-1">{errors[`parent_${index}_email`]}</p>}
                     </div>
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">Phone number</label>
-                      <div className="flex items-center border border-gray-300 rounded-xl px-4 py-3 mt-2">
+                      <div className={`flex items-center border ${errors[`parent_${index}_phone`] ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 mt-2`}>
                         {/* Flag Dropdown */}
                         <PhoneInput
                           country="uk"
@@ -1729,6 +1786,7 @@ const BirthdayBookingForm = () => {
                           className='border-none w-full focus:outline-none'
                         />
                       </div>
+                      {errors[`parent_${index}_phone`] && <p className="text-red-500 text-xs mt-1">{errors[`parent_${index}_phone`]}</p>}
                     </div>
                   </div>
 
@@ -1739,26 +1797,28 @@ const BirthdayBookingForm = () => {
                       <Select
                         options={relationOptions}
                         placeholder="Select Relation"
-                        className="mt-2"
+                        className={`mt-2 ${errors[`parent_${index}_relation`] ? 'border border-red-500 rounded-xl' : ''}`}
                         classNamePrefix="react-select"
                         value={relationOptions.find((o) => o.value === parent.relationChild)}
                         onChange={(selected) =>
                           handleParentChange(index, "relationChild", selected.value)
                         }
                       />
+                      {errors[`parent_${index}_relation`] && <p className="text-red-500 text-xs mt-1">{errors[`parent_${index}_relation`]}</p>}
                     </div>
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">How did you hear about us?</label>
                       <Select
                         options={hearOptions}
                         placeholder="Select from drop down"
-                        className="mt-2"
+                        className={`mt-2 ${errors[`parent_${index}_how`] ? 'border border-red-500 rounded-xl' : ''}`}
                         classNamePrefix="react-select"
                         value={hearOptions.find((o) => o.value === parent.howDidHear)}
                         onChange={(selected) =>
                           handleParentChange(index, "howDidHear", selected.value)
                         }
                       />
+                      {errors[`parent_${index}_how`] && <p className="text-red-500 text-xs mt-1">{errors[`parent_${index}_how`]}</p>}
                     </div>
                   </div>
                 </motion.div>
@@ -1787,7 +1847,7 @@ const BirthdayBookingForm = () => {
                 <div className="w-1/2">
                   <label className="block text-[16px] font-semibold">First name</label>
                   <input
-                    className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                    className={`w-full mt-2 border ${errors.emergencyFirstName ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                     placeholder="Enter first name"
                     value={emergency.emergencyFirstName}
                     onChange={e =>
@@ -1797,11 +1857,12 @@ const BirthdayBookingForm = () => {
                       }))
                     }
                   />
+                  {errors.emergencyFirstName && <p className="text-red-500 text-xs mt-1">{errors.emergencyFirstName}</p>}
                 </div>
                 <div className="w-1/2">
                   <label className="block text-[16px] font-semibold">Last name</label>
                   <input
-                    className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                    className={`w-full mt-2 border ${errors.emergencyLastName ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                     placeholder="Enter last name"
                     value={emergency.emergencyLastName}
                     onChange={e =>
@@ -1811,13 +1872,14 @@ const BirthdayBookingForm = () => {
                       }))
                     }
                   />
+                  {errors.emergencyLastName && <p className="text-red-500 text-xs mt-1">{errors.emergencyLastName}</p>}
                 </div>
               </div>
 
               <div className="flex gap-4">
                 <div className="w-1/2">
                   <label className="block text-[16px] font-semibold">Phone number</label>
-                  <div className="flex items-center border border-gray-300 rounded-xl px-4 py-3 mt-2">
+                  <div className={`flex items-center border ${errors.emergencyPhoneNumber ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 mt-2`}>
                     {/* Flag Dropdown */}
                     <PhoneInput
                       country="uk"
@@ -1850,6 +1912,7 @@ const BirthdayBookingForm = () => {
                     />
 
                   </div>
+                  {errors.emergencyPhoneNumber && <p className="text-red-500 text-xs mt-1">{errors.emergencyPhoneNumber}</p>}
                 </div>
                 <div className="w-1/2">
                   <label className="block text-[16px] font-semibold">Relation to child</label>
@@ -1863,9 +1926,10 @@ const BirthdayBookingForm = () => {
                       }))
                     }
                     placeholder="Select Relation"
-                    className="mt-2"
+                    className={`mt-2 ${errors.emergencyRelation ? 'border border-red-500 rounded-xl' : ''}`}
                     classNamePrefix="react-select"
                   />
+                  {errors.emergencyRelation && <p className="text-red-500 text-xs mt-1">{errors.emergencyRelation}</p>}
                 </div>
               </div>
             </div>
@@ -1950,16 +2014,7 @@ const BirthdayBookingForm = () => {
               <button
                 type="button"
                 onClick={() => {
-                  if (!selectedPackage || !selectedDate) {
-                    let msg = "";
-                    if (!selectedPackage && !selectedDate) msg = "Please select Package and Date";
-                    else if (!selectedPackage) msg = "Please select package";
-                    else if (!selectedDate) msg = "Please select Date";
-                    showWarning("Required Fields", msg);
-                    return;
-                  }
-
-                  // If both are selected, proceed
+                  if (!validate()) return;
                   setShowPopup(true);
                 }}
                 disabled={isSubmitting || !selectedPackage || !selectedDate}

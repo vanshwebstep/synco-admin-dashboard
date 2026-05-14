@@ -236,8 +236,11 @@ const MainTable = () => {
                     <th className="p-4">Venue</th>
                     <th className="p-4">Date of Booking</th>
                     <th className="p-4">Who Booked</th>
-                    <th className="p-4">Membership Plan</th>
-                    <th className="p-4">Life Cycle of Membership</th>
+                    {activeTab !== "trials" && (
+                      <>
+                        <th className="p-4">Membership Plan</th>
+                        <th className="p-4">Life Cycle of Membership</th> </>
+                    )}
                     <th className="p-4">Status</th>
                   </tr>
                 </thead>
@@ -304,7 +307,7 @@ const MainTable = () => {
 
                           <td className="p-4">
                             <div className="w-[200px]">
-                              {safe(user?.venue?.name || user?.address || "N/A")}
+                              {safe(user?.venue?.name || user?.holidayVenue?.name || user?.address || "N/A")}
                             </div>
                           </td>
 
@@ -342,17 +345,22 @@ const MainTable = () => {
                             })()}
                           </td>
 
-                          <td className="p-4 whitespace-nowrap">
-                            {safe(user?.paymentPlan?.title)}
-                          </td>
+                          {activeTab !== "trials" && (
+                            <>
+                              <td className="p-4 whitespace-nowrap">
+                                {safe(user?.paymentPlan?.title || user?.holidayPaymentPlan?.title)}
+                              </td>
 
-                          <td className="p-4 whitespace-nowrap">
-                            {user?.paymentPlan?.duration &&
-                              user?.paymentPlan?.interval
-                              ? `${user.paymentPlan.duration} ${user.paymentPlan.interval
-                              }${user.paymentPlan.duration > 1 ? "s" : ""}`
-                              : ""}
-                          </td>
+                              <td className="p-4 whitespace-nowrap">
+                                {(() => {
+                                  const plan = user?.paymentPlan || user?.holidayPaymentPlan;
+                                  return plan?.duration && plan?.interval
+                                    ? `${plan.duration} ${plan.interval}${plan.duration > 1 ? "s" : ""}`
+                                    : "";
+                                })()}
+                              </td>
+                            </>
+                          )}
 
                           {/* ✅ FIXED STATUS */}
                           <td className="p-4 whitespace-nowrap">

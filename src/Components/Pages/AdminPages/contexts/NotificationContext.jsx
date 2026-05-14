@@ -108,7 +108,7 @@ export const NotificationProvider = ({ children }) => {
   }, []);
 
   return (
-    <NotificationContext.Provider value={{ stopFetching, fetchCustomNotification, fetchMarkAsRead, loadingCustomNotification, setLoadingCustomNotification, notification, setNotification, fetchNotification, loadingNotification, customnotificationAll, customNotification, setCustomnotificationAll, setCustomNotification, setAdminInfo, adminInfo, franchisesInfo, setFranchisesInfo,activeAccount, setActiveAccount }}>
+    <NotificationContext.Provider value={{ stopFetching, fetchCustomNotification, fetchMarkAsRead, loadingCustomNotification, setLoadingCustomNotification, notification, setNotification, fetchNotification, loadingNotification, customnotificationAll, customNotification, setCustomnotificationAll, setCustomNotification, setAdminInfo, adminInfo, franchisesInfo, setFranchisesInfo, activeAccount, setActiveAccount }}>
       {children}
     </NotificationContext.Provider>
   );

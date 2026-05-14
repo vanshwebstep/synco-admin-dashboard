@@ -1,35 +1,36 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import CandidateInfo from "./CandidateInfo";
 import Events from "./Events";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 // import Loader from "../contexts/Loader";
 
 
 
 const CandidateDetails = () => {
     const navigate = useNavigate();
-    const [steps, setSteps] = useState([
+    const [searchParams] = useSearchParams();
+    const id = searchParams.get("id");
+    const comesfrom = searchParams.get("comesfrom");
+
+    const initialSteps = [
         {
             id: 1,
             title: "Qualify Lead",
-            actionType: "buttons", // show ✓ × buttons
+            actionType: "buttons",
             status: "pending",
-            isEnabled: true, // ONLY first step enabled // completed | pending | skipped
+            isEnabled: true,
         },
-
         {
             id: 2,
-            title: "Telephone Call Setup",
+            title: comesfrom === "venueManager" ? "Google Meet Call" : "Telephone Call Setup",
             buttonText: "Schedule a call",
             isOpen: false,
             status: "pending",
             isEnabled: false,
         },
-
-
         {
             id: 3,
-            title: "Delivery Telephone Interview",
+            title: comesfrom === "venueManager" ? "Delivery Google Meet" : "Delivery Telephone Interview",
             buttonText: "Scorecard",
             isOpen: false,
             status: "pending",
@@ -53,7 +54,25 @@ const CandidateDetails = () => {
             status: "pending",
             isEnabled: false,
         },
-    ]);
+    ];
+
+    const [steps, setSteps] = useState(initialSteps);
+
+    useEffect(() => {
+        setSteps(initialSteps);
+    }, [id]);
+
+    useEffect(() => {
+        setSteps(prev => prev.map(step => {
+            if (step.id === 2) {
+                return { ...step, title: comesfrom === "venueManager" ? "Google Meet Call" : "Telephone Call Setup" };
+            }
+            if (step.id === 3) {
+                return { ...step, title: comesfrom === "venueManager" ? "Delivery Google Meet" : "Delivery Telephone Interview" };
+            }
+            return step;
+        }));
+    }, [comesfrom]);
     const tabs = [
         { name: "Candidate Profile", component: <CandidateInfo steps={steps} setSteps={setSteps} /> },
         { name: "Events", component: <Events /> },

@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback } from "react";
 import { useNavigate } from 'react-router-dom';
-import { showSuccess } from "../../../../utils/swalHelper";
+import { showSuccess, showError } from "../../../../utils/swalHelper";
 
 const HolidaySessionPlanContext = createContext();
 
@@ -293,86 +293,103 @@ export const HolidaySessionPlanContextProvider = ({ children }) => {
 
 
     // Update discount
-    const updateDiscount = useCallback(async (id, data) => {
-        if (!token) return;
+    const updateDiscount = useCallback(
+        async (id, data) => {
+            if (!token) return;
 
-        setLoading(true); // 🔵 Start loading
+            setLoading(true);
 
-        try {
-            const formdata = new FormData();
+            try {
+                const formData = new FormData();
 
-            const appendMedia = (key, file) => {
-                if (file && typeof file !== "string") {
-                    const fileName =
-                        file instanceof File
-                            ? file.name
-                            : `${key}.${file.type === "audio/webm" ? "webm" : "mp3"}`;
-                    formdata.append(key, file, fileName);
+                const appendMedia = (key, file) => {
+                    if (file && typeof file !== "string") {
+                        const fileName =
+                            file instanceof File
+                                ? file.name
+                                : `${key}.${file?.type === "audio/webm" ? "webm" : "mp3"}`;
+
+                        formData.append(key, file, fileName);
+                    }
+                };
+
+                // Media files
+                appendMedia("banner", data.banner);
+                appendMedia("banner_file", data.banner_file);
+                appendMedia("video_file", data.video_file);
+                appendMedia("video", data.video);
+
+                appendMedia("beginner_video", data.beginner_video);
+                appendMedia("beginner_banner", data.beginner_banner);
+
+                appendMedia("intermediate_video", data.intermediate_video);
+                appendMedia("intermediate_banner", data.intermediate_banner);
+
+                appendMedia("advanced_video", data.advanced_video);
+                appendMedia("advanced_banner", data.advanced_banner);
+
+                appendMedia("pro_video", data.pro_video);
+                appendMedia("pro_banner", data.pro_banner);
+
+                // Dynamic audio uploads
+                Object.keys(data).forEach((key) => {
+                    if (key.endsWith("_upload")) {
+                        appendMedia(key, data[key]);
+                    }
+                });
+
+                // Levels
+                if (data.levels) {
+                    formData.append("levels", JSON.stringify(data.levels));
                 }
-            };
 
-            // Append media files
-            appendMedia("banner", data.banner);
-            appendMedia("banner_file", data.banner_file);
-            appendMedia("video_file", data.video_file);
-            appendMedia("video", data.video);
-
-            appendMedia("beginner_video", data.beginner_video);
-            appendMedia("beginner_banner", data.beginner_banner);
-
-            appendMedia("intermediate_video", data.intermediate_video);
-            appendMedia("intermediate_banner", data.intermediate_banner);
-
-            appendMedia("advanced_video", data.advanced_video);
-            appendMedia("advanced_banner", data.advanced_banner);
-            appendMedia("pro_video", data.pro_video);
-            appendMedia("pro_banner", data.pro_banner);
-
-            // 🔊 Append audio files dynamically (beginner_recording, intermediate_recording, etc.)
-            Object.keys(data).forEach((key) => {
-                if (key.endsWith("_upload")) {
-                    appendMedia(key, data[key]);
+                // Other fields
+                if (data.groupName) {
+                    formData.append("groupName", data.groupName);
                 }
-            });
 
-            // Append levels JSON
-            if (data.levels) {
-                formdata.append("levels", JSON.stringify(data.levels));
+                if (data.player) {
+                    formData.append("player", data.player);
+                }
+
+                const response = await fetch(
+                    `${API_BASE_URL}/api/admin/holiday/session-plan-group/update/${id}`,
+                    {
+                        method: "PUT",
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: formData,
+                    }
+                );
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result?.message || "Failed to update");
+                }
+
+                await showSuccess(
+                    "Success",
+                    result?.message || "Level updated successfully."
+                );
+
+                await fetchSessionGroup();
+
+                navigate("/configuration/holiday-camp/session-plan/list");
+            } catch (err) {
+                console.error("Failed to update discount:", err);
+
+                await showError(
+                    "Error",
+                    err?.message || "Something went wrong."
+                );
+            } finally {
+                setLoading(false);
             }
-
-            if (data.groupName) {
-                formdata.append("groupName", data.groupName);
-            }
-
-            if (data.player) {
-                formdata.append("player", data.player);
-            }
-
-            const response = await fetch(`${API_BASE_URL}/api/admin/holiday/session-plan-group/update/${id}`, {
-                method: "PUT",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-                body: formdata,
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) throw new Error(result.message || "Failed to update");
-
-            await showSuccess("Success", result.message || "Level updated successfully.");
-
-            navigate("/configuration/holiday-camp/session-plan/list");
-            await fetchSessionGroup();
-        } catch (err) {
-            console.error("Failed to update discount:", err);
-            await showError("Error", err.message || "Something went wrong.");
-        } finally {
-            setLoading(false); // 🔵 End loading
-        }
-    }, [token, fetchSessionGroup, navigate, setLoading]);
-
-
+        },
+        [token, fetchSessionGroup, navigate]
+    );
 
     // Delete discount
     const deleteSessionGroup = useCallback(async (id) => {

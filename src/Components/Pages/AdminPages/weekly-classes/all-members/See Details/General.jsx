@@ -1521,7 +1521,7 @@ const ParentProfile = (stateData) => {
                                                 <div className="text-[20px] font-bold text-[#1F2937]">Account Status</div>
                                                 <div className="text-[16px] font-semibold text-[#1F2937]">Trials</div>
                                             </div>
-                                            <div className="bg-[#343A40] flex items-center gap-2  text-white text-[14px] px-3 py-2 rounded-xl">
+                                            <div className="w-max bg-[#343A40] flex items-center gap-2  text-white text-[14px] px-3 py-2 rounded-xl">
 
                                                 <div className="flex items-center gap-2">
                                                     {status === 'pending' && (

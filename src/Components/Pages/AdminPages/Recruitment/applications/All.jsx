@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { Check, Phone } from "lucide-react";
 import { TiUserAdd } from "react-icons/ti";
 import { Plus } from "lucide-react";
@@ -8,7 +8,7 @@ import {
     MessageSquare,
     Download,
     ChevronLeft,
-    ChevronRight, Filter
+    ChevronRight, Filter, X
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRecruitmentTemplate } from "../../contexts/RecruitmentContext";
@@ -18,27 +18,32 @@ import * as XLSX from "xlsx";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Select from "react-select";
-import { showError, showWarning, showConfirm } from "../../../../../utils/swalHelper";
+import { showError, showWarning, showSuccess } from "../../../../../utils/swalHelper";
 import PhoneInput from "react-phone-input-2";
 import { useGlobalSearch } from "../../contexts/GlobalSearchContext";
+import { useEmail } from '../../contexts/messages/SendEmailContext';
+import { useTextPopup } from '../../contexts/messages/SendTextContext';
+
 const All = () => {
     const [selectedVenue, setSelectedVenue] = useState(null);
     const [showFilter, setShowFilter] = useState(false);
-        const { searchQuery } = useGlobalSearch();
+    const { searchQuery } = useGlobalSearch();
+
+    const { openEmailPopup } = useEmail();
+    const { openTextPopup } = useTextPopup();
 
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [loading, setLoading] = useState(false);
-    const dbsOptions = [
-        { value: "yes", label: "Yes" },
-        { value: "no", label: "No" },
-    ];
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-    const levelOptions = [
-        { value: "yes", label: "Yes" },
-        { value: "no", label: "No" },
-    ];
-    const { recruitment, fetchAllRecruitment, statsRecruitment, createVenueRecruitment, sendCoachMail } = useRecruitmentTemplate() || {};
+    const [agentsData, setAgentsData] = useState([]);
+    const [agentsLoading, setAgentsLoading] = useState(false);
+    const [showAgentPopup, setShowAgentPopup] = useState(false);
+    const [isAssigningAgent, setIsAssigningAgent] = useState(false);
+    const [selectedAgents, setSelectedAgents] = useState([]);
+    const [selectedLeads, setSelectedLeads] = useState([]);
+    const { recruitment, fetchAllRecruitment, statsRecruitment, sendCoachMail } = useRecruitmentTemplate() || {};
     useEffect(() => {
         const loadData = async () => {
             setLoading(true);
@@ -168,9 +173,111 @@ const All = () => {
     };
 
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+    const handleClick = () => {
+        if (!selectedIds || selectedIds.length === 0) {
+            showWarning("Warning", "Please select at least 1 lead");
+            return;
+        }
+
+        const selectedLeads = filteredRecruitment.filter((lead) =>
+            selectedIds.includes(lead.id)
+        );
+
+        setSelectedLeads(selectedLeads);
+
+        // Check already assigned leads
+        const alreadyAssigned = selectedLeads.filter(
+            (lead) => lead.assignedAgentId != null
+        );
+
+        // Check if any selected lead is NOT from website
+        const hasNonWebsiteLead = selectedLeads.some(
+            (lead) => lead.source !== "website"
+        );
+
+        if (alreadyAssigned.length > 0) {
+            showWarning(
+                "Warning",
+                "One or more selected leads are already assigned to an agent."
+            );
+            return;
+        }
+
+        if (hasNonWebsiteLead) {
+            showWarning(
+                "Warning",
+                "Only website leads can be assigned."
+            );
+            return;
+        }
+
+        fetchAllAgents();
     };
+
+    const handleAssignAgent = async () => {
+        if (!selectedAgents || selectedAgents.length === 0) {
+            showWarning("Warning", "Please select an agent.");
+            return;
+        }
+        const token = localStorage.getItem("adminToken");
+        if (!token) return;
+
+        setIsAssigningAgent(true);
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/assign-recruitment/lead`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    leadIds: selectedLeads,
+                    createdBy: selectedAgents[0]?.value, // Send single ID
+                }),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                showSuccess("Success", result.message || "Agent assigned successfully.");
+                setShowAgentPopup(false);
+                setSelectedLeads([]); // Clear selection
+                setSelectedAgents([]); // Clear selected agents
+                if (fetchAllRecruitment) fetchAllRecruitment(); // Refresh data
+            } else {
+                throw new Error(result.message || "Failed to assign agents.");
+            }
+        } catch (error) {
+            console.error("Failed to assign agent:", error);
+            showError("Error", error.message || "Failed to assign agent.");
+        } finally {
+            setIsAssigningAgent(false);
+        }
+    };
+    const fetchAllAgents = useCallback(async () => {
+        const token = localStorage.getItem("adminToken");
+        if (!token) return;
+
+        setAgentsLoading(true);
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/get-agents`, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            const resultRaw = await response.json();
+            const result = resultRaw.data || [];
+            setAgentsData(result);
+            setShowAgentPopup(true);
+        } catch (error) {
+            console.error("Failed to fetch agents:", error);
+            showError("Error", "Failed to fetch agents.");
+        } finally {
+            setAgentsLoading(false);
+        }
+    }, []);
 
     // Checkbox state
     const [selectedIds, setSelectedIds] = useState([]);
@@ -441,73 +548,106 @@ const All = () => {
         }),
         indicatorSeparator: () => ({ display: "none" }),
     };
-    const handleCoachMail = async (selectedIds) => {
-        const result = await showConfirm(
-            "Are you sure?",
-            "Do you want to send the mail?",
-            "Yes, send it"
-        );
+    const handleSendEmail = () => {
+        if (selectedIds && selectedIds.length > 0) {
+            const filteredAll = currentData.filter(c => selectedIds.includes(c.id));
+            const emails = filteredAll.map(c => c.email).filter(Boolean);
 
-        if (result.isConfirmed) {
-            await sendCoachMail(selectedIds);
-
+            if (emails.length > 0) {
+                const token = localStorage.getItem("adminToken");
+                openEmailPopup(
+                    emails,
+                    "/api/admin/send-manual-email",
+                    { token, showError, showSuccess: () => { } }
+                );
+            } else {
+                showWarning("No Emails Found", "Selected candidates do not have valid email addresses.");
+            }
+        } else {
+            showWarning("No Candidates Selected", "Please select at least one candidate to send an email.");
         }
     };
+
+    const handleSendText = () => {
+        if (selectedIds && selectedIds.length > 0) {
+            const filteredAll = currentData.filter(c => selectedIds.includes(c.id));
+            const recipients = filteredAll
+                .filter(c => c.phoneNumber)
+                .map(c => ({
+                    name: `${c.firstName || ""} ${c.lastName || ""}`.trim(),
+                    phone: c.phoneNumber
+                }));
+
+            if (recipients.length > 0) {
+                const token = localStorage.getItem("adminToken");
+                openTextPopup(
+                    recipients,
+                    "/api/admin/send-manual-text",
+                    { token, showError, showSuccess: () => { } }
+                );
+            } else {
+                showWarning("No Phone Numbers", "Selected candidates do not have valid phone numbers.");
+            }
+        } else {
+            showWarning("No Candidates Selected", "Please select at least one candidate to send a text.");
+        }
+    };
+
     const inputClass =
         " px-4 py-3 border border-[#E2E1E5] rounded-xl focus:outline-none ";
 
 
-   const filterBySearchQuery = (data) => {
-           if (!searchQuery.trim()) return data;
-   
-           const q = searchQuery.toLowerCase();
-   
-           return data.filter((coach) => {
-               const values = [
-                   coach?.firstName,
-                   coach?.lastName,
-                   coach?.age,
-                   coach?.postcode,
-                   coach?.phoneNumber,
-                   coach?.email,
-                   coach?.managementExperience,
-                   coach?.level,
-                   coach?.dbs,
-                   coach?.status,
-               ];
-   
-               return values.some((val) =>
-                   String(val || "").toLowerCase().includes(q)
-               );
-           });
-       };
-   
-   
-       const totalItems = filteredRecruitment.length;
-       const totalPages = Math.ceil(totalItems / rowsPerPage);
-   
-       const startIndex = (currentPage - 1) * rowsPerPage;
-       const endIndex = startIndex + rowsPerPage;
-   
-       const currentData = useMemo(
-           () => filteredRecruitment.slice(startIndex, endIndex),
-           [filteredRecruitment, startIndex, endIndex]
-       );
-       useEffect(() => {
-           setCurrentPage(1);
-       }, [searchQuery]);
-       useEffect(() => {
-           if (!Array.isArray(recruitment)) return;
-   
-           let data = [...recruitment];
-   
-           data = filterByName(data);
-           data = filterByVenue(data);
-           data = filterBySearchQuery(data); // ✅ ADD THIS
-   
-           setFilteredRecruitment(data);
-       }, [recruitment, studentName, selectedVenue, searchQuery]);
-   
+    const filterBySearchQuery = (data) => {
+        if (!searchQuery.trim()) return data;
+
+        const q = searchQuery.toLowerCase();
+
+        return data.filter((coach) => {
+            const values = [
+                coach?.firstName,
+                coach?.lastName,
+                coach?.age,
+                coach?.postcode,
+                coach?.phoneNumber,
+                coach?.email,
+                coach?.managementExperience,
+                coach?.level,
+                coach?.dbs,
+                coach?.status,
+            ];
+
+            return values.some((val) =>
+                String(val || "").toLowerCase().includes(q)
+            );
+        });
+    };
+
+
+    const totalItems = filteredRecruitment.length;
+    const totalPages = Math.ceil(totalItems / rowsPerPage);
+
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+
+    const currentData = useMemo(
+        () => filteredRecruitment.slice(startIndex, endIndex),
+        [filteredRecruitment, startIndex, endIndex]
+    );
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery]);
+    useEffect(() => {
+        if (!Array.isArray(recruitment)) return;
+
+        let data = [...recruitment];
+
+        data = filterByName(data);
+        data = filterByVenue(data);
+        data = filterBySearchQuery(data); // ✅ ADD THIS
+
+        setFilteredRecruitment(data);
+    }, [recruitment, studentName, selectedVenue, searchQuery]);
+
 
 
 
@@ -575,7 +715,7 @@ const All = () => {
                         <div className="bg-white min-w-[38px] min-h-[38px]   border border-gray-300 p-2 rounded-full flex items-center justify-center">
                             <Filter size={16} className='cursor-pointer' onClick={() => setShowFilter(!showFilter)} />
                         </div>
-                        <button className="bg-white border border-[#E2E1E5] rounded-full flex justify-center items-center h-10 w-10"><TiUserAdd className="text-xl" /></button>
+                        <button onClick={handleClick} className="bg-white border border-[#E2E1E5] rounded-full flex justify-center items-center h-10 w-10"><TiUserAdd className="text-xl" /></button>
                         {/* <button onClick={() => setIsOpen(true)}
                             className="flex items-center gap-2 bg-[#237FEA] text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition">
                             <Plus size={16} />
@@ -624,7 +764,7 @@ const All = () => {
                                         key={coach.id}
                                         onClick={() => {
                                             if (status == "recruited" || status == "pending" || status == "rejected") {
-                                                navigate(`/recruitment/lead/coach/profile?id=${coach.id}`);
+                                                navigate(`/recruitment/lead/coach/profile?id=${coach.id}&comesfrom=${coach?.appliedFor == "coach" ? "coach" : "venueManager"}`);
                                             }
                                         }}
                                         className="border-b cursor-pointer border-gray-200"
@@ -640,10 +780,10 @@ const All = () => {
                                                         }`}
                                                 >
                                                     {isChecked && (
-                                                        <Check size={16} strokeWidth={3} className="text-gray-500" />
+                                                        <Check size={16} strokeWidth={3} className="text-gray-500 w-6 h-6" />
                                                     )}
                                                 </button>
-                                                {fullName}
+                                                <span>   {fullName}</span>
                                             </div>
                                         </td>
 
@@ -654,7 +794,7 @@ const All = () => {
                                         <td className="p-4">{experience}</td>
 
                                         <td className="p-4">
-                                            {faLevel1 ? (
+                                            {coach?.candidateProfile?.whichQualificationYouHave?.includes("FA Level 1") ? (
                                                 <img src="/reportsIcons/greenCheck.png" className="w-6" />
                                             ) : (
                                                 <img src="/reportsIcons/cross.png" className="w-6" />
@@ -662,7 +802,7 @@ const All = () => {
                                         </td>
 
                                         <td className="p-4">
-                                            {dbs ? (
+                                            {coach?.candidateProfile?.whichQualificationYouHave?.includes("DBS (within the year") ? (
                                                 <img src="/reportsIcons/greenCheck.png" className="w-6" />
                                             ) : (
                                                 <img src="/reportsIcons/cross.png" className="w-6" />
@@ -980,10 +1120,10 @@ const All = () => {
 
                     {/* Actions */}
                     <div className="grid blockButton md:grid-cols-3 gap-3 mt-4">
-                        <button onClick={() => handleCoachMail(selectedIds)} className="flex-1 flex items-center justify-center text-[#717073] gap-1 border border-[#717073] rounded-lg py-3 text-sm hover:bg-gray-50">
+                        <button onClick={handleSendEmail} className="flex-1 flex items-center justify-center text-[#717073] gap-1 border border-[#717073] rounded-lg py-3 text-sm hover:bg-gray-50">
                             <Mail size={16} className="text-[#717073]" /> Send Email
                         </button>
-                        <button className="flex-1 flex items-center justify-center gap-1 border text-[#717073] border-[#717073] rounded-lg py-3 text-sm hover:bg-gray-50">
+                        <button onClick={handleSendText} className="flex-1 flex items-center justify-center gap-1 border text-[#717073] border-[#717073] rounded-lg py-3 text-sm hover:bg-gray-50">
                             <MessageSquare size={16} className="text-[#717073]" /> Send Text
                         </button>
                         <button onClick={handleVenueManagerExport} className="flex items-center justify-center gap-1 bg-[#237FEA] text-white text-sm py-3 rounded-lg hover:bg-blue-700 transition">
@@ -1178,7 +1318,70 @@ const All = () => {
                     )}
                 </div>
             )}
+            {showAgentPopup && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[99] p-4">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-8 animate-in fade-in zoom-in duration-200">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-[28px] font-bold text-[#282829]">Select agent</h3>
+                            <button onClick={() => setShowAgentPopup(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                <X size={24} />
+                            </button>
+                        </div>
 
+                        <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
+                            {agentsLoading ? (
+                                <div className="flex justify-center py-10">
+                                    <span className="text-[#237FEA]">Loading...</span>
+                                </div>
+                            ) : agentsData.length === 0 ? (
+                                <p className="text-center text-gray-500 py-4 font-medium">No agents available.</p>
+                            ) : (
+                                agentsData.map((agent) => {
+                                    const isSelected = selectedAgents.some((a) => a.value === agent.id);
+                                    return (
+                                        <div
+                                            key={agent.id}
+                                            className="flex items-center gap-4 py-2 cursor-pointer group"
+                                            onClick={() => {
+                                                if (isSelected) {
+                                                    setSelectedAgents([]);
+                                                } else {
+                                                    setSelectedAgents([{ value: agent.id, label: `${agent.firstName} ${agent.lastName}` }]);
+                                                }
+                                            }}
+                                        >
+                                            <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${isSelected ? "bg-[#237FEA] border-[#237FEA]" : "border-gray-200 group-hover:border-[#237FEA]"}`}>
+                                                {isSelected && <Check size={16} className="text-white" strokeWidth={4} />}
+                                            </div>
+                                            <div className="relative">
+                                                <img
+                                                    src={agent.profilePicture || agent.image || "/images/avatar-placeholder.png"}
+                                                    alt=""
+                                                    className="w-14 h-14 rounded-full object-cover border-2 border-[#E6F7FB]"
+                                                    onError={(e) => (e.target.src = `https://ui-avatars.com/api/?name=${agent.firstName}+${agent.lastName}&background=E6F7FB&color=237FEA`)}
+                                                />
+                                            </div>
+                                            <span className="text-[20px] font-medium text-[#282829]">
+                                                {agent.firstName} {agent.lastName}
+                                            </span>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+
+                        <div className="mt-8">
+                            <button
+                                onClick={handleAssignAgent}
+                                disabled={isAssigningAgent || selectedAgents.length === 0}
+                                className="w-full py-4 bg-[#237FEA] text-white font-bold rounded-2xl hover:bg-[#1a6ed8] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-blue-100 text-lg"
+                            >
+                                {isAssigningAgent ? "Assigning..." : "Assign"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

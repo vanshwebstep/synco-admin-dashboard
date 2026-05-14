@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { Check } from "lucide-react";
 import { TiUserAdd } from "react-icons/ti";
 import { Plus } from "lucide-react";
@@ -8,37 +8,43 @@ import {
     MessageSquare,
     Download,
     ChevronLeft,
-    ChevronRight, Filter
+    ChevronRight, Filter, X
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRecruitmentTemplate } from "../../contexts/RecruitmentContext";
 import Loader from "../../contexts/Loader";
 import * as XLSX from "xlsx";
 
-import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Select from "react-select";
-import { showError, showWarning, showConfirm } from "../../../../../utils/swalHelper";
+import { showConfirm, showError, showWarning, showSuccess } from "../../../../../utils/swalHelper";
 import PhoneInput from "react-phone-input-2";
 import { useGlobalSearch } from "../../contexts/GlobalSearchContext";
+import { useEmail } from '../../contexts/messages/SendEmailContext';
+import { useTextPopup } from '../../contexts/messages/SendTextContext';
+
 const VenueManager = () => {
     const [currentPage, setCurrentPage] = useState(1);
-        const { searchQuery } = useGlobalSearch();
-    
+    const { searchQuery } = useGlobalSearch();
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const { openEmailPopup } = useEmail();
+    const { openTextPopup } = useTextPopup();
+
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [loading, setLoading] = useState(false);
-    const dbsOptions = [
-        { value: "yes", label: "Yes" },
-        { value: "no", label: "No" },
-    ];
+
     const [showFilter, setShowFilter] = useState(false);
     const [selectedVenue, setSelectedVenue] = useState(null);
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-    const levelOptions = [
-        { value: "yes", label: "Yes" },
-        { value: "no", label: "No" },
-    ];
-    const { venueRecruitment, fetchvenuemanagerRecruitment, statsRecruitment, createVenueRecruitment, sendvenuemanagerMail } = useRecruitmentTemplate() || {};
+    const [agentsData, setAgentsData] = useState([]);
+    const [agentsLoading, setAgentsLoading] = useState(false);
+    const [showAgentPopup, setShowAgentPopup] = useState(false);
+    const [isAssigningAgent, setIsAssigningAgent] = useState(false);
+    const [selectedAgents, setSelectedAgents] = useState([]);
+    const [selectedLeads, setSelectedLeads] = useState([]);
+    const [dialCode, setDialCode] = useState("+44");
+    const { venueRecruitment, fetchvenuemanagerRecruitment, statsRecruitment, createVenueRecruitment, filteredRecruitment, setFilteredRecruitment, sendvenuemanagerMail } = useRecruitmentTemplate() || {};
     useEffect(() => {
         const loadData = async () => {
             setLoading(true);
@@ -54,16 +60,7 @@ const VenueManager = () => {
         }));
     };
 
-    const [filteredRecruitment, setFilteredRecruitment] = useState([]);
-    const qualificationOptions = [
-        { value: "fa_level_1", label: "FA Level 1" },
-        { value: "fa_level_2", label: "FA Level 2" },
-        { value: "dbs_within_year", label: "DBS (within the year)" },
-        { value: "futsal_level_1", label: "Futsal Level 1" },
-        { value: "uefa_b", label: "UEFA B" },
-        { value: "first_aid_2_years", label: "First Aid (within 2 years)" },
-        { value: "none", label: "None" },
-    ];
+
     const summaryCards = [
         {
             icon: "/reportsIcons/user-group.png",
@@ -92,6 +89,16 @@ const VenueManager = () => {
     ];
     const [isOpen, setIsOpen] = useState(false);
     const navigate = useNavigate();
+    const [errors, setErrors] = useState({});
+
+    const firstNameRef = useRef(null);
+    const lastNameRef = useRef(null);
+    const phoneNumberRef = useRef(null);
+    const emailRef = useRef(null);
+    const postcodeRef = useRef(null);
+    const ageRef = useRef(null);
+    const coverNoteRef = useRef(null);
+
     // Add ID to each coach
     const exportToExcel = (data, fileName) => {
         if (!data || data.length === 0) return;
@@ -119,75 +126,80 @@ const VenueManager = () => {
         exportToExcel(formattedData, "venue_managers");
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-
-        // ✅ Required fields
-        const requiredFields = [
-            { key: "firstName", label: "First Name" },
-            { key: "lastName", label: "Last Name" },
-            { key: "gender", label: "Gender" },
-            { key: "dob", label: "Date of Birth" },
-            { key: "phoneNumber", label: "Phone Number" },
-            { key: "email", label: "Email Address" },
-            { key: "postcode", label: "Postcode" },
-            { key: "managementExperience", label: "Management Experience" },
-        ];
-
-        for (let field of requiredFields) {
-            if (!formData[field.key] || formData[field.key].toString().trim() === "") {
-                showWarning("Missing Field", `${field.label} is required.`);
-                return;
-            }
-        }
-
-        // ✅ Email validation
+        setIsSubmitting(true);
+        let formErrors = {};
+        let focusRef = null;
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(formData.email)) {
-            showError("Invalid Email", "Please enter a valid email address.");
+
+        if (!formData.firstName?.trim()) { formErrors.firstName = "First Name is required"; if (!focusRef) focusRef = firstNameRef; }
+        if (!formData.lastName?.trim()) { formErrors.lastName = "Last Name is required"; if (!focusRef) focusRef = lastNameRef; }
+        if (!formData.phoneNumber || formData.phoneNumber.toString().length < 8) { formErrors.phoneNumber = "Valid phone number is required (min 8 digits)"; if (!focusRef) focusRef = phoneNumberRef; }
+        if (!formData.email?.trim() || !emailRegex.test(formData.email)) { formErrors.email = "Valid Email Address is required"; if (!focusRef) focusRef = emailRef; }
+        if (!formData.postcode?.trim()) { formErrors.postcode = "Postcode is required"; if (!focusRef) focusRef = postcodeRef; }
+        if (!formData.age?.toString().trim()) { formErrors.age = "Age is required"; if (!focusRef) focusRef = ageRef; }
+        if (!formData.footballExperience?.trim()) { formErrors.footballExperience = "Football experience is required"; }
+        if (!formData.managementExperience?.trim()) { formErrors.managementExperience = "Management experience is required"; }
+        if (!formData.ageGroupExperience || formData.ageGroupExperience.length === 0) { formErrors.ageGroupExperience = "At least one age group must be selected"; }
+        if (!formData.fullWeekendAvailablity?.trim()) { formErrors.fullWeekendAvailablity = "Please select weekend availability"; }
+        if (!formData.uploadCv) { formErrors.uploadCv = "CV upload is required"; }
+        if (!formData.coverNote?.trim()) { formErrors.coverNote = "Cover note is required"; if (!focusRef) focusRef = coverNoteRef; }
+        if (!formData.howDidYouHear?.trim()) { formErrors.howDidYouHear = "Please select how you heard about us"; }
+
+        if (Object.keys(formErrors).length > 0) {
+            setErrors(formErrors);
+            if (focusRef?.current) {
+                if (typeof focusRef.current.focus === 'function') focusRef.current.focus();
+            }
             return;
         }
 
-        // ✅ Phone validation
-        if (formData.phoneNumber.length < 8) {
-            showError("Invalid Phone Number", "Phone number must be at least 8 digits.");
-            return;
+        try {
+            const payload = new FormData();
+            payload.append("firstName", formData.firstName);
+            payload.append("lastName", formData.lastName);
+            payload.append("email", formData.email);
+            payload.append("age", formData.age);
+            payload.append("phoneNumber", `${dialCode}${formData.phoneNumber}`);
+            payload.append("postcode", formData.postcode);
+            payload.append("howDidYouHear", formData.howDidYouHear);
+            payload.append("accessToOwnVehicle", formData.accessToOwnVehicle);
+            payload.append("whichQualificationYouHave", JSON.stringify(formData.whichQualificationYouHave));
+            payload.append("footballExperience", formData.footballExperience);
+            payload.append("managementExperience", formData.managementExperience);
+            payload.append("coverNote", formData.coverNote);
+            payload.append("fullWeekEndAvailability", formData.fullWeekendAvailablity ? formData.fullWeekendAvailablity : "");
+            if (formData.uploadCv) payload.append("uploadCv", formData.uploadCv);
+
+            payload.append("ageGroupExperience", JSON.stringify(formData.ageGroupExperience)); // ✅ ADD
+
+            await createVenueRecruitment(payload);
+
+            // In payload building:
+
+            // In reset after success:
+            setFormData({
+                firstName: "", lastName: "", age: "", phoneNumber: "",
+                email: "", postcode: "", footballExperience: "",
+                accessToOwnVehicle: "true", whichQualificationYouHave: [],
+                ageGroupExperience: [],   // ✅ ADD
+                uploadCv: null, coverNote: "", howDidYouHear: "",
+                fullWeekendAvailablity: '', managementExperience: ''
+            });
+            setErrors({});
+            setIsOpen(false);
+            setDialCode("+44");
+            setIsSubmitting(false);
+        } catch (error) {
+            console.error("Failed to add new lead:", error);
+            setIsSubmitting(false);
         }
-
-        // ✅ Minimum age
-
-
-        console.log("New Lead Data:", formData);
-        createVenueRecruitment(formData);
-
-        // ✅ Reset form
-        setFormData({
-            firstName: "",
-            lastName: "",
-            gender: "",
-            dob: "",
-            age: "",
-            phoneNumber: "",
-            email: "",
-            postcode: "",
-            managementExperience: "",
-            qualification: []
-        });
-
-        setIsOpen(false);
-    };
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    // Checkbox state
+
     const [selectedIds, setSelectedIds] = useState([]);
-    const handleMultiSelectChange = (field, selectedOptions) => {
-        setFormData((prev) => ({
-            ...prev,
-            [field]: selectedOptions ? selectedOptions.map(o => o.value) : [],
-        }));
-    };
+
     const toggleCheckbox = (id) => {
         setSelectedIds((prev) =>
             prev.includes(id)
@@ -256,6 +268,157 @@ const VenueManager = () => {
         setToDate(null);
     };
 
+    const handleSendEmail = () => {
+        if (selectedIds && selectedIds.length > 0) {
+            const filteredManagers = currentData.filter(m => selectedIds.includes(m.id));
+            const emails = filteredManagers.map(m => m.email).filter(Boolean);
+
+            if (emails.length > 0) {
+                const token = localStorage.getItem("adminToken");
+                openEmailPopup(
+                    emails,
+                    "/api/admin/send-manual-email",
+                    { token, showError, showSuccess: () => { } }
+                );
+            } else {
+                showWarning("No Emails Found", "Selected candidates do not have valid email addresses.");
+            }
+        } else {
+            showWarning("No Candidates Selected", "Please select at least one candidate to send an email.");
+        }
+    };
+
+    const handleSendText = () => {
+        if (selectedIds && selectedIds.length > 0) {
+            const filteredManagers = currentData.filter(m => selectedIds.includes(m.id));
+            const recipients = filteredManagers
+                .filter(m => m.phoneNumber)
+                .map(m => ({
+                    name: `${m.firstName || ""} ${m.lastName || ""}`.trim(),
+                    phone: m.phoneNumber
+                }));
+
+            if (recipients.length > 0) {
+                const token = localStorage.getItem("adminToken");
+                openTextPopup(
+                    recipients,
+                    "/api/admin/send-manual-text",
+                    { token, showError, showSuccess: () => { } }
+                );
+            } else {
+                showWarning("No Phone Numbers", "Selected candidates do not have valid phone numbers.");
+            }
+        } else {
+            showWarning("No Candidates Selected", "Please select at least one candidate to send a text.");
+        }
+    };
+    const handleClick = () => {
+        if (!selectedIds || selectedIds.length === 0) {
+            showWarning("Warning", "Please select at least 1 lead");
+            return;
+        }
+
+        const selectedLeads = filteredRecruitment.filter((lead) =>
+            selectedIds.includes(lead.id)
+        );
+
+        setSelectedLeads(selectedLeads);
+
+        // Check already assigned leads
+        const alreadyAssigned = selectedLeads.filter(
+            (lead) => lead.assignedAgentId != null
+        );
+
+        // Check if any selected lead is NOT from website
+        const hasNonWebsiteLead = selectedLeads.some(
+            (lead) => lead.source !== "website"
+        );
+
+        if (alreadyAssigned.length > 0) {
+            showWarning(
+                "Warning",
+                "One or more selected leads are already assigned to an agent."
+            );
+            return;
+        }
+
+        if (hasNonWebsiteLead) {
+            showWarning(
+                "Warning",
+                "Only website leads can be assigned."
+            );
+            return;
+        }
+
+        fetchAllAgents();
+    };
+
+    const handleAssignAgent = async () => {
+        if (!selectedAgents || selectedAgents.length === 0) {
+            showWarning("Warning", "Please select an agent.");
+            return;
+        }
+        const token = localStorage.getItem("adminToken");
+        if (!token) return;
+
+        setIsAssigningAgent(true);
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/assign-recruitment/lead`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    leadIds: selectedLeads,
+                    createdBy: selectedAgents[0]?.value, // Send single ID
+                }),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                showSuccess("Success", result.message || "Agent assigned successfully.");
+                setShowAgentPopup(false);
+                setSelectedLeads([]); // Clear selection
+                setSelectedAgents([]); // Clear selected agents
+                if (fetchvenuemanagerRecruitment) fetchvenuemanagerRecruitment(); // Refresh data
+            } else {
+                throw new Error(result.message || "Failed to assign agents.");
+            }
+        } catch (error) {
+            console.error("Failed to assign agent:", error);
+            showError("Error", error.message || "Failed to assign agent.");
+        } finally {
+            setIsAssigningAgent(false);
+        }
+    };
+    const fetchAllAgents = useCallback(async () => {
+        const token = localStorage.getItem("adminToken");
+        if (!token) return;
+
+        setAgentsLoading(true);
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/get-agents`, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            const resultRaw = await response.json();
+            const result = resultRaw.data || [];
+            setAgentsData(result);
+            setShowAgentPopup(true);
+        } catch (error) {
+            console.error("Failed to fetch agents:", error);
+            showError("Error", "Failed to fetch agents.");
+        } finally {
+            setAgentsLoading(false);
+        }
+    }, []);
+
+
     const isSameDate = (d1, d2) =>
         d1 &&
         d2 &&
@@ -278,31 +441,23 @@ const VenueManager = () => {
             }
         }
     };
-    const calculateAge = (dob) => {
-        if (!dob) return "";
-        const birthDate = new Date(dob);
-        const today = new Date();
 
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const m = today.getMonth() - birthDate.getMonth();
-
-        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-        }
-        return age;
-    };
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
-        gender: "",
-        dob: "",
         age: "",
         phoneNumber: "",
         email: "",
         postcode: "",
+        footballExperience: "",
         managementExperience: "",
-        qualification: []
-
+        accessToOwnVehicle: "true",
+        whichQualificationYouHave: [],
+        ageGroupExperience: [],        // ✅ ADD THIS
+        uploadCv: null,
+        coverNote: "",
+        howDidYouHear: "",
+        fullWeekendAvailablity: '',
     });
     const venueOptions = useMemo(() => {
         const venuesMap = new Map();
@@ -390,7 +545,6 @@ const VenueManager = () => {
         setFilteredRecruitment(temp);
     };
 
-
     const filterByName = (data) => {
         if (!studentName.trim()) return data;
         setCurrentPage(1);
@@ -412,7 +566,7 @@ const VenueManager = () => {
         if (Array.isArray(venueRecruitment)) {
             setFilteredRecruitment(venueRecruitment);
         }
-    }, [venueRecruitment?.length]);
+    }, [venueRecruitment]); // ✅ depend on the array itself, not .length
 
     const finalSummaryCards = summaryCards.map(card => {
         const matched = Array.isArray(statsRecruitment)
@@ -437,11 +591,7 @@ const VenueManager = () => {
         { value: "More than 5 years", label: "More than 5 years" },
     ];
 
-    const genderOptions = [
-        { value: "Male", label: "Male" },
-        { value: "Female", label: "Female" },
-        { value: "Other", label: "Other" },
-    ];
+
     const handleVenueMail = async (selectedIds) => {
         const result = await showConfirm(
             "Are you sure?",
@@ -480,60 +630,56 @@ const VenueManager = () => {
 
 
 
-
-
     const filterBySearchQuery = (data) => {
-           if (!searchQuery.trim()) return data;
-   
-           const q = searchQuery.toLowerCase();
-   
-           return data.filter((coach) => {
-               const values = [
-                   coach?.firstName,
-                   coach?.lastName,
-                   coach?.age,
-                   coach?.postcode,
-                   coach?.phoneNumber,
-                   coach?.email,
-                   coach?.managementExperience,
-                   coach?.level,
-                   coach?.dbs,
-                   coach?.status,
-               ];
-   
-               return values.some((val) =>
-                   String(val || "").toLowerCase().includes(q)
-               );
-           });
-       };
-   
-   
-       const totalItems = filteredRecruitment.length;
-       const totalPages = Math.ceil(totalItems / rowsPerPage);
-   
-       const startIndex = (currentPage - 1) * rowsPerPage;
-       const endIndex = startIndex + rowsPerPage;
-   
-       const currentData = useMemo(
-           () => filteredRecruitment.slice(startIndex, endIndex),
-           [filteredRecruitment, startIndex, endIndex]
-       );
-       useEffect(() => {
-           setCurrentPage(1);
-       }, [searchQuery]);
-       useEffect(() => {
-           if (!Array.isArray(venueRecruitment)) return;
-   
-           let data = [...venueRecruitment];
-   
-           data = filterByName(data);
-           data = filterByVenue(data);
-           data = filterBySearchQuery(data); // ✅ ADD THIS
-   
-           setFilteredRecruitment(data);
-       }, [venueRecruitment, studentName, selectedVenue, searchQuery]);
-   
+        if (!searchQuery.trim()) return data;
 
+        const q = searchQuery.toLowerCase();
+
+        return data.filter((coach) => {
+            const values = [
+                coach?.firstName,
+                coach?.lastName,
+                coach?.age,
+                coach?.postcode,
+                coach?.phoneNumber,
+                coach?.email,
+                coach?.managementExperience,
+                coach?.level,
+                coach?.dbs,
+                coach?.status,
+            ];
+
+            return values.some((val) =>
+                String(val || "").toLowerCase().includes(q)
+            );
+        });
+    };
+
+
+    const totalItems = filteredRecruitment.length;
+    const totalPages = Math.ceil(totalItems / rowsPerPage);
+
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+
+    const currentData = useMemo(
+        () => filteredRecruitment.slice(startIndex, endIndex),
+        [filteredRecruitment, startIndex, endIndex]
+    );
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery]);
+    useEffect(() => {
+        if (!Array.isArray(venueRecruitment)) return;
+
+        let data = [...venueRecruitment];
+
+        data = filterByName(data);
+        data = filterByVenue(data);
+        data = filterBySearchQuery(data); // ✅ ADD THIS
+
+        setFilteredRecruitment(data);
+    }, [venueRecruitment, studentName, selectedVenue, searchQuery]);
 
 
 
@@ -574,7 +720,8 @@ const VenueManager = () => {
                         <div className="bg-white min-w-[38px] min-h-[38px]   border border-gray-300 p-2 rounded-full flex items-center justify-center">
                             <Filter size={16} className='cursor-pointer' onClick={() => setShowFilter(!showFilter)} />
                         </div>
-                        <button className="bg-white border border-[#E2E1E5] rounded-full flex justify-center items-center h-10 w-10"><TiUserAdd className="text-xl" /></button>
+                        <button onClick={handleClick}
+                            className="bg-white border border-[#E2E1E5] rounded-full flex justify-center items-center h-10 w-10"><TiUserAdd className="text-xl" /></button>
                         <button onClick={() => setIsOpen(true)}
                             className="flex items-center gap-2 bg-[#237FEA] text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition">
                             <Plus size={16} />
@@ -640,7 +787,7 @@ const VenueManager = () => {
                                                         }`}
                                                 >
                                                     {isChecked && (
-                                                        <Check size={16} strokeWidth={3} className="text-gray-500" />
+                                                        <Check size={16} strokeWidth={3} className="text-gray-500 w-5 h-5" />
                                                     )}
                                                 </button>
                                                 {fullName}
@@ -654,7 +801,7 @@ const VenueManager = () => {
                                         <td className="p-4">{experience}</td>
 
                                         <td className="p-4">
-                                            {faLevel1 ? (
+                                            {coach?.candidateProfile?.whichQualificationYouHave?.includes("FA Level 1") ? (
                                                 <img src="/reportsIcons/greenCheck.png" className="w-6" />
                                             ) : (
                                                 <img src="/reportsIcons/cross.png" className="w-6" />
@@ -662,7 +809,7 @@ const VenueManager = () => {
                                         </td>
 
                                         <td className="p-4">
-                                            {dbs ? (
+                                            {coach?.candidateProfile?.whichQualificationYouHave?.includes("DBS (within the year") ? (
                                                 <img src="/reportsIcons/greenCheck.png" className="w-6" />
                                             ) : (
                                                 <img src="/reportsIcons/cross.png" className="w-6" />
@@ -980,10 +1127,10 @@ const VenueManager = () => {
 
                     {/* Actions */}
                     <div className="grid blockButton md:grid-cols-3 gap-3 mt-4">
-                        <button onClick={() => handleVenueMail(selectedIds)} className="flex-1 flex items-center justify-center text-[#717073] gap-1 border border-[#717073] rounded-lg py-3 text-sm hover:bg-gray-50">
+                        <button onClick={handleSendEmail} className="flex-1 flex items-center justify-center text-[#717073] gap-1 border border-[#717073] rounded-lg py-3 text-sm hover:bg-gray-50">
                             <Mail size={16} className="text-[#717073]" /> Send Email
                         </button>
-                        <button className="flex-1 flex items-center justify-center gap-1 border text-[#717073] border-[#717073] rounded-lg py-3 text-sm hover:bg-gray-50">
+                        <button onClick={handleSendText} className="flex-1 flex items-center justify-center gap-1 border text-[#717073] border-[#717073] rounded-lg py-3 text-sm hover:bg-gray-50">
                             <MessageSquare size={16} className="text-[#717073]" /> Send Text
                         </button>
                         <button
@@ -993,191 +1140,413 @@ const VenueManager = () => {
                             <Download size={16} /> Export Data
                         </button>
                     </div>
-                    {isOpen && (
-                        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-                            <div className="bg-white w-full max-w-lg rounded-2xl shadow-xl p-6">
-                                {/* Modal Header */}
-                                <div className="flex justify-between items-center mb-4">
-                                    <h2 className="text-lg font-semibold">Add New Lead</h2>
-                                    <button
-                                        onClick={() => setIsOpen(false)}
-                                        className="text-gray-400 hover:text-gray-600"
-                                    >
-                                        ✕
-                                    </button>
+
+                </div>
+            )}
+
+            {isOpen && (
+                <div className="fixed inset-0 bg-[#0000008f]  bg-opacity-40 flex items-center justify-center z-50">
+                    <div className="bg-white w-full max-w-lg rounded-2xl shadow-xl p-6">
+                        {/* Modal Header */}
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-lg font-semibold">Add New Lead</h2>
+                            <button
+                                onClick={() => setIsOpen(false)}
+                                className="text-gray-400 hover:text-gray-600"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        {/* Form */}
+                        <form onSubmit={handleSubmit} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+
+                            {/* First Name & Last Name */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-sm font-medium text-[#282829] mb-1">First Name</label>
+                                    <input
+                                        ref={firstNameRef}
+                                        placeholder="First Name"
+                                        value={formData.firstName}
+                                        onChange={(e) => { setFormData({ ...formData, firstName: e.target.value }); setErrors(p => ({ ...p, firstName: '' })); }}
+                                        className={`w-full px-4 py-3 border rounded-xl focus:outline-none ${errors.firstName ? 'border-red-500' : 'border-[#E2E1E5]'}`}
+                                    />
+                                    {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
                                 </div>
-                                {/* Form */}
-                                <form onSubmit={handleSubmit} className="space-y-4">
-                                    {/* Name */}
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <input
-                                            placeholder="First Name"
-                                            value={formData.firstName}
-                                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                                            className={inputClass}
-                                        />
-                                        <input
-                                            placeholder="Last Name"
-                                            value={formData.lastName}
-                                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                                            className={inputClass}
-                                        />
-                                    </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-[#282829] mb-1">Surname</label>
+                                    <input
+                                        ref={lastNameRef}
+                                        placeholder="Surname"
+                                        value={formData.lastName}
+                                        onChange={(e) => { setFormData({ ...formData, lastName: e.target.value }); setErrors(p => ({ ...p, lastName: '' })); }}
+                                        className={`w-full px-4 py-3 border rounded-xl focus:outline-none ${errors.lastName ? 'border-red-500' : 'border-[#E2E1E5]'}`}
+                                    />
+                                    {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
+                                </div>
+                            </div>
 
-                                    {/* DOB & Age */}
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div className="relative">
-                                            <DatePicker
-                                                selected={formData.dob ? new Date(formData.dob) : null}
-                                                onChange={(date) => {
-                                                    const dob = date ? date.toLocaleDateString("en-CA") : null;
+                            {/* Email Address */}
+                            <div>
+                                <label className="block text-sm font-medium text-[#282829] mb-1">Email Address</label>
+                                <input
+                                    ref={emailRef}
+                                    type="email"
+                                    placeholder="Email Address"
+                                    value={formData.email}
+                                    onChange={(e) => { setFormData({ ...formData, email: e.target.value }); setErrors(p => ({ ...p, email: '' })); }}
+                                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none ${errors.email ? 'border-red-500' : 'border-[#E2E1E5]'}`}
+                                />
+                                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                            </div>
 
+                            {/* Telephone Number */}
+                            <div>
+                                <label className="block text-sm font-medium text-[#282829] mb-1">Telephone Number</label>
+                                <div className={`flex items-center border rounded-xl px-3 py-3 ${errors.phoneNumber ? 'border-red-500' : 'border-gray-300'}`}>
+                                    <PhoneInput
+                                        country="uk"
+                                        value={dialCode}
+                                        onChange={(val, data) => setDialCode(`+${data.dialCode}`)}
+                                        disableCountryCode={true}
+                                        countryCodeEditable={false}
+                                        inputStyle={{ width: "0px", maxWidth: '20px', height: "0px", opacity: 0, pointerEvents: "none", position: "absolute" }}
+                                        buttonClass="!bg-white !border-none !p-0"
+                                    />
+                                    <input
+                                        ref={phoneNumberRef}
+                                        type="number"
+                                        placeholder="Telephone Number"
+                                        value={formData.phoneNumber}
+                                        onChange={(e) => { setFormData({ ...formData, phoneNumber: e.target.value }); setErrors(p => ({ ...p, phoneNumber: '' })); }}
+                                        className="border-none w-full focus:outline-none"
+                                    />
+                                </div>
+                                {errors.phoneNumber && <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>}
+                            </div>
+
+                            {/* Date of Birth & Age */}
+                            <div className="grid  gap-3">
+
+                                <div>
+                                    <label className="block text-sm font-medium text-[#282829] mb-1">Age</label>
+                                    <input
+                                        ref={ageRef}
+                                        placeholder="Age"
+                                        value={formData.age}
+                                        onChange={(e) => {
+                                            setFormData({ ...formData, age: e.target.value })
+                                            setErrors(p => ({ ...p, age: '' }));
+                                        }}
+                                        className={`w-full px-4 py-3 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-100 ${errors.age ? 'border-red-500' : 'border-[#E2E1E5]'}`}
+                                    />
+                                    {errors.age && <p className="text-red-500 text-sm mt-1">{errors.age}</p>}
+                                </div>
+                            </div>
+
+                            {/* London Postcode */}
+                            <div>
+                                <label className="block text-sm font-medium text-[#282829] mb-1">London Postcode</label>
+                                <input
+                                    ref={postcodeRef}
+                                    placeholder="London Postcode"
+                                    value={formData.postcode}
+                                    onChange={(e) => { setFormData({ ...formData, postcode: e.target.value }); setErrors(p => ({ ...p, postcode: '' })); }}
+                                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none ${errors.postcode ? 'border-red-500' : 'border-[#E2E1E5]'}`}
+                                />
+                                {errors.postcode && <p className="text-red-500 text-sm mt-1">{errors.postcode}</p>}
+                            </div>
+
+                            {/* Access to own vehicle */}
+                            <div>
+                                <label className="block text-sm font-medium text-[#282829] mb-2">Do you have access to your own vehicle?</label>
+                                <div className="flex gap-6">
+                                    {["true", "false"].map((val) => (
+                                        <label key={val} className="flex items-center gap-2 cursor-pointer text-sm text-[#282829]">
+                                            <input
+                                                type="radio"
+                                                name="accessToOwnVehicle"
+                                                value={val}
+                                                checked={formData.accessToOwnVehicle === val}
+                                                onChange={() => setFormData({ ...formData, accessToOwnVehicle: val })}
+                                                className="accent-green-500 w-4 h-4"
+                                            />
+                                            {val === "true" ? "Yes" : "No"}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Qualifications */}
+                            <div>
+                                <label className="block text-sm font-medium text-[#282829] mb-2">Please select which qualifications you have</label>
+                                <div className="flex flex-col gap-2">
+                                    {["FA Level 1", "FA Level 2", "DBS (within the year)", "Futsal Level 1", "UEFA B", "First Aid (within 2 years)"].map((q) => (
+                                        <label key={q} className="flex items-center gap-2 text-sm text-[#282829] cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.whichQualificationYouHave.includes(q)}
+                                                onChange={() => {
+                                                    const current = formData.whichQualificationYouHave;
                                                     setFormData({
                                                         ...formData,
-                                                        dob,
-                                                        age: calculateAge(dob),
+                                                        whichQualificationYouHave: current.includes(q)
+                                                            ? current.filter(x => x !== q)
+                                                            : [...current, q]
                                                     });
                                                 }}
-
-                                                placeholderText="Date of Birth"
-                                                dateFormat="yyyy-MM-dd"
-                                                showYearDropdown
-                                                showMonthDropdown
-                                                dropdownMode="select"
-                                                maxDate={new Date()}
-                                                className={inputClass}
+                                                className="accent-green-500 w-4 h-4"
                                             />
-                                        </div>
-
-                                        <input
-                                            placeholder="Age"
-                                            value={formData.age}
-                                            readOnly
-                                            className={`${inputClass} bg-gray-50 cursor-not-allowed`}
-                                        />
-                                    </div>
-
-                                    {/* Phone & Email */}
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div className="flex items-center border border-gray-300 rounded-xl px-3 py-3 ">
-                                            {/* Flag Dropdown */}
-                                            <PhoneInput
-                                                country="uk"
-                                                value="+44"
-                                                disableDropdown={true}
-                                                disableCountryCode={true}
-                                                countryCodeEditable={false}
-                                                inputStyle={{
-                                                    width: "0px",
-                                                    maxWidth: '20px',
-                                                    height: "0px",
-                                                    opacity: 0,
-                                                    pointerEvents: "none", // ✅ prevents blocking typing
-                                                    position: "absolute",
-                                                }}
-                                                buttonClass="!bg-white !border-none !p-0"
-                                            />
-                                            <input
-                                                type="number"
-                                                placeholder="Phone Number"
-                                                value={formData.phoneNumber}
-                                                onChange={(e) =>
-                                                    setFormData({ ...formData, phoneNumber: e.target.value })
-                                                }
-                                                className="border-none w-full focus:outline-none"
-
-                                            />
-                                        </div>
-                                        <input
-                                            type="email"
-                                            placeholder="Email Address"
-                                            value={formData.email}
-                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                            className={inputClass}
-                                        />
-                                    </div>
-
-                                    {/* Postcode & Experience */}
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <input
-                                            placeholder="Postcode"
-                                            value={formData.postcode}
-                                            onChange={(e) => setFormData({ ...formData, postcode: e.target.value })}
-                                            className={inputClass}
-                                        />
-
-                                        <Select
-                                            options={experienceOptions}
-                                            styles={selectStyles}
-                                            placeholder="Select experience"
-                                            value={experienceOptions.find(
-                                                (o) => o.value === formData.managementExperience
-                                            )}
-                                            onChange={(selected) =>
-                                                setFormData({
-                                                    ...formData,
-                                                    managementExperience: selected?.value || "",
-                                                })
-                                            }
-                                        />
-
-                                    </div>
-
-                                    {/* Gender */}
-                                    <Select
-                                        options={genderOptions}
-                                        styles={selectStyles}
-                                        placeholder="Select Gender"
-                                        value={genderOptions.find((o) => o.value === formData.gender)}
-                                        onChange={(selected) =>
-                                            setFormData({
-                                                ...formData,
-                                                gender: selected?.value || "",
-                                            })
-                                        }
-                                    />
-
-
-                                    {/* DBS & FA Level */}
-                                    <div className="grid grid-cols-2 gap-3">
-
-                                        <Select
-                                            isMulti
-                                            isClearable
-                                            styles={selectStyles}
-                                            options={qualificationOptions}
-                                            value={qualificationOptions.filter(o =>
-                                                formData.qualification.includes(o.value)
-                                            )}
-                                            onChange={(selected) =>
-                                                handleMultiSelectChange("qualification", selected)
-                                            }
-                                            placeholder="Select qualifications"
-                                            className="col-span-2"
-                                        />
-                                    </div>
-
-                                    {/* Actions */}
-                                    <div className="flex justify-end gap-3 mt-4">
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsOpen(false)}
-                                            className="px-4 py-2 rounded-lg bg-gray-200"
-                                        >
-                                            Cancel
-                                        </button>
-
-                                        <button
-                                            type="submit"
-                                            className="px-4 py-2 rounded-lg bg-[#237FEA] text-white"
-                                        >
-                                            Save Lead
-                                        </button>
-                                    </div>
-                                </form>
+                                            {q}
+                                        </label>
+                                    ))}
+                                </div>
                             </div>
+
+
+                            {/* Football Experience */}
+                            <div>
+                                <label className="block text-sm font-medium text-[#282829] mb-1">How many years football coaching experience do you have?</label>
+                                <Select
+                                    options={experienceOptions}
+                                    styles={selectStyles}
+                                    placeholder="Select experience"
+                                    value={experienceOptions.find(o => o.value === formData.footballExperience) || null}
+                                    onChange={(selected) => {
+                                        setFormData({ ...formData, footballExperience: selected?.value || "" });
+                                        setErrors(p => ({ ...p, footballExperience: '' }));
+                                    }}
+                                    className={errors.footballExperience ? 'border border-red-500 rounded-xl' : ''}
+                                />
+                                {errors.footballExperience && <p className="text-red-500 text-sm mt-1">{errors.footballExperience}</p>}
+                            </div>
+
+                            {/* Available Venues */}
+                            {/* Age Group Experience */}
+                            <div>
+                                <label className="block text-sm font-medium text-[#282829] mb-2">
+                                    Which age groups do you have experience working with? Please select from the options
+                                </label>
+                                <div className="flex flex-col gap-2">
+                                    {["5-7 Years", "4-5 years", "8-10 Years", "11-13 Years", "14-16 Years", "17+ Years"].map((q) => (
+                                        <label key={q} className="flex items-center gap-2 text-sm text-[#282829] cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={formData.ageGroupExperience.includes(q)}  // ✅ correct field
+                                                onChange={() => {
+                                                    const current = formData.ageGroupExperience;
+                                                    setFormData({
+                                                        ...formData,
+                                                        ageGroupExperience: current.includes(q)  // ✅ correct field
+                                                            ? current.filter(x => x !== q)
+                                                            : [...current, q]
+                                                    });
+                                                    setErrors(p => ({ ...p, ageGroupExperience: '' }));
+                                                }}
+                                                className="accent-green-500 w-4 h-4"
+                                            />
+                                            {q}
+                                        </label>
+                                    ))}
+                                </div>
+                                {errors.ageGroupExperience && <p className="text-red-500 text-sm mt-1">{errors.ageGroupExperience}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-[#282829] mb-2">
+                                    How many years of management experience do you have?
+                                </label>
+                                <Select
+                                    options={experienceOptions}
+                                    styles={selectStyles}
+                                    placeholder="Select experience"
+                                    value={experienceOptions.find(o => o.value === formData.managementExperience) || null}
+                                    onChange={(selected) => {
+                                        setFormData({ ...formData, managementExperience: selected?.value || "" });
+                                        setErrors(p => ({ ...p, managementExperience: '' }));
+                                    }}
+                                    className={errors.managementExperience ? 'border border-red-500 rounded-xl' : ''}
+                                />
+                                {errors.managementExperience && <p className="text-red-500 text-sm mt-1">{errors.managementExperience}</p>}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-[#282829] mb-2">Do you have full time weekend availability?</label>
+                                <div className="flex flex-col gap-2">
+                                    {["Yes", "No"].map((source) => (
+                                        <label key={source} className="flex items-center gap-2 text-sm text-[#282829] cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="fullWeekendAvailablity"
+                                                value={source}
+                                                checked={formData.fullWeekendAvailablity === source}
+                                                onChange={() => {
+                                                    setFormData({ ...formData, fullWeekendAvailablity: source });
+                                                    setErrors(p => ({ ...p, fullWeekendAvailablity: '' }));
+                                                }}
+                                                className="accent-green-500 w-4 h-4"
+                                            />
+                                            {source}
+                                        </label>
+                                    ))}
+                                </div>
+                                {errors.fullWeekendAvailablity && <p className="text-red-500 text-sm mt-1">{errors.fullWeekendAvailablity}</p>}
+                            </div>
+
+                            {/* Upload CV */}
+                            <div>
+                                <label className="block text-sm font-medium text-[#282829] mb-1">Please upload your CV</label>
+                                <label className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-5 cursor-pointer hover:border-blue-400 transition bg-white ${errors.uploadCv ? 'border-red-500' : 'border-gray-300'}`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 12V4m0 0L8 8m4-4l4 4" />
+                                    </svg>
+                                    <span className="text-sm">
+                                        <span className="text-blue-500 font-medium">Click to upload</span>
+                                        <span className="text-gray-500"> or drag and drop</span>
+                                    </span>
+                                    <span className="text-xs text-gray-400 mt-1">SVG, PNG, JPG or GIF (max. 800×400px)</span>
+                                    {formData.uploadCv && (
+                                        <span className="text-xs text-green-600 mt-2 font-medium">{formData.uploadCv.name}</span>
+                                    )}
+                                    <input
+                                        type="file"
+                                        className="hidden"
+                                        accept=".svg,.png,.jpg,.jpeg,.gif,.pdf,.doc,.docx"
+                                        onChange={(e) => {
+                                            setFormData({ ...formData, uploadCv: e.target.files[0] || null });
+                                            setErrors(p => ({ ...p, uploadCv: '' }));
+                                        }}
+                                    />
+                                </label>
+                                {errors.uploadCv && <p className="text-red-500 text-sm mt-1">{errors.uploadCv}</p>}
+                            </div>
+
+                            {/* Cover Note */}
+                            <div>
+                                <label className="block text-sm font-medium text-[#282829] mb-1">Please Add a short cover note (500 words max)</label>
+                                <textarea
+                                    ref={coverNoteRef}
+                                    placeholder="Message"
+                                    rows={4}
+                                    maxLength={3000}
+                                    value={formData.coverNote}
+                                    onChange={(e) => {
+                                        setFormData({ ...formData, coverNote: e.target.value });
+                                        setErrors(p => ({ ...p, coverNote: '' }));
+                                    }}
+                                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 resize-none text-sm ${errors.coverNote ? 'border-red-500' : 'border-[#E2E1E5]'}`}
+                                />
+                                {errors.coverNote && <p className="text-red-500 text-sm mt-1">{errors.coverNote}</p>}
+                            </div>
+
+                            {/* How did you hear */}
+                            <div>
+                                <label className="block text-sm font-medium text-[#282829] mb-2">How did you hear about this opportunity?</label>
+                                <div className="flex flex-col gap-2">
+                                    {["Indeed", "Facebook", "Google", "Referral", "Other"].map((source) => (
+                                        <label key={source} className="flex items-center gap-2 text-sm text-[#282829] cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="howDidYouHear"
+                                                value={source}
+                                                checked={formData.howDidYouHear === source}
+                                                onChange={() => {
+                                                    setFormData({ ...formData, howDidYouHear: source });
+                                                    setErrors(p => ({ ...p, howDidYouHear: '' }));
+                                                }}
+                                                className="accent-green-500 w-4 h-4"
+                                            />
+                                            {source}
+                                        </label>
+                                    ))}
+                                </div>
+                                {errors.howDidYouHear && <p className="text-red-500 text-sm mt-1">{errors.howDidYouHear}</p>}
+                            </div>
+
+
+                            {/* Actions */}
+                            <div className="flex justify-end gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => { setIsOpen(false); setErrors({}); }}
+                                    className="px-4 py-2 rounded-lg bg-gray-200 text-sm font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className={`px-4 py-2 rounded-lg bg-[#237FEA] text-white text-sm font-medium ${isSubmitting ? "opacity-60 cursor-not-allowed" : ""}`}
+                                >
+                                    {isSubmitting ? "Submitting..." : "Save Lead"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {showAgentPopup && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[99] p-4">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-8 animate-in fade-in zoom-in duration-200">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-[28px] font-bold text-[#282829]">Select agent</h3>
+                            <button onClick={() => setShowAgentPopup(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                <X size={24} />
+                            </button>
                         </div>
-                    )}
+
+                        <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
+                            {agentsLoading ? (
+                                <div className="flex justify-center py-10">
+                                    <span className="text-[#237FEA]">Loading...</span>
+                                </div>
+                            ) : agentsData.length === 0 ? (
+                                <p className="text-center text-gray-500 py-4 font-medium">No agents available.</p>
+                            ) : (
+                                agentsData.map((agent) => {
+                                    const isSelected = selectedAgents.some((a) => a.value === agent.id);
+                                    return (
+                                        <div
+                                            key={agent.id}
+                                            className="flex items-center gap-4 py-2 cursor-pointer group"
+                                            onClick={() => {
+                                                if (isSelected) {
+                                                    setSelectedAgents([]);
+                                                } else {
+                                                    setSelectedAgents([{ value: agent.id, label: `${agent.firstName} ${agent.lastName}` }]);
+                                                }
+                                            }}
+                                        >
+                                            <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${isSelected ? "bg-[#237FEA] border-[#237FEA]" : "border-gray-200 group-hover:border-[#237FEA]"}`}>
+                                                {isSelected && <Check size={16} className="text-white" strokeWidth={4} />}
+                                            </div>
+                                            <div className="relative">
+                                                <img
+                                                    src={agent.profilePicture || agent.image || "/images/avatar-placeholder.png"}
+                                                    alt=""
+                                                    className="w-14 h-14 rounded-full object-cover border-2 border-[#E6F7FB]"
+                                                    onError={(e) => (e.target.src = `https://ui-avatars.com/api/?name=${agent.firstName}+${agent.lastName}&background=E6F7FB&color=237FEA`)}
+                                                />
+                                            </div>
+                                            <span className="text-[20px] font-medium text-[#282829]">
+                                                {agent.firstName} {agent.lastName}
+                                            </span>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+
+                        <div className="mt-8">
+                            <button
+                                onClick={handleAssignAgent}
+                                disabled={isAssigningAgent || selectedAgents.length === 0}
+                                className="w-full py-4 bg-[#237FEA] text-white font-bold rounded-2xl hover:bg-[#1a6ed8] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-blue-100 text-lg"
+                            >
+                                {isAssigningAgent ? "Assigning..." : "Assign"}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 

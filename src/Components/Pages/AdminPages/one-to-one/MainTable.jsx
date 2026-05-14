@@ -154,19 +154,26 @@ const MainTable = () => {
                                                     {safe(user?.students?.[0]?.age)}
                                                 </td>
                                                 <td className="p-4 whitespace-nowrap" onClick={() => navigate(`/weekly-classes/account-information?id=${user.id}`)}>
-                                                    {safe(user?.venue?.name)}
+                                                    {safe(user?.venue?.name || user?.holidayVenue?.name)}
                                                 </td>
                                                 <td className="p-4 whitespace-nowrap" onClick={() => navigate(`/weekly-classes/account-information?id=${user.id}`)}>
                                                     {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                                                 </td>
                                                 <td className="p-4 whitespace-nowrap" onClick={() => navigate(`/weekly-classes/account-information?id=${user.id}`)}>
-                                                    {`${safe(user?.bookedByAdmin?.firstName)} ${safe(user?.bookedByAdmin?.lastName)}`}
+                                                    {user?.bookedByAdmin?.firstName 
+                                                        ? `${safe(user?.bookedByAdmin?.firstName)} ${safe(user?.bookedByAdmin?.lastName)}`
+                                                        : user?.parentAdminId || "-"}
                                                 </td>
-                                                <td className="p-4 whitespace-nowrap">{safe(user?.paymentPlan?.title)}</td>
                                                 <td className="p-4 whitespace-nowrap">
-                                                    {user?.paymentPlan?.duration && user?.paymentPlan?.interval
-                                                        ? `${user.paymentPlan?.duration} ${user.paymentPlan?.interval}${user.paymentPlan?.duration > 1 ? 's' : ''}`
-                                                        : 'N/A'}
+                                                    {safe(user?.paymentPlan?.title || user?.holidayPaymentPlan?.title)}
+                                                </td>
+                                                <td className="p-4 whitespace-nowrap">
+                                                    {(user?.paymentPlan || user?.holidayPaymentPlan) ? (() => {
+                                                        const plan = user?.paymentPlan || user?.holidayPaymentPlan;
+                                                        return plan?.duration && plan?.interval
+                                                            ? `${plan.duration} ${plan.interval}${plan.duration > 1 ? 's' : ''}`
+                                                            : 'N/A';
+                                                    })() : 'N/A'}
                                                 </td>
                                                 <td className="p-4 whitespace-nowrap">
                                                     <span className={`px-3 py-1 rounded-xl capitalize font-semibold ${statusColors[user.status] || 'bg-gray-100 text-gray-800'}`}>

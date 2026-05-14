@@ -1,9 +1,13 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useClassSchedule } from "../../../contexts/ClassScheduleContent";
+import { getNames } from "country-list";
 import Select from "react-select";
 import { Check, X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useBookFreeTrial } from "../../../contexts/BookAFreeTrialContext";
+import { useNotification } from "../../../contexts/NotificationContext";
+
+const IS_SANDBOX = import.meta.env.VITE_PAYMENT_ENV === "sandbox";
 
 const HistoryOfPayments = ({ stateData }) => {
   const { fetchFindClassID, singleClassSchedulesOnly, loading } = useClassSchedule() || {};
@@ -20,6 +24,20 @@ const HistoryOfPayments = ({ stateData }) => {
   const [zipCode, setZipCode] = useState("");
   const [errors, setErrors] = useState({});           // ✅ FIX 1: was missing
   const [directDebitData, setDirectDebitData] = useState([]);
+
+  // Refs for focusing on errors
+  const emailRef = useRef(null);
+  const accountHolderNameRef = useRef(null);
+  const line1Ref = useRef(null);
+  const cityRef = useRef(null);
+  const postalCodeRef = useRef(null);
+  const branchCodeRef = useRef(null);
+  const accountNumberRef = useRef(null);
+  const nameOnCardRef = useRef(null);
+  const cardNumberRef = useRef(null);
+  const expiryDateRef = useRef(null);
+  const cvcRef = useRef(null);
+  const zipCodeRef = useRef(null);
 
   // ── Popup / plan / calendar state ──
   const [showPopup, setShowPopup] = useState(null);
@@ -43,8 +61,17 @@ const HistoryOfPayments = ({ stateData }) => {
     STRIPE: "stripe",
   };
 
+  const { adminInfo } = useNotification() || {};
+  const isFranchisee =
+    adminInfo?.role?.role === "Franchisee" ||
+    singleClassSchedulesOnly?.venue?.admins?.role?.role === "Franchisee";
+
+  const subscriptionPaymentType = isFranchisee
+    ? PAYMENT_TYPES.GOCARDLESS
+    : PAYMENT_TYPES.ACCESS_PAY_SUITE;
+
   const [payment, setPayment] = useState({
-    paymentType: PAYMENT_TYPES.ACCESS_PAY_SUITE,
+    paymentType: subscriptionPaymentType,
     firstName: "",
     lastName: "",
     email: "",
@@ -56,6 +83,12 @@ const HistoryOfPayments = ({ stateData }) => {
     branch_code: "",
     account_holder_name: "",
   });
+
+  useEffect(() => {
+    if (subscriptionPaymentType) {
+      setPayment(prev => ({ ...prev, paymentType: subscriptionPaymentType }));
+    }
+  }, [subscriptionPaymentType]);
   const [selectedPlanData, setSelectedPlanData] = useState(null);
   const [proRataDiscountData, setProRataDiscountData] = useState(null);
   const [isProRataApplied, setIsProRataApplied] = useState(false);
@@ -136,6 +169,10 @@ const HistoryOfPayments = ({ stateData }) => {
 
     return filtered;
   }, [singleClassSchedulesOnly, numberOfStudents, stateData]);
+
+  const countryOptions = useMemo(() => {
+    return getNames().map((name) => ({ label: name, value: name }));
+  }, []);
 
   // ── SESSION & EXCLUSION DATES ──
   const sessionDates = singleClassSchedulesOnly?.venue?.termGroups?.flatMap(group =>
@@ -245,7 +282,7 @@ const HistoryOfPayments = ({ stateData }) => {
         starterDiscountAmount = Number(appliedDiscount.data.discountAmount || 0);
     }
 
-    const totalBeforeDiscount = effectiveLessonCharge + starterPack;
+    const totalBeforeDiscount = effectiveLessonCharge;
     const finalTotal = Math.max(totalBeforeDiscount - starterDiscountAmount, 0);
     const totalToday = Number(finalTotal.toFixed(2));
     const nextMonthPayment = Number(monthlyPrice.toFixed(2));
@@ -336,15 +373,49 @@ const HistoryOfPayments = ({ stateData }) => {
   const goToPreviousMonth = () => setCurrentDate(new Date(year, month - 1));
   const goToNextMonth = () => setCurrentDate(new Date(year, month + 1));
 
-  // ✅ FIX 5: validateField implementation (was used but never declared)
+  // ✅ FIX 5: validateField implementation
   const validateField = (field, value) => {
-    if (field === "nameOnCard" && !value.trim()) return "Name on card is required";
-    if (field === "cardNumber" && value.replace(/\s/g, "").length < 16)
-      return "Enter a valid 16-digit card number";
-    if (field === "expiryDate" && !/^\d{2}\/\d{2}$/.test(value))
-      return "Enter expiry as MM/YY";
-    if (field === "cvc" && value.length < 3) return "Enter a valid CVC";
-    return null;
+    switch (field) {
+      case "email":
+        return !value?.trim() ? "Email is required" : (!/\S+@\S+\.\S+/.test(value) ? "Invalid email address" : null);
+      case "account_holder_name":
+        return !value?.trim() ? "Account holder name is required" : null;
+      case "line1":
+        return !value?.trim() ? "Address line 1 is required" : null;
+      case "city":
+        return !value?.trim() ? "City is required" : null;
+      case "postalCode":
+        return !value?.trim() ? "Postal code is required" : null;
+      case "branch_code":
+        return !value || value.length !== 6 ? "Sort code must be 6 digits" : null;
+      case "account_number":
+        return !value || value.length !== 8 ? "Account number must be 8 digits" : null;
+      case "nameOnCard":
+        return !value?.trim() ? "Name on card is required" : null;
+      case "cardNumber":
+        return value.replace(/\s/g, "").length !== 16 ? "Card number must be 16 digits" : null;
+      case "expiryDate":
+        return !/^\d{2}\/\d{2}$/.test(value) ? "Enter expiry as MM/YY" : null;
+      case "cvc":
+        return value.length < 3 ? "CVC must be at least 3 digits" : null;
+      case "zipCode":
+        return !value?.trim() ? "Postal Code is required" : null;
+      case "checkoutCountry":
+        return !value?.trim() ? "Country is required" : null;
+      default:
+        return null;
+    }
+  };
+
+  const handlePaymentChange = (field, value) => {
+    setPayment(prev => ({ ...prev, [field]: value }));
+    const msg = validateField(field, value);
+    setErrors(prev => {
+      const copy = { ...prev };
+      if (msg) copy[field] = msg;
+      else delete copy[field];
+      return copy;
+    });
   };
 
   const handleCheckoutChange = (field, rawValue) => {
@@ -382,6 +453,40 @@ const HistoryOfPayments = ({ stateData }) => {
       return;
     }
 
+    const checkoutFields = ["nameOnCard", "cardNumber", "expiryDate", "cvc", "checkoutCountry", "zipCode"];
+    const newErrors = {};
+    let firstErrorField = null;
+
+    checkoutFields.forEach(field => {
+      let val = "";
+      if (field === "nameOnCard") val = nameOnCard;
+      else if (field === "cardNumber") val = cardNumber;
+      else if (field === "expiryDate") val = expiryDate;
+      else if (field === "cvc") val = cvc;
+      else if (field === "zipCode") val = zipCode;
+      else if (field === "checkoutCountry") val = checkoutCountry;
+
+      const msg = validateField(field, val);
+      if (msg) {
+        newErrors[field] = msg;
+        if (!firstErrorField) firstErrorField = field;
+      }
+    });
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      // Focus first error
+      const refs = {
+        nameOnCard: nameOnCardRef,
+        cardNumber: cardNumberRef,
+        expiryDate: expiryDateRef,
+        cvc: cvcRef,
+        zipCode: zipCodeRef
+      };
+      refs[firstErrorField]?.current?.focus();
+      return;
+    }
+
     setIsSubmitting(true);
     const amountToSend = calculateAmount(selectedDate);
     const proRataToSend = pricingBreakdown.isFullMonthCharge
@@ -392,16 +497,15 @@ const HistoryOfPayments = ({ stateData }) => {
       newPaymentPlanId: membershipPlan?.value ?? null,
       startDate: selectedDate,
       payment: {
+        ...payment, // existing fields
         price: pricingBreakdown.nextMonthPayment,
         proRataAmount: proRataToSend,
-        ...payment, // existing fields
         nameOnCard,
         cardNumber,
         expiryDate,
         cvc,
         country: checkoutCountry,
         zipCode,
-        price: pricingBreakdown.nextMonthPayment,
       },
 
     };
@@ -418,6 +522,41 @@ const HistoryOfPayments = ({ stateData }) => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleContinueToStep2 = () => {
+    let step1Fields = ["email", "account_holder_name", "branch_code", "account_number"];
+
+    if (!isFranchisee) {
+      step1Fields = ["email", "account_holder_name", "line1", "city", "postalCode", "branch_code", "account_number"];
+    }
+
+    const newErrors = {};
+    let firstErrorField = null;
+
+    step1Fields.forEach(field => {
+      const msg = validateField(field, payment[field]);
+      if (msg) {
+        newErrors[field] = msg;
+        if (!firstErrorField) firstErrorField = field;
+      }
+    });
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      const refs = {
+        email: emailRef,
+        account_holder_name: accountHolderNameRef,
+        line1: line1Ref,
+        city: cityRef,
+        postalCode: postalCodeRef,
+        branch_code: branchCodeRef,
+        account_number: accountNumberRef
+      };
+      refs[firstErrorField]?.current?.focus();
+      return;
+    }
+    setStep(2);
   };
 
   // ── RENDER ──
@@ -457,15 +596,18 @@ const HistoryOfPayments = ({ stateData }) => {
           <div className="col-span-1 text-end border-b border-gray-200 pb-4">
             {formatDate(stateData.dateBooked)}
           </div>
-
-          <div className="col-span-1 text-gray-500 border-b border-gray-200 pb-4">Address</div>
-          <div className="col-span-1 text-end border-b border-gray-200 pb-4">
-            {safeValue(
-              stateData?.payments?.length
-                ? stateData.payments[stateData.payments.length - 1]?.billingAddress
-                : null
+          {stateData.payments?.[stateData.payments.length - 1]?.billingAddress != null &&
+            stateData.payments?.[stateData.payments.length - 1]?.billingAddress !== "" && (<>
+              <div className="col-span-1 text-gray-500 border-b border-gray-200 pb-4">Address</div>
+              <div className="col-span-1 text-end border-b border-gray-200 pb-4">
+                {safeValue(
+                  stateData?.payments?.length
+                    ? stateData.payments[stateData.payments.length - 1]?.billingAddress
+                    : null
+                )}
+              </div>
+            </>
             )}
-          </div>
 
           <div className="col-span-1 text-gray-500">Email</div>
           <div className="col-span-1 text-end">{safeValue(stateData?.payments?.[0]?.email)}</div>
@@ -512,7 +654,7 @@ const HistoryOfPayments = ({ stateData }) => {
                     <tr key={payment.id || index} className="relative">
                       <td className="py-3 px-6 font-medium relative">
                         <div
-                          className={`flex gap-2 text-left w-44 bg-gray-100 px-2 py-1 rounded-xl shadow-sm whitespace-nowrap items-center ${isFailed ? "cursor-pointer" : ""}`}
+                          className={`flex gap-2 text-left w-max bg-gray-100 px-2 py-1 rounded-xl shadow-sm whitespace-nowrap items-center ${isFailed ? "cursor-pointer" : ""}`}
                           onClick={() =>
                             isFailed &&
                             setShowPopup(showPopup === payment.id ? null : payment.id)
@@ -781,75 +923,112 @@ const HistoryOfPayments = ({ stateData }) => {
                     <label className="block">
                       <span className="block text-gray-700 text-[14px] mb-1">Email address</span>
                       <input
+                        ref={emailRef}
                         type="email"
                         placeholder="Email address"
                         value={payment.email}
-                        onChange={(e) => setPayment({ ...payment, email: e.target.value })}
-                        className="w-full bg-white border border-gray-200 rounded-[6px] px-4 py-2"
+                        onChange={(e) => handlePaymentChange("email", e.target.value)}
+                        className={`w-full bg-white border ${errors.email ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
                       />
+                      {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                     </label>
 
-                    <label className="block">
-                      <span className="block text-gray-700 text-[14px] mb-1">Account Holder Name</span>
-                      <input
-                        type="text"
-                        placeholder="Account Holder Name"
-                        value={payment.account_holder_name}
-                        onChange={(e) => {
-                          const fullName = e.target.value;
-                          const parts = fullName.trim().split(" ");
-                          setPayment({ ...payment, account_holder_name: fullName, firstName: parts[0] || "", lastName: parts.slice(1).join(" ") });
-                        }}
-                        cla
-                        className="w-full bg-white border border-gray-200 rounded-[6px] px-4 py-2"
-                      />
-                    </label>
-                    <label className="block">
-                      <span className="block poppins text-gray-700 text-[14px] mb-1">Address Line 1</span>
-                      <input type="text" value={payment.line1}
-                        onChange={(e) => setPayment({ ...payment, line1: e.target.value })}
-                        className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
-                      />
-                    </label>
-                    <div className="md:flex gap-4">
-                      <label className="flex-1">
-                        <span className="block poppins text-gray-700 text-[14px] mb-1">City</span>
-                        <input type="text" value={payment.city}
-                          onChange={(e) => setPayment({ ...payment, city: e.target.value })}
-                          className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
-                        />
-                      </label>
-                      <label className="flex-1">
-                        <span className="block poppins text-gray-700 text-[14px] mb-1">Postal Code</span>
-                        <input type="text" value={payment.postalCode}
-                          onChange={(e) => setPayment({ ...payment, postalCode: e.target.value })}
-                          className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
-                        />
-                      </label>
-                    </div>
-                    <div className="flex gap-3 w-full">
-                      <label className="block w-full">
-                        <span className="block text-gray-700 text-[14px] mb-1">Sort Code</span>
+                    <p className="text-[14px] font-medium text-[#34353B]">
+                      Payment Method: <span className="font-semibold">{isFranchisee ? "GoCardless" : "Access Pay Suite"}</span>
+                    </p>
+
+                    <div className="space-y-4">
+                      <label className="block">
+                        <span className="block text-gray-700 text-[14px] mb-1">Account Holder Name</span>
                         <input
+                          ref={accountHolderNameRef}
                           type="text"
-                          placeholder="Sort Code"
-                          onChange={(e) =>
-                            setPayment({ ...payment, branch_code: e.target.value.replace(/\D/g, "") })
-                          }
-                          className="w-full bg-white border border-gray-200 rounded-[6px] px-4 py-2"
+                          placeholder="Account Holder Name"
+                          value={payment.account_holder_name}
+                          onChange={(e) => {
+                            const fullName = e.target.value;
+                            const parts = fullName.trim().split(" ");
+                            setPayment({ ...payment, account_holder_name: fullName, firstName: parts[0] || "", lastName: parts.slice(1).join(" ") });
+                            const msg = validateField("account_holder_name", fullName);
+                            setErrors(prev => {
+                              const copy = { ...prev };
+                              if (msg) copy.account_holder_name = msg;
+                              else delete copy.account_holder_name;
+                              return copy;
+                            });
+                          }}
+                          className={`w-full bg-white border ${errors.account_holder_name ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
                         />
+                        {errors.account_holder_name && <p className="text-red-500 text-xs mt-1">{errors.account_holder_name}</p>}
                       </label>
-                      <label className="block w-full">
-                        <span className="block text-gray-700 text-[14px] mb-1">Account Number</span>
-                        <input
-                          type="text"
-                          placeholder="Account Number"
-                          onChange={(e) =>
-                            setPayment({ ...payment, account_number: e.target.value.replace(/\D/g, "") })
-                          }
-                          className="w-full bg-white border border-gray-200 rounded-[6px] px-4 py-2"
-                        />
-                      </label>
+
+                      {!isFranchisee && (
+                        <>
+                          <label className="block">
+                            <span className="block poppins text-gray-700 text-[14px] mb-1">Address Line 1</span>
+                            <input
+                              ref={line1Ref}
+                              type="text"
+                              value={payment.line1}
+                              onChange={(e) => handlePaymentChange("line1", e.target.value)}
+                              className={`w-full bg-white border ${errors.line1 ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
+                            />
+                            {errors.line1 && <p className="text-red-500 text-xs mt-1">{errors.line1}</p>}
+                          </label>
+
+                          <div className="md:flex gap-4">
+                            <label className="flex-1">
+                              <span className="block poppins text-gray-700 text-[14px] mb-1">City</span>
+                              <input
+                                ref={cityRef}
+                                type="text"
+                                value={payment.city}
+                                onChange={(e) => handlePaymentChange("city", e.target.value)}
+                                className={`w-full bg-white border ${errors.city ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
+                              />
+                              {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
+                            </label>
+                            <label className="flex-1">
+                              <span className="block poppins text-gray-700 text-[14px] mb-1">Postal Code</span>
+                              <input
+                                ref={postalCodeRef}
+                                type="text"
+                                value={payment.postalCode}
+                                onChange={(e) => handlePaymentChange("postalCode", e.target.value)}
+                                className={`w-full bg-white border ${errors.postalCode ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
+                              />
+                              {errors.postalCode && <p className="text-red-500 text-xs mt-1">{errors.postalCode}</p>}
+                            </label>
+                          </div>
+                        </>
+                      )}
+
+                      <div className="flex gap-3 w-full">
+                        <label className="block w-full">
+                          <span className="block text-gray-700 text-[14px] mb-1">Sort Code</span>
+                          <input
+                            ref={branchCodeRef}
+                            type="text"
+                            placeholder="Sort Code"
+                            value={payment.branch_code}
+                            onChange={(e) => handlePaymentChange("branch_code", e.target.value.replace(/\D/g, "").slice(0, 6))}
+                            className={`w-full bg-white border ${errors.branch_code ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
+                          />
+                          {errors.branch_code && <p className="text-red-500 text-xs mt-1">{errors.branch_code}</p>}
+                        </label>
+                        <label className="block w-full">
+                          <span className="block text-gray-700 text-[14px] mb-1">Account Number</span>
+                          <input
+                            ref={accountNumberRef}
+                            type="text"
+                            placeholder="Account Number"
+                            value={payment.account_number}
+                            onChange={(e) => handlePaymentChange("account_number", e.target.value.replace(/\D/g, "").slice(0, 8))}
+                            className={`w-full bg-white border ${errors.account_number ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
+                          />
+                          {errors.account_number && <p className="text-red-500 text-xs mt-1">{errors.account_number}</p>}
+                        </label>
+                      </div>
                     </div>
 
                     <label className="flex gap-2 text-sm">
@@ -867,7 +1046,7 @@ const HistoryOfPayments = ({ stateData }) => {
                         Back
                       </button>
                       <button
-                        onClick={() => setStep(2)}
+                        onClick={handleContinueToStep2}
                         className="bg-[#042C89] text-white px-6 py-2 rounded-md"
                       >
                         Continue
@@ -879,72 +1058,116 @@ const HistoryOfPayments = ({ stateData }) => {
                 {/* ── Step 2: Checkout (Stripe) ── */}
                 {step === 2 && (
                   <div className="max-w-xl mx-auto space-y-4">
-                    <h2 className="text-xl font-semibold">Checkout</h2>
+                    <h2 className="text-2xl font-semibold poppins pb-4">Checkout</h2>
+                    <p className="text-gray-600 mb-4 poppins text-[14px]">
+                      Fill out your card details below to pay for the Starter Pack
+                      {pricingBreakdown?.numberOfLessonsProRated > 0 && " and Pro-Rata lessons"}
+                      {" "}via Stripe. This payment goes directly to Head Office.
+                    </p>
+
+                    {/* Stripe destination badge */}
+                    <div className="mb-6 bg-green-50 border border-green-200 rounded-xl px-4 py-2 text-xs text-green-800 font-medium">
+                      💳 Stripe → Head Office &nbsp;·&nbsp; Amount: <strong>£{pricingBreakdown.totalAmountToday?.toFixed(2)}</strong>
+                      {IS_SANDBOX && <span className="ml-2 text-orange-600">🧪 Sandbox</span>}
+                    </div>
 
                     <label className="block">
-                      <span className="block text-gray-700 text-[14px] mb-1">Name on card</span>
+                      <span className="block text-gray-700 text-[14px] font-medium mb-1">Name on card<span className="text-red-500 ml-0.5">*</span></span>
                       <input
-                        placeholder="Name on card"
+                        ref={nameOnCardRef}
+                        placeholder="Enter name on card"
                         value={nameOnCard}
                         onChange={(e) => handleCheckoutChange("nameOnCard", e.target.value)}
-                        className="w-full bg-white border border-gray-200 rounded-[6px] px-4 py-2"
+                        className={`w-full bg-white border ${errors.nameOnCard ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
                       />
                       {errors.nameOnCard && (
                         <p className="text-red-500 text-xs mt-1">{errors.nameOnCard}</p>
                       )}
                     </label>
 
-                    {/* ✅ FIX 6: typo "Card numbser" → "Card number" */}
                     <label className="block">
-                      <span className="block text-gray-700 text-[14px] mb-1">Card number</span>
+                      <span className="block text-gray-700 text-[14px] font-medium mb-1">Card number<span className="text-red-500 ml-0.5">*</span></span>
                       <input
-                        placeholder="Card number"
+                        ref={cardNumberRef}
+                        placeholder="1234 1234 1234 1234"
                         value={cardNumber}
                         onChange={(e) => handleCheckoutChange("cardNumber", e.target.value)}
-                        className="w-full bg-white border border-gray-200 rounded-[6px] px-4 py-2"
+                        className={`w-full bg-white border ${errors.cardNumber ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
                       />
                       {errors.cardNumber && (
                         <p className="text-red-500 text-xs mt-1">{errors.cardNumber}</p>
                       )}
                     </label>
 
-                    <div className="flex gap-3 w-full">
-                      <label className="block w-full">
-                        <span className="block text-gray-700 text-[14px] mb-1">MM/YY</span>
+                    <div className="flex gap-4 w-full">
+                      <label className="block flex-1">
+                        <span className="block text-gray-700 text-[14px] font-medium mb-1">Expiration date<span className="text-red-500 ml-0.5">*</span></span>
                         <input
+                          ref={expiryDateRef}
                           placeholder="MM/YY"
                           value={expiryDate}
                           onChange={(e) => handleCheckoutChange("expiryDate", e.target.value)}
-                          className="w-full bg-white border border-gray-200 rounded-[6px] px-4 py-2"
+                          className={`w-full bg-white border ${errors.expiryDate ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
                         />
                         {errors.expiryDate && (
                           <p className="text-red-500 text-xs mt-1">{errors.expiryDate}</p>
                         )}
                       </label>
-                      <label className="block w-full">
-                        <span className="block text-gray-700 text-[14px] mb-1">CVC</span>
+                      <label className="block flex-1">
+                        <span className="block text-gray-700 text-[14px] font-medium mb-1">CVC<span className="text-red-500 ml-0.5">*</span></span>
                         <input
+                          ref={cvcRef}
                           placeholder="CVC"
                           value={cvc}
                           onChange={(e) => handleCheckoutChange("cvc", e.target.value)}
-                          className="w-full bg-white border border-gray-200 rounded-[6px] px-4 py-2"
+                          className={`w-full bg-white border ${errors.cvc ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
                         />
                         {errors.cvc && (
                           <p className="text-red-500 text-xs mt-1">{errors.cvc}</p>
                         )}
                       </label>
-
-                    </div>
-                    <div className="flex-1">
-                      <label className="block text-gray-700 poppins text-[14px] font-medium mb-1">Postal Code<span className="text-red-500 ml-0.5">*</span></label>
-                      <input type="text" value={zipCode} onChange={(e) => handleCheckoutChange("zipCode", e.target.value)}
-                        placeholder="Enter Postal Code" className="w-full bg-white border border-gray-200 rounded-[6px] px-4 py-2"
-                      />
-                      {errors.zipCode && <span className="text-red-500 text-[12px] mt-1 block">{errors.zipCode}</span>}
                     </div>
 
-                    <p className="text-lg font-semibold">
-                      Total: £{pricingBreakdown?.totalAmountToday?.toFixed(2)}
+                    <div className="flex gap-4 w-full">
+                      <div className="flex-1">
+                        <label className="block text-gray-700 text-[14px] font-medium mb-1">Country or region<span className="text-red-500 ml-0.5">*</span></label>
+                        <Select
+                          options={countryOptions}
+                          value={countryOptions.find(opt => opt.value === checkoutCountry)}
+                          onChange={(selectedOption) => handleCheckoutChange("checkoutCountry", selectedOption?.value)}
+                          className="mt-1"
+                          classNamePrefix="react-select"
+                          styles={{
+                            control: (base) => ({
+                              ...base,
+                              borderColor: errors.country ? "#ef4444" : "#e5e7eb",
+                              borderRadius: "6px",
+                              padding: "2px",
+                              boxShadow: "none",
+                              "&:hover": {
+                                borderColor: errors.country ? "#ef4444" : "#3b82f6"
+                              }
+                            })
+                          }}
+                        />
+                        {errors.country && <span className="text-red-500 text-xs mt-1 block">{errors.country}</span>}
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-gray-700 text-[14px] font-medium mb-1">Postal Code<span className="text-red-500 ml-0.5">*</span></label>
+                        <input
+                          ref={zipCodeRef}
+                          type="text"
+                          value={zipCode}
+                          onChange={(e) => handleCheckoutChange("zipCode", e.target.value)}
+                          placeholder="Enter Postal Code"
+                          className={`w-full bg-white border ${errors.zipCode ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
+                        />
+                        {errors.zipCode && <span className="text-red-500 text-xs mt-1 block">{errors.zipCode}</span>}
+                      </div>
+                    </div>
+
+                    <p className="font-semibold text-[#34353B] poppins text-md">
+                      Total to pay now <span className="float-right poppins text-blue-900" style={{ fontSize: "22px" }}>£{pricingBreakdown?.totalAmountToday?.toFixed(2)}</span>
                     </p>
 
                     <div className="flex justify-between">

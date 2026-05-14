@@ -646,12 +646,12 @@ const ParentProfile = (fetchedData) => {
               }}>
 
                 <p className="text-[20px] text-black font-bold relative z-10">Account Status</p>
-                <p className="text-sm text-black relative capitalize z-10"> {fetchedData?.leadData?.bookings?.[0]?.status || fetchedData?.leadData?.status || "N/A"}</p>
+                <p className="text-sm text-black relative capitalize z-10"> {formData?.bookings?.[0]?.status || formData?.status || "N/A"}</p>
               </div>
               <div className="border-b border-[#495362] pb-3 flex items-center gap-5">
                 <div><img src="/members/user2.png" alt="" /></div>
                 <div>  <h3 className="text-lg font-semibold">Assigned Agent</h3>
-                  <p className="text-gray-300 text-sm">{fetchedData?.leadData?.assignedAgent?.firstName} {fetchedData?.leadData?.assignedAgent?.lastName}</p></div>
+                  <p className="text-gray-300 text-sm">{formData?.assignedAgent?.firstName} {formData?.assignedAgent?.lastName}</p></div>
               </div>
 
               <div className="border-b border-[#495362] pb-3">

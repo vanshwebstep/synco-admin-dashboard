@@ -752,4 +752,4 @@ const MembersList = () => {
     )
 }
 
-export default MembersList
+export default MembersList;

@@ -84,7 +84,8 @@ const StudentProfile = ({ profile }) => {
   const firstPayment = Array.isArray(profile?.payments)
     ? profile.payments[0]
     : profile?.payments;
-  const ID = profile?.bookedId || firstPayment?.pan;
+  const ID = profile?.bookingId || firstPayment?.pan;
+  console.log('profile', profile)
   const PAYMENT_TYPES = {
     ACCESS_PAY_SUITE: "accesspaysuite",
     GOCARDLESS: "gocardless",
@@ -1574,13 +1575,11 @@ const StudentProfile = ({ profile }) => {
               <div className="flex gap-4">
                 <button
                   onClick={() => {
-                    if (bookingId) {
-                      sendBirthdayMail(bookingId);
+                    const parentEmails = profile?.parents?.map(p => p.parentEmail).filter(Boolean) || [];
+                    if (parentEmails.length > 0) {
+                      openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
                     } else {
-                      showWarning(
-                        "No Students Selected",
-                        "Please select at least one Lead before sending an email."
-                      );
+                      showWarning("No Email Found", "No parent email available to send email.");
                     }
                   }}
                   className="flex-1 border border-[#717073] rounded-xl py-3 text-[18px] flex items-center justify-center gap-2 text-[#717073] font-medium hover:shadow-md"
@@ -1588,7 +1587,30 @@ const StudentProfile = ({ profile }) => {
                   Send Email
                 </button>
 
-                <button className="flex-1 border border-[#717073] rounded-xl py-3 text-[18px] flex items-center justify-center gap-2 text-[#717073] font-medium hover:shadow-md">
+                <button
+                  onClick={() => {
+                    const formattedParents = profile?.parents
+                      ?.filter(p => p.parentPhoneNumber)
+                      .map(p => ({
+                        name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
+                        phone: p.parentPhoneNumber
+                      })) || [];
+
+                    if (formattedParents.length > 0) {
+                      openTextPopup(
+                        formattedParents,
+                        "/api/admin/send-manual-text",
+                        { token, showError, showSuccess }
+                      );
+                    } else {
+                      showWarning(
+                        "No Phone Numbers",
+                        "No parent phone numbers available to send text."
+                      );
+                    }
+                  }}
+                  className="flex-1 border border-[#717073] rounded-xl py-3 text-[18px] flex items-center justify-center gap-2 text-[#717073] font-medium hover:shadow-md"
+                >
                   Send Text
                 </button>
               </div>
@@ -1739,10 +1761,11 @@ const StudentProfile = ({ profile }) => {
                 <div className="flex gap-7">
                   <button
                     onClick={() => {
-                      if (bookingId) {
-                        sendOnetoOneMail(bookingId);
+                      const parentEmails = profile?.parents?.map(p => p.parentEmail).filter(Boolean) || [];
+                      if (parentEmails.length > 0) {
+                        openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
                       } else {
-                        showWarning("Booking ID not found. Cannot send email.");
+                        showWarning("No Email Found", "No parent email available to send email.");
                       }
                     }}
                     className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 text-[#717073] font-medium hover:shadow-md transition-shadow duration-300"
@@ -1751,6 +1774,27 @@ const StudentProfile = ({ profile }) => {
                   </button>
 
                   <button
+                    onClick={() => {
+                      const formattedParents = profile?.parents
+                        ?.filter(p => p.parentPhoneNumber)
+                        .map(p => ({
+                          name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
+                          phone: p.parentPhoneNumber
+                        })) || [];
+
+                      if (formattedParents.length > 0) {
+                        openTextPopup(
+                          formattedParents,
+                          "/api/admin/send-manual-text",
+                          { token, showError, showSuccess }
+                        );
+                      } else {
+                        showWarning(
+                          "No Phone Numbers",
+                          "No parent phone numbers available to send text."
+                        );
+                      }
+                    }}
                     className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium"
                   >
                     Send Text
@@ -1892,11 +1936,11 @@ const StudentProfile = ({ profile }) => {
                     <div className="flex gap-7">
                       <button
                         onClick={() => {
-                          if (bookingId) {
-                            const parentEmails = parents?.map(p => p.parentEmail).filter(Boolean) || [];
+                          const parentEmails = profile?.parents?.map(p => p.parentEmail).filter(Boolean) || [];
+                          if (parentEmails.length > 0) {
                             openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
                           } else {
-                            showWarning("No Booking ID", "No booking ID found to send email.");
+                            showWarning("No Email Found", "No parent email available to send email.");
                           }
                         }}
                         className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 text-[#717073] font-medium hover:shadow-md transition-shadow duration-300"
@@ -1906,10 +1950,24 @@ const StudentProfile = ({ profile }) => {
 
                       <button
                         onClick={() => {
-                          if (bookingId) {
-                            sendText();
+                          const formattedParents = profile?.parents
+                            ?.filter(p => p.parentPhoneNumber)
+                            .map(p => ({
+                              name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
+                              phone: p.parentPhoneNumber
+                            })) || [];
+
+                          if (formattedParents.length > 0) {
+                            openTextPopup(
+                              formattedParents,
+                              "/api/admin/send-manual-text",
+                              { token, showError, showSuccess }
+                            );
                           } else {
-                            showWarning("No Booking ID", "No booking ID found to send email.");
+                            showWarning(
+                              "No Phone Numbers",
+                              "No parent phone numbers available to send text."
+                            );
                           }
                         }}
                         className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium"
@@ -2030,7 +2088,7 @@ const StudentProfile = ({ profile }) => {
                         <div className="text-[20px] font-bold text-[#1F2937]">Account Status</div>
                         <div className="text-[16px] font-semibold text-[#1F2937]">Trials</div>
                       </div>
-                      <div className="bg-[#343A40] flex items-center gap-2  text-white text-[14px] px-3 py-2 rounded-xl">
+                      <div className="w-max bg-[#343A40] flex items-center gap-2  text-white text-[14px] px-3 py-2 rounded-xl">
 
                         <div className="flex items-center gap-2">
                           {status === 'pending' && (
@@ -2400,7 +2458,27 @@ const StudentProfile = ({ profile }) => {
                         </button>
                         <button
                           disabled={textloading}
-                          onClick={() => sendText([bookingId])}
+                          onClick={() => {
+                            const formattedParents = parents
+                              ?.filter(p => p.parentPhoneNumber)
+                              .map(p => ({
+                                name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
+                                phone: p.parentPhoneNumber
+                              })) || [];
+
+                            if (formattedParents.length > 0) {
+                              openTextPopup(
+                                formattedParents,
+                                "/api/admin/send-manual-text",
+                                { token, showError, showSuccess }
+                              );
+                            } else {
+                              showWarning(
+                                "No Phone Numbers",
+                                "Selected parents do not have valid phone numbers."
+                              );
+                            }
+                          }}
                           className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium"
                         >
                           <img src="/images/icons/sendText.png" alt="" />

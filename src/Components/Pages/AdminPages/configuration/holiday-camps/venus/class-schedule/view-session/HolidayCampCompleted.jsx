@@ -19,6 +19,8 @@ const HolidayCampCompleted = ({ item, sessionData }) => {
     const sessionDate = location.state?.sessionDate;
 
     const token = localStorage.getItem("adminToken");
+
+    console.log('data', data)
     const statusIs = location.state?.statusIs;
     const fetchData = useCallback(async () => {
         if (!token) return;
@@ -215,12 +217,12 @@ const HolidayCampCompleted = ({ item, sessionData }) => {
                             <div className="text-sm p-6 text-gray-700 space-y-3 text-left">
                                 <p>
                                     <span className="font-semibold">Venue</span>
-                                    <br /> {data?.venue?.name || "—"}
+                                    <br /> {data?.holidayVenue?.name || "—"}
                                 </p>
 
                                 <p>
                                     <span className="font-semibold">Class</span>
-                                    <br /> {data?.classSchedule?.className || "—"}
+                                    <br /> {data?.holidayClassSchedule?.className || "—"}
                                 </p>
 
                                 <p>
@@ -237,8 +239,8 @@ const HolidayCampCompleted = ({ item, sessionData }) => {
 
                                 <p>
                                     <span className="font-semibold">Time</span>
-                                    <br /> {(data?.classSchedule?.startTime && data?.classSchedule?.endTime)
-                                        ? `${data.classSchedule?.startTime} – ${data.classSchedule?.endTime}`
+                                    <br /> {(data?.holidayClassSchedule?.startTime && data?.holidayClassSchedule?.endTime)
+                                        ? `${data.holidayClassSchedule?.startTime} – ${data.holidayClassSchedule?.endTime}`
                                         : "—"}
                                 </p>
                             </div>

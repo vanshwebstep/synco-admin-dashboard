@@ -184,6 +184,12 @@ const StudentProfile = () => {
     return local.toISOString().split("T")[0]; // yyyy-mm-dd, stays same as selected
   };
 
+  const safeDate = (date) => {
+    if (!date) return null;
+    const d = new Date(date);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
   // --- Add Student ---
   const handleAddStudent = () => {
     if (!newStudent.studentFirstName && !newStudent.studentLastName) {
@@ -359,7 +365,7 @@ const StudentProfile = () => {
               <label className="block text-[16px] font-semibold">Date of birth</label>
               <DatePicker
                 withPortal
-                selected={student.dateOfBirth}
+                selected={safeDate(student.dateOfBirth)}
                 onChange={(date) => handleDOBChange(index, date)}
                 className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                 showYearDropdown
@@ -463,7 +469,7 @@ const StudentProfile = () => {
                 <label className="block text-[15px] mb-1 font-semibold">Date of birth</label>
                 <DatePicker
                   withPortal
-                  selected={newStudent.dateOfBirth}
+                  selected={safeDate(newStudent.dateOfBirth)}
                   onChange={(date) => handleDOBChange(null, date, true)} // index is null, isModal = true
                   className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-3 text-base"
                   showYearDropdown

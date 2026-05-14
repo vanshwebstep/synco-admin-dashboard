@@ -78,6 +78,8 @@ const List = () => {
             // Add other fields if needed
         },
     ]);
+
+    console.log('students',students)
     const [activePopup, setActivePopup] = useState(null);
     const togglePopup = (id) => {
         setActivePopup((prev) => (prev === id ? null : id));

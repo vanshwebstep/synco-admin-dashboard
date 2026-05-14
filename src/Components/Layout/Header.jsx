@@ -8,6 +8,7 @@ import { useAccountsInfo } from '../Pages/AdminPages/contexts/AccountsInfoContex
 import { showConfirm } from '../../utils/swalHelper';
 import { useGlobalSearch } from '../Pages/AdminPages/contexts/GlobalSearchContext';
 import { verifyTokenAndSyncState } from '../verifyToken';
+import GlobalSearch from '../Pages/AdminPages/Common/GlobalSearch';
 
 const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpen }) => {
   const isFetchingRef = useRef(false);
@@ -479,17 +480,8 @@ const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpe
         <div className="hidden relative lg:flex flex-col sm:flex-row items-start sm:items-center md:gap-10 sm:gap-6 w-full lg:w-auto">
 
           {/* Search Bar */}
-          <div className="relative w-full sm:w-[280px] lg:w-[200px] xl:w-[250px] 2xl:w-[400px]">
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-3 pl-10 border border-[#E2E1E5] rounded-lg bg-white text-[16px] focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Search"
-            />
-            <img src="/images/icons/search.png" className="absolute right-3 top-1/2 left-2 max-w-[10px] transform -translate-y-1/2 text-black" alt="" />
-
-          </div>
+          {/* Search Bar */}
+          <GlobalSearch />
           {hasPermission && (
 
             <div
@@ -668,14 +660,7 @@ const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpe
 
       {/* SEARCH BAR: Only for mobile (below header) */}
       <div className="block lg:hidden px-4 sm:px-6 py-3 bg-gray-50 border-b">
-        <div className="relative w-full">
-          <input
-            type="search"
-            className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Search"
-          />
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
-        </div>
+        <GlobalSearch />
       </div>
 
     </>

@@ -81,19 +81,99 @@ const List = () => {
   const [locationSuggestions, setLocationSuggestions] = useState([]);
   const [addressSuggestions, setAddressSuggestions] = useState([]);
 
-  // 🔹 Universal function to fetch suggestions from OpenStreetMap
-  // const fetchSuggestions = async (query, setList) => {
-  //   if (!query || query.length < 2) return setList([]);
-  //   try {
-  //     const res = await fetch(
-  //       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`
-  //     );
-  //     const data = await res.json();
-  //     setList(data);
-  //   } catch (err) {
-  //     console.error("Suggestion fetch failed:", err);
-  //   }
-  // };
+  const [errors, setErrors] = useState({});
+
+  const validateForm = () => {
+    let newErrors = {};
+
+    if (!locationValue) newErrors.locationValue = "Location is required";
+    if (!address) newErrors.address = "Address is required";
+    if (!selectedDate) newErrors.selectedDate = "Date is required";
+    if (!time) newErrors.time = "Time is required";
+    if (!selectedCoach) newErrors.selectedCoach = "Coach is required";
+    if (!selectedPackage) newErrors.selectedPackage = "Package is required";
+    if (!numberOfStudents || numberOfStudents < 1) newErrors.numberOfStudents = "Number of students is required";
+
+    students.forEach((student, index) => {
+      if (!student.studentFirstName) newErrors[`student_${index}_firstName`] = "First name is required";
+      if (!student.studentLastName) newErrors[`student_${index}_lastName`] = "Last name is required";
+      if (!student.dateOfBirth) newErrors[`student_${index}_dob`] = "Date of Birth is required";
+      if (!student.gender) newErrors[`student_${index}_gender`] = "Gender is required";
+    });
+
+    parents.forEach((parent, index) => {
+      if (!parent.parentFirstName) newErrors[`parent_${index}_firstName`] = "First name is required";
+      if (!parent.parentLastName) newErrors[`parent_${index}_lastName`] = "Last name is required";
+      if (!parent.parentEmail) {
+        newErrors[`parent_${index}_email`] = "Email is required";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parent.parentEmail.trim())) {
+        newErrors[`parent_${index}_email`] = "Valid email is required";
+      }
+      if (!parent.phoneNumber) newErrors[`parent_${index}_phone`] = "Phone number is required";
+      if (!parent.relationChild) newErrors[`parent_${index}_relation`] = "Relation is required";
+    });
+
+    if (!emergency.emergencyFirstName) newErrors.emergencyFirstName = "First name is required";
+    if (!emergency.emergencyLastName) newErrors.emergencyLastName = "Last name is required";
+    if (!emergency.emergencyPhoneNumber) newErrors.emergencyPhoneNumber = "Phone number is required";
+    if (!emergency.emergencyRelation) newErrors.emergencyRelation = "Relation is required";
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      const firstErrorKey = Object.keys(newErrors)[0];
+      const errorElement = document.getElementById(`error-${firstErrorKey}`);
+      if (errorElement) {
+        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const input = errorElement.querySelector('input, select, textarea') || errorElement;
+        if (input && typeof input.focus === 'function') {
+          input.focus();
+        }
+      }
+      return false;
+    }
+
+    return true;
+  };
+
+  const validatePaymentForm = () => {
+    let newErrors = {};
+
+    if (!payment.firstName) newErrors.paymentFirstName = "First name is required";
+    if (!payment.lastName) newErrors.paymentLastName = "Last name is required";
+    if (!payment.email) {
+      newErrors.paymentEmail = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payment.email.trim())) {
+      newErrors.paymentEmail = "Valid email is required";
+    }
+    if (!payment.billingAddress) newErrors.paymentBillingAddress = "Billing address is required";
+    if (!payment.cardNumber) newErrors.paymentCardNumber = "Card number is required";
+    if (!payment.expiryDate) newErrors.paymentExpiryDate = "Expiry date is required";
+    if (!payment.securityCode) newErrors.paymentSecurityCode = "Security code is required";
+
+    setErrors(prev => {
+        const cleaned = { ...prev };
+        ['paymentFirstName', 'paymentLastName', 'paymentEmail', 'paymentBillingAddress', 'paymentCardNumber', 'paymentExpiryDate', 'paymentSecurityCode'].forEach(k => delete cleaned[k]);
+        return { ...cleaned, ...newErrors };
+    });
+
+    if (Object.keys(newErrors).length > 0) {
+      const firstErrorKey = Object.keys(newErrors)[0];
+      const errorElement = document.getElementById(`error-${firstErrorKey}`);
+      if (errorElement) {
+        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const input = errorElement.querySelector('input, select, textarea') || errorElement;
+        if (input && typeof input.focus === 'function') {
+           input.focus();
+        }
+      }
+      return false;
+    }
+
+    return true;
+  };
+
+
   const handleCountryChange2 = (countryData) => {
     setCountry2(countryData.countryCode);
     setDialCode2("+" + countryData.dialCode);
@@ -335,9 +415,7 @@ const List = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedPlans, setSelectedPlans] = useState([]);
   const [congestionNote, setCongestionNote] = useState(null);
-  // const [selectedDate, setSelectedDate] = useState(null);
-  const [membershipPlan, setMembershipPlan] = useState(null);
-  const today = new Date();
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [fromDate, setFromDate] = useState(new Date(currentDate.getFullYear(), currentDate.getMonth(), 11));
   const [toDate, setToDate] = useState(null);
@@ -444,20 +522,6 @@ const List = () => {
     };
   }, [showModal, clickedIcon, setShowModal]);
 
-
-  const allTermRanges = Array.isArray(congestionNote)
-    ? congestionNote.flatMap(group =>
-      group.terms.map(term => ({
-        start: new Date(term.startDate),
-        end: new Date(term.endDate),
-        exclusions: (Array.isArray(term.exclusionDates)
-          ? term.exclusionDates
-          : JSON.parse(term.exclusionDates || '[]')
-        ).map(date => new Date(date)),
-      }))
-    )
-    : [];
-  // or `null`, `undefined`, or any fallback value
 
 
 
@@ -788,31 +852,7 @@ const List = () => {
   console.log('selectedPackage', selectedPackage)
 
 
-  function htmlToHtmlArray(html) {
-    if (!html) return [];
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = html;
 
-    // 1. Try to find explicit list items and keep their inner HTML
-    const liItems = Array.from(tempDiv.querySelectorAll("li"))
-      .map(li => li.innerHTML.trim())
-      .filter(h => h !== "");
-    if (liItems.length > 0) return liItems;
-
-    // 2. Try to split by common block elements
-    const blockItems = Array.from(tempDiv.querySelectorAll("p, div"))
-      .map(p => p.innerHTML.trim())
-      .filter(h => h !== "");
-    if (blockItems.length > 0) return blockItems;
-
-    // 3. Fallback: split by newlines if it's just raw text
-    const plainText = tempDiv.innerHTML.trim();
-    if (plainText) {
-      return plainText.split(/\n+/).map(t => t.trim()).filter(t => t !== "");
-    }
-
-    return [];
-  }
 
   // Extract one-to-one key info items
   const oneToOneKeyInfoRaw = Array.isArray(keyInfoData)
@@ -1184,7 +1224,7 @@ const List = () => {
             <h2 className="text-[24px] font-semibold">General Information</h2>
             <div className="space-y-6">
               {/* 🔸 Location Input */}
-              <div className="">
+              <div className="" id="error-locationValue">
                 <label className="text-base font-semibold">Location</label>
                 <div className="relative mt-2">
                   <input
@@ -1194,9 +1234,10 @@ const List = () => {
                     onChange={(e) => {
                       const val = e.target.value;
                       setLocationValue(val);
+                      if (errors.locationValue) setErrors(prev => ({ ...prev, locationValue: null }));
                       // fetchSuggestions(val, setLocationSuggestions);
                     }}
-                    className="w-full border border-gray-300 rounded-xl px-3 text-[16px] py-3 pl-9 focus:outline-none"
+                    className={`w-full border ${errors.locationValue ? 'border-red-500' : 'border-gray-300'} rounded-xl px-3 text-[16px] py-3 pl-9 focus:outline-none`}
                   />
                   <FiSearch className="absolute left-3 top-4 text-[20px]" />
 
@@ -1218,6 +1259,7 @@ const List = () => {
                     </ul>
                   )}
                 </div>
+                {errors.locationValue && <p className="text-red-500 text-sm mt-1">{errors.locationValue}</p>}
               </div>
 
               {/* 🔸 Address Input */}
@@ -1255,22 +1297,24 @@ const List = () => {
                     </ul>
                   )}
                 </div>
+                {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
               </div>
             </div>
-            <div className="w-full">
+            <div className="w-full" id="error-selectedDate">
               <label className="block text-[16px] font-semibold">Date</label>
               <DatePicker
                 withPortal
                 selected={selectedDate}
-                onChange={(date) => setSelectedDate(date)}
-                className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                onChange={(date) => { setSelectedDate(date); if (errors.selectedDate) setErrors(prev => ({ ...prev, selectedDate: null })); }}
+                className={`w-full mt-2 border ${errors.selectedDate ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                 showYearDropdown
                 scrollableYearDropdown
                 dateFormat="dd/MM/yyyy"
                 placeholderText="Select date"
               />
+              {errors.selectedDate && <p className="text-red-500 text-sm mt-1">{errors.selectedDate}</p>}
             </div>
-            <div className="">
+            <div className="" id="error-time">
               <label htmlFor="" className="text-base font-semibold">Time </label>
               <div className="relative mt-2 ">
                 <DatePicker
@@ -1283,12 +1327,13 @@ const List = () => {
                   timeCaption="Time"
                   dateFormat="h:mm aa"
                   placeholderText="Select time"
-                  className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                  className={`w-full mt-2 border ${errors.time ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                 />
 
               </div>
+              {errors.time && <p className="text-red-500 text-sm mt-1">{errors.time}</p>}
             </div>
-            <div className="mb-5">
+            <div className="mb-5" id="error-numberOfStudents">
               <label htmlFor="" className="text-base font-semibold">Students</label>
               <div className="relative mt-2 ">
 
@@ -1299,14 +1344,16 @@ const List = () => {
                     const val = Number(e.target.value);
                     if ([1, 2, 3, 4].includes(val) || e.target.value === "") {
                       setNumberOfStudents(e.target.value);
+                      if (errors.numberOfStudents) setErrors(prev => ({ ...prev, numberOfStudents: null }));
                     }
                     // Do nothing if invalid
                   }}
                   placeholder="Choose number of students"
-                  className="w-full border border-gray-300 rounded-xl px-3 text-[16px] py-3 focus:outline-none"
+                  className={`w-full border ${errors.numberOfStudents ? 'border-red-500' : 'border-gray-300'} rounded-xl px-3 text-[16px] py-3 focus:outline-none`}
                 />
 
               </div>
+              {errors.numberOfStudents && <p className="text-red-500 text-sm mt-1">{errors.numberOfStudents}</p>}
             </div>
             <div className="">
               <label htmlFor="" className="text-base font-semibold">Areas To Work On </label>
@@ -1321,31 +1368,39 @@ const List = () => {
               </div>
             </div>
 
-            <div className="w-full">
+            <div className="w-full" id="error-selectedCoach">
               <label className="block text-[16px] font-semibold">Select a Coach </label>
               <Select
                 className="w-full mt-2 text-base"
                 classNamePrefix="react-select"
+                styles={{ control: (base) => ({ ...base, borderColor: errors.selectedCoach ? '#ef4444' : base.borderColor }) }}
                 placeholder="Select a Coach"
                 value={Array.isArray(coachOptions) ? coachOptions.find((opt) => opt.value === selectedCoach) || null : null}
                 onChange={(opt) => {
                   setSelectedCoach(opt?.value || null);
                   setSelectedPackage(null); // reset package if coach changes
+                  if (errors.selectedCoach) setErrors(prev => ({ ...prev, selectedCoach: null }));
                 }}
                 options={coachOptions}
               />
+              {errors.selectedCoach && <p className="text-red-500 text-sm mt-1">{errors.selectedCoach}</p>}
             </div>
-            <div className="w-full">
+            <div className="w-full" id="error-selectedPackage">
               <label className="block text-[16px] font-semibold">Package</label>
               <Select
                 className="w-full mt-2 text-base"
                 classNamePrefix="react-select"
+                styles={{ control: (base) => ({ ...base, borderColor: errors.selectedPackage ? '#ef4444' : base.borderColor }) }}
                 placeholder={selectedCoach ? "Select a Package" : "Select a Coach first"}
                 isDisabled={!selectedCoach}
                 value={filteredPackages.find((opt) => opt.value === selectedPackage) || null}
-                onChange={(opt) => setSelectedPackage(opt?.value || null)}
+                onChange={(opt) => {
+                  setSelectedPackage(opt?.value || null);
+                  if (errors.selectedPackage) setErrors(prev => ({ ...prev, selectedPackage: null }));
+                }}
                 options={filteredPackages}
               />
+              {errors.selectedPackage && <p className="text-red-500 text-sm mt-1">{errors.selectedPackage}</p>}
             </div>
             <div className="w-full">
               <label className="block text-[16px] font-semibold">Apply discount</label>
@@ -1440,41 +1495,48 @@ const List = () => {
 
                   {/* Row 1 */}
                   <div className="flex gap-4">
-                    <div className="w-1/2">
+                    <div className="w-1/2" id={`error-student_${index}_firstName`}>
                       <label className="block text-[16px] font-semibold">First name</label>
                       <input
-                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                        className={`w-full mt-2 border ${errors[`student_${index}_firstName`] ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                         placeholder="Enter first name"
                         value={student.studentFirstName}
-                        onChange={(e) =>
-                          handleInputChange(index, 'studentFirstName', e.target.value)
-                        }
+                        onChange={(e) => {
+                          handleInputChange(index, 'studentFirstName', e.target.value);
+                          if (errors[`student_${index}_firstName`]) setErrors(prev => ({ ...prev, [`student_${index}_firstName`]: null }));
+                        }}
                       />
+                      {errors[`student_${index}_firstName`] && <p className="text-red-500 text-sm mt-1">{errors[`student_${index}_firstName`]}</p>}
                     </div>
-                    <div className="w-1/2">
+                    <div className="w-1/2" id={`error-student_${index}_lastName`}>
                       <label className="block text-[16px] font-semibold">Last name</label>
                       <input
-                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                        className={`w-full mt-2 border ${errors[`student_${index}_lastName`] ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                         placeholder="Enter last name"
                         value={student.studentLastName}
-                        onChange={(e) =>
-                          handleInputChange(index, 'studentLastName', e.target.value)
-                        }
+                        onChange={(e) => {
+                          handleInputChange(index, 'studentLastName', e.target.value);
+                          if (errors[`student_${index}_lastName`]) setErrors(prev => ({ ...prev, [`student_${index}_lastName`]: null }));
+                        }}
                       />
+                      {errors[`student_${index}_lastName`] && <p className="text-red-500 text-sm mt-1">{errors[`student_${index}_lastName`]}</p>}
                     </div>
                   </div>
 
                   {/* Row 2 */}
                   <div className="flex gap-4">
-                    <div className="w-1/2">
+                    <div className="w-1/2" id={`error-student_${index}_dob`}>
                       <label className="block text-[16px] font-semibold">
                         Date of Birth
                       </label>
                       <DatePicker
                         withPortal
                         selected={student.dateOfBirth}
-                        onChange={(date) => handleDOBChange(index, date)}
-                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                        onChange={(date) => {
+                          handleDOBChange(index, date);
+                          if (errors[`student_${index}_dob`]) setErrors(prev => ({ ...prev, [`student_${index}_dob`]: null }));
+                        }}
+                        className={`w-full mt-2 border ${errors[`student_${index}_dob`] ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                         showYearDropdown
                         scrollableYearDropdown
                         yearDropdownItemNumber={100}
@@ -1484,6 +1546,7 @@ const List = () => {
                         placeholderText="Select date of birth"
 
                       />
+                      {errors[`student_${index}_dob`] && <p className="text-red-500 text-sm mt-1">{errors[`student_${index}_dob`]}</p>}
                     </div>
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">Age</label>
@@ -1500,20 +1563,23 @@ const List = () => {
 
                   {/* Row 3 */}
                   <div className="flex gap-4">
-                    <div className="w-1/2">
+                    <div className="w-1/2" id={`error-student_${index}_gender`}>
                       <label className="block text-[16px] font-semibold">Gender</label>
 
                       <Select
                         className="w-full mt-2 text-base"
                         classNamePrefix="react-select"
+                        styles={{ control: (base) => ({ ...base, borderColor: errors[`student_${index}_gender`] ? '#ef4444' : base.borderColor }) }}
                         placeholder="Select gender"
                         value={genderOptions.find((option) => option.value === student.gender) || null}
-                        onChange={(selectedOption) =>
-                          handleInputChange(index, "gender", selectedOption ? selectedOption.value : "")
-                        }
+                        onChange={(selectedOption) => {
+                          handleInputChange(index, "gender", selectedOption ? selectedOption.value : "");
+                          if (errors[`student_${index}_gender`]) setErrors(prev => ({ ...prev, [`student_${index}_gender`]: null }));
+                        }}
 
                         options={genderOptions}
                       />
+                      {errors[`student_${index}_gender`] && <p className="text-red-500 text-sm mt-1">{errors[`student_${index}_gender`]}</p>}
                     </div>
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">
@@ -1575,57 +1641,65 @@ const List = () => {
 
                   {/* Row 1 */}
                   <div className="flex gap-4">
-                    <div className="w-1/2">
+                    <div className="w-1/2" id={`error-parent_${index}_firstName`}>
                       <label className="block text-[16px] font-semibold">First name</label>
                       <input
-                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                        className={`w-full mt-2 border ${errors[`parent_${index}_firstName`] ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                         placeholder="Enter first name"
                         value={parent.parentFirstName}
                         onChange={(e) => {
                           // Allow only alphabets and spaces
                           const value = e.target.value.replace(/[^A-Za-z\s]/g, "");
                           handleParentChange(index, "parentFirstName", value);
+                          if (errors[`parent_${index}_firstName`]) setErrors(prev => ({ ...prev, [`parent_${index}_firstName`]: null }));
                         }}
                         onKeyPress={(e) => {
                           if (!/[A-Za-z\s]/.test(e.key)) e.preventDefault(); // block numbers & special chars
                         }}
                       />
+                      {errors[`parent_${index}_firstName`] && <p className="text-red-500 text-sm mt-1">{errors[`parent_${index}_firstName`]}</p>}
                     </div>
 
-                    <div className="w-1/2">
+                    <div className="w-1/2" id={`error-parent_${index}_lastName`}>
                       <label className="block text-[16px] font-semibold">Last name</label>
                       <input
-                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                        className={`w-full mt-2 border ${errors[`parent_${index}_lastName`] ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                         placeholder="Enter last name"
                         value={parent.parentLastName}
                         onChange={(e) => {
                           // Allow only alphabets and spaces
                           const value = e.target.value.replace(/[^A-Za-z\s]/g, "");
                           handleParentChange(index, "parentLastName", value);
+                          if (errors[`parent_${index}_lastName`]) setErrors(prev => ({ ...prev, [`parent_${index}_lastName`]: null }));
                         }}
                         onKeyPress={(e) => {
                           if (!/[A-Za-z\s]/.test(e.key)) e.preventDefault(); // block numbers & special chars
                         }}
                       />
+                      {errors[`parent_${index}_lastName`] && <p className="text-red-500 text-sm mt-1">{errors[`parent_${index}_lastName`]}</p>}
                     </div>
                   </div>
 
 
                   {/* Row 2 */}
                   <div className="flex gap-4">
-                    <div className="w-1/2">
+                    <div className="w-1/2" id={`error-parent_${index}_email`}>
                       <label className="block text-[16px] font-semibold">Email</label>
                       <input
                         type="email"
-                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                        className={`w-full mt-2 border ${errors[`parent_${index}_email`] ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                         placeholder="Enter email address"
                         value={parent.parentEmail}
-                        onChange={(e) => handleParentChange(index, "parentEmail", e.target.value)}
+                        onChange={(e) => {
+                          handleParentChange(index, "parentEmail", e.target.value);
+                          if (errors[`parent_${index}_email`]) setErrors(prev => ({ ...prev, [`parent_${index}_email`]: null }));
+                        }}
                       />
+                      {errors[`parent_${index}_email`] && <p className="text-red-500 text-sm mt-1">{errors[`parent_${index}_email`]}</p>}
                     </div>
-                    <div className="w-1/2">
+                    <div className="w-1/2" id={`error-parent_${index}_phone`}>
                       <label className="block text-[16px] font-semibold">Phone number</label>
-                      <div className="flex items-center border border-gray-300 rounded-xl px-4 py-3 mt-2">
+                      <div className={`flex items-center border ${errors[`parent_${index}_phone`] ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 mt-2`}>
                         {/* Flag Dropdown */}
                         <PhoneInput
                           country="uk"
@@ -1648,30 +1722,35 @@ const List = () => {
                         <input
                           type="number"
                           value={parent.phoneNumber}
-                          onChange={(e) =>
-                            handleParentChange(index, "phoneNumber", e.target.value)
-                          }
+                          onChange={(e) => {
+                            handleParentChange(index, "phoneNumber", e.target.value);
+                            if (errors[`parent_${index}_phone`]) setErrors(prev => ({ ...prev, [`parent_${index}_phone`]: null }));
+                          }}
                           placeholder="Enter phone number"
                           className='border-none w-full focus:outline-none'
                         />
                       </div>
+                      {errors[`parent_${index}_phone`] && <p className="text-red-500 text-sm mt-1">{errors[`parent_${index}_phone`]}</p>}
                     </div>
                   </div>
 
                   {/* Row 3 */}
                   <div className="flex gap-4">
-                    <div className="w-1/2">
+                    <div className="w-1/2" id={`error-parent_${index}_relation`}>
                       <label className="block text-[16px] font-semibold">Relation to child</label>
                       <Select
                         options={relationOptions}
                         placeholder="Select Relation"
                         className="mt-2"
                         classNamePrefix="react-select"
+                        styles={{ control: (base) => ({ ...base, borderColor: errors[`parent_${index}_relation`] ? '#ef4444' : base.borderColor }) }}
                         value={relationOptions.find((o) => o.value === parent.relationChild)}
-                        onChange={(selected) =>
-                          handleParentChange(index, "relationChild", selected.value)
-                        }
+                        onChange={(selected) => {
+                          handleParentChange(index, "relationChild", selected.value);
+                          if (errors[`parent_${index}_relation`]) setErrors(prev => ({ ...prev, [`parent_${index}_relation`]: null }));
+                        }}
                       />
+                      {errors[`parent_${index}_relation`] && <p className="text-red-500 text-sm mt-1">{errors[`parent_${index}_relation`]}</p>}
                     </div>
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">How did you hear about us?</label>
@@ -1710,40 +1789,44 @@ const List = () => {
               </div>
 
               <div className="flex gap-4">
-                <div className="w-1/2">
+                <div className="w-1/2" id="error-emergencyFirstName">
                   <label className="block text-[16px] font-semibold">First name</label>
                   <input
-                    className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                    className={`w-full mt-2 border ${errors.emergencyFirstName ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                     placeholder="Enter first name"
                     value={emergency.emergencyFirstName}
-                    onChange={e =>
+                    onChange={e => {
                       setEmergency(prev => ({
                         ...prev,
                         emergencyFirstName: e.target.value
-                      }))
-                    }
+                      }));
+                      if (errors.emergencyFirstName) setErrors(prev => ({ ...prev, emergencyFirstName: null }));
+                    }}
                   />
+                  {errors.emergencyFirstName && <p className="text-red-500 text-sm mt-1">{errors.emergencyFirstName}</p>}
                 </div>
-                <div className="w-1/2">
+                <div className="w-1/2" id="error-emergencyLastName">
                   <label className="block text-[16px] font-semibold">Last name</label>
                   <input
-                    className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                    className={`w-full mt-2 border ${errors.emergencyLastName ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                     placeholder="Enter last name"
                     value={emergency.emergencyLastName}
-                    onChange={e =>
+                    onChange={e => {
                       setEmergency(prev => ({
                         ...prev,
                         emergencyLastName: e.target.value
-                      }))
-                    }
+                      }));
+                      if (errors.emergencyLastName) setErrors(prev => ({ ...prev, emergencyLastName: null }));
+                    }}
                   />
+                  {errors.emergencyLastName && <p className="text-red-500 text-sm mt-1">{errors.emergencyLastName}</p>}
                 </div>
               </div>
 
               <div className="flex gap-4">
-                <div className="w-1/2">
+                <div className="w-1/2" id="error-emergencyPhoneNumber">
                   <label className="block text-[16px] font-semibold">Phone number</label>
-                  <div className="flex items-center border border-gray-300 rounded-xl px-4 py-3 mt-2">
+                  <div className={`flex items-center border ${errors.emergencyPhoneNumber ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 mt-2`}>
                     {/* Flag Dropdown */}
                     <PhoneInput
                       country="uk"
@@ -1766,32 +1849,37 @@ const List = () => {
                     <input
                       type="number"
                       value={emergency.emergencyPhoneNumber}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setEmergency((prev) => ({
                           ...prev,
                           emergencyPhoneNumber: e.target.value,
-                        }))
-                      }
+                        }));
+                        if (errors.emergencyPhoneNumber) setErrors(prev => ({ ...prev, emergencyPhoneNumber: null }));
+                      }}
                       className='border-none w-full focus:outline-none' placeholder="Enter phone number"
                     />
 
                   </div>
+                  {errors.emergencyPhoneNumber && <p className="text-red-500 text-sm mt-1">{errors.emergencyPhoneNumber}</p>}
                 </div>
-                <div className="w-1/2">
+                <div className="w-1/2" id="error-emergencyRelation">
                   <label className="block text-[16px] font-semibold">Relation to child</label>
                   <Select
                     options={relationOptions}
                     value={relationOptions.find(option => option.value === emergency.emergencyRelation)}
-                    onChange={selectedOption =>
+                    onChange={selectedOption => {
                       setEmergency(prev => ({
                         ...prev,
                         emergencyRelation: selectedOption?.value || ""
-                      }))
-                    }
+                      }));
+                      if (errors.emergencyRelation) setErrors(prev => ({ ...prev, emergencyRelation: null }));
+                    }}
                     placeholder="Select Relation"
                     className="mt-2"
                     classNamePrefix="react-select"
+                    styles={{ control: (base) => ({ ...base, borderColor: errors.emergencyRelation ? '#ef4444' : base.borderColor }) }}
                   />
+                  {errors.emergencyRelation && <p className="text-red-500 text-sm mt-1">{errors.emergencyRelation}</p>}
                 </div>
               </div>
             </div>
@@ -1852,16 +1940,16 @@ const List = () => {
               </AnimatePresence>
             </motion.div>
 
-           <Comments
-                   adminInfo={adminInfo}
-                   comment={comment}
-                   setComment={setComment}
-                   handleSubmitComment={handleSubmitComment}
-                   loadingComment={loadingComment}
-                   commentsList={commentsList}
-                   currentComments={currentComments}
-                   formatTimeAgo={formatTimeAgo}
-                 />
+            <Comments
+              adminInfo={adminInfo}
+              comment={comment}
+              setComment={setComment}
+              handleSubmitComment={handleSubmitComment}
+              loadingComment={loadingComment}
+              commentsList={commentsList}
+              currentComments={currentComments}
+              formatTimeAgo={formatTimeAgo}
+            />
 
             <div className="flex justify-end gap-4">
               <button
@@ -1875,40 +1963,12 @@ const List = () => {
               <button
                 type="button"
                 onClick={() => {
-                  const parentEmail = parents?.[0]?.parentEmail || "";
-
-                  console.log("parentEmail:", parentEmail);
-
-                  if (!selectedPackage || !selectedDate || !parentEmail) {
-                    let msg = "";
-                    if (!selectedPackage && !selectedDate) msg = "Please select Package and Date";
-                    else if (!selectedPackage) msg = "Please select package";
-                    else if (!parentEmail) msg = "Please enter Parent email";
-                    else if (!selectedDate) msg = "Please select Date";
-
-                    showWarning("Required Fields", msg);
-                    return;
+                  if (validateForm()) {
+                    setShowPopup(true);
                   }
-
-                  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parentEmail.trim());
-                  if (!isValidEmail) {
-                    showWarning("Invalid Email", "Please enter a valid email address");
-
-                    return;
-                  }
-
-                  setShowPopup(true);
                 }}
-                disabled={
-                  isSubmitting ||
-                  !selectedPackage ||
-                  !selectedDate ||
-                  !parents?.[0]?.parentEmail
-                }
-                className={`text-white font-semibold text-[18px] px-6 py-3 rounded-lg ${!isSubmitting &&
-                  selectedPackage &&
-                  selectedDate &&
-                  parents?.[0]?.parentEmail
+                disabled={isSubmitting}
+                className={`text-white font-semibold text-[18px] px-6 py-3 rounded-lg ${!isSubmitting
                   ? "bg-[#237FEA] border border-[#237FEA]"
                   : "bg-gray-400 border-gray-400 cursor-not-allowed"
                   }`}
@@ -1944,49 +2004,63 @@ const List = () => {
                   <div className="space-y-2 px-6 pb-0">
                     <h3 className="font-semibold text-[20px]">Personal Details</h3>
                     <div className="grid grid-cols-2 gap-2">
-                      <div>
+                      <div id="error-paymentFirstName">
                         <label className="block text-[16px] font-semibold">First name</label>
                         <input
-                          className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                          className={`w-full mt-2 border ${errors.paymentFirstName ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                           type="text"
                           value={payment.firstName}
-                          onChange={(e) => setPayment({ ...payment, firstName: e.target.value })}
+                          onChange={(e) => {
+                            setPayment({ ...payment, firstName: e.target.value });
+                            if (errors.paymentFirstName) setErrors(prev => ({ ...prev, paymentFirstName: null }));
+                          }}
                         />
+                        {errors.paymentFirstName && <p className="text-red-500 text-sm mt-1">{errors.paymentFirstName}</p>}
                       </div>
-                      <div>
+                      <div id="error-paymentLastName">
                         <label className="block text-[16px] font-semibold">Last name </label>
                         <input
                           type="text"
-                          className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                          className={`w-full mt-2 border ${errors.paymentLastName ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                           value={payment.lastName}
-                          onChange={(e) => setPayment({ ...payment, lastName: e.target.value })}
+                          onChange={(e) => {
+                            setPayment({ ...payment, lastName: e.target.value });
+                            if (errors.paymentLastName) setErrors(prev => ({ ...prev, paymentLastName: null }));
+                          }}
                         />
+                        {errors.paymentLastName && <p className="text-red-500 text-sm mt-1">{errors.paymentLastName}</p>}
                       </div>
                     </div>
-                    <div>
+                    <div id="error-paymentEmail">
                       <label className="block text-[16px] font-semibold">Email address </label>
                       <input
                         type="email"
-                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                        className={`w-full mt-2 border ${errors.paymentEmail ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                         value={payment.email}
-                        onChange={(e) => setPayment({ ...payment, email: e.target.value })}
+                        onChange={(e) => {
+                          setPayment({ ...payment, email: e.target.value });
+                          if (errors.paymentEmail) setErrors(prev => ({ ...prev, paymentEmail: null }));
+                        }}
                       />
+                      {errors.paymentEmail && <p className="text-red-500 text-sm mt-1">{errors.paymentEmail}</p>}
                     </div>
-                    <div>
+                    <div id="error-paymentBillingAddress">
                       <label className="block text-[16px] font-semibold">Billing Address</label>
                       <input
                         type="text"
                         required={payment.paymentType === "card"}
                         placeholder=""
-                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                        className={`w-full mt-2 border ${errors.paymentBillingAddress ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                         value={payment.billingAddress}
-                        onChange={(e) =>
+                        onChange={(e) => {
                           setPayment({
                             ...payment,
                             billingAddress: e.target.value, // allow full text input
-                          })
-                        }
+                          });
+                          if (errors.paymentBillingAddress) setErrors(prev => ({ ...prev, paymentBillingAddress: null }));
+                        }}
                       />
+                      {errors.paymentBillingAddress && <p className="text-red-500 text-sm mt-1">{errors.paymentBillingAddress}</p>}
                     </div>
 
                     <h3 className="font-semibold text-[20px] pt-2">Bank Details</h3>
@@ -1995,7 +2069,7 @@ const List = () => {
 
                     <div className="mt-5 space-y-4">
                       {/* Card Holder Name */}
-                      <div>
+                      <div id="error-paymentCardNumber">
                         <label className="block text-[16px] font-semibold">Card Number</label>
                         <input
                           type="text"
@@ -2003,17 +2077,19 @@ const List = () => {
                           inputMode="numeric"
                           placeholder="**** **** **** ****"
                           maxLength={19}
-                          className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base tracking-widest"
+                          className={`w-full mt-2 border ${errors.paymentCardNumber ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base tracking-widest`}
                           value={payment.cardNumber}
                           onChange={(e) => {
                             let value = e.target.value.replace(/\D/g, ""); // only digits
                             value = value.replace(/(.{4})/g, "$1 ").trim(); // format as XXXX XXXX XXXX XXXX
                             setPayment({ ...payment, cardNumber: value });
+                            if (errors.paymentCardNumber) setErrors(prev => ({ ...prev, paymentCardNumber: null }));
                           }}
                         />
+                        {errors.paymentCardNumber && <p className="text-red-500 text-sm mt-1">{errors.paymentCardNumber}</p>}
                       </div>
 
-                      <div className="w-full">
+                      <div className="w-full" id="error-paymentExpiryDate">
                         <label className="block text-[16px] font-semibold">Expiry Date</label>
                         <input
                           required={payment.paymentType === "card"}
@@ -2021,7 +2097,7 @@ const List = () => {
                           inputMode="numeric"
                           placeholder="MM/YY"
                           maxLength={5}
-                          className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                          className={`w-full mt-2 border ${errors.paymentExpiryDate ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                           value={payment.expiryDate}
                           onChange={(e) => {
                             let value = e.target.value.replace(/\D/g, ""); // only digits
@@ -2029,12 +2105,14 @@ const List = () => {
                               value = value.slice(0, 2) + "/" + value.slice(2, 4);
                             }
                             setPayment({ ...payment, expiryDate: value });
+                            if (errors.paymentExpiryDate) setErrors(prev => ({ ...prev, paymentExpiryDate: null }));
                           }}
                         />
+                        {errors.paymentExpiryDate && <p className="text-red-500 text-sm mt-1">{errors.paymentExpiryDate}</p>}
                       </div>
 
                       {/* PAN (Card Number) */}
-                      <div className="w-full">
+                      <div className="w-full" id="error-paymentSecurityCode">
                         <label className="block text-[16px] font-semibold">Security Code</label>
                         <input
                           required={payment.paymentType === "card"}
@@ -2042,15 +2120,17 @@ const List = () => {
                           inputMode="numeric"
                           placeholder="123"
                           maxLength={4}
-                          className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                          className={`w-full mt-2 border ${errors.paymentSecurityCode ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                           value={payment.securityCode}
-                          onChange={(e) =>
+                          onChange={(e) => {
                             setPayment({
                               ...payment,
                               securityCode: e.target.value.replace(/\D/g, ""), // only digits
-                            })
-                          }
+                            });
+                            if (errors.paymentSecurityCode) setErrors(prev => ({ ...prev, paymentSecurityCode: null }));
+                          }}
                         />
+                        {errors.paymentSecurityCode && <p className="text-red-500 text-sm mt-1">{errors.paymentSecurityCode}</p>}
                       </div>
 
                       {/* Billing Address */}
@@ -2063,22 +2143,9 @@ const List = () => {
                   <div className="w-full mx-auto flex justify-center" >
                     <button
                       type="button"
-                      disabled={
-                        isSubmitting ||
-                        !payment.expiryDate ||
-                        !payment.securityCode ||
-                        !payment.cardNumber ||
-                        !payment.billingAddress
-                      }
+                      disabled={isSubmitting}
                       onClick={async () => {
-                        if (
-                          !payment.expiryDate ||
-                          !payment.securityCode ||
-                          !payment.cardNumber ||
-                          !payment.billingAddress
-                        ) {
-                          return;
-                        }
+                        if (!validatePaymentForm()) return;
 
                         setIsSubmitting(true);
                         try {
@@ -2090,11 +2157,7 @@ const List = () => {
                         }
                       }}
                       className={`w-full max-w-[90%] mx-auto my-3 text-white text-[16px] py-3 rounded-lg font-semibold transition-colors duration-200
-    ${isSubmitting ||
-                          !payment.expiryDate ||
-                          !payment.securityCode ||
-                          !payment.cardNumber ||
-                          !payment.billingAddress
+    ${isSubmitting
                           ? "bg-gray-400 cursor-not-allowed"
                           : "bg-[#237FEA] hover:bg-[#1a6edc] cursor-pointer"
                         }`}

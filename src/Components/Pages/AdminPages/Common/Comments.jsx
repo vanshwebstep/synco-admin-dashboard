@@ -10,6 +10,8 @@ const Comments = ({
   currentComments,
   formatTimeAgo,
 }) => {
+
+
   return (
     <div className="bg-white my-10 rounded-3xl p-5 space-y-4">
       <h2 className="text-[22px] font-semibold">Notes</h2>
@@ -58,27 +60,27 @@ const Comments = ({
         <div className="space-y-3">
           {currentComments.map((c, i) => (
             <div key={i} className="bg-gray-50 rounded-lg p-3 text-sm">
-              
+
               {/* User Info */}
               <div className="flex justify-end items-center gap-2 mb-2">
                 <img
                   src={
-                    c?.bookedByAdmin?.profile
-                      ? c.bookedByAdmin.profile
+                    c?.commentedBy?.profile
+                      ? c.commentedBy.profile
                       : "/members/dummyuser.png"
                   }
                   onError={(e) => {
                     e.currentTarget.onerror = null;
                     e.currentTarget.src = "/members/dummyuser.png";
                   }}
-                  alt={c?.bookedByAdmin?.firstName}
+                  alt={c?.commentedBy?.firstName}
                   className="w-9 h-9 rounded-full object-cover"
                 />
 
                 <div className="text-right">
                   <p className="font-semibold text-[#237FEA] text-[14px] leading-tight">
-                    {c?.bookedByAdmin?.firstName}{" "}
-                    {c?.bookedByAdmin?.lastName}
+                    {c?.commentedBy?.firstName}{" "}
+                    {c?.commentedBy?.lastName}
                   </p>
 
                   {/* Time just below name */}

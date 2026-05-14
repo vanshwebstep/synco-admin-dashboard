@@ -86,6 +86,13 @@ const StudentProfile = (fetchedData) => {
     setNewStudent((prev) => ({ ...prev, [field]: value }));
   };
 
+  const parseYMDToDate = (ymd) => {
+    if (!ymd) return null;
+    if (ymd instanceof Date) return ymd;
+    const [y, m, d] = ymd.split("-").map(Number);
+    return new Date(y, m - 1, d); // local midnight
+  };
+
   const handleDOBChange = (index, date, isModal = false) => {
     const today = new Date();
     let age = "";
@@ -259,7 +266,7 @@ const StudentProfile = (fetchedData) => {
               <label className="block text-[16px] font-semibold">Date of birth</label>
               <DatePicker
                 withPortal
-                selected={student.dateOfBirth}
+                selected={parseYMDToDate(student.dateOfBirth)}
                 onChange={(date) => handleDOBChange(index, date)}
                 className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                 showYearDropdown
@@ -364,7 +371,7 @@ const StudentProfile = (fetchedData) => {
                 </label>
                 <DatePicker
                   withPortal
-                  selected={newStudent.dateOfBirth}
+                  selected={parseYMDToDate(newStudent.dateOfBirth)}
                   onChange={(date) => handleDOBChange(null, date, true)}
                   className="w-full border border-gray-300 rounded-xl px-3 py-3 text-base"
                   showYearDropdown

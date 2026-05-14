@@ -20,6 +20,7 @@ const ClassSheduleList = () => {
     const [sessionStates, setSessionStates] = useState({});
     ;
 
+
     const scrollTo8AM = () => {
         requestAnimationFrame(() => {
             const list = document.querySelector(".react-datepicker__time-list");
@@ -476,6 +477,9 @@ const ClassSheduleList = () => {
 
                                                                                 return sessions.map((session) => {
                                                                                     const sessionMaps = session.sessionPlan || {};
+
+                                                                                    console.log('term', term)
+                                                                                    console.log('sessions', sessions)
 
                                                                                     return (
                                                                                         <div

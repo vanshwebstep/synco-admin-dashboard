@@ -7,7 +7,7 @@ import { useRecruitmentTemplate } from "../contexts/RecruitmentContext";
 import { useLocation } from "react-router-dom";
 
 const tabs = [
-  { name: "Coach Applicatiion", component: <Coach /> },
+  { name: "Coach Application", component: <Coach /> },
   { name: "Venue Manager Application", component: <VenueManager /> },
   { name: "All", component: <All /> },
 ];
@@ -22,7 +22,7 @@ const Recruitment = () => {
     const comesfrom = location.state?.comesfrom;
 
     if (comesfrom === "CoachRecruitment") {
-      setActiveTab("Coach Applicatiion");
+      setActiveTab("Coach Application");
     }
 
     if (comesfrom === "VenueRecruitment") {

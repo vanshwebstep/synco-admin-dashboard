@@ -14,7 +14,7 @@ const DynamicTable = ({
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const { searchQuery } = useGlobalSearch();
+  const { searchQuery,registerTableData  } = useGlobalSearch();
   /* =============================
      Selection
   ============================== */
@@ -163,10 +163,12 @@ const DynamicTable = ({
         if (!clean) return true;
 
         // 1. Phone matching (6+ digits)
-        if (/^\d{6,}$/.test(clean)) {
-          return normalizedPhones.includes(clean);
-        }
-
+     if (/^[\d+\s\-()]{2,}$/.test(clean)) {
+  const cleanDigits = clean.replace(/[^\d]/g, "");
+  if (cleanDigits.length >= 2) {
+    return normalizedPhones.includes(cleanDigits);
+  }
+}
         // 2. Exact age match
         if (ageStr && ageStr === clean) return true;
 
@@ -212,7 +214,9 @@ const DynamicTable = ({
   useEffect(() => {
     setCurrentPage(1);
   }, [rowsPerPage]);
-
+useEffect(() => {
+  registerTableData(finalData);
+}, [finalData]);
   /* =============================
      Render
   ============================== */

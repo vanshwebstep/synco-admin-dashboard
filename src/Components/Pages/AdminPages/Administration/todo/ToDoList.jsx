@@ -1,5 +1,5 @@
 import { Plus, MoreVertical, Filter, X } from "lucide-react";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { ChevronDown, Send } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import Select from "react-select";
@@ -644,6 +644,9 @@ function CreateTaskModal({ members, onClose }) {
         comment: "",
     });
     const [showMembers, setShowMembers] = useState(null);
+    const [errors, setErrors] = useState({});
+    const titleInputRef = useRef(null);
+    const descriptionInputRef = useRef(null);
 
 
     const handleChange = (e) => {
@@ -686,6 +689,27 @@ function CreateTaskModal({ members, onClose }) {
 
 
     const handleSubmit = async () => {
+        let formErrors = {};
+        let focusRef = null;
+
+        if (!formData.title?.trim()) {
+            formErrors.title = "Title is required";
+            if (!focusRef) focusRef = titleInputRef;
+        } 
+        
+        if (!formData.description?.trim()) {
+            formErrors.description = "Description is required";
+            if (!focusRef) focusRef = descriptionInputRef;
+        }
+
+        if (Object.keys(formErrors).length > 0) {
+            setErrors(formErrors);
+            if (focusRef && focusRef.current) {
+                focusRef.current.focus();
+            }
+            return;
+        }
+
         const data = new FormData();
 
         (uploadedFiles || []).forEach((f) => {
@@ -705,10 +729,14 @@ function CreateTaskModal({ members, onClose }) {
         });
 
         // finally send
-        createToDoList(data);
-
-        console.log("FORMDATA SENT:", [...data.entries()]);
-        onClose();
+        try {
+            await createToDoList(data);
+            console.log("FORMDATA SENT:", [...data.entries()]);
+            onClose();
+        } catch (error) {
+            console.error("Failed to submit task:", error);
+            // Modal stays open on failure
+        }
     };
 
     const today = new Date().toLocaleDateString("en-GB", {
@@ -737,23 +765,33 @@ function CreateTaskModal({ members, onClose }) {
                         <div>
                             <label className="text-sm ">Title</label>
                             <input
-                                className="w-full border border-[#E2E1E5] rounded-xl px-3 py-2 mt-1 focus:outline-none"
+                                ref={titleInputRef}
+                                className={`w-full border ${errors.title ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 focus:outline-none`}
                                 type="text"
                                 name="title"
                                 value={formData.title}
-                                onChange={handleChange}
+                                onChange={(e) => {
+                                    handleChange(e);
+                                    setErrors((prev) => ({ ...prev, title: '' }));
+                                }}
                             />
+                            {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
                         </div>
 
 
                         <div>
                             <label className="text-sm ">Description</label>
                             <textarea
-                                className="bg-[#FAFAFA] w-full h-32 border border-[#E2E1E5] rounded-xl px-3 py-2 mt-1 resize-none focus:outline-none"
+                                ref={descriptionInputRef}
+                                className={`bg-[#FAFAFA] w-full h-32 border ${errors.description ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 resize-none focus:outline-none`}
                                 name="description"
                                 value={formData.description}
-                                onChange={handleChange}
+                                onChange={(e) => {
+                                    handleChange(e);
+                                    setErrors((prev) => ({ ...prev, description: '' }));
+                                }}
                             ></textarea>
+                            {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
                         </div>
 
 

@@ -69,7 +69,7 @@ const HolidayCampPending = ({ item, sessionData }) => {
       setPage(1);
     }
   }, [selectedGroup]);
-    const [isDownloading, setIsDownloading] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
 
   const dynamicTabs = Object.keys(myData);
@@ -271,7 +271,7 @@ const HolidayCampPending = ({ item, sessionData }) => {
                             setIsDownloading(true);
                             const token = localStorage.getItem("adminToken");
                             const response = await fetch(
-                              `${API_BASE_URL}/api/admin/session-plan-group/${currentContent.id}/download-video?level=${activeTab.toLowerCase()}`,
+                              `${API_BASE_URL}/api/admin/holiday/session-plan-group/${currentContent.id}/download-video?level=${activeTab.toLowerCase()}`,
                               {
                                 method: "GET",
                                 headers: {

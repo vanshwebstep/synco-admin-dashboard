@@ -28,6 +28,7 @@ const ParentProfile = ({ ParentProfile }) => {
     const { openEmailPopup } = useEmail();
     const [transferVenue, setTransferVenue] = useState(false);
     const [selectedStudents, setSelectedStudents] = useState([]);
+    const [cancelErrors, setCancelErrors] = useState({});
     const { openTextPopup } = useTextPopup();
 
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -99,6 +100,26 @@ const ParentProfile = ({ ParentProfile }) => {
         });
     };
     const handleCancel = () => {
+        let errors = {};
+        if (selectedStudents.length === 0) {
+            errors.students = "Please select at least one student to cancel.";
+        }
+
+        if (!formData.cancelReason) {
+            errors.reason = "Please select a reason for cancellation.";
+        }
+
+        if (formData.cancelReason === "other" && !formData.otherReason?.trim()) {
+            errors.otherReason = "Please enter the reason for cancellation.";
+        }
+
+        if (Object.keys(errors).length > 0) {
+            setCancelErrors(errors);
+            return;
+        }
+
+        setCancelErrors({});
+
         const payload = {
             ...formData,
             studentIds: selectedStudents.map(student => student.id),
@@ -707,7 +728,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                 <div className="text-[20px] font-bold text-[#1F2937]">Account Status</div>
                                 <div className="text-[16px] font-semibold text-[#1F2937]">Trials</div>
                             </div>
-                            <div className="bg-[#343A40] flex items-center gap-2  text-white text-[14px] px-3 py-2 rounded-xl">
+                            <div className="w-max bg-[#343A40] flex items-center gap-2  text-white text-[14px] px-3 py-2 rounded-xl">
                                 <div className="flex items-center gap-2">
                                     {status === 'pending' && (
                                         <img src="/images/icons/loadingWhite.png" alt="Pending" />
@@ -1316,10 +1337,10 @@ const ParentProfile = ({ ParentProfile }) => {
                             <div className="space-y-4 px-6 pb-6 pt-4">
                                 <div>
                                     <label className="block text-[16px] font-semibold">
-                                        Select Students to Cancel
+                                        Select Students to Cancel <span className="text-red-500">*</span>
                                     </label>
 
-                                    <div className="mt-3 space-y-2">
+                                    <div className={`mt-3 space-y-2 p-3 rounded-xl border ${cancelErrors.students ? "border-red-500" : "border-transparent"}`}>
                                         {studentsList.map((student) => {
                                             const isCancelled = student.studentStatus === "cancelled";
 
@@ -1332,17 +1353,22 @@ const ParentProfile = ({ ParentProfile }) => {
                                                         type="checkbox"
                                                         disabled={isCancelled}
                                                         checked={selectedStudents.some((s) => s.id === student.id)}
-                                                        onChange={() =>
-                                                            !isCancelled &&
-                                                            handleStudentSelect({
-                                                                id: student.id,
-                                                                studentFirstName: student.studentFirstName,
-                                                                studentLastName: student.studentLastName,
-                                                            })
-                                                        }
+                                                        onChange={() => {
+                                                            if (!isCancelled) {
+                                                                handleStudentSelect({
+                                                                    id: student.id,
+                                                                    studentFirstName: student.studentFirstName,
+                                                                    studentLastName: student.studentLastName,
+                                                                });
+
+                                                                setCancelErrors((prev) => ({
+                                                                    ...prev,
+                                                                    students: "",
+                                                                }));
+                                                            }
+                                                        }}
                                                         className="w-4 h-4"
                                                     />
-
                                                     <span className="text-[15px]">
                                                         {student.studentFirstName} {student.studentLastName}
                                                         {isCancelled && " (Already Cancelled)"}
@@ -1351,17 +1377,21 @@ const ParentProfile = ({ ParentProfile }) => {
                                             );
                                         })}
                                     </div>
+                                    {cancelErrors.students && (
+                                        <p className="text-red-500 text-sm mt-1">{cancelErrors.students}</p>
+                                    )}
                                 </div>
                                 {/* Reason */}
                                 <div>
                                     <label className="block text-[16px] font-semibold">
-                                        Reason for Cancellation
+                                        Reason for Cancellation <span className="text-red-500">*</span>
                                     </label>
                                     <Select
                                         value={reasonOptions.find((opt) => opt.value === formData.cancelReason)}
-                                        onChange={(selected) =>
-                                            setFormData((prev) => ({ ...prev, cancelReason: selected.value }))
-                                        }
+                                        onChange={(selected) => {
+                                            setFormData((prev) => ({ ...prev, cancelReason: selected.value }));
+                                            setCancelErrors((prev) => ({ ...prev, reason: "" }));
+                                        }}
                                         options={reasonOptions}
                                         placeholder=""
                                         className="rounded-lg mt-2"
@@ -1372,25 +1402,38 @@ const ParentProfile = ({ ParentProfile }) => {
                                                 boxShadow: "none",
                                                 padding: "4px 8px",
                                                 minHeight: "48px",
+                                                borderColor: cancelErrors.reason ? "#EF4444" : base.borderColor,
+                                                "&:hover": {
+                                                    borderColor: cancelErrors.reason ? "#EF4444" : base.borderColor,
+                                                }
                                             }),
                                             placeholder: (base) => ({ ...base, fontWeight: 600 }),
                                             dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
                                             indicatorSeparator: () => ({ display: "none" }),
                                         }}
                                     />
+                                    {cancelErrors.reason && (
+                                        <p className="text-red-500 text-sm mt-1">{cancelErrors.reason}</p>
+                                    )}
                                     {formData.cancelReason === "other" && (
-                                        <input
-                                            type="text"
-                                            placeholder="Enter your reason"
-                                            value={formData.otherReason}
-                                            onChange={(e) =>
-                                                setFormData((prev) => ({
-                                                    ...prev,
-                                                    otherReason: e.target.value,
-                                                }))
-                                            }
-                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 mt-3"
-                                        />
+                                        <>
+                                            <input
+                                                type="text"
+                                                placeholder="Enter your reason"
+                                                value={formData.otherReason}
+                                                onChange={(e) => {
+                                                    setFormData((prev) => ({
+                                                        ...prev,
+                                                        otherReason: e.target.value,
+                                                    }));
+                                                    setCancelErrors((prev) => ({ ...prev, otherReason: "" }));
+                                                }}
+                                                className={`w-full border rounded-lg px-3 py-2 mt-3 ${cancelErrors.otherReason ? "border-red-500" : "border-gray-300"}`}
+                                            />
+                                            {cancelErrors.otherReason && (
+                                                <p className="text-red-500 text-sm mt-1">{cancelErrors.otherReason}</p>
+                                            )}
+                                        </>
                                     )}
                                 </div>
 

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { FiSearch } from "react-icons/fi";
 import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import Select from "react-select";
-import { Check, Filter, Loader2 } from "lucide-react";
+import { Check, Filter, Loader2, X } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { useBookFreeTrial } from '../../contexts/BookAFreeTrialContext';
 import Loader from '../../contexts/Loader';
@@ -96,8 +96,8 @@ const trialLists = () => {
     const [selectedDates, setSelectedDates] = useState([]);
     const { fetchMembershipSales, fetchMembershipSalesLoading, bookMembership, setBookMembership, sendActiveBookMembershipMail, bookedByAdmin, setSearchTerm, searchTerm, status, loading, selectedVenue, setSelectedVenue, statsMembership, myVenues, setMyVenues } = useBookFreeTrial() || {};
 
-    const [showAgentPopup, setShowAgentPopup] = useState(null);
-    const [agentsLoading, setAgentsLoading] = useState(null);
+    const [showAgentPopup, setShowAgentPopup] = useState(false);
+    const [agentsLoading, setAgentsLoading] = useState(false);
     const [agentsData, setAgentsData] = useState([]);
     const [selectedAdminId, setSelectedAdminId] = useState(null);
 
@@ -240,7 +240,8 @@ const trialLists = () => {
             }
 
             showSuccess("Booking assigned successfully!");
-
+            setShowAgentPopup(false);
+            setSelectedAdminId(null);
             fetchMembershipSales();
             setSelectedStudents([]);
 
@@ -1032,99 +1033,88 @@ const trialLists = () => {
                                 </button>
                             </div>
                         </div>
-                    )
-                }
+                    )}
 
-                {
-                    showAgentPopup && (
-                        <div
-                            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm"
-                            onClick={() => setShowAgentPopup(false)}
-                        >
-                            <div
-                                className="bg-white rounded-lg overflow-y-auto shadow-xl max-w-md w-full p-8 relative"
-                                onClick={(e) => e.stopPropagation()}
-                                role="dialog"
-                                aria-modal="true"
-                                aria-labelledby="admin-list-title"
-                            >
-                                <h2
-                                    id="admin-list-title"
-                                    className="text-md font-extrabold mb-6 text-gray-800"
+                {showAgentPopup && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[99] p-4" onClick={() => setShowAgentPopup(false)}>
+                        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-8 animate-in fade-in zoom-in duration-200" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-[28px] font-bold text-[#282829]">Select agent</h3>
+                                <button
+                                    onClick={() => setShowAgentPopup(false)}
+                                    className="text-gray-400 hover:text-gray-600 transition-colors"
                                 >
-                                    Select any one admin for assign
-                                </h2>
+                                    <X size={24} />
+                                </button>
+                            </div>
 
+                            <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
                                 {agentsLoading ? (
-                                    <p className="text-center text-gray-500 text-lg">Loading admins...</p>
-                                ) : agentsData.length > 0 ? (
-                                    <ul className="space-y-4 ">
-                                        {agentsData.map((admin) => {
-                                            const isSelected = selectedAdminId === admin.id;
-                                            return (
-                                                <li
-                                                    key={admin.id}
-                                                    tabIndex={0}
-                                                    onClick={() => setSelectedAdminId(admin.id)}
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === "Enter" || e.key === " ") {
-                                                            e.preventDefault();
-                                                            setSelectedAdminId(admin.id);
-                                                        }
-                                                    }}
-                                                    className={`
-                  cursor-pointer select-none rounded-lg py-4 px-6 text-lg font-semibold
-                  transition-all duration-300 ease-in-out
-                  ${isSelected
-                                                            ? "bg-[#0098d9] text-white shadow-lg shadow-blue-300/60"
-                                                            : "bg-[#a3def7] text-black hover:bg-blue-200"
-                                                        }
-                `}
-                                                    role="button"
-                                                    aria-pressed={isSelected}
-                                                >
-                                                    {admin.firstName} {admin.lastName}
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
+                                    <div className="flex justify-center py-10">
+                                        <Loader2 className="text-[#237FEA] animate-spin" size={32} />
+                                    </div>
+                                ) : agentsData.length === 0 ? (
+                                    <p className="text-center text-gray-500 py-4 font-medium">No agents available.</p>
                                 ) : (
-                                    <p className="text-center text-gray-500 text-lg">No admins found.</p>
+                                    agentsData.map((agent) => {
+                                        const isSelected = selectedAdminId === agent.id;
+                                        return (
+                                            <div
+                                                key={agent.id}
+                                                className="flex items-center gap-4 py-2 cursor-pointer group"
+                                                onClick={() => {
+                                                    if (isSelected) {
+                                                        setSelectedAdminId(null);
+                                                    } else {
+                                                        setSelectedAdminId(agent.id);
+                                                    }
+                                                }}
+                                            >
+                                                <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-[#237FEA] border-[#237FEA]' : 'border-gray-200 group-hover:border-[#237FEA]'
+                                                    }`}>
+                                                    {isSelected && <Check size={16} className="text-white" strokeWidth={4} />}
+                                                </div>
+
+                                                <div className="relative">
+                                                    <img
+                                                        src={agent.profilePicture || agent.image || (agent.profile ? `${API_BASE_URL}${agent.profile}` : "/images/avatar-placeholder.png")}
+                                                        alt=""
+                                                        className="w-14 h-14 rounded-full object-cover border-2 border-[#E6F7FB]"
+                                                        onError={(e) => e.target.src = "https://ui-avatars.com/api/?name=" + agent.firstName + "+" + agent.lastName + "&background=E6F7FB&color=237FEA"}
+                                                    />
+                                                    <div className="absolute inset-0 rounded-full border-2 border-yellow-400/30 pointer-events-none"></div>
+                                                </div>
+
+                                                <span className="text-[20px] font-medium text-[#282829]">
+                                                    {agent.firstName} {agent.lastName}
+                                                </span>
+                                            </div>
+                                        );
+                                    })
                                 )}
+                            </div>
 
-                                <div className="flex justify-end gap-4 mt-8">
-                                    <button
-                                        onClick={() => setShowAgentPopup(false) & setSelectedAdminId(null)}
-                                        className="px-6 py-3 rounded-md bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold transition"
-                                        type="button"
-                                    >
-                                        Cancel
-                                    </button>
-
-                                    <button
-                                        onClick={() => {
-                                            if (selectedAdminId) {
-                                                handleAgentSubmit(selectedAdminId);
-                                                setShowAgentPopup(false);
-                                            } else {
-                                                alert("Please select an admin before submitting.");
-                                            }
-                                        }}
-                                        className="px-6 py-3 rounded-md bg-blue-500 hover:bg-[#0098d9] text-white font-semibold transition"
-                                        type="button"
-                                    >
-                                        Assign
-                                    </button>
-                                </div>
+                            <div className="mt-8">
+                                <button
+                                    onClick={() => handleAgentSubmit(selectedAdminId)}
+                                    disabled={agentsLoading || !selectedAdminId}
+                                    className="w-full py-4 bg-[#237FEA] text-white font-bold rounded-2xl hover:bg-[#1a6ed8] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-blue-100 text-lg"
+                                >
+                                    {agentsLoading ? (
+                                        <>
+                                            <Loader2 size={24} className="animate-spin" />
+                                            Assigning...
+                                        </>
+                                    ) : (
+                                        'Assign'
+                                    )}
+                                </button>
                             </div>
                         </div>
-                    )
-                }
-
+                    </div>
+                )}
             </div>
-
         </div>
-
 
     )
 }

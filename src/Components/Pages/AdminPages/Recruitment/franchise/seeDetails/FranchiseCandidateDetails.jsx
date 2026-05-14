@@ -1,56 +1,66 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import OverView from "./OverView";
 import Answers from "./Answers";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 // import Loader from "../contexts/Loader";
 
 
- 
+
 const FranchiseCandidateDetails = () => {
     const navigate = useNavigate();
-const [steps, setSteps] = useState([
-  {
-    id: 1,
-    title: "Qualify Lead",
-    actionType: "buttons",
-    status: "completed",
-    isEnabled: true, // Always enabled
-  },
-  {
-    id: 2,
-    title: "Google Meet Call",
-    buttonText: "Schedule a call",
-    isOpen: false,
-    status: "pending",
-    isEnabled: false,
-  },
-  {
-    id: 3,
-    title: "Delivery Google Meet",
-    buttonText: "Scorecard",
-    status: "pending",
-    isEnabled: false,
-  },
-  {
-    id: 4,
-    title: "Discovery day",
-    status: "pending",
-    isEnabled: false,
-  },
-  {
-    id: 5,
-    title: "Waiting for offer",
-    resultPercent: "87%",
-    resultStatus: "Passed",
-    status: "pending",
-    isEnabled: false,
-  },
-]);
+    const [searchParams] = useSearchParams();
+    const id = searchParams.get("id");
 
-const tabs = [
-    { name: "OverView", component: <OverView steps={steps} setSteps={setSteps} /> },
-    { name: "Answers", component: <Answers /> },
-];
+    const initialSteps = [
+        {
+            id: 1,
+            title: "Qualify Lead",
+            actionType: "buttons",
+            status: "pending",
+            isEnabled: true,
+        },
+        {
+            id: 2,
+            title: "Google Meet Call",
+            buttonText: "Schedule a call",
+            isOpen: false,
+            status: "pending",
+            isEnabled: false,
+        },
+        {
+            id: 3,
+            title: "Delivery Google Meet",
+            buttonText: "Scorecard",
+            status: "pending",
+            isEnabled: false,
+        },
+        {
+            id: 4,
+            title: "Discovery day",
+            buttonText: "Book Discovery Day",
+            status: "pending",
+            isEnabled: false,
+        },
+        {
+            id: 5,
+            title: "Waiting for offer",
+            resultPercent: "87%",
+            resultStatus: "Passed",
+            status: "pending",
+            isEnabled: false,
+        },
+    ];
+
+    const [steps, setSteps] = useState(initialSteps);
+
+    useEffect(() => {
+        setSteps(initialSteps);
+    }, [id]);
+
+    const tabs = [
+        { name: "OverView", component: <OverView steps={steps} setSteps={setSteps} /> },
+        { name: "Answers", component: <Answers /> },
+    ];
     const [activeTab, setActiveTab] = useState(tabs[0].name);
 
     return (

@@ -12,6 +12,7 @@ export const RecruitmentProvider = ({ children }) => {
 
     const [recuritmentDataById, setRecuritmentDataById] = useState([]);
     const [venues, setVenues] = useState([]);
+    const [filteredRecruitment, setFilteredRecruitment] = useState([]);
 
 
     const [bookFreeTrials, setBookFreeTrials] = useState([]);
@@ -338,6 +339,7 @@ export const RecruitmentProvider = ({ children }) => {
                 setMyVenues(Array.isArray(venues) ? venues : []);
                 setStatsRecruitment(totals)
                 setVenueRecruitment(result);
+                setFilteredRecruitment(result);
             } catch (error) {
                 console.error("Failed to fetch bookFreeTrials:", error);
             } finally {
@@ -558,25 +560,22 @@ export const RecruitmentProvider = ({ children }) => {
     }, []);
     const createCoachRecruitment = async (recruitmentData) => {
         setLoading(true);
-        console.log('recruitmentData', recruitmentData)
 
-        const headers = {
-            "Content-Type": "application/json",
-        };
+        const headers = {};  // ✅ NO Content-Type — browser sets multipart/form-data + boundary automatically
 
         if (token) {
             headers["Authorization"] = `Bearer ${token}`;
         }
-        let url = `${API_BASE_URL}/api/admin/coach/recruitment/create`;
 
+        const url = `${API_BASE_URL}/api/admin/coach/recruitment/application-form`;
 
         try {
             const response = await fetch(url, {
                 method: "POST",
                 headers,
-                body: JSON.stringify(recruitmentData),
+                body: recruitmentData,  // ✅ Pass FormData directly — NO JSON.stringify
             });
-
+            console.log('recruitmentData', recruitmentData)
             const result = await response.json();
 
             if (!response.ok) {
@@ -587,11 +586,47 @@ export const RecruitmentProvider = ({ children }) => {
             return result;
 
         } catch (error) {
-            console.error("Error creating class schedule:", error);
+            console.error("Error creating coach recruitment:", error);
             await showError("Error", error.message || "Something went wrong while creating Coach Recruitment.");
             throw error;
         } finally {
             await fetchRecruitment();
+            setLoading(false);
+        }
+    };
+    const createVenueRecruitment = async (recruitmentData) => {
+        setLoading(true);
+
+        const headers = {};  // ✅ NO Content-Type — browser sets multipart/form-data + boundary automatically
+
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const url = `${API_BASE_URL}/api/admin/venue-manager/recruitment/application-form`;
+
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                headers,
+                body: recruitmentData,  // ✅ Pass FormData directly — NO JSON.stringify
+            });
+            console.log('recruitmentData', recruitmentData)
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || result || "Failed to create Coach Recruitment");
+            }
+
+            await showSuccess("Success!", result.message || "Coach Recruitment has been created successfully.");
+            return result;
+
+        } catch (error) {
+            console.error("Error creating coach recruitment:", error);
+            await showError("Error", error.message || "Something went wrong while creating Coach Recruitment.");
+            throw error;
+        } finally {
+            await fetchvenuemanagerRecruitment();
             setLoading(false);
         }
     };
@@ -835,46 +870,7 @@ export const RecruitmentProvider = ({ children }) => {
             setLoading(false);
         }
     };
-    const createVenueRecruitment = async (recruitmentData) => {
-        setLoading(true);
-        console.log('recruitmentData', recruitmentData)
 
-        const headers = {
-            "Content-Type": "application/json",
-        };
-
-        if (token) {
-            headers["Authorization"] = `Bearer ${token}`;
-        }
-        let url = `${API_BASE_URL}/api/admin/venue-manager/recruitment/create`;
-
-
-        try {
-            const response = await fetch(url, {
-                method: "POST",
-                headers,
-                body: JSON.stringify(recruitmentData),
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.message || result || "Failed to create Coach Recruitment");
-            }
-
-            await showSuccess("Success!", result.message || "Coach Recruitment has been created successfully.");
-
-            return result;
-
-        } catch (error) {
-            console.error("Error creating class schedule:", error);
-            await showError("Error", error.message || "Something went wrong while creating Coach Recruitment.");
-            throw error;
-        } finally {
-            await fetchvenuemanagerRecruitment();
-            setLoading(false);
-        }
-    };
     const createAllRecruitment = async (recruitmentData) => {
         setLoading(true);
         console.log('recruitmentData', recruitmentData)
@@ -1610,7 +1606,7 @@ export const RecruitmentProvider = ({ children }) => {
         } catch (error) {
             console.error("Error creating class schedule:", error);
             await showError("Error", error.message || "Something went wrong while creating class schedule.");
-               
+
             throw error;
         } finally {
             await fetchBookFreeTrials();
@@ -2330,7 +2326,7 @@ export const RecruitmentProvider = ({ children }) => {
             }
 
             await showSuccess("Success!", result.message || "Membership has been created successfully.");
-              
+
             navigate(`/weekly-classes/all-members/list`)
             return result;
 
@@ -2374,7 +2370,7 @@ export const RecruitmentProvider = ({ children }) => {
         } catch (error) {
             console.error("Error creating class schedule:", error);
             await showError("Error", error.message || "Something went wrong while creating class schedule.");
-               
+
             throw error;
         } finally {
             await fetchBookMemberships();
@@ -2446,7 +2442,7 @@ export const RecruitmentProvider = ({ children }) => {
             }
 
             await showSuccess("Success!", result.message || "Membership has been cancelled successfully.");
-                
+
             if (comesfrom === "allMembers") {
                 navigate(`/weekly-classes/all-members/list`);
             } else {
@@ -2486,12 +2482,12 @@ export const RecruitmentProvider = ({ children }) => {
             if (!response.ok) {
                 if (result?.message?.includes("No slots left")) {
                     showWarning("No Slots Left", result.message);
-                  
+
                     return;
                 }
-                
+
                 await showError("Error", result.message || "Something went wrong while transferring membership.");
-              
+
                 return;
             }
 
@@ -2540,7 +2536,7 @@ export const RecruitmentProvider = ({ children }) => {
             }
 
             await showSuccess("Success!", result.message || "Membership has been frozen successfully.");
-                
+
             if (comesfrom === "allMembers") {
                 navigate(`/weekly-classes/all-members/list`);
             } else {
@@ -2812,14 +2808,14 @@ export const RecruitmentProvider = ({ children }) => {
             }
 
             await showSuccess("Success!", result.message || "Emails sent successfully.");
-              
+
 
             return result;
 
         } catch (error) {
             console.error("Error creating class schedule:", error);
             await showError("Error", error.message || "Something went wrong while sending emails.");
-              
+
             throw error;
         } finally {
             await fetchMembershipSales();
@@ -2830,7 +2826,7 @@ export const RecruitmentProvider = ({ children }) => {
     // Add to Waiting List 
     const addtoWaitingListSubmit = async (bookingIds, comesfrom) => {
         if (!bookingIds || bookingIds.length === 0) {
-           showWarning("No Bookings Selected", "Please select at least one booking to add to the waiting list.");
+            showWarning("No Bookings Selected", "Please select at least one booking to add to the waiting list.");
             return;
         }
 
@@ -2858,13 +2854,13 @@ export const RecruitmentProvider = ({ children }) => {
 
             if (!response.ok) {
                 // Handle API-level errors gracefully
-              showError("Failed to Add to Waiting List", result.message || result.error || "Something went wrong.");
+                showError("Failed to Add to Waiting List", result.message || result.error || "Something went wrong.");
                 return;
             }
 
             // ✅ Success alert
             await showSuccess("Success!", result.message || "Members have been successfully added to the waiting list.");
-               
+
 
             // ✅ Navigate safely based on source
             if (comesfrom === "allMembers") {
@@ -3044,7 +3040,7 @@ export const RecruitmentProvider = ({ children }) => {
             }
 
             await showSuccess("Success!", result.message || "Emails have been sent successfully.");
-               
+
 
             return result;
 
@@ -3173,7 +3169,7 @@ export const RecruitmentProvider = ({ children }) => {
             }
 
             await showSuccess("Success!", result.message || "Waiting list spot has been created successfully.");
-             
+
             navigate(`/weekly-classes/find-a-class/add-to-waiting-list/list`)
             return result;
 
@@ -3518,7 +3514,7 @@ export const RecruitmentProvider = ({ children }) => {
             }
 
             await showSuccess("Success!", result.message || "Cancellation request has been sent successfully.");
-               
+
             navigate("/weekly-classes/cancellation");
             return result;
 
@@ -3557,7 +3553,7 @@ export const RecruitmentProvider = ({ children }) => {
             }
 
             await showSuccess("Success!", result.message || "All cancellation emails have been sent successfully.");
-                
+
             navigate("/weekly-classes/cancellation", { state: 'allCancellation' });
             return result;
 
@@ -3603,7 +3599,7 @@ export const RecruitmentProvider = ({ children }) => {
         } catch (error) {
             console.error("Error sending full cancellation emails:", error);
             await showError("Error", error.message || "Something went wrong while sending full cancellation emails.");
-          
+
             throw error;
         } finally {
             await fetchFullCancellations();
@@ -3854,15 +3850,15 @@ export const RecruitmentProvider = ({ children }) => {
                 fetchBookMembershipsLoading,
                 ServiceHistoryFulltto,
                 ServiceHistoryAlltto,
-                fetchMembershipSalesLoading, createBookLeads, createBookBirthday, addToWaitingList, setaddToWaitingList, showCancelTrial, setshowCancelTrial
+                fetchMembershipSalesLoading, createBookLeads, createBookBirthday, addToWaitingList, setaddToWaitingList, showCancelTrial, setshowCancelTrial,
 
-
+                filteredRecruitment, setFilteredRecruitment
                 , allRecruitment, setAllRecruitment, fetchRecruitment, recruitment, setRecruitment,
                 fetchCommunicationTemplate, fetchCoachRecruitmentById, venueRecruitment, sendOfferMail, sendFranchiseMail, rejectFranchise, rejectCoach, sendCoachMail, sendvenuemanagerMail, fetchFranchiseRecruitment, fetchvenuemanagerRecruitment, fetchAllRecruitment, recuritmentDataById, setRecuritmentDataById, createCoachRecruitment, createCoachRecruitmentById, createVenuManagerRecruitmentById, createFranchiseRecruitmentById, createFranchiseRecruitment, createVenueRecruitment, createCommunicationTemplate, deleteCommunicationTemplate, updateCommunicationTemplate
                 , fetchCoachReport, fetchFranchiseRecruitmentById, fetchVenueManagerRecruitmentById, fetchAllRecruitmentById, fetchVenueNames, venues, coachReport, fetchVenueManagerreport, venueManagerreport, fetchFranchiseReport, franchiseReport
             }}>
             {children}
-        </RecruitmentContext.Provider>
+        </RecruitmentContext.Provider >
     );
 };
 

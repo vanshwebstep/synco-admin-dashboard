@@ -12,12 +12,15 @@ import { IoMdCheckmarkCircle } from "react-icons/io";
 import Select from "react-select";
 import DatePicker from "react-datepicker";
 import PhoneInput from "react-phone-input-2";
-
+import "react-phone-input-2/lib/style.css";
+import { detectCountryFromPhone, stripDialCode } from '../../../../../../utils/phoneHelper';
 import { useRecruitmentTemplate } from '../../../contexts/RecruitmentContext';
 import { useVenue } from '../../../contexts/VenueContext';
 import Loader from '../../../contexts/Loader';
-import { showConfirm, showError } from '../../../../../../utils/swalHelper';
+import { showConfirm, showError, showWarning, showSuccess } from '../../../../../../utils/swalHelper';
 import Comments from '../../../Common/Comments';
+import { useEmail } from '../../../contexts/messages/SendEmailContext';
+import { useTextPopup } from '../../../contexts/messages/SendTextContext';
 const dateOptions = [
   { value: "2025-01-01", label: "Jan 01 2025" },
   { value: "2025-01-02", label: "Jan 02 2025" },
@@ -42,6 +45,9 @@ const CandidateInfo = ({ steps, setSteps }) => {
   const [loading, setLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [classOptions, setClassOptions] = useState([]);
+
+  const { openEmailPopup } = useEmail();
+  const { openTextPopup } = useTextPopup();
   const [telephoneCallDelivery, setTelephoneCallDelivery] = useState({
     telePhoneCallDeliveryCommunicationSkill: null,
     telePhoneCallDeliveryPassionCoaching: null,
@@ -65,7 +71,6 @@ const CandidateInfo = ({ steps, setSteps }) => {
       knowledge: null,
     },
   });
-  console.log('telephoneCallDelivery', telephoneCallDelivery)
   const [payload, setPayload] = useState({
     qualifyLead: null,
 
@@ -85,7 +90,6 @@ const CandidateInfo = ({ steps, setSteps }) => {
     "Experience": "telePhoneCallDeliveryExperience",
     "Knowledge of SSS": "telePhoneCallDeliveryKnowledgeOfSSS",
   };
-  // console.log('telephoneCall', telephoneCall)
   const [rateOpen, setRateOpen] = useState(false);
   const [openCandidateStatusModal, setOpenCandidateStatusModal] = useState(false);
   const { fetchCoachRecruitmentById, fetchVenueManagerRecruitmentById, recuritmentDataById, fetchAllRecruitmentById, rejectCoach, sendCoachMail, createCoachRecruitmentById, createVenuManagerRecruitmentById } = useRecruitmentTemplate() || {};
@@ -95,7 +99,6 @@ const CandidateInfo = ({ steps, setSteps }) => {
   const id = searchParams.get("id");   // 👉 this gives "7"
   const comesfrom = searchParams.get("comesfrom");   // 👉 this gives "7"
 
-  // console.log("telephoneCallDelivery:", telephoneCallDelivery);
 
   const [openResultModal, setOpenResultModal] = useState(false);
   const [openOfferModal, setOpenOfferModal] = useState(false);
@@ -105,6 +108,14 @@ const CandidateInfo = ({ steps, setSteps }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const commentsPerPage = 5; // Number of comments per page
   const { adminInfo } = useNotification();
+
+  const ageGroupOptions = ["5-7 Years", "4-5 years", "8-10 Years", "11-13 Years", "14-16 Years", "17+ Years"];
+
+  const qualificationOptions = ["FA Level 1", "FA Level 2", "DBS (within the year)", "Futsal Level 1", "UEFA B", "First Aid (within 2 years)"];
+
+  const experienceOptions = ["1 year", "2 years", "3 years", "4 years", "5 years", "More than 5 years"];
+
+  const heardFromOptions = ["Indeed", "Facebook", "Google", "Referral", "Other"];
 
   // const [venues, setVenues] = useState([]);
 
@@ -124,11 +135,42 @@ const CandidateInfo = ({ steps, setSteps }) => {
 
         ageGroup: "",
         vehicle: "",
-        qualification: "",
+        qualification: [],
         experience: "",
         venues: [],
         coverNote: "",
       };
+    }
+
+    let parsedQualification = [];
+    if (data.candidateProfile?.whichQualificationYouHave) {
+      try {
+        const qArr = JSON.parse(data.candidateProfile.whichQualificationYouHave);
+        parsedQualification = Array.isArray(qArr) ? qArr : [qArr];
+      } catch (e) {
+        parsedQualification = [data.candidateProfile.whichQualificationYouHave];
+      }
+    }
+
+    let parsedAgeGroup = [];
+    if (data.candidateProfile?.ageGroupExperience) {
+      try {
+        const agArr = JSON.parse(data.candidateProfile.ageGroupExperience);
+        parsedAgeGroup = Array.isArray(agArr) ? agArr : [agArr];
+      } catch (e) {
+        parsedAgeGroup = [data.candidateProfile.ageGroupExperience];
+      }
+    }
+
+    let dialCode = "+44";
+    let countryCode = "gb";
+    let phone = data.phoneNumber || "";
+
+    const detected = detectCountryFromPhone(phone);
+    if (detected) {
+      dialCode = detected.dialCode;
+      countryCode = detected.countryCode;
+      phone = stripDialCode(phone);
     }
 
     return {
@@ -138,24 +180,27 @@ const CandidateInfo = ({ steps, setSteps }) => {
       dob: data.dob || "",
       age: data.age || "",
       email: data.email || "",
-      phone: data.phoneNumber || "",
+      dialCode,
+      phone,
+      countryCode,
       postcode: data.postcode || "",
       heardFrom: data.candidateProfile?.howDidYouHear || "Indeed",
 
-      ageGroup: data.candidateProfile?.ageGroupExperience || "",
+      ageGroup: parsedAgeGroup || [],
       vehicle:
         data.candidateProfile?.accessToOwnVehicle === true
           ? "Yes"
           : data.candidateProfile?.accessToOwnVehicle === false
             ? "No"
             : "",
-      qualification: data.candidateProfile?.whichQualificationYouHave || "",
+      qualification: parsedQualification || [],
       experience: data.candidateProfile?.footballExperience || "",
       venues: parsedVenues || [],
       coverNote: data.candidateProfile?.coverNote || "",
     };
   };
   const [form, setForm] = useState(() => getInitialForm(recuritmentDataById));
+
   useEffect(() => {
     if (recuritmentDataById) {
       setForm(getInitialForm(recuritmentDataById));
@@ -205,14 +250,7 @@ const CandidateInfo = ({ steps, setSteps }) => {
       setSelectedClass(null);
     }
   }, [venueState, venues]);
-  const venueSlots = [
-    "London Bridge / SAT 9 AM - 10 AM",
-    "London Bridge / SAT 10 AM - 11 AM",
-    "London Bridge / SAT 11 AM - 12 PM",
-    "London Bridge / SAT 12 PM - 1 PM",
-    "London Bridge / SAT 2 PM - 3 PM",
-    "London Bridge / SAT 3 PM - 4 PM",
-  ];
+
   // Pagination calculations
   const indexOfLastComment = currentPage * commentsPerPage;
   const indexOfFirstComment = indexOfLastComment - commentsPerPage;
@@ -238,18 +276,122 @@ const CandidateInfo = ({ steps, setSteps }) => {
     });
   };
 
-  const goToPage = (page) => {
-    if (page < 1) page = 1;
-    if (page > totalPages) page = totalPages;
-    setCurrentPage(page);
+  const [practicalLoading, setPracticalLoading] = useState(false);
+  const [practicalErrors, setPracticalErrors] = useState({});
+
+  const validatePracticalForm = () => {
+    const errors = {};
+
+    if (payload.qualifyLead === null || payload.qualifyLead === undefined) {
+      errors.qualifyLead = "Please select qualify lead.";
+    }
+
+    if (!telephoneCall.date) errors.telephoneCallSetupDate = "Telephone call setup date is required.";
+    if (!telephoneCall.time) errors.telephoneCallSetupTime = "Telephone call setup time is required.";
+    if (!telephoneCall.email) errors.telephoneCallSetupEmail = "Telephone call setup email is required.";
+
+    if (telephoneCallDelivery.telePhoneCallDeliveryCommunicationSkill === null || telephoneCallDelivery.telePhoneCallDeliveryCommunicationSkill === undefined) {
+      errors.telePhoneCallDeliveryCommunicationSkill = "Communication rating is required.";
+    }
+    if (telephoneCallDelivery.telePhoneCallDeliveryPassionCoaching === null || telephoneCallDelivery.telePhoneCallDeliveryPassionCoaching === undefined) {
+      errors.telePhoneCallDeliveryPassionCoaching = "Passion rating is required.";
+    }
+    if (telephoneCallDelivery.telePhoneCallDeliveryExperience === null || telephoneCallDelivery.telePhoneCallDeliveryExperience === undefined) {
+      errors.telePhoneCallDeliveryExperience = "Experience rating is required.";
+    }
+    if (telephoneCallDelivery.telePhoneCallDeliveryKnowledgeOfSSS === null || telephoneCallDelivery.telePhoneCallDeliveryKnowledgeOfSSS === undefined) {
+      errors.telePhoneCallDeliveryKnowledgeOfSSS = "Knowledge rating is required.";
+    }
+
+    if (!venueState) errors.venueState = "Venue is required.";
+    if (!selectedClass?.value) errors.selectedClass = "Class is required.";
+    if (!selectedDate) errors.selectedDate = "Assessment date is required.";
+    if (!venueManager?.value) errors.venueManager = "Venue manager is required.";
+
+    setPracticalErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
-  const fetchComments = useCallback(async () => {
+  const handleSubmitPracticalAssesment = async (e) => {
+    e.preventDefault();
+
+    if (!validatePracticalForm()) return;
+
+    const result = await showConfirm(
+      "Are you sure?",
+      "Please confirm booking this practical assessment.",
+      "Yes, Confirm Booking"
+    );
+
+    if (!result.isConfirmed) return;
+
     const token = localStorage.getItem("adminToken");
-    if (!token) return;
+
+    const body = {
+      recruitmentLeadId: Number(id),
+      qualifyLead: !!payload.qualifyLead,
+      telephoneCallSetupDate: telephoneCall.date,
+      telephoneCallSetupTime: telephoneCall.time,
+      ...(comesfrom !== "venueManager" && { telephoneCallSetupEmail: telephoneCall.email }),
+      telePhoneCallDeliveryCommunicationSkill: telephoneCallDelivery.telePhoneCallDeliveryCommunicationSkill,
+      telePhoneCallDeliveryPassionCoaching: telephoneCallDelivery.telePhoneCallDeliveryPassionCoaching,
+      telePhoneCallDeliveryExperience: telephoneCallDelivery.telePhoneCallDeliveryExperience,
+      telePhoneCallDeliveryKnowledgeOfSSS: telephoneCallDelivery.telePhoneCallDeliveryKnowledgeOfSSS,
+      bookPracticalAssessment: [
+        {
+          venueId: Number(venueState),
+          classId: selectedClass.value,
+          date: selectedDate instanceof Date ? selectedDate.toISOString().split('T')[0] : selectedDate,
+          assignToVenueManagerId: venueManager.value,
+        },
+      ],
+      telephoneCallSetupReminder: telephoneCall.reminder,
+    };
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/book-membership/comment/list`, {
+      setPracticalLoading(true);
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/admin/${comesfrom === "venueManager" ? "venue-manager" : "coach"}/candidate-profile/update`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(body),
+        }
+      );
+
+      const resultData = await response.json();
+
+      if (!response.ok) {
+        showError("Failed to update candidate profile", resultData?.message || "Something went wrong.");
+        return;
+      }
+
+      showSuccess("Success", resultData?.message || "Candidate profile updated successfully.");
+      setOpenCandidateStatusModal(false);
+      // Optionally refresh data
+      if (comesfrom === "venueManager") {
+        fetchVenueManagerRecruitmentById(id);
+      } else if (comesfrom === "coach") {
+        fetchCoachRecruitmentById(id);
+      } else {
+        fetchAllRecruitmentById(id);
+      }
+    } catch (error) {
+      showError("Network Error", error?.message || "Unable to submit practical assessment.");
+    } finally {
+      setPracticalLoading(false);
+    }
+  };
+  const fetchComments = useCallback(async () => {
+    const token = localStorage.getItem("adminToken");
+    if (!token || !id) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/comment/list?commentType=recruitment&serviceType=recruitment&commentByRecruitmentLead=${id}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -263,7 +405,7 @@ const CandidateInfo = ({ steps, setSteps }) => {
       console.error("Failed to fetch comments:", error);
       showError("Error", error.message || error.error || "Failed to fetch comments. Please try again later.");
     }
-  }, []);
+  }, [API_BASE_URL, id]);
 
   const submitScorecard = () => {
     setPayload(prev => ({ ...prev, ...telephoneCallDelivery }));
@@ -271,6 +413,7 @@ const CandidateInfo = ({ steps, setSteps }) => {
 
     toggleStep(3, "completed");
     setRateOpen(false);
+    showSuccess("Step Completed", "Scorecard ratings have been saved.");
   };
   const handleSubmitComment = async (e) => {
     const token = localStorage.getItem("adminToken");
@@ -281,7 +424,10 @@ const CandidateInfo = ({ steps, setSteps }) => {
     myHeaders.append("Authorization", `Bearer ${token}`);
 
     const raw = JSON.stringify({
-      "comment": comment
+      "comment": comment,
+      "commentType": "recruitment",
+      "serviceType": "recruitment",
+      "commentByRecruitmentLead": Number(id)
     });
 
     const requestOptions = {
@@ -295,7 +441,7 @@ const CandidateInfo = ({ steps, setSteps }) => {
       setLoadingComment(true);
 
 
-      const response = await fetch(`${API_BASE_URL}/api/admin/book-membership/comment/create`, requestOptions);
+      const response = await fetch(`${API_BASE_URL}/api/admin/comment/create`, requestOptions);
 
       const result = await response.json();
 
@@ -322,7 +468,6 @@ const CandidateInfo = ({ steps, setSteps }) => {
 
   // steps 
 
-  console.log('steps', steps)
   const venueOptions = assignedVenues.map((v) => ({
     value: v.id,
     label: `${v.firstName} ${v.lastName}`.trim() || v.email, // fallback to email if no name
@@ -430,12 +575,13 @@ const CandidateInfo = ({ steps, setSteps }) => {
 
   useEffect(() => {
     const p = recuritmentDataById?.candidateProfile;
-    console.log('ppppppppppp', p)
+
     if (!p) {
       setSteps(prev =>
         prev.map(step => ({
           ...step,
           status: "pending",
+          isEnabled: step.id === 1,
           resultPercent: undefined,
           resultStatus: undefined,
         }))
@@ -445,40 +591,105 @@ const CandidateInfo = ({ steps, setSteps }) => {
 
     setSteps(prev =>
       prev.map(step => {
+        const isStep1Done = !!p.qualifyLead;
+        const isStep2Done = !!p.telephoneCallSetupDate;
+        const isStep3Done = !!p.telePhoneCallDeliveryCommunicationSkill;
+        const isStep4Done = !!p.bookPracticalAssessment;
+        const isStep5Done = !!p.result;
+
+        let isEnabled = false;
         switch (step.id) {
           case 1:
-            return { ...step, status: p.qualifyLead ? "completed" : "pending" };
+            isEnabled = true;
+            break;
+          case 2:
+            isEnabled = isStep1Done;
+            break;
+          case 3:
+            isEnabled = isStep2Done;
+            break;
+          case 4:
+            isEnabled = isStep3Done;
+            break;
+          case 5:
+            isEnabled = isStep4Done;
+            break;
+          default:
+            isEnabled = false;
+        }
+
+        switch (step.id) {
+          case 1:
+            return { ...step, status: isStep1Done ? "completed" : "pending", isEnabled };
           case 2:
             return {
               ...step,
-              status: p.telephoneCallSetupDate ? "completed" : "pending",
-              isEnabled: !p.telephoneCallSetupDate,
+              status: isStep2Done ? "completed" : "pending",
+              isEnabled
             };
-
           case 3:
             return {
               ...step,
-              status: p.telePhoneCallDeliveryCommunicationSkill ? "completed" : "pending",
+              status: isStep3Done ? "completed" : "pending",
+              isEnabled
             };
-
+          case 4:
+            return {
+              ...step,
+              status: isStep4Done ? "completed" : "pending",
+              isEnabled
+            };
           case 5:
-            return p.result
+            return isStep5Done
               ? {
                 ...step,
                 status: "completed",
                 resultPercent: recuritmentDataById.telephoneCallScorePercentage + "%",
                 resultStatus: p.result === "passed" ? "Passed" : "Failed",
+                isEnabled,
               }
-              : step;
+              : { ...step, status: "pending", isEnabled };
 
           default:
             return step;
         }
       })
     );
+
+    // Sync other states
+    setTelephoneCall({
+      date: p.telephoneCallSetupDate || "",
+      time: p.telephoneCallSetupTime || "",
+      reminder: p.telephoneCallSetupReminder || "",
+      email: p.telephoneCallSetupEmail || "",
+      scores: {
+        communication: p.telePhoneCallDeliveryCommunicationSkill,
+        passion: p.telePhoneCallDeliveryPassionCoaching,
+        experience: p.telePhoneCallDeliveryExperience,
+        knowledge: p.telePhoneCallDeliveryKnowledgeOfSSS,
+      },
+    });
+
+    setTelephoneCallDelivery({
+      telePhoneCallDeliveryCommunicationSkill: p.telePhoneCallDeliveryCommunicationSkill,
+      telePhoneCallDeliveryPassionCoaching: p.telePhoneCallDeliveryPassionCoaching,
+      telePhoneCallDeliveryExperience: p.telePhoneCallDeliveryExperience,
+      telePhoneCallDeliveryKnowledgeOfSSS: p.telePhoneCallDeliveryKnowledgeOfSSS,
+    });
+
+    setPayload({
+      qualifyLead: p.qualifyLead,
+      telephoneCallSetupDate: p.telephoneCallSetupDate,
+      telephoneCallSetupTime: p.telephoneCallSetupTime,
+      telephoneCallSetupReminder: p.telephoneCallSetupReminder,
+      telephoneCallSetupEmail: p.telephoneCallSetupEmail,
+      telePhoneCallDeliveryCommunicationSkill: p.telePhoneCallDeliveryCommunicationSkill,
+      telePhoneCallDeliveryPassionCoaching: p.telePhoneCallDeliveryPassionCoaching,
+      telePhoneCallDeliveryExperience: p.telePhoneCallDeliveryExperience,
+      telePhoneCallDeliveryKnowledgeOfSSS: p.telePhoneCallDeliveryKnowledgeOfSSS,
+    });
   }, [recuritmentDataById]);
 
-  console.log('recuritmentDataByIdp', recuritmentDataById)
   const enableNextStep = (id) => {
     setSteps(prev =>
       prev.map(step =>
@@ -494,6 +705,24 @@ const CandidateInfo = ({ steps, setSteps }) => {
           : step
       )
     );
+
+    // Clear relevant errors
+    setPracticalErrors(prev => {
+      const newErrors = { ...prev };
+      if (id === 1) delete newErrors.qualifyLead;
+      if (id === 2 && status === "skipped") {
+        delete newErrors.telephoneCallSetupDate;
+        delete newErrors.telephoneCallSetupTime;
+        delete newErrors.telephoneCallSetupEmail;
+      }
+      if (id === 3 && status === "skipped") {
+        delete newErrors.telePhoneCallDeliveryCommunicationSkill;
+        delete newErrors.telePhoneCallDeliveryPassionCoaching;
+        delete newErrors.telePhoneCallDeliveryExperience;
+        delete newErrors.telePhoneCallDeliveryKnowledgeOfSSS;
+      }
+      return newErrors;
+    });
 
     // ===== STEP-SPECIFIC DATA HANDLING =====
 
@@ -539,6 +768,16 @@ const CandidateInfo = ({ steps, setSteps }) => {
     );
   };
   const confirmTelephoneCall = () => {
+    const errors = {};
+    if (!telephoneCall.date) errors.telephoneCallSetupDate = "Date is required.";
+    if (!telephoneCall.time) errors.telephoneCallSetupTime = "Time is required.";
+    if (!telephoneCall.email) errors.telephoneCallSetupEmail = "Email is required.";
+
+    if (Object.keys(errors).length > 0) {
+      setPracticalErrors(prev => ({ ...prev, ...errors }));
+      return;
+    }
+
     setPayload(prev => ({
       ...prev,
       telephoneCallSetupDate: telephoneCall.date,
@@ -546,141 +785,54 @@ const CandidateInfo = ({ steps, setSteps }) => {
       telephoneCallSetupReminder: telephoneCall.reminder,
       telephoneCallSetupEmail: telephoneCall.email,
     }));
+    setPracticalErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors.telephoneCallSetupDate;
+      delete newErrors.telephoneCallSetupTime;
+      delete newErrors.telephoneCallSetupEmail;
+      return newErrors;
+    });
     toggleOpenStep(2);
     toggleStep(2, "completed");
+    showSuccess("Step Completed", "Telephone call details have been saved.");
   };
   const handleRejectCandidate = async (id) => {
-    showConfirm("Are you sure?", "Do you want to Reject this Candidate ?", "warning").then(async (result) => {
-      if (result.isConfirmed) {
-        await rejectCoach(id);
-      }
-    });
-
-
+    const result = await showConfirm("Are you sure?", "Do you want to Reject this Candidate ?", "Yes, Reject");
     if (result.isConfirmed) {
       await rejectCoach(id);
-
     }
   };
 
-  const handleSubmitPracticalAssesment = (e) => {
-    e.preventDefault();
 
-    if (!venueState || !selectedClass || !selectedDate || !venueManager) {
-      alert("Please fill all fields");
-      return;
-    }
-
-    const payloadd = {
-
-    };
-    setPayload(prev => ({
-      ...prev,
-      bookPracticalAssessment: [
-        {
-          venueId: parseInt(venueState), // assuming input is numeric ID
-          classId: selectedClass.value,
-          date: selectedDate, // assuming dateOptions have `value` as YYYY-MM-DD
-          assignToVenueManagerId: venueManager.value,
-        },
-      ],
-    }));
-    setOpenCandidateStatusModal(false)
-    // console.log("Payload:", payloadd);
-    // send payload to your API here
-  };
-  const handleSubmit = async () => {
-    showConfirm("Are you sure?", "Once you submit this recruitment, you will not be able to edit or fill any fields again. Please carefully review all your entries before submitting. Only submit when everything is confirmed and correct.", "warning").then(async (result) => {
-      if (result.isConfirmed) {
-        await submitRecruitment(id);
-      }
-    });
-
-
-    // If user cancels, stop execution
-    if (!result.isConfirmed) return;
-
-    if (comesfrom === "coach") {
-      const payloadMain = {
-        recruitmentLeadId: id,
-        howDidYouHear: form.heardFrom,
-        ageGroupExperience: form.ageGroup,
-        accessToOwnVehicle: form.vehicle === "Yes",
-        whichQualificationYouHave: form.qualification,
-        footballExperience: form.experience,
-        availableVenueWork: selectedVenueNames,
-        coverNote: form.coverNote,
-        qualifyLead: payload.qualifyLead,
-        telephoneCallSetupDate: payload.telephoneCallSetupDate,
-        telephoneCallSetupTime: payload.telephoneCallSetupTime,
-        // "telephoneCallSetupReminder": 15,
-        telephoneCallSetupEmail: payload.telephoneCallSetupEmail,
-        telePhoneCallDeliveryCommunicationSkill: payload.telePhoneCallDeliveryCommunicationSkill,
-        telePhoneCallDeliveryPassionCoaching: payload.telePhoneCallDeliveryPassionCoaching,
-        telePhoneCallDeliveryExperience: payload.telePhoneCallDeliveryExperience,
-        telePhoneCallDeliveryKnowledgeOfSSS: payload.telePhoneCallDeliveryKnowledgeOfSSS,
-        bookPracticalAssessment: payload.bookPracticalAssessment,
-      };
-      await createCoachRecruitmentById(payloadMain);
-      console.log("Submit Payload (coach):", payloadMain);
-    }
-    else if (comesfrom === "venueManager") {
-      const payloadMain = {
-        recruitmentLeadId: id,
-        howDidYouHear: form.heardFrom,
-        ageGroupExperience: form.ageGroup,
-        accessToOwnVehicle: form.vehicle === "Yes",
-        whichQualificationYouHave: form.qualification,
-        footballExperience: form.experience,
-        availableVenueWork: selectedVenueNames,
-        coverNote: form.coverNote,
-        qualifyLead: payload.qualifyLead,
-        telephoneCallSetupDate: payload.telephoneCallSetupDate,
-        telephoneCallSetupTime: payload.telephoneCallSetupTime,
-        // "telephoneCallSetupReminder": 15,
-        telephoneCallSetupEmail: payload.telephoneCallSetupEmail,
-        telePhoneCallDeliveryCommunicationSkill: payload.telePhoneCallDeliveryCommunicationSkill,
-        telePhoneCallDeliveryPassionCoaching: payload.telePhoneCallDeliveryPassionCoaching,
-        telePhoneCallDeliveryExperience: payload.telePhoneCallDeliveryExperience,
-        telePhoneCallDeliveryKnowledgeOfSSS: payload.telePhoneCallDeliveryKnowledgeOfSSS,
-        bookPracticalAssessment: payload.bookPracticalAssessment,
-      };
-      await createVenuManagerRecruitmentById(payloadMain);
-      console.log("Submit Payload (coach):", payloadMain);
+  const handleSubmit = async () => { };
+  const handleSendEmail = () => {
+    if (form.email) {
+      const token = localStorage.getItem("adminToken");
+      openEmailPopup(
+        [form.email],
+        "/api/admin/send-manual-email",
+        { token, showError, showSuccess }
+      );
     } else {
-      const payloadMain = {
-        recruitmentLeadId: id,
-        howDidYouHear: form.heardFrom,
-        ageGroupExperience: form.ageGroup,
-        accessToOwnVehicle: form.vehicle === "Yes",
-        whichQualificationYouHave: form.qualification,
-        footballExperience: form.experience,
-        availableVenueWork: selectedVenueNames,
-        coverNote: form.coverNote,
-        qualifyLead: payload.qualifyLead,
-        telephoneCallSetupDate: payload.telephoneCallSetupDate,
-        telephoneCallSetupTime: payload.telephoneCallSetupTime,
-        // "telephoneCallSetupReminder": 15,
-        telephoneCallSetupEmail: payload.telephoneCallSetupEmail,
-        telePhoneCallDeliveryCommunicationSkill: payload.telePhoneCallDeliveryCommunicationSkill,
-        telePhoneCallDeliveryPassionCoaching: payload.telePhoneCallDeliveryPassionCoaching,
-        telePhoneCallDeliveryExperience: payload.telePhoneCallDeliveryExperience,
-        telePhoneCallDeliveryKnowledgeOfSSS: payload.telePhoneCallDeliveryExperience,
-        bookPracticalAssessment: payload.bookPracticalAssessment,
-      };
-      await createCoachRecruitmentById(payloadMain);
-      console.log("Submit Payload (coach):", payloadMain);
+      showWarning("No Email Found", "This candidate does not have a valid email address.");
     }
   };
-  // console.log('payload', payload)
-  const handleCoachMail = async (id) => {
-    showConfirm("Are you sure?", "Do you want to send the mail?", "warning").then(async (result) => {
-      if (result.isConfirmed) {
-        await sendCoachMail([id]);
-      }
-    });
 
-
+  const handleSendText = () => {
+    if (form.phone) {
+      const recipient = {
+        name: `${form.firstName || ""} ${form.surname || ""}`.trim(),
+        phone: recuritmentDataById.phoneNumber
+      };
+      const token = localStorage.getItem("adminToken");
+      openTextPopup(
+        [recipient],
+        "/api/admin/send-manual-text",
+        { token, showError, showSuccess }
+      );
+    } else {
+      showWarning("No Phone Number", "This candidate does not have a valid phone number.");
+    }
   };
   const getStatusStyles = (status) => {
     switch (status?.toLowerCase()) {
@@ -697,118 +849,10 @@ const CandidateInfo = ({ steps, setSteps }) => {
 
   const safe = (v) => v !== null && v !== undefined && v !== "";
   const handleDownload = () => {
-    if (pdfLoading) return;
-    setPdfLoading(true);
+    const fileUrl = recuritmentDataById?.candidateProfile?.uploadCv;
 
-    try {
-      const d = recuritmentDataById || {};
-      const p = d.candidateProfile || {};
-
-      const personalInfo = [];
-      safe(d.email) && personalInfo.push(["Email", d.email]);
-      safe(d.phoneNumber) && personalInfo.push(["Phone", d.phoneNumber]);
-      safe(d.dob) && personalInfo.push(["DOB", d.dob]);
-      safe(d.age) && personalInfo.push(["Age", String(d.age)]);
-      safe(d.gender) && personalInfo.push(["Gender", d.gender]);
-      safe(d.postcode) && personalInfo.push(["Postcode", d.postcode]);
-
-      const professionalInfo = [];
-      safe(d.managementExperience) &&
-        professionalInfo.push(["Management Experience", d.managementExperience]);
-      safe(p.footballExperience) &&
-        professionalInfo.push(["Football Experience", p.footballExperience]);
-      safe(p.whichQualificationYouHave) &&
-        professionalInfo.push(["Qualification", p.whichQualificationYouHave]);
-      safe(p.accessToOwnVehicle) &&
-        professionalInfo.push([
-          "Access to Own Vehicle",
-          p.accessToOwnVehicle ? "Yes" : "No",
-        ]);
-
-      const assessmentInfo = [];
-      safe(p.result) && assessmentInfo.push(["Result", p.result]);
-      safe(d.telephoneCallScorePercentage) &&
-        assessmentInfo.push([
-          "Telephone Score",
-          `${d.telephoneCallScorePercentage}%`,
-        ]);
-
-      const docDefinition = {
-        pageSize: "A4",
-        pageMargins: [40, 60, 40, 60],
-
-        content: [
-          {
-            text: `${d.firstName || ""} ${d.lastName || ""}`,
-            style: "header",
-          },
-          safe(d.appliedFor)
-            ? { text: `Applied For: ${d.appliedFor}`, style: "subheader" }
-            : {},
-
-          personalInfo.length && {
-            text: "Personal Information",
-            style: "section",
-          },
-          personalInfo.length && {
-            table: {
-              widths: ["30%", "70%"],
-              body: personalInfo,
-            },
-            layout: "lightHorizontalLines",
-          },
-
-          professionalInfo.length && {
-            text: "Professional Details",
-            style: "section",
-            margin: [0, 15, 0, 5],
-          },
-          professionalInfo.length && {
-            table: {
-              widths: ["30%", "70%"],
-              body: professionalInfo,
-            },
-            layout: "lightHorizontalLines",
-          },
-
-          safe(p.coverNote) && {
-            text: "Cover Note",
-            style: "section",
-            margin: [0, 15, 0, 5],
-          },
-          safe(p.coverNote) && {
-            text: p.coverNote,
-            italics: true,
-          },
-
-          assessmentInfo.length && {
-            text: "Assessment Summary",
-            style: "section",
-            margin: [0, 15, 0, 5],
-          },
-          assessmentInfo.length && {
-            table: {
-              widths: ["30%", "70%"],
-              body: assessmentInfo,
-            },
-            layout: "lightHorizontalLines",
-          },
-        ].filter(Boolean),
-
-        styles: {
-          header: { fontSize: 20, bold: true },
-          subheader: { fontSize: 11, margin: [0, 5, 0, 15] },
-          section: { fontSize: 14, bold: true },
-        },
-      };
-
-      pdfMake.createPdf(docDefinition).download(
-        `${d.firstName || "Candidate"}_CV.pdf`
-      );
-    } catch (err) {
-      console.error("CV generation failed", err);
-    } finally {
-      setPdfLoading(false);
+    if (fileUrl) {
+      window.open(fileUrl, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -839,7 +883,8 @@ const CandidateInfo = ({ steps, setSteps }) => {
                 <label className="text-[16px] font-semibold block">First Name</label>
                 <input
                   type="text"
-                  className="input border border-[#E2E1E5] rounded-xl w-full p-3"
+                  disabled
+                  className="input border border-[#E2E1E5] rounded-xl w-full p-3 bg-gray-100 cursor-not-allowed"
                   value={form.firstName}
                   onChange={(e) => handleChange("firstName", e.target.value)}
                   placeholder="Tom"
@@ -851,21 +896,11 @@ const CandidateInfo = ({ steps, setSteps }) => {
                 <label className="text-[16px] font-semibold block">Surname</label>
                 <input
                   type="text"
-                  className="input border border-[#E2E1E5] rounded-xl w-full p-3"
+                  disabled
+                  className="input border border-[#E2E1E5] rounded-xl w-full p-3 bg-gray-100 cursor-not-allowed"
                   value={form.surname}
                   onChange={(e) => handleChange("surname", e.target.value)}
                   placeholder="John"
-                />
-              </div>
-
-              {/** DOB */}
-              <div className="space-y-1">
-                <label className="text-[16px] font-semibold block">Date of Birth</label>
-                <input
-                  type="date"
-                  className="input border border-[#E2E1E5] rounded-xl w-full p-3"
-                  value={form.dob}
-                  onChange={(e) => handleChange("dob", e.target.value)}
                 />
               </div>
 
@@ -874,7 +909,8 @@ const CandidateInfo = ({ steps, setSteps }) => {
                 <label className="text-[16px] font-semibold block">Age</label>
                 <input
                   type="number"
-                  className="input border border-[#E2E1E5] rounded-xl w-full p-3"
+                  disabled
+                  className="input border border-[#E2E1E5] rounded-xl w-full p-3 bg-gray-100 cursor-not-allowed"
                   value={form.age}
                   onChange={(e) => handleChange("age", e.target.value)}
                   placeholder="25"
@@ -886,7 +922,8 @@ const CandidateInfo = ({ steps, setSteps }) => {
                 <label className="text-[16px] font-semibold block">Email</label>
                 <input
                   type="email"
-                  className="input border border-[#E2E1E5] rounded-xl w-full p-3"
+                  disabled
+                  className="input border border-[#E2E1E5] rounded-xl w-full p-3 bg-gray-100 cursor-not-allowed"
                   value={form.email}
                   onChange={(e) => handleChange("email", e.target.value)}
                   placeholder="email@gmail.com"
@@ -896,12 +933,13 @@ const CandidateInfo = ({ steps, setSteps }) => {
               {/** PHONE */}
               <div className="space-y-1">
                 <label className="text-[16px] font-semibold block">Phone number</label>
-                <div className="flex items-center border border-gray-300 rounded-xl px-4 py-3">
+                <div className="flex items-center border border-gray-300 rounded-xl px-4 py-3 bg-gray-100">
                   <PhoneInput
-                    country="uk"
-                    value="+44"
+                    country={form.countryCode || "gb"}
+                    value={form.dialCode}
+                    disabled
                     disableDropdown={true}
-                    disableCountryCode={true}
+                    disableCountryCode={false}
                     countryCodeEditable={false}
                     inputStyle={{
                       width: "0px",
@@ -914,8 +952,9 @@ const CandidateInfo = ({ steps, setSteps }) => {
                     buttonClass="!bg-white !border-none !p-0"
                   />
                   <input
-                    type="number"
-                    className="border-none w-full focus:outline-none"
+                    type="text"
+                    disabled
+                    className="border-none w-full focus:outline-none bg-transparent cursor-not-allowed"
                     value={form.phone}
                     onChange={(e) => handleChange("phone", e.target.value)}
                     placeholder="+91"
@@ -928,7 +967,8 @@ const CandidateInfo = ({ steps, setSteps }) => {
                 <label className="text-[16px] font-semibold block">London Postcode</label>
                 <input
                   type="text"
-                  className="input border border-[#E2E1E5] rounded-xl w-full p-3"
+                  disabled
+                  className="input border border-[#E2E1E5] rounded-xl w-full p-3 bg-gray-100 cursor-not-allowed"
                   value={form.postcode}
                   onChange={(e) => handleChange("postcode", e.target.value)}
                   placeholder="SW15 0AB"
@@ -936,18 +976,19 @@ const CandidateInfo = ({ steps, setSteps }) => {
               </div>
 
               {/** HEARD FROM */}
-              <div className="space-y-1">
+              <div className="space-y-1 col-span-2">
                 <label className="text-[16px] font-semibold block">How did you hear about us?</label>
                 <select
-                  className="input border border-[#E2E1E5] rounded-xl w-full p-3"
+                  disabled
+                  className="input border border-[#E2E1E5] rounded-xl w-full p-3 bg-gray-100 cursor-not-allowed"
                   value={form.heardFrom}
                   onChange={(e) => handleChange("heardFrom", e.target.value)}
                 >
-                  <option value="Indeed">Indeed</option>
-                  <option value="Facebook">Facebook</option>
-                  <option value="LinkedIn">Linked In</option>
-                  <option value="Instagram">Instagram</option>
-                  <option value="Referral">Referral</option>
+                  {heardFromOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -955,46 +996,57 @@ const CandidateInfo = ({ steps, setSteps }) => {
           </div>
 
           {/* Job Specifications */}
-          <div className="bg-white rounded-2xl p-6 space-y-6">
+          <div className="bg-white rounded-2xl p-6 space-y-6 mt-6">
             <h2 className="font-semibold text-[24px]">Job Specifications</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-              {/* Age Groups */}
-              <div>
-                <p className="font-semibold text-[18px] mb-2">Age groups experience</p>
-                <div className="space-y-2">
-                  {["4-6", "7-9", "10-12", "13-16"].map((age) => (
-                    <label key={age} className="flex items-center gap-3 cursor-pointer select-none">
 
-                      <input
-                        type="radio"
-                        name="ageGroup"
-                        value={age}
-                        checked={form.ageGroup === age}
-                        onChange={(e) => handleChange("ageGroup", e.target.value)}
-                        className="peer hidden"
-                      />
+              {comesfrom == "venueManager" &&
 
-                      <span className="w-5 h-5 rounded-full border-2 border-gray-400 flex items-center justify-center peer-checked:bg-blue-600 peer-checked:border-blue-600 text-white">
-                        <Check className="p-[2px]" />
-                      </span>
+                (
 
-                      {age}
-                    </label>
-                  ))}
-                </div>
-              </div>
+                  <>
+                    <p className="font-semibold text-[18px] mb-2">Age groups experience</p>
+                    <div className="space-y-2">
+                      {ageGroupOptions.map((age) => (
+                        <label key={age} className="flex items-center gap-3 cursor-not-allowed select-none opacity-60 pointer-events-none">
+
+                          <input
+                            type="checkbox"
+                            disabled
+                            value={age}
+                            checked={form.ageGroup?.includes(age)}
+                            onChange={(e) => {
+                              handleChange("ageGroup", form.ageGroup?.includes(age)
+                                ? form.ageGroup.filter(x => x !== age)
+                                : [...(form.ageGroup || []), age]
+                              );
+                            }}
+                            className="peer hidden"
+                          />
+
+                          <span className={`w-5 h-5 border-2 border-gray-400 flex items-center justify-center peer-checked:bg-blue-600 peer-checked:border-blue-600 text-white rounded`}>
+                            <Check className={`p-[2px] ${form.ageGroup?.includes(age) ? 'opacity-100' : 'opacity-0'}`} />
+                          </span>
+
+                          {age}
+                        </label>
+                      ))}
+                    </div>
+                  </>
+                )}
 
               {/* VEHICLE */}
               <div>
                 <p className="font-semibold text-[18px] mb-2">Access to your own vehicle?</p>
                 <div className="space-y-2">
                   {["Yes", "No"].map((v) => (
-                    <label key={v} className="flex items-center gap-3 cursor-pointer select-none">
+                    <label key={v} className="flex items-center gap-3 cursor-not-allowed select-none opacity-60 pointer-events-none">
 
                       <input
                         type="radio"
+                        disabled
                         value={v}
                         checked={form.vehicle === v}
                         onChange={(e) => handleChange("vehicle", e.target.value)}
@@ -1015,19 +1067,25 @@ const CandidateInfo = ({ steps, setSteps }) => {
               <div>
                 <p className="font-semibold text-[18px] mb-2">Which qualifications do you have?</p>
                 <div className="space-y-2">
-                  {["Bachelor's Degree", "Level one in football", "Level two in football", "Higher level"].map((q) => (
-                    <label key={q} className="flex items-center gap-3 cursor-pointer select-none">
+                  {qualificationOptions.map((q) => (
+                    <label key={q} className="flex items-center gap-3 cursor-not-allowed select-none opacity-60 pointer-events-none">
 
                       <input
-                        type="radio"
+                        type="checkbox"
+                        disabled
                         value={q}
-                        checked={form.qualification === q}
-                        onChange={(e) => handleChange("qualification", e.target.value)}
+                        checked={form.qualification?.includes(q)}
+                        onChange={(e) => {
+                          handleChange("qualification", form.qualification?.includes(q)
+                            ? form.qualification.filter(x => x !== q)
+                            : [...(form.qualification || []), q]
+                          );
+                        }}
                         className="peer hidden"
                       />
 
-                      <span className="w-5 h-5 rounded-full border-2 border-gray-400 flex items-center justify-center peer-checked:bg-blue-600 peer-checked:border-blue-600 text-white">
-                        <Check className="p-[2px]" />
+                      <span className={`w-5 h-5 border-2 border-gray-400 flex items-center justify-center peer-checked:bg-blue-600 peer-checked:border-blue-600 text-white rounded`}>
+                        <Check className={`p-[2px] ${form.qualification?.includes(q) ? 'opacity-100' : 'opacity-0'}`} />
                       </span>
 
                       {q}
@@ -1038,13 +1096,18 @@ const CandidateInfo = ({ steps, setSteps }) => {
 
               {/* EXPERIENCE */}
               <div>
-                <p className="font-semibold text-[18px] mb-2">How many years football coaching experience?</p>
+                <p className="font-semibold text-[18px] mb-2">
+                  {comesfrom === "venueManager"
+                    ? "How many years football coaching experience do you have?"
+                    : "How many years football coaching experience?"}
+                </p>
                 <div className="space-y-2">
-                  {["0-1 year", "2 years", "3 years", "More than 3 years", "None"].map((ex) => (
-                    <label key={ex} className="flex items-center gap-3 cursor-pointer select-none">
+                  {experienceOptions.map((ex) => (
+                    <label key={ex} className="flex items-center gap-3 cursor-not-allowed select-none opacity-60 pointer-events-none">
 
                       <input
                         type="radio"
+                        disabled
                         value={ex}
                         checked={form.experience === ex}
                         onChange={(e) => handleChange("experience", e.target.value)}
@@ -1073,11 +1136,12 @@ const CandidateInfo = ({ steps, setSteps }) => {
                       return (
                         <label
                           key={venue.id}
-                          className="flex items-center gap-3 cursor-pointer"
+                          className="flex items-center gap-3 cursor-not-allowed opacity-60 pointer-events-none"
                         >
                           {/* Hidden native checkbox */}
                           <input
                             type="checkbox"
+                            disabled
                             checked={checked}
                             onChange={() => handleVenueChange(venue.id)}
                             className="sr-only"
@@ -1134,7 +1198,8 @@ const CandidateInfo = ({ steps, setSteps }) => {
             </button>
 
             <textarea
-              className="input border border-[#E2E1E5] bg-[#FAFAFA] rounded-xl w-full p-3 h-32 resize-none"
+              disabled
+              className="input border border-[#E2E1E5] bg-gray-100 rounded-xl w-full p-3 h-32 resize-none cursor-not-allowed"
               value={form.coverNote}
               onChange={(e) => handleChange("coverNote", e.target.value)}
               placeholder="Cover Note"
@@ -1155,15 +1220,15 @@ const CandidateInfo = ({ steps, setSteps }) => {
           {/* comments */}
 
           <Comments
-                  adminInfo={adminInfo}
-                  comment={comment}
-                  setComment={setComment}
-                  handleSubmitComment={handleSubmitComment}
-                  loadingComment={loadingComment}
-                  commentsList={commentsList}
-                  currentComments={currentComments}
-                  formatTimeAgo={formatTimeAgo}
-                />
+            adminInfo={adminInfo}
+            comment={comment}
+            setComment={setComment}
+            handleSubmitComment={handleSubmitComment}
+            loadingComment={loadingComment}
+            commentsList={commentsList}
+            currentComments={currentComments}
+            formatTimeAgo={formatTimeAgo}
+          />
         </div>
 
         <div className="md:w-4/12  space-y-6">
@@ -1194,7 +1259,6 @@ const CandidateInfo = ({ steps, setSteps }) => {
 
                     {step.status !== "completed" && (
                       <button
-                        disabled={recruitedMode}
                         className="text-gray-400 text-sm"
                         onClick={() => toggleStep(step.id, "skipped")}
                       >
@@ -1214,28 +1278,29 @@ const CandidateInfo = ({ steps, setSteps }) => {
 
                   {/* QUALIFY BUTTONS */}
                   {step.actionType === "buttons" && (
-                    <div className="flex gap-2 mt-3">
-                      <button
-                        className={`w-8 h-8 border rounded-lg ${step.status === "skipped"
-                          ? "bg-blue-600 text-white"
-                          : "bg-white text-gray-500"
-                          }`}
-                        onClick={() => !recruitedMode && toggleStep(step.id, "skipped")}
-                      >
-                        ✕
-                      </button>
-                      <button
-
-                        disabled={recruitedMode}
-                        className={`w-8 h-8 rounded-lg ${step.status === "completed"
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-200 text-gray-500"
-                          }`}
-                        onClick={() => !recruitedMode && toggleStep(step.id, "completed")}
-                      >
-                        ✓
-                      </button>
-                    </div>
+                    <>
+                      <div className="flex gap-2 mt-3">
+                        <button
+                          className={`w-8 h-8 border rounded-lg ${step.status === "skipped"
+                            ? "bg-blue-600 text-white"
+                            : "bg-white text-gray-500"
+                            }`}
+                          onClick={() => toggleStep(step.id, "skipped")}
+                        >
+                          ✕
+                        </button>
+                        <button
+                          className={`w-8 h-8 rounded-lg ${step.status === "completed"
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-200 text-gray-500"
+                            }`}
+                          onClick={() => toggleStep(step.id, "completed")}
+                        >
+                          ✓
+                        </button>
+                      </div>
+                      {practicalErrors.qualifyLead && <p className="text-red-500 text-xs mt-1">{practicalErrors.qualifyLead}</p>}
+                    </>
                   )}
 
                   {/* BUTTON */}
@@ -1260,40 +1325,58 @@ const CandidateInfo = ({ steps, setSteps }) => {
                   {/* TELEPHONE CALL FORM */}
                   {step.id === 2 && step.isOpen && (
                     <div className="bg-gray-50 rounded-xl p-4 mt-3 space-y-3">
-                      <input
-                        type="date"
-                        disabled={recruitedMode}
-                        value={telephoneCall.date}
-                        className="border mr-4 rounded-xl p-2"
-                        onChange={(e) =>
-                          setTelephoneCall({ ...telephoneCall, date: e.target.value })
-                        }
-                      />
+                      <div className="grid grid-cols-2 gap-4">
+                        <input
+                          type="date"
+                          value={telephoneCall.date}
+                          className="border mr-4 w-full rounded-xl p-2"
+                          onChange={(e) =>
+                            setTelephoneCall({ ...telephoneCall, date: e.target.value })
+                          }
+                        />
 
-                      <input
-                        type="time" disabled={recruitedMode}
-                        value={telephoneCall.time}
-                        className="border rounded-xl p-2"
+                        <input
+                          type="time"
+                          value={telephoneCall.time}
+                          className="border w-full rounded-xl p-2"
 
-                        onChange={(e) =>
-                          setTelephoneCall({ ...telephoneCall, time: e.target.value })
-                        }
-                      />
+                          onChange={(e) =>
+                            setTelephoneCall({ ...telephoneCall, time: e.target.value })
+                          }
+                        />
+                      </div>
 
-                      <input
-                        type="email"
-                        disabled={recruitedMode}
-                        value={telephoneCall.email}
-                        className="border rounded-xl p-2"
-                        placeholder="Candidate email"
+                      {comesfrom == "coach" && (
+                        <input
+                          type="email"
+                          value={telephoneCall.email}
+                          className="border rounded-xl p-2 w-full"
+                          placeholder="Candidate email"
 
-                        onChange={(e) =>
-                          setTelephoneCall({ ...telephoneCall, email: e.target.value })
-                        }
-                      />
+                          onChange={(e) =>
+                            setTelephoneCall({ ...telephoneCall, email: e.target.value })
+                          }
+                        />
+                      )}
+
+                      <select
+                        value={telephoneCall.reminder}
+                        className="border border-[#E2E1E5] rounded-xl px-3 py-2.5 w-full text-gray-600"
+                        onChange={(e) => setTelephoneCall({ ...telephoneCall, reminder: e.target.value })}
+                      >
+                        <option value="">When do you want to be reminded?</option>
+                        <option value="10 minutes before">10 minutes before</option>
+                        <option value="30 minutes before">30 minutes before</option>
+                        <option value="1 hour before">1 hour before</option>
+                        <option value="1 day before">1 day before</option>
+                      </select>
+
+                      {practicalErrors.telephoneCallSetupDate && <p className="text-red-500 text-xs mt-1">{practicalErrors.telephoneCallSetupDate}</p>}
+                      {practicalErrors.telephoneCallSetupTime && <p className="text-red-500 text-xs mt-1">{practicalErrors.telephoneCallSetupTime}</p>}
+                      {practicalErrors.telephoneCallSetupEmail && <p className="text-red-500 text-xs mt-1">{practicalErrors.telephoneCallSetupEmail}</p>}
+                      {practicalErrors.telephoneCallSetupReminder && <p className="text-red-500 text-xs mt-1">{practicalErrors.telephoneCallSetupReminder}</p>}
 
                       <button
-                        disabled={recruitedMode}
                         className="w-full bg-blue-600 text-white py-2 rounded-xl"
                         onClick={confirmTelephoneCall}
                       >
@@ -1317,74 +1400,17 @@ const CandidateInfo = ({ steps, setSteps }) => {
               ))}
             </div>
 
-            {/* SCORECARD MODAL */}
-            {rateOpen && (
-              <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="bg-white rounded-2xl w-full max-w-lg p-6"
-                >
-                  <h3 className="text-lg font-semibold mb-4">Call Scorecard</h3>
 
-                  {["communication", "passion", "experience", "knowledge"].map((key) => (
-                    <div key={key} className="mb-4">
-                      <p className="capitalize font-semibold mb-2">{key}</p>
-                      {[1, 2, 3, 4, 5].map((n) => (
-                        <label key={n} className="mr-4">
-                          <input
-                            type="radio"
-                            checked={telephoneCall.scores[key] === n}
-                            onChange={() => {
-                              // Update scores
-                              setTelephoneCall((prev) => ({
-                                ...prev,
-                                scores: { ...prev.scores, [key]: n },
-                              }));
-
-                              // Map and save in delivery state
-                              const mapping = {
-                                communication: "telePhoneCallDeliveryCommunicationSkill",
-                                passion: "telePhoneCallDeliveryPassionCoaching",
-                                experience: "telePhoneCallDeliveryExperience",
-                                knowledge: "telePhoneCallDeliveryKnowledgeOfSSS",
-                              };
-                              setTelephoneCallDelivery((prev) => ({
-                                ...prev,
-                                [mapping[key]]: n,
-                              }));
-                            }}
-                          />{" "}
-                          {n}
-                        </label>
-                      ))}
-                    </div>
-                  ))}
-
-                  <button
-                    className="w-full bg-blue-600 text-white py-2 rounded-xl"
-                    onClick={() => {
-
-                      toggleStep(3, "completed"); // mark step completed
-                      setRateOpen(false);
-                      // console.log("Saved delivery values:", telephoneCallDelivery);
-                    }}
-                  >
-                    Submit Scorecard
-                  </button>
-                </motion.div>
-              </div>
-            )}
           </div>
 
           {/* FOOTER ACTIONS */}
           <div className="bg-white p-6 rounded-2xl  space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => handleCoachMail(id)} className="flex items-center justify-center gap-2 border border-[#717073] rounded-xl py-3">
+              <button onClick={handleSendEmail} className="flex items-center justify-center gap-2 border border-[#717073] rounded-xl py-3">
                 <Mail size={18} /> <span>Send Email</span>
               </button>
 
-              <button className="flex items-center justify-center gap-2 border border-[#717073] rounded-xl py-3">
+              <button onClick={handleSendText} className="flex items-center justify-center gap-2 border border-[#717073] rounded-xl py-3">
                 <MessageSquare size={18} /> <span>Send Text</span>
               </button>
             </div>
@@ -1538,11 +1564,32 @@ const CandidateInfo = ({ steps, setSteps }) => {
                             </label>
                           ))}
                         </div>
+                        {practicalErrors[scoreKeyMap[label]] && <p className="text-red-500 text-xs mt-1">{practicalErrors[scoreKeyMap[label]]}</p>}
                       </div>
                     ))}
                   </div>
 
-                  <button onClick={submitScorecard}
+                  <button onClick={() => {
+                    const errors = {};
+                    if (telephoneCallDelivery.telePhoneCallDeliveryCommunicationSkill === null) errors.telePhoneCallDeliveryCommunicationSkill = "Required";
+                    if (telephoneCallDelivery.telePhoneCallDeliveryPassionCoaching === null) errors.telePhoneCallDeliveryPassionCoaching = "Required";
+                    if (telephoneCallDelivery.telePhoneCallDeliveryExperience === null) errors.telePhoneCallDeliveryExperience = "Required";
+                    if (telephoneCallDelivery.telePhoneCallDeliveryKnowledgeOfSSS === null) errors.telePhoneCallDeliveryKnowledgeOfSSS = "Required";
+
+                    if (Object.keys(errors).length > 0) {
+                      setPracticalErrors(prev => ({ ...prev, ...errors }));
+                      return;
+                    }
+                    setPracticalErrors(prev => {
+                      const newErrors = { ...prev };
+                      delete newErrors.telePhoneCallDeliveryCommunicationSkill;
+                      delete newErrors.telePhoneCallDeliveryPassionCoaching;
+                      delete newErrors.telePhoneCallDeliveryExperience;
+                      delete newErrors.telePhoneCallDeliveryKnowledgeOfSSS;
+                      return newErrors;
+                    });
+                    submitScorecard();
+                  }}
                     className="bg-[#237FEA] text-white py-3 rounded-xl w-full font-semibold hover:bg-blue-700 transition-all">
                     Submit
                   </button>
@@ -1560,7 +1607,7 @@ const CandidateInfo = ({ steps, setSteps }) => {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-white rounded-2xl w-full max-w-xl shadow-xl  overflow-hidden "
+              className="bg-white rounded-2xl max-h-[90vh] w-full max-w-xl shadow-xl  overflow-auto "
             >
               <div className="relative mt-6 border-b  border-[#E2E1E5]  pb-5">
                 <h2 className="text-xl font-semibold  text-center">Book Practical Assessment</h2>
@@ -1586,7 +1633,7 @@ const CandidateInfo = ({ steps, setSteps }) => {
                       </option>
                     ))}
                   </select>
-
+                  {practicalErrors.venueState && <p className="text-red-500 text-xs mt-1">{practicalErrors.venueState}</p>}
                 </div>
 
                 <div className="mb-3">
@@ -1599,6 +1646,7 @@ const CandidateInfo = ({ steps, setSteps }) => {
                     value={selectedClass}
                     onChange={setSelectedClass}
                   />
+                  {practicalErrors.selectedClass && <p className="text-red-500 text-xs mt-1">{practicalErrors.selectedClass}</p>}
                 </div>
 
                 <div className="mb-3">
@@ -1610,6 +1658,7 @@ const CandidateInfo = ({ steps, setSteps }) => {
                     className="border border-[#E2E1E5] w-full rounded-2xl p-3"
                     dateFormat="dd/MM/yyyy"
                   />
+                  {practicalErrors.selectedDate && <p className="text-red-500 text-xs mt-1">{practicalErrors.selectedDate}</p>}
                 </div>
 
                 <div className="mb-3">
@@ -1622,20 +1671,23 @@ const CandidateInfo = ({ steps, setSteps }) => {
                     value={venueManager}
                     onChange={setVenueManager}
                   />
+                  {practicalErrors.venueManager && <p className="text-red-500 text-xs mt-1">{practicalErrors.venueManager}</p>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mt-12">
                   <button
                     type="button"
+                    onClick={() => setOpenCandidateStatusModal(false)}
                     className="w-full p-3 border border-[#E2E1E5] text-[#717073] font-semibold rounded-2xl"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="w-full p-3 border border-[#E2E1E5] bg-[#237FEA] text-white font-semibold rounded-2xl"
+                    disabled={practicalLoading || recruitedMode}
+                    className={`w-full p-3 border border-[#E2E1E5] ${recruitedMode ? 'bg-slate-400 cursor-not-allowed' : 'bg-[#237FEA]'} text-white font-semibold rounded-2xl flex items-center justify-center gap-2`}
                   >
-                    Send Confirmation
+                    {practicalLoading ? <Loader2 className="animate-spin" size={20} /> : "Send Confirmation"}
                   </button>
                 </div>
               </form>
