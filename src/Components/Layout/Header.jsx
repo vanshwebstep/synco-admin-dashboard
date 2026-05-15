@@ -481,7 +481,24 @@ const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpe
 
           {/* Search Bar */}
           {/* Search Bar */}
-          <GlobalSearch />
+          <GlobalSearch
+            onResultClick={(sourceRow) => {
+              // id nikalo — parent id prefer karo
+              console.log("sourceRow",sourceRow)
+              const itemId =
+                sourceRow?.parent?.id ||
+                sourceRow?.id ||
+                sourceRow?.parent?.bookingId ||
+                sourceRow?.bookingId;
+
+              if (!itemId) return;
+
+              // State mein bhejo + navigate
+              navigate(`/weekly-classes/all-members/account-info`, {
+                state: { itemId },
+              });
+            }}
+          />
           {hasPermission && (
 
             <div

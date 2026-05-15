@@ -25,8 +25,7 @@ const Facebook = () => {
   const PRef = useRef(null);
   const [calendarData, setCalendarData] = useState([]);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
-  const { searchQuery } = useGlobalSearch();
-
+const { searchQuery, registerTableData } = useGlobalSearch();
   const { loading, fetchData, data, selectedUserIds, setSelectedUserIds, setSelectedBookingIds, selectedBookingIds, setCurrentPage, currentPage, sheetUrl } = useLeads();
   const [expandedRow, setExpandedRow] = useState(null);
   const navigate = useNavigate()
@@ -219,7 +218,27 @@ const Facebook = () => {
     fetchData();
   }, []);
 
+useEffect(() => {
+  if (!data?.length) return;
 
+  // Shape leads into the structure GlobalSearch expects:
+  // it looks for _parents (parentFirstName, parentLastName, parentPhoneNumber, parentEmail)
+  // and _student (studentFirstName, studentLastName, age)
+  const shaped = data.map((lead) => ({
+    id: lead.id,
+    parents: [
+      {
+        parentFirstName: lead.firstName || "",
+        parentLastName:  lead.lastName  || "",
+        parentPhoneNumber: lead.phone   || "",
+        parentEmail:     lead.email     || "",
+      },
+    ],
+    students: [], // leads don't have students yet — searching by parent name/phone is enough
+  }));
+
+  registerTableData(shaped);
+}, [data]);
   const handleIconClick = (type, id, paymentPlans = []) => {
 
 

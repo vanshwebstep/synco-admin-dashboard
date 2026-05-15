@@ -56,7 +56,7 @@ function findActiveItemAndParents(items, currentPath, parents = []) {
 
 const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
   const [openDropdowns, setOpenDropdowns] = useState({});
-  const { searchQuery , setSearchQuery } = useGlobalSearch();
+  const { searchQuery , setSearchQuery,clearRegisteredData } = useGlobalSearch();
   const [hoveredItem, setHoveredItem] = useState(null);
   const location = useLocation();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -618,6 +618,7 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
     localStorage.removeItem("openTerms");
     localStorage.removeItem("activeTab");
     setHistoryActiveTab('General');
+    clearRegisteredData();
     setOpenDropdowns((prev) => ({ ...prev, [title]: !prev[title] }));
   };
 
@@ -626,6 +627,7 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
     localStorage.removeItem("openTerms");
     localStorage.removeItem("activeTab");
     setHistoryActiveTab('General');
+    clearRegisteredData(); 
   };
 
   const toggleMobileMenu = () => {
@@ -680,6 +682,7 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
   // ✅ Reset only if search has value
   if (searchQuery) {
     setSearchQuery("");
+     clearRegisteredData();
   }
 
   if (hasSubItems || hasInnerSubItems) {
@@ -768,6 +771,7 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
     to={item.link}
     onClick={() => {
       if (searchQuery) setSearchQuery("");
+      clearRegisteredData();
     }}
   >
     {content}

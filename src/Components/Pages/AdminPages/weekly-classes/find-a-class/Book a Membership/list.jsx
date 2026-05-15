@@ -359,9 +359,7 @@ const List = () => {
     const img2Ref = useRef(null);
     const [showPopup, setShowPopup] = useState(false);
     const [directDebitData, setDirectDebitData] = useState([]);
-
-    console.log('comesFrom', comesFrom)
-
+    console.log("location.state", location.state);
     const formatTimeAgo = (timestamp) => {
         const now = new Date();
         const past = new Date(timestamp);
@@ -402,7 +400,7 @@ const List = () => {
     const [parents, setParents] = useState([{
         id: Date.now(), parentFirstName: '', parentLastName: '', parentEmail: '',
         parentPhoneNumber: '', interestReason: '', interestReasonOther: '',
-        relationToChild: '', howDidYouHear: '', isCustomReason: false
+        relationToChild: '', howDidYouHear: '', isCustomReason: false, starterPackSize: ''
     }]);
     const [payment, setPayment] = useState({
         paymentType: PAYMENT_TYPES.ACCESS_PAY_SUITE,
@@ -504,9 +502,21 @@ const List = () => {
             );
 
             // 🚨 Capacity 0 case
+            // 🚨 Capacity 0 case
             if (selectedClass?.capacity === 0 &&
                 selectedOption.value !== updated[index].initialClassId &&
                 selectedOption.value !== updated[index].selectedClassId) {
+
+                if (comesFrom === "cancellation") {
+                    // Show inline error — do not navigate to waiting list
+                    updated[index] = {
+                        ...updated[index],
+                        selectedClassId: selectedOption.value,
+                        selectedClassData: selectedClass,
+                        error: "This class has no capacity. Please select another class.",
+                    };
+                    return updated;
+                }
 
                 showConfirm(
                     "Are you sure?",
@@ -517,9 +527,9 @@ const List = () => {
                         navigate("/weekly-classes/find-a-class/add-to-waiting-list", {
                             state: {
                                 itemId: selectedClass.id,
-                                studentsData: prev,              // 👈 ALL students
-                                parentsData: parents,            // 👈 parents
-                                emergencyData: emergency,        // 👈 emergency
+                                studentsData: prev,
+                                parentsData: parents,
+                                emergencyData: emergency,
                                 selectedClassData: selectedClass,
                                 selectedStudentIndex: index,
                                 comesFrom: 'membership',
@@ -529,12 +539,8 @@ const List = () => {
                     }
                 });
 
-
-
-
                 return prev; // don't update selection
             }
-
             // ✅ Normal case
             updated[index] = {
                 ...updated[index],
@@ -628,10 +634,21 @@ const List = () => {
                 const mappedStudents = TrialData.students.map((student) => ({
                     ...student,
                     dateOfBirth: formatDOB(student.dateOfBirth),
-
-                    selectedClassId: student.selectedClassId || singleClassSchedulesOnly?.id || null,
-                    selectedClassData: student.selectedClassData || singleClassSchedulesOnly || null,
-                    initialClassId: student.selectedClassId || singleClassSchedulesOnly?.id || null,
+                    selectedClassId:
+                        student.selectedClassId ||
+                        student.classSchedule?.id ||
+                        singleClassSchedulesOnly?.id ||
+                        null,
+                    selectedClassData:
+                        student.selectedClassData ||
+                        student.classSchedule ||
+                        singleClassSchedulesOnly ||
+                        null,
+                    initialClassId:
+                        student.selectedClassId ||
+                        student.classSchedule?.id ||
+                        singleClassSchedulesOnly?.id ||
+                        null,
                 }));
                 setStudents(mappedStudents);
                 setNumberOfStudents(TrialData?.totalStudents);
@@ -719,7 +736,7 @@ const List = () => {
             if (!s.medicalInformation?.trim()) newErrors[`student_${i}_medicalInformation`] = "Medical info required (write 'None' if applicable)";
             if (i !== 0 && !comesFrom && !s.selectedClassId) newErrors[`student_${i}_selectedClassId`] = "Please select a class";
             if (s.selectedClassData && Number(s.selectedClassData.capacity) === 0) {
-                newErrors[`student_${i}_selectedClassId`] = "Selected class has no available capacity";
+                newErrors[`student_${i}_selectedClassId`] = "This class has no capacity. Please select another class.";
             }
         }
 
@@ -733,6 +750,9 @@ const List = () => {
             if (!p.interestReason) newErrors[`parent_${i}_interestReason`] = "Selection required";
             if (!p.relationToChild) newErrors[`parent_${i}_relationToChild`] = "Relation is required";
             if (!p.howDidYouHear) newErrors[`parent_${i}_howDidYouHear`] = "Please select how you heard about us";
+            if (i === 0 && singleClassSchedulesOnly?.venue?.starterPack && comesFrom !== 'cancellation' && !p.starterPackSize) {
+                newErrors[`parent_${i}_starterPackSize`] = "Size is required";
+            }
         }
 
         if (!emergency.emergencyFirstName?.trim()) newErrors["emergency_emergencyFirstName"] = "First name is required";
@@ -930,7 +950,7 @@ const List = () => {
         setParents((prev) => [...prev, {
             id: Date.now(), parentFirstName: '', parentLastName: '', parentEmail: '',
             parentPhoneNumber: '', relationToChild: '', interestReason: '',
-            interestReasonOther: '', howDidYouHear: '', isCustomReason: false
+            interestReasonOther: '', howDidYouHear: '', isCustomReason: false, starterPackSize: ''
         }]);
     };
 
@@ -1120,19 +1140,20 @@ const List = () => {
                 };
             }),
 
-            parents: parents.map(({ id, ...rest }) =>
-                studentRemoved ? rest : { id, ...rest }  // ✅
-            ),
+            parents: parents.map(({ id, ...rest }) => rest),
             starterPack:
                 singleClassSchedulesOnly?.venue?.starterPack &&
                     comesFrom !== "cancellation"
                     ? Number(membershipPlan?.starterPackPrice || 0)
                     : 0,
             discountId: appliedDiscount?.data?.discountId || null,
-            emergency: studentRemoved
-                ? (({ id, ...rest }) => rest)(emergency)
+            size: parents[0]?.starterPackSize || null,
+            emergency: emergency
+                ? (() => {
+                    const { id, ...rest } = emergency;
+                    return rest;
+                })()
                 : emergency,
-
             paymentPlanId: membershipPlan?.value ?? null,
 
             ...(paymentData && {
@@ -1277,6 +1298,13 @@ const List = () => {
         { value: "Instagram", label: "Instagram" },
         { value: "Friend", label: "Friend" },
         { value: "Flyer", label: "Flyer" },
+    ];
+
+    const sizeOptions = [
+        { value: "Small", label: "Small" },
+        { value: "Medium", label: "Medium" },
+        { value: "Large", label: "Large" },
+        { value: "XL", label: "Extra Large" }
     ];
 
     const fetchComments = useCallback(async () => {
@@ -1532,11 +1560,15 @@ const List = () => {
             <p className="font-bold mb-1 text-[13px]">💳 Payment Routing</p>
             <div className="grid grid-cols-2 gap-1">
                 <span className="text-gray-600">Monthly subscription:</span>
-                <span className="font-semibold">
+                <span className="font-semibold block">
                     {isFranchisee ? "GoCardless → Franchisee" : "AccessPaySuite →  Head Office"}
                 </span>
-                <span className="text-gray-600">Starter pack:</span>
-                <span className="font-semibold text-green-700">Stripe → Head Office</span>
+                {singleClassSchedulesOnly?.venue?.starterPack && comesFrom !== 'cancellation' && (
+                    <>
+                        <span className="text-gray  -600">Starter pack:</span>
+                        <span className="font-semibold text-green-700">Stripe → Head Office</span>
+                    </>
+                )}
                 {!pricingBreakdown.isFullMonthCharge && (
                     <>
                         <span className="text-gray-600">Pro-rata payments:</span>
@@ -2207,6 +2239,35 @@ const List = () => {
                                             <ErrorMsg name={`parent_${index}_howDidYouHear`} />
                                         </div>
                                     </div>
+                                    {index === 0 && singleClassSchedulesOnly?.venue?.starterPack && comesFrom !== 'cancellation' && (
+                                        <div className="flex gap-4">
+                                            <div className="w-full">
+                                                <label className="block text-[16px] font-semibold">Starter Pack Size</label>
+                                                <Select
+                                                    options={sizeOptions}
+                                                    placeholder="Select Size"
+                                                    className="mt-2"
+                                                    classNamePrefix="react-select"
+                                                    value={sizeOptions.find((o) => o.value === parent.starterPackSize) || parents[0]?.starterPackSize || null}
+                                                    onChange={(selected) => {
+                                                        handleParentChange(index, "starterPackSize", selected.value);
+                                                        clearError(`parent_${index}_starterPackSize`);
+                                                    }}
+                                                    styles={{
+                                                        control: (base, state) => ({
+                                                            ...base,
+                                                            borderColor: fieldErrors[`parent_${index}_starterPackSize`] ? "#ef4444" : base.borderColor,
+                                                            "&:hover": {
+                                                                borderColor: fieldErrors[`parent_${index}_starterPackSize`] ? "#ef4444" : base.borderColor,
+                                                            },
+                                                            boxShadow: state.isFocused && fieldErrors[`parent_${index}_starterPackSize`] ? "0 0 0 1px #ef4444" : base.boxShadow,
+                                                        }),
+                                                    }}
+                                                />
+                                                <ErrorMsg name={`parent_${index}_starterPackSize`} />
+                                            </div>
+                                        </div>
+                                    )}
                                 </motion.div>
                             ))}
                         </div>

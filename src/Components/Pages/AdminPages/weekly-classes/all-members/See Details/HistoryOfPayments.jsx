@@ -462,8 +462,6 @@ const HistoryOfPayments = ({ stateData }) => {
 
     };
 
-    console.log("amountToSend", amountToSend);
-    console.log("payload", payload);
 
     try {
       await updateBookMembership(payload, stateData.id || stateData.bookingId);
