@@ -7,6 +7,18 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
         display: style.display || "grid",
     };
 
+    // ✅ Opens all <a> tags in new tab
+    const openLinksInNewTab = (html) => {
+        if (!html) return html;
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+        doc.querySelectorAll("a").forEach((anchor) => {
+            anchor.setAttribute("target", "_blank");
+            anchor.setAttribute("rel", "noopener noreferrer");
+        });
+        return doc.body.innerHTML;
+    };
+
     const updateBox = (boxId, key, value) => {
         const newBoxes = (block.boxes || []).map((b) =>
             b.id === boxId ? { ...b, [key]: value } : b
@@ -84,7 +96,7 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
                                 <FaCopy size={8} />
                             </button>
                             <button
-                                className="bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center hover:bg-red-600 shadow-lg"
+                                className="bg-[#F04438] text-white w-5 h-5 rounded-full flex items-center justify-center  shadow-lg"
                                 onClick={(e) => { e.stopPropagation(); removeBox(box.id); }}
                             >
                                 ×
@@ -127,7 +139,7 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
                                             const newItems = (box.items || []).filter((_, i) => i !== idx);
                                             updateBox(box.id, "items", newItems);
                                         }}
-                                        className="absolute -right-2 top-0 text-red-300 hover:text-red-500 opacity-0 group-hover/item:opacity-100 transition"
+                                        className="absolute -right-2 top-0 text-red-300 hover:text-[#F04438] opacity-0 group-hover/item:opacity-100 transition"
                                     >
                                         ×
                                     </button>
@@ -141,10 +153,11 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
                                             color: boxStyle.labelColor || "#6b7280",
                                             marginBottom: "2px"
                                         }}>{item.label}</div>
+                                        {/* ✅ Links inside value open in new tab */}
                                         <div style={{
                                             fontSize: "14px",
                                             color: boxStyle.valueColor || "#111827"
-                                        }} dangerouslySetInnerHTML={{ __html: item.value || "" }} />
+                                        }} dangerouslySetInnerHTML={{ __html: openLinksInNewTab(item.value || "") }} />
                                     </div>
                                 ) : (
                                     <>

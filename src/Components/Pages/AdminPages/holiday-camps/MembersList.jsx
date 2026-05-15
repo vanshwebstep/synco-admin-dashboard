@@ -42,9 +42,9 @@ const MembersList = () => {
     const getStatusBadge = (status) => {
         const s = status.toLowerCase();
         let styles =
-            "bg-red-100 text-red-500"; // default fallback
+            "bg-red-100 text-[#F04438]"; // default fallback
         if (s === "attended" || s === "active")
-            styles = "bg-green-100 text-green-600";
+            styles = "bg-green-100 text-[#027A48]";
         else if (s === "pending") styles = "bg-yellow-100 text-yellow-600";
         else if (s === "frozen") styles = "bg-blue-100 text-blue-600";
         else if (s === "waiting list") styles = "bg-gray-200 text-gray-700";
@@ -225,14 +225,14 @@ const MembersList = () => {
             value: statsMembership?.totalStudents?.toString() || "0",
             icon: "/members/allmemberTotalRevenue.png",
             change: "+12%",
-            color: "text-green-500",
+            color: "text-[#12B76A]",
             bg: "bg-[#F3FAF5]"
         },
         {
             title: "Monthly revenue",
             value: Number(statsMembership?.totalRevenue)?.toFixed(2) || "0.00",
             icon: "/members/allmemberMonthlyRevenue.png",
-            color: "text-green-500",
+            color: "text-[#12B76A]",
             bg: "bg-[#F3FAFD]"
         },
         {
@@ -240,7 +240,7 @@ const MembersList = () => {
             value: Number(statsMembership?.avgMonthlyFee)?.toFixed(2) || "0.00",
             icon: "/members/allmemberMonthlyFee.png",
             change: "35%",
-            color: "text-green-500",
+            color: "text-[#12B76A]",
             bg: "bg-[#FEF6FB]"
         },
         {
@@ -248,7 +248,7 @@ const MembersList = () => {
             value: Number(statsMembership?.avgLifeCycle) || "0.00",
             icon: "/members/allmemberLifeCycle.png",
             change: "45%",
-            color: "text-green-500",
+            color: "text-[#12B76A]",
             bg: "bg-[#F0F9F9]"
         }
     ];

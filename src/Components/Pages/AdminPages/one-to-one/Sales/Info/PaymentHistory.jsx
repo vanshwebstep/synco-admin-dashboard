@@ -84,8 +84,8 @@ const PaymentHistory = () => {
                   <td className="py-3 px-6 flex items-center gap-2 md:w-6/12">
                     <span
                       className={`w-2 h-2 rounded-full ${data?.booking?.payment?.paymentStatus === "paid"
-                        ? "bg-green-500"
-                        : "bg-red-500"
+                        ? "bg-[#12B76A]"
+                        : "bg-[#F04438]"
                         }`}
                     ></span>
                     {data?.booking?.payment?.paymentStatus || "N/A"}

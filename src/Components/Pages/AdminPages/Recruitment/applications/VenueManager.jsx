@@ -704,7 +704,7 @@ const VenueManager = () => {
                                 <div className="flex items-center gap-2">
                                     <h3 className="text-xl font-semibold">{card.value}</h3>
                                     {card.change && (
-                                        <p className="text-green-600 text-xs">{card.change}</p>
+                                        <p className="text-[#027A48] text-xs">{card.change}</p>
                                     )}
                                 </div>
                             </div>
@@ -1169,9 +1169,9 @@ const VenueManager = () => {
                                         placeholder="First Name"
                                         value={formData.firstName}
                                         onChange={(e) => { setFormData({ ...formData, firstName: e.target.value }); setErrors(p => ({ ...p, firstName: '' })); }}
-                                        className={`w-full px-4 py-3 border rounded-xl focus:outline-none ${errors.firstName ? 'border-red-500' : 'border-[#E2E1E5]'}`}
+                                        className={`w-full px-4 py-3 border rounded-xl focus:outline-none ${errors.firstName ? 'border-[#F04438]' : 'border-[#E2E1E5]'}`}
                                     />
-                                    {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
+                                    {errors.firstName && <p className="text-[#F04438] text-sm mt-1">{errors.firstName}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-[#282829] mb-1">Surname</label>
@@ -1180,9 +1180,9 @@ const VenueManager = () => {
                                         placeholder="Surname"
                                         value={formData.lastName}
                                         onChange={(e) => { setFormData({ ...formData, lastName: e.target.value }); setErrors(p => ({ ...p, lastName: '' })); }}
-                                        className={`w-full px-4 py-3 border rounded-xl focus:outline-none ${errors.lastName ? 'border-red-500' : 'border-[#E2E1E5]'}`}
+                                        className={`w-full px-4 py-3 border rounded-xl focus:outline-none ${errors.lastName ? 'border-[#F04438]' : 'border-[#E2E1E5]'}`}
                                     />
-                                    {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
+                                    {errors.lastName && <p className="text-[#F04438] text-sm mt-1">{errors.lastName}</p>}
                                 </div>
                             </div>
 
@@ -1195,15 +1195,15 @@ const VenueManager = () => {
                                     placeholder="Email Address"
                                     value={formData.email}
                                     onChange={(e) => { setFormData({ ...formData, email: e.target.value }); setErrors(p => ({ ...p, email: '' })); }}
-                                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none ${errors.email ? 'border-red-500' : 'border-[#E2E1E5]'}`}
+                                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none ${errors.email ? 'border-[#F04438]' : 'border-[#E2E1E5]'}`}
                                 />
-                                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                                {errors.email && <p className="text-[#F04438] text-sm mt-1">{errors.email}</p>}
                             </div>
 
                             {/* Telephone Number */}
                             <div>
                                 <label className="block text-sm font-medium text-[#282829] mb-1">Telephone Number</label>
-                                <div className={`flex items-center border rounded-xl px-3 py-3 ${errors.phoneNumber ? 'border-red-500' : 'border-gray-300'}`}>
+                                <div className={`flex items-center border rounded-xl px-3 py-3 ${errors.phoneNumber ? 'border-[#F04438]' : 'border-gray-300'}`}>
                                     <PhoneInput
                                         country="uk"
                                         value={dialCode}
@@ -1222,7 +1222,7 @@ const VenueManager = () => {
                                         className="border-none w-full focus:outline-none"
                                     />
                                 </div>
-                                {errors.phoneNumber && <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>}
+                                {errors.phoneNumber && <p className="text-[#F04438] text-sm mt-1">{errors.phoneNumber}</p>}
                             </div>
 
                             {/* Date of Birth & Age */}
@@ -1238,9 +1238,9 @@ const VenueManager = () => {
                                             setFormData({ ...formData, age: e.target.value })
                                             setErrors(p => ({ ...p, age: '' }));
                                         }}
-                                        className={`w-full px-4 py-3 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-100 ${errors.age ? 'border-red-500' : 'border-[#E2E1E5]'}`}
+                                        className={`w-full px-4 py-3 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-100 ${errors.age ? 'border-[#F04438]' : 'border-[#E2E1E5]'}`}
                                     />
-                                    {errors.age && <p className="text-red-500 text-sm mt-1">{errors.age}</p>}
+                                    {errors.age && <p className="text-[#F04438] text-sm mt-1">{errors.age}</p>}
                                 </div>
                             </div>
 
@@ -1252,9 +1252,9 @@ const VenueManager = () => {
                                     placeholder="London Postcode"
                                     value={formData.postcode}
                                     onChange={(e) => { setFormData({ ...formData, postcode: e.target.value }); setErrors(p => ({ ...p, postcode: '' })); }}
-                                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none ${errors.postcode ? 'border-red-500' : 'border-[#E2E1E5]'}`}
+                                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none ${errors.postcode ? 'border-[#F04438]' : 'border-[#E2E1E5]'}`}
                                 />
-                                {errors.postcode && <p className="text-red-500 text-sm mt-1">{errors.postcode}</p>}
+                                {errors.postcode && <p className="text-[#F04438] text-sm mt-1">{errors.postcode}</p>}
                             </div>
 
                             {/* Access to own vehicle */}
@@ -1269,7 +1269,7 @@ const VenueManager = () => {
                                                 value={val}
                                                 checked={formData.accessToOwnVehicle === val}
                                                 onChange={() => setFormData({ ...formData, accessToOwnVehicle: val })}
-                                                className="accent-green-500 w-4 h-4"
+                                                className="accent-[#12B76A] w-4 h-4"
                                             />
                                             {val === "true" ? "Yes" : "No"}
                                         </label>
@@ -1295,7 +1295,7 @@ const VenueManager = () => {
                                                             : [...current, q]
                                                     });
                                                 }}
-                                                className="accent-green-500 w-4 h-4"
+                                                className="accent-[#12B76A] w-4 h-4"
                                             />
                                             {q}
                                         </label>
@@ -1316,9 +1316,9 @@ const VenueManager = () => {
                                         setFormData({ ...formData, footballExperience: selected?.value || "" });
                                         setErrors(p => ({ ...p, footballExperience: '' }));
                                     }}
-                                    className={errors.footballExperience ? 'border border-red-500 rounded-xl' : ''}
+                                    className={errors.footballExperience ? 'border border-[#F04438] rounded-xl' : ''}
                                 />
-                                {errors.footballExperience && <p className="text-red-500 text-sm mt-1">{errors.footballExperience}</p>}
+                                {errors.footballExperience && <p className="text-[#F04438] text-sm mt-1">{errors.footballExperience}</p>}
                             </div>
 
                             {/* Available Venues */}
@@ -1343,13 +1343,13 @@ const VenueManager = () => {
                                                     });
                                                     setErrors(p => ({ ...p, ageGroupExperience: '' }));
                                                 }}
-                                                className="accent-green-500 w-4 h-4"
+                                                className="accent-[#12B76A] w-4 h-4"
                                             />
                                             {q}
                                         </label>
                                     ))}
                                 </div>
-                                {errors.ageGroupExperience && <p className="text-red-500 text-sm mt-1">{errors.ageGroupExperience}</p>}
+                                {errors.ageGroupExperience && <p className="text-[#F04438] text-sm mt-1">{errors.ageGroupExperience}</p>}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-[#282829] mb-2">
@@ -1364,9 +1364,9 @@ const VenueManager = () => {
                                         setFormData({ ...formData, managementExperience: selected?.value || "" });
                                         setErrors(p => ({ ...p, managementExperience: '' }));
                                     }}
-                                    className={errors.managementExperience ? 'border border-red-500 rounded-xl' : ''}
+                                    className={errors.managementExperience ? 'border border-[#F04438] rounded-xl' : ''}
                                 />
-                                {errors.managementExperience && <p className="text-red-500 text-sm mt-1">{errors.managementExperience}</p>}
+                                {errors.managementExperience && <p className="text-[#F04438] text-sm mt-1">{errors.managementExperience}</p>}
                             </div>
 
                             <div>
@@ -1383,19 +1383,19 @@ const VenueManager = () => {
                                                     setFormData({ ...formData, fullWeekendAvailablity: source });
                                                     setErrors(p => ({ ...p, fullWeekendAvailablity: '' }));
                                                 }}
-                                                className="accent-green-500 w-4 h-4"
+                                                className="accent-[#12B76A] w-4 h-4"
                                             />
                                             {source}
                                         </label>
                                     ))}
                                 </div>
-                                {errors.fullWeekendAvailablity && <p className="text-red-500 text-sm mt-1">{errors.fullWeekendAvailablity}</p>}
+                                {errors.fullWeekendAvailablity && <p className="text-[#F04438] text-sm mt-1">{errors.fullWeekendAvailablity}</p>}
                             </div>
 
                             {/* Upload CV */}
                             <div>
                                 <label className="block text-sm font-medium text-[#282829] mb-1">Please upload your CV</label>
-                                <label className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-5 cursor-pointer hover:border-blue-400 transition bg-white ${errors.uploadCv ? 'border-red-500' : 'border-gray-300'}`}>
+                                <label className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-5 cursor-pointer hover:border-blue-400 transition bg-white ${errors.uploadCv ? 'border-[#F04438]' : 'border-gray-300'}`}>
                                     <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 12V4m0 0L8 8m4-4l4 4" />
                                     </svg>
@@ -1405,7 +1405,7 @@ const VenueManager = () => {
                                     </span>
                                     <span className="text-xs text-gray-400 mt-1">SVG, PNG, JPG or GIF (max. 800×400px)</span>
                                     {formData.uploadCv && (
-                                        <span className="text-xs text-green-600 mt-2 font-medium">{formData.uploadCv.name}</span>
+                                        <span className="text-xs text-[#027A48] mt-2 font-medium">{formData.uploadCv.name}</span>
                                     )}
                                     <input
                                         type="file"
@@ -1417,7 +1417,7 @@ const VenueManager = () => {
                                         }}
                                     />
                                 </label>
-                                {errors.uploadCv && <p className="text-red-500 text-sm mt-1">{errors.uploadCv}</p>}
+                                {errors.uploadCv && <p className="text-[#F04438] text-sm mt-1">{errors.uploadCv}</p>}
                             </div>
 
                             {/* Cover Note */}
@@ -1433,9 +1433,9 @@ const VenueManager = () => {
                                         setFormData({ ...formData, coverNote: e.target.value });
                                         setErrors(p => ({ ...p, coverNote: '' }));
                                     }}
-                                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 resize-none text-sm ${errors.coverNote ? 'border-red-500' : 'border-[#E2E1E5]'}`}
+                                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 resize-none text-sm ${errors.coverNote ? 'border-[#F04438]' : 'border-[#E2E1E5]'}`}
                                 />
-                                {errors.coverNote && <p className="text-red-500 text-sm mt-1">{errors.coverNote}</p>}
+                                {errors.coverNote && <p className="text-[#F04438] text-sm mt-1">{errors.coverNote}</p>}
                             </div>
 
                             {/* How did you hear */}
@@ -1453,13 +1453,13 @@ const VenueManager = () => {
                                                     setFormData({ ...formData, howDidYouHear: source });
                                                     setErrors(p => ({ ...p, howDidYouHear: '' }));
                                                 }}
-                                                className="accent-green-500 w-4 h-4"
+                                                className="accent-[#12B76A] w-4 h-4"
                                             />
                                             {source}
                                         </label>
                                     ))}
                                 </div>
-                                {errors.howDidYouHear && <p className="text-red-500 text-sm mt-1">{errors.howDidYouHear}</p>}
+                                {errors.howDidYouHear && <p className="text-[#F04438] text-sm mt-1">{errors.howDidYouHear}</p>}
                             </div>
 
 

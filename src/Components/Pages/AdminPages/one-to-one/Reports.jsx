@@ -244,8 +244,8 @@ export default function Reports() {
       sub1: `vs. previous period `,
       sub2: `${summary?.totalLeads?.lastYear ?? 0}`,
       color: Number(summary?.totalLeads?.thisYear) <= Number(summary?.totalLeads?.lastYear)
-        ? "text-green-600"
-        : "text-red-600",
+        ? "text-[#027A48]"
+        : "text-[#B42318]",
 
     },
     {
@@ -256,8 +256,8 @@ export default function Reports() {
       sub1: `vs. previous period `,
       sub2: `${summary?.numberOfSales?.lastYear ?? 0}`,
       color: Number(summary?.numberOfSales?.thisYear) <= Number(summary?.numberOfSales?.lastYear)
-        ? "text-green-600"
-        : "text-red-600",
+        ? "text-[#027A48]"
+        : "text-[#B42318]",
     },
     {
       icon: '/reportsIcons/Percent.png',
@@ -267,8 +267,8 @@ export default function Reports() {
         sub1: `vs. previous period `,
       sub2: `${summary?.conversionRate?.lastYear ?? "0%"}`,
       color: parsePercent(summary?.conversionRate?.thisYear) <= parsePercent(summary?.conversionRate?.lastYear)
-        ? "text-green-600"
-        : "text-red-600",
+        ? "text-[#027A48]"
+        : "text-[#B42318]",
     },
     {
       icon: '/reportsIcons/pound.png',
@@ -280,8 +280,8 @@ export default function Reports() {
       color:
         Number(summary?.revenueGenerated?.thisYear ?? 0) <=
           Number(summary?.revenueGenerated?.lastYear ?? 0)
-          ? "text-green-600"
-          : "text-red-600",
+          ? "text-[#027A48]"
+          : "text-[#B42318]",
     },
     {
       icon: '/reportsIcons/Package.png',
@@ -291,8 +291,8 @@ export default function Reports() {
        sub1: `vs. previous period `,
       sub2: `£${summary?.revenueGoldPackage?.lastYear}`,
       color: Number(summary?.revenueGoldPackage?.thisYear) <= Number(summary?.revenueGoldPackage?.lastYear)
-        ? "text-green-600"
-        : "text-red-600",
+        ? "text-[#027A48]"
+        : "text-[#B42318]",
     },
     {
       icon: '/reportsIcons/silver-package.png',
@@ -302,8 +302,8 @@ export default function Reports() {
       sub1: `vs. previous period `,
       sub2: `£${summary?.revenueSilverPackage?.lastYear}`,
       color: Number(summary?.revenueSilverPackage?.thisYear) <= Number(summary?.revenueSilverPackage?.lastYear)
-        ? "text-green-600"
-        : "text-red-600",
+        ? "text-[#027A48]"
+        : "text-[#B42318]",
     },
   ];
 
@@ -664,7 +664,7 @@ export default function Reports() {
                           <div className="text-[16px] font-semibold">Revenue Growth</div>
                           <div className="font-semibold text-[24px] ">{pkg.revenueGrowth}%</div>
                           <div
-                            className={`text-xs font-semibold ${pkg.revenueGrowth < 0 ? "text-red-500" : "text-[#717073]"
+                            className={`text-xs font-semibold ${pkg.revenueGrowth < 0 ? "text-[#F04438]" : "text-[#717073]"
                               }`}
                           >
                             vs last month {pkg.lastRevenueGrowth}%

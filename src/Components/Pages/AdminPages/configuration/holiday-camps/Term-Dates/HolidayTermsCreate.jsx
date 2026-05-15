@@ -468,13 +468,13 @@ const HolidayTermsCreate = () => {
                                 placeholder="Enter Holiday Camp Name"
                                 value={groupName}
                                 onChange={(e) => { setGroupName(e.target.value); if (errors.groupName) setErrors(prev => ({ ...prev, groupName: null })); }}
-                                className={`md:w-1/2 px-4 font-semibold text-base py-3 border ${errors.groupName ? 'border-red-500' : 'border-gray-200'} rounded-lg 
-focus:outline-none focus:ring-2 ${errors.groupName ? 'focus:ring-red-500' : 'focus:ring-blue-500'} 
+                                className={`md:w-1/2 px-4 font-semibold text-base py-3 border ${errors.groupName ? 'border-[#F04438]' : 'border-gray-200'} rounded-lg 
+focus:outline-none focus:ring-2 ${errors.groupName ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'} 
 ${(id || myGroupData?.id) && !isEditMode ? 'cursor-not-allowed' : ''}`}
                                 disabled={(id || myGroupData?.id) && !isEditMode}
                             />
                             {errors.groupName && (
-                                <p className="text-sm text-red-500 mt-1">{errors.groupName}</p>
+                                <p className="text-sm text-[#F04438] mt-1">{errors.groupName}</p>
                             )}
 
 
@@ -556,7 +556,7 @@ ${(id || myGroupData?.id) && !isEditMode ? 'cursor-not-allowed' : ''}`}
                                                 <DatePicker
                                                     selected={holidayTerms.startDate}
                                                     onChange={(date) => { handleDateChange('startDate', date); if (errors.startDate) setErrors(prev => ({ ...prev, startDate: null })); }}
-                                                    className={`w-full mt-2 border ${errors.startDate ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base ${id && !isEdit ? 'cursor-not-allowed' : ''}`}
+                                                    className={`w-full mt-2 border ${errors.startDate ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base ${id && !isEdit ? 'cursor-not-allowed' : ''}`}
                                                     showYearDropdown
                                                     scrollableYearDropdown
                                                     yearDropdownItemNumber={100}
@@ -567,7 +567,7 @@ ${(id || myGroupData?.id) && !isEditMode ? 'cursor-not-allowed' : ''}`}
                                                     minDate={new Date()}  // disable past dates before today
                                                 />
                                                 {errors.startDate && (
-                                                    <p className="text-sm text-red-500 mt-1">{errors.startDate}</p>
+                                                    <p className="text-sm text-[#F04438] mt-1">{errors.startDate}</p>
                                                 )}
                                             </div>
 
@@ -578,7 +578,7 @@ ${(id || myGroupData?.id) && !isEditMode ? 'cursor-not-allowed' : ''}`}
                                                 <DatePicker
                                                     selected={holidayTerms.endDate}
                                                     onChange={(date) => { handleDateChange('endDate', date); if (errors.endDate) setErrors(prev => ({ ...prev, endDate: null })); }}
-                                                    className={`w-full mt-2 border ${errors.endDate ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base ${id && !isEdit ? 'cursor-not-allowed' : ''}`}
+                                                    className={`w-full mt-2 border ${errors.endDate ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base ${id && !isEdit ? 'cursor-not-allowed' : ''}`}
                                                     showYearDropdown
                                                     scrollableYearDropdown
 
@@ -590,7 +590,7 @@ ${(id || myGroupData?.id) && !isEditMode ? 'cursor-not-allowed' : ''}`}
                                                     minDate={holidayTerms.startDate || new Date()}  // disable dates before start date or today
                                                 />
                                                 {errors.endDate && (
-                                                    <p className="text-sm text-red-500 mt-1">{errors.endDate}</p>
+                                                    <p className="text-sm text-[#F04438] mt-1">{errors.endDate}</p>
                                                 )}
                                             </div>
                                         </div>
@@ -625,14 +625,14 @@ ${(id || myGroupData?.id) && !isEditMode ? 'cursor-not-allowed' : ''}`}
                                                 <button
                                                     id="sessionMappings"
                                                     className={`flex whitespace-nowrap px-2 md:w-5/12 w-full items-center justify-center gap-1 
-                                        border ${errors.sessionMappings ? 'border-red-500 text-red-500' : 'border-blue-500 text-[#237FEA]'} hover:bg-blue-50
+                                        border ${errors.sessionMappings ? 'border-[#F04438] text-[#F04438]' : 'border-blue-500 text-[#237FEA]'} hover:bg-blue-50
                                         px-6 py-2 rounded-lg text-[14px] font-semibold`}
                                                     onClick={handleMapClick}
                                                 >
                                                     Map Session
                                                 </button>
                                                 {errors.sessionMappings && (
-                                                    <p className="text-sm text-red-500 mt-1">{errors.sessionMappings}</p>
+                                                    <p className="text-sm text-[#F04438] mt-1">{errors.sessionMappings}</p>
                                                 )}
 
 
@@ -685,9 +685,9 @@ ${(id || myGroupData?.id) && !isEditMode ? 'cursor-not-allowed' : ''}`}
                                 transition={{ duration: 0.3 }}
                                 className="rounded-2xl mb-5 bg-white md:p-6"
                             >
-                                <div id="mapping-section" className={`border ${mappingErrors.mappings ? 'border-red-500' : 'border-gray-200'} rounded-3xl px-4 py-3`}>
+                                <div id="mapping-section" className={`border ${mappingErrors.mappings ? 'border-[#F04438]' : 'border-gray-200'} rounded-3xl px-4 py-3`}>
                                     {mappingErrors.mappings && (
-                                        <p className="text-sm text-red-500 mb-2 font-semibold">{mappingErrors.mappings}</p>
+                                        <p className="text-sm text-[#F04438] mb-2 font-semibold">{mappingErrors.mappings}</p>
                                     )}
                                     <div className="md:flex items-center justify-between mb-2">
                                         <label className="block text-[22px] font-semibold">

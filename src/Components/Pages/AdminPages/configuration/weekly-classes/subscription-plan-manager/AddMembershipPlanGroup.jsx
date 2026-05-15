@@ -627,10 +627,10 @@ const AddPaymentPlanGroup = () => {
                                             }}
                                             type="text"
                                             placeholder="Enter Group Name"
-                                            className={`w-full px-4 text-[#282829] font-semibold py-3 border ${groupErrors.groupName ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                                            className={`w-full px-4 text-[#282829] font-semibold py-3 border ${groupErrors.groupName ? 'border-[#F04438]' : 'border-gray-200'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500`}
                                         />
                                         {groupErrors.groupName && (
-                                            <p className="text-red-500 text-sm mt-1">{groupErrors.groupName}</p>
+                                            <p className="text-[#F04438] text-sm mt-1">{groupErrors.groupName}</p>
                                         )}
                                     </div>
 
@@ -650,10 +650,10 @@ const AddPaymentPlanGroup = () => {
                                             }}
                                             type="text"
                                             placeholder="Add Internal reference"
-                                            className={`w-full text-[#282829] px-4 font-semibold py-3 border ${groupErrors.description ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                                            className={`w-full text-[#282829] px-4 font-semibold py-3 border ${groupErrors.description ? 'border-[#F04438]' : 'border-gray-200'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500`}
                                         />
                                         {groupErrors.description && (
-                                            <p className="text-red-500 text-sm mt-1">{groupErrors.description}</p>
+                                            <p className="text-[#F04438] text-sm mt-1">{groupErrors.description}</p>
                                         )}
                                     </div>
 
@@ -664,7 +664,7 @@ const AddPaymentPlanGroup = () => {
                                         </label>
 
                                         {/* Selected summary */}
-                                        <div className={`w-full mb-5 px-4 font-semibold py-3 border ${groupErrors.selectedPlans ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500`}>
+                                        <div className={`w-full mb-5 px-4 font-semibold py-3 border ${groupErrors.selectedPlans ? 'border-[#F04438]' : 'border-gray-200'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500`}>
                                             {selectedPlans.map((plan, idx) => (
                                                 <div
                                                     key={plan.id || idx}
@@ -691,7 +691,7 @@ const AddPaymentPlanGroup = () => {
                                                         <button
                                                             type="button"
                                                             onClick={() => handleEditPlan(idx)}
-                                                            className="text-gray-500 hover:text-green-500"
+                                                            className="text-gray-500 hover:text-[#12B76A]"
                                                         >
                                                             <Pencil size={19} />
                                                         </button>
@@ -700,7 +700,7 @@ const AddPaymentPlanGroup = () => {
                                                         <button
                                                             type="button"
                                                             onClick={() => handleRemovePlan(idx)}
-                                                            className="text-gray-500 hover:text-red-500"
+                                                            className="text-gray-500 hover:text-[#F04438]"
                                                         >
                                                             <Trash2 size={18} />
                                                         </button>
@@ -795,7 +795,7 @@ const AddPaymentPlanGroup = () => {
                                             }}
                                         />
                                         {groupErrors.selectedPlans && (
-                                            <p className="text-red-500 text-sm mt-1">{groupErrors.selectedPlans}</p>
+                                            <p className="text-[#F04438] text-sm mt-1">{groupErrors.selectedPlans}</p>
                                         )}
 
                                     </div>
@@ -938,7 +938,7 @@ const AddPaymentPlanGroup = () => {
                                                                     placeholder=""
                                                                 />
                                                                 {planErrors.interval && (
-                                                                    <p className="text-red-500 text-sm mt-1">{planErrors.interval}</p>
+                                                                    <p className="text-[#F04438] text-sm mt-1">{planErrors.interval}</p>
                                                                 )}
                                                             </div>
                                                         ) : field.name === "duration" && formData.interval ? (
@@ -952,7 +952,7 @@ const AddPaymentPlanGroup = () => {
                                                                             setPlanErrors({ ...planErrors, duration: null });
                                                                         }
                                                                     }}
-                                                                    className={`w-full px-4 py-3 font-semibold text-[18px] text-[#282829] border ${planErrors.duration ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-transparent`}
+                                                                    className={`w-full px-4 py-3 font-semibold text-[18px] text-[#282829] border ${planErrors.duration ? 'border-[#F04438]' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-transparent`}
                                                                 >
                                                                     <option value="" disabled>
                                                                         Select Duration
@@ -964,7 +964,7 @@ const AddPaymentPlanGroup = () => {
                                                                     ))}
                                                                 </select>
                                                                 {planErrors.duration && (
-                                                                    <p className="text-red-500 text-sm mt-1">{planErrors.duration}</p>
+                                                                    <p className="text-[#F04438] text-sm mt-1">{planErrors.duration}</p>
                                                                 )}
                                                             </div>
                                                         ) : field.type === "number" ? (
@@ -1001,10 +1001,10 @@ const AddPaymentPlanGroup = () => {
                                                                             e.preventDefault();
                                                                         }
                                                                     }}
-                                                                    className={`w-full px-4 py-3 font-semibold text-[18px] text-[#282829] border ${planErrors[field.name] ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-transparent`}
+                                                                    className={`w-full px-4 py-3 font-semibold text-[18px] text-[#282829] border ${planErrors[field.name] ? 'border-[#F04438]' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-transparent`}
                                                                 />
                                                                 {planErrors[field.name] && (
-                                                                    <p className="text-red-500 text-sm mt-1">{planErrors[field.name]}</p>
+                                                                    <p className="text-[#F04438] text-sm mt-1">{planErrors[field.name]}</p>
                                                                 )}
                                                             </div>
                                                         ) : (
@@ -1020,10 +1020,10 @@ const AddPaymentPlanGroup = () => {
                                                                             setPlanErrors({ ...planErrors, [field.name]: null });
                                                                         }
                                                                     }}
-                                                                    className={`w-full text-[#282829] px-4 py-3 font-semibold text-[18px] border ${planErrors[field.name] ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-transparent`}
+                                                                    className={`w-full text-[#282829] px-4 py-3 font-semibold text-[18px] border ${planErrors[field.name] ? 'border-[#F04438]' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-transparent`}
                                                                 />
                                                                 {planErrors[field.name] && (
-                                                                    <p className="text-red-500 text-sm mt-1">{planErrors[field.name]}</p>
+                                                                    <p className="text-[#F04438] text-sm mt-1">{planErrors[field.name]}</p>
                                                                 )}
                                                             </div>
                                                         )}

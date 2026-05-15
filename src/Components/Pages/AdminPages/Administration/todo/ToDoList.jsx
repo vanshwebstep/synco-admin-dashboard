@@ -766,7 +766,7 @@ function CreateTaskModal({ members, onClose }) {
                             <label className="text-sm ">Title</label>
                             <input
                                 ref={titleInputRef}
-                                className={`w-full border ${errors.title ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 focus:outline-none`}
+                                className={`w-full border ${errors.title ? 'border-[#F04438]' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 focus:outline-none`}
                                 type="text"
                                 name="title"
                                 value={formData.title}
@@ -775,7 +775,7 @@ function CreateTaskModal({ members, onClose }) {
                                     setErrors((prev) => ({ ...prev, title: '' }));
                                 }}
                             />
-                            {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+                            {errors.title && <p className="text-[#F04438] text-sm mt-1">{errors.title}</p>}
                         </div>
 
 
@@ -783,7 +783,7 @@ function CreateTaskModal({ members, onClose }) {
                             <label className="text-sm ">Description</label>
                             <textarea
                                 ref={descriptionInputRef}
-                                className={`bg-[#FAFAFA] w-full h-32 border ${errors.description ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 resize-none focus:outline-none`}
+                                className={`bg-[#FAFAFA] w-full h-32 border ${errors.description ? 'border-[#F04438]' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 resize-none focus:outline-none`}
                                 name="description"
                                 value={formData.description}
                                 onChange={(e) => {
@@ -791,7 +791,7 @@ function CreateTaskModal({ members, onClose }) {
                                     setErrors((prev) => ({ ...prev, description: '' }));
                                 }}
                             ></textarea>
-                            {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
+                            {errors.description && <p className="text-[#F04438] text-sm mt-1">{errors.description}</p>}
                         </div>
 
 
@@ -826,7 +826,7 @@ function CreateTaskModal({ members, onClose }) {
 
                                                 {/* Delete Button */}
                                                 <button
-                                                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6
+                                                    className="absolute top-1 right-1 bg-[#F04438] text-white rounded-full w-6 h-6
                 flex items-center justify-center text-xs"
                                                     onClick={() =>
                                                         setUploadedFiles(uploadedFiles.filter((_, i) => i !== index))
@@ -981,7 +981,7 @@ function CreateTaskModal({ members, onClose }) {
                                         }}
                                         className={`cursor-pointer text-xs px-2 py-1 rounded-md
                         ${priority === p
-                                                ? "bg-red-500 text-white"
+                                                ? "bg-[#F04438] text-white"
                                                 : "bg-red-100 text-[#FF5C40]"}
                     `}
                                     >
@@ -1194,7 +1194,7 @@ function ViewTaskModal({ task, open, setOpen, onClose, activeTab }) {
                                                 {uploadedFiles.map((item, index) => (
                                                     <div key={index} className="relative border rounded-md p-2 bg-white shadow-sm">
                                                         <button
-                                                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+                                                            className="absolute top-1 right-1 bg-[#F04438] text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
                                                             onClick={() =>
                                                                 setUploadedFiles(uploadedFiles.filter((_, i) => i !== index))
                                                             }

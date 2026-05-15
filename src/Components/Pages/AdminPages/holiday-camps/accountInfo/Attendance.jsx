@@ -56,11 +56,11 @@ export default function Attendance() {
                 <td className="p-3 text-sm text-balck font-semibold">{item.date}</td>
                 <td className="p-3">
                   {item.status === "Attended" ? (
-                    <button className="bg-green-50 text-green-600 text-sm md:w-[100px] font-medium px-3 py-1 rounded-md">
+                    <button className="bg-green-50 text-[#027A48] text-sm md:w-[100px] font-medium px-3 py-1 rounded-md">
                       Attended
                     </button>
                   ) : (
-                    <button className="bg-red-50 text-red-500 text-sm md:w-[100px] font-medium px-3 py-1 rounded-md">
+                    <button className="bg-red-50 text-[#F04438] text-sm md:w-[100px] font-medium px-3 py-1 rounded-md">
                       Absent
                     </button>
                   )}

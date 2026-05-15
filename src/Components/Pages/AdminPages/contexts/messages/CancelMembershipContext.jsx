@@ -195,7 +195,7 @@ const CancelMembershipPopup = () => {
                         <button
                             onClick={handleCancelSubmit}
                             disabled={cancelLoading}
-                            className={`w-1/2 bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow ${cancelLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                            className={`w-1/2 bg-[#F04438] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow ${cancelLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             {cancelLoading
                                 ? "Processing..."

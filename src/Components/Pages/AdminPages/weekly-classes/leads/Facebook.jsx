@@ -651,7 +651,7 @@ const Facebook = () => {
 
                                   <div className="bg-white rounded-2xl shadow-2xl px-6 py-4 min-w-[300px] max-w-[489px]">
                                     <div className="flex items-start justify-between">
-                                      <h2 className="text-red-500 font-semibold text-[18px]">Congestion Information</h2>
+                                      <h2 className="text-[#F04438] font-semibold text-[18px]">Congestion Information</h2>
                                       <img src="/images/icons/infoIcon.png" alt="" />
                                     </div>
                                     <div className="mt-2 text-[16px] text-gray-700 leading-snug">
@@ -673,7 +673,7 @@ const Facebook = () => {
 
                                   <div className="bg-white rounded-2xl shadow-2xl px-6 py-4 min-w-[300px] max-w-[489px]">
                                     <div className="flex items-start justify-between">
-                                      <h2 className="text-red-500 font-semibold text-[18px]">Parking Information</h2>
+                                      <h2 className="text-[#F04438] font-semibold text-[18px]">Parking Information</h2>
                                       <img src="/images/icons/infoIcon.png" alt="" />
                                     </div>
                                     <div className="mt-2 text-[16px] text-gray-700 leading-snug">

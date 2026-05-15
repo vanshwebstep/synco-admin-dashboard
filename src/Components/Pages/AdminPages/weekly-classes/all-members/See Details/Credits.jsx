@@ -128,7 +128,7 @@ const Credits = ({ itemId, stateData }) => {
                   </td>
 
                   {/* Credit */}
-                  <td className="py-3 px-4 font-semibold text-green-600">
+                  <td className="py-3 px-4 font-semibold text-[#027A48]">
                     +{item.credit}
                   </td>
 

@@ -331,7 +331,7 @@ console.log('sortedPlans',sortedPlans)
                               {canDelete && (
                                 <button
                                   onClick={() => handleDelete(user.id)}
-                                  className="group flex items-center text-red-600 hover:underline"
+                                  className="group flex items-center text-[#B42318] hover:underline"
                                 >
                                   <img
                                     src="/images/icons/deleteIcon.png"
@@ -400,7 +400,7 @@ console.log('sortedPlans',sortedPlans)
                           />
                         </button>
 
-                        <button onClick={() => handleDelete(user.id)} className="group flex items-center text-red-600 hover:underline">
+                        <button onClick={() => handleDelete(user.id)} className="group flex items-center text-[#B42318] hover:underline">
                           <img
                             src="/images/icons/deleteIcon.png"
                             alt="Delete"

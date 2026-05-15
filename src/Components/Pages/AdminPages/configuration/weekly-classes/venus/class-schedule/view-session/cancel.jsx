@@ -257,7 +257,7 @@ const handleReasonChange = async (value) => {
                                 ${statusIs !== "cancelled" && statusIs !== "complete" ? "bg-[#f8f8f8]" : ""}
                             `}
         >
-          <div className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center text-white mx-auto mb-4">
+          <div className="w-20 h-20 bg-[#F04438] rounded-full flex items-center justify-center text-white mx-auto mb-4">
             {statusIs === "cancelled" ? (
               <img src="/images/icons/cancelBig.png" alt="Cancelled" />
             ) : statusIs === "complete" ? (

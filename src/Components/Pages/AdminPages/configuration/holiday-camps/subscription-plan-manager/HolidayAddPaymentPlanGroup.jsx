@@ -357,10 +357,10 @@ const HolidayAddPaymentPlanGroup = () => {
                                             onChange={(e) => setGroupName(e.target.value)}
                                             type="text"
                                             placeholder="Enter Group Name"
-                                            className={`w-full px-4 font-semibold text-base py-3 border ${errors.groupName ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${errors.groupName ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                                            className={`w-full px-4 font-semibold text-base py-3 border ${errors.groupName ? 'border-[#F04438]' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${errors.groupName ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
                                         />
                                         {errors.groupName && (
-                                            <p className="text-sm text-red-500 mt-1">{errors.groupName}</p>
+                                            <p className="text-sm text-[#F04438] mt-1">{errors.groupName}</p>
                                         )}
                                     </div>
 
@@ -374,10 +374,10 @@ const HolidayAddPaymentPlanGroup = () => {
                                             onChange={(e) => setDescription(e.target.value)}
                                             type="text"
                                             placeholder="Add Internal  reference"
-                                            className={`w-full px-4 font-semibold py-3 border ${errors.description ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${errors.description ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                                            className={`w-full px-4 font-semibold py-3 border ${errors.description ? 'border-[#F04438]' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${errors.description ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
                                         />
                                         {errors.description && (
-                                            <p className="text-sm text-red-500 mt-1">{errors.description}</p>
+                                            <p className="text-sm text-[#F04438] mt-1">{errors.description}</p>
                                         )}
                                     </div>
 
@@ -395,7 +395,7 @@ const HolidayAddPaymentPlanGroup = () => {
                                         <div
                                             id="selectedPlans"
                                             onClick={() => setIsOpen(!isOpen)}
-                                            className={`mt-4 space-y-2 border ${errors.selectedPlans ? 'border-red-500' : 'border-gray-200'} px-4 py-3 rounded-lg cursor-pointer`}
+                                            className={`mt-4 space-y-2 border ${errors.selectedPlans ? 'border-[#F04438]' : 'border-gray-200'} px-4 py-3 rounded-lg cursor-pointer`}
                                         >
                                             {selectedPlans.length > 0 ? (
                                                 selectedPlans.map((plan, idx) => (
@@ -414,7 +414,7 @@ const HolidayAddPaymentPlanGroup = () => {
                                                                 e.stopPropagation();
                                                                 handleRemovePlan(idx);
                                                             }}
-                                                            className="text-gray-500 hover:text-red-500"
+                                                            className="text-gray-500 hover:text-[#F04438]"
                                                         >
                                                             <Trash2 size={18} />
                                                         </button>
@@ -425,7 +425,7 @@ const HolidayAddPaymentPlanGroup = () => {
                                             )}
                                         </div>
                                         {errors.selectedPlans && (
-                                            <p className="text-sm text-red-500 mt-1">{errors.selectedPlans}</p>
+                                            <p className="text-sm text-[#F04438] mt-1">{errors.selectedPlans}</p>
                                         )}
 
                                         <AnimatePresence initial={false}>
@@ -672,7 +672,7 @@ const HolidayAddPaymentPlanGroup = () => {
                                                             placeholder=""
                                                         />
                                                         {planErrors.interval && (
-                                                            <p className="text-sm text-red-500 mt-1">{planErrors.interval}</p>
+                                                            <p className="text-sm text-[#F04438] mt-1">{planErrors.interval}</p>
                                                         )}
                                                     </div>
                                                 ) : field.name === "duration" && formData.interval ? (
@@ -683,7 +683,7 @@ const HolidayAddPaymentPlanGroup = () => {
                                                             onChange={(e) =>
                                                                 setFormData({ ...formData, duration: e.target.value })
                                                             }
-                                                            className={`w-full px-4 py-3 font-semibold text-base border ${planErrors.duration ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${planErrors.duration ? 'focus:ring-red-500' : 'focus:ring-blue-500'} appearance-none bg-transparent`}
+                                                            className={`w-full px-4 py-3 font-semibold text-base border ${planErrors.duration ? 'border-[#F04438]' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${planErrors.duration ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'} appearance-none bg-transparent`}
                                                         >
                                                             <option value="" disabled>
                                                                 Select Duration
@@ -695,7 +695,7 @@ const HolidayAddPaymentPlanGroup = () => {
                                                             ))}
                                                         </select>
                                                         {planErrors.duration && (
-                                                            <p className="text-sm text-red-500 mt-1">{planErrors.duration}</p>
+                                                            <p className="text-sm text-[#F04438] mt-1">{planErrors.duration}</p>
                                                         )}
                                                     </div>
                                                 ) : field.type === "number" ? (
@@ -723,10 +723,10 @@ const HolidayAddPaymentPlanGroup = () => {
                                                                     e.preventDefault();
                                                                 }
                                                             }}
-                                                            className={`w-full px-4 py-3 font-semibold text-[18px] text-[#282829] border ${planErrors[field.name] ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${planErrors[field.name] ? 'focus:ring-red-500' : 'focus:ring-blue-500'} appearance-none bg-transparent`}
+                                                            className={`w-full px-4 py-3 font-semibold text-[18px] text-[#282829] border ${planErrors[field.name] ? 'border-[#F04438]' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${planErrors[field.name] ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'} appearance-none bg-transparent`}
                                                         />
                                                         {planErrors[field.name] && (
-                                                            <p className="text-sm text-red-500 mt-1">{planErrors[field.name]}</p>
+                                                            <p className="text-sm text-[#F04438] mt-1">{planErrors[field.name]}</p>
                                                         )}
                                                     </div>
                                                 ) : (
@@ -738,10 +738,10 @@ const HolidayAddPaymentPlanGroup = () => {
                                                             onChange={(e) =>
                                                                 setFormData({ ...formData, [field.name]: e.target.value })
                                                             }
-                                                            className={`w-full px-4 py-3 font-semibold text-base border ${planErrors[field.name] ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${planErrors[field.name] ? 'focus:ring-red-500' : 'focus:ring-blue-500'} appearance-none bg-transparent`}
+                                                            className={`w-full px-4 py-3 font-semibold text-base border ${planErrors[field.name] ? 'border-[#F04438]' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${planErrors[field.name] ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'} appearance-none bg-transparent`}
                                                         />
                                                         {planErrors[field.name] && (
-                                                            <p className="text-sm text-red-500 mt-1">{planErrors[field.name]}</p>
+                                                            <p className="text-sm text-[#F04438] mt-1">{planErrors[field.name]}</p>
                                                         )}
                                                     </div>
                                                 )}
@@ -753,7 +753,7 @@ const HolidayAddPaymentPlanGroup = () => {
                                         <label className="block text-base font-semibold text-gray-700 mb-2">
                                             Holiday Camps Package Details
                                         </label>
-                                        <div className={`rounded-md border p-1 ${planErrors.HolidayCampPackage ? 'border-red-500' : 'border-gray-300'}`}>
+                                        <div className={`rounded-md border p-1 ${planErrors.HolidayCampPackage ? 'border-[#F04438]' : 'border-gray-300'}`}>
                                             <Editor
                                                 apiKey="sqe5er2lyngzjf0armhqaw1u7ffh0xgjyzmb7unv5irietwa"
                                                 value={formData.HolidayCampPackage}
@@ -781,14 +781,14 @@ const HolidayAddPaymentPlanGroup = () => {
                                                 }}
                                             />
                                         </div>
-                                        {planErrors.HolidayCampPackage && <p className="text-sm text-red-500 mt-1">{planErrors.HolidayCampPackage}</p>}
+                                        {planErrors.HolidayCampPackage && <p className="text-sm text-[#F04438] mt-1">{planErrors.HolidayCampPackage}</p>}
                                     </div>
 
                                     <div className="mb-4 relative">
                                         <label className="block text-base font-semibold text-gray-700 mb-2">
                                             Terms & Conditions
                                         </label>
-                                        <div className={`rounded-md border p-1 ${planErrors.termsAndCondition ? 'border-red-500' : 'border-gray-300'}`}>
+                                        <div className={`rounded-md border p-1 ${planErrors.termsAndCondition ? 'border-[#F04438]' : 'border-gray-300'}`}>
                                             <Editor
                                                 apiKey="sqe5er2lyngzjf0armhqaw1u7ffh0xgjyzmb7unv5irietwa"
                                                 value={formData.termsAndCondition}
@@ -816,7 +816,7 @@ const HolidayAddPaymentPlanGroup = () => {
                                                 }}
                                             />
                                         </div>
-                                        {planErrors.termsAndCondition && <p className="text-sm text-red-500 mt-1">{planErrors.termsAndCondition}</p>}
+                                        {planErrors.termsAndCondition && <p className="text-sm text-[#F04438] mt-1">{planErrors.termsAndCondition}</p>}
                                     </div>
 
                                     <div className="text-right">

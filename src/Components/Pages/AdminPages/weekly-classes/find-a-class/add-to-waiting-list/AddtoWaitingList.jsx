@@ -1272,7 +1272,7 @@ const AddtoWaitingList = () => {
                   {students.length > 1 && (
                     <button
                       onClick={() => handleRemoveStudent(index)}
-                      className="absolute top-4 right-4 text-red-500 hover:text-red-700 text-xl"
+                      className="absolute top-4 right-4 text-[#F04438] hover:text-red-700 text-xl"
                     >
                       ✕
                     </button>
@@ -1288,7 +1288,7 @@ const AddtoWaitingList = () => {
                       <input
                         id={`studentFirstName-${index}`}
                         className={`w-full mt-2 px-4 py-3 rounded-xl border
-              ${errors[`studentFirstName-${index}`] ? "border-red-500" : "border-gray-300"}`}
+              ${errors[`studentFirstName-${index}`] ? "border-[#F04438]" : "border-gray-300"}`}
                         placeholder="Enter first name"
                         value={student.studentFirstName}
                         onChange={(e) => {
@@ -1297,7 +1297,7 @@ const AddtoWaitingList = () => {
                         }}
                       />
                       {errors[`studentFirstName-${index}`] && (
-                        <p className="text-red-500 text-xs mt-1">{errors[`studentFirstName-${index}`]}</p>
+                        <p className="text-[#F04438] text-xs mt-1">{errors[`studentFirstName-${index}`]}</p>
                       )}
                     </div>
                     <div className="w-1/2">
@@ -1309,13 +1309,13 @@ const AddtoWaitingList = () => {
                           clearError(`studentLastName-${index}`);
                         }}
                         className={`w-full mt-2 px-4 py-3 rounded-xl border
-              ${errors[`studentLastName-${index}`] ? "border-red-500" : "border-gray-300"}`}
+              ${errors[`studentLastName-${index}`] ? "border-[#F04438]" : "border-gray-300"}`}
                         placeholder="Enter last name"
                         value={student.studentLastName}
 
                       />
                       {errors[`studentLastName-${index}`] && (
-                        <p className="text-red-500 text-xs mt-1">{errors[`studentLastName-${index}`]}</p>
+                        <p className="text-[#F04438] text-xs mt-1">{errors[`studentLastName-${index}`]}</p>
                       )}
                     </div>
                   </div>
@@ -1336,13 +1336,13 @@ const AddtoWaitingList = () => {
                           clearError(`dob-${index}`);
                         }}
                         className={`w-full mt-2 px-4 py-3 rounded-xl border
-              ${errors[`dob-${index}`] ? "border-red-500" : "border-gray-300"}`}
+              ${errors[`dob-${index}`] ? "border-[#F04438]" : "border-gray-300"}`}
                         placeholder="DD/MM/YYYY (e.g. 15/10/2026)"
                         maxLength={10}
 
                       />
                       {errors[`dob-${index}`] && (
-                        <p className="text-red-500 text-xs mt-1">{errors[`dob-${index}`]}</p>
+                        <p className="text-[#F04438] text-xs mt-1">{errors[`dob-${index}`]}</p>
                       )}
                     </div>
                     <div className="w-1/2">
@@ -1363,7 +1363,7 @@ const AddtoWaitingList = () => {
                       <label className="block text-[16px] font-semibold">Gender</label>
                       <Select
                         inputId={`gender-${index}`}
-                        className={`w-full mt-2 text-base ${errors[`gender-${index}`] ? "border-red-500 rounded-xl" : ""}`}
+                        className={`w-full mt-2 text-base ${errors[`gender-${index}`] ? "border-[#F04438] rounded-xl" : ""}`}
                         classNamePrefix="react-select"
                         placeholder="Select gender"
                         value={genderOptions.find((option) => option.value === student.gender) || null}
@@ -1374,7 +1374,7 @@ const AddtoWaitingList = () => {
                         options={genderOptions}
                       />
                       {errors[`gender-${index}`] && (
-                        <p className="text-red-500 text-xs mt-1">{errors[`gender-${index}`]}</p>
+                        <p className="text-[#F04438] text-xs mt-1">{errors[`gender-${index}`]}</p>
                       )}
                     </div>
                     <div className="w-1/2">
@@ -1392,10 +1392,10 @@ const AddtoWaitingList = () => {
                           clearError(`medicalInformation-${index}`);
                         }}
                         className={`mt-2 w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
-                        ${errors[`medicalInformation-${index}`] ? "border-red-500" : "border-gray-300"}`}
+                        ${errors[`medicalInformation-${index}`] ? "border-[#F04438]" : "border-gray-300"}`}
                       />
                       {errors[`medicalInformation-${index}`] && (
-                        <p className="text-red-500 text-xs mt-1">{errors[`medicalInformation-${index}`]}</p>
+                        <p className="text-[#F04438] text-xs mt-1">{errors[`medicalInformation-${index}`]}</p>
                       )}
 
                     </div>
@@ -1486,7 +1486,7 @@ const AddtoWaitingList = () => {
                       {index > 0 && (
                         <button
                           onClick={() => handleRemoveParent(parent.id)}
-                          className="text-gray-500 hover:text-red-600"
+                          className="text-gray-500 hover:text-[#B42318]"
                         >
                           <X className="w-5 h-5" />
                         </button>
@@ -1501,7 +1501,7 @@ const AddtoWaitingList = () => {
                       <input
                         id={`parentFirstName-${index}`}
                         className={`w-full mt-2 px-4 py-3 rounded-xl border
-              ${errors[`parentFirstName-${index}`] ? "border-red-500" : "border-gray-300"}`}
+              ${errors[`parentFirstName-${index}`] ? "border-[#F04438]" : "border-gray-300"}`}
                         placeholder="Enter first name"
                         value={parent.parentFirstName}
                         onChange={(e) => {
@@ -1515,7 +1515,7 @@ const AddtoWaitingList = () => {
                         }}
                       />
                       {errors[`parentFirstName-${index}`] && (
-                        <p className="text-red-500 text-xs mt-1">{errors[`parentFirstName-${index}`]}</p>
+                        <p className="text-[#F04438] text-xs mt-1">{errors[`parentFirstName-${index}`]}</p>
                       )}
                     </div>
 
@@ -1524,7 +1524,7 @@ const AddtoWaitingList = () => {
                       <input
                         id={`parentLastName-${index}`}
                         className={`w-full mt-2 px-4 py-3 rounded-xl border
-              ${errors[`parentLastName-${index}`] ? "border-red-500" : "border-gray-300"}`}
+              ${errors[`parentLastName-${index}`] ? "border-[#F04438]" : "border-gray-300"}`}
                         placeholder="Enter last name"
                         value={parent.parentLastName}
                         onChange={(e) => {
@@ -1539,7 +1539,7 @@ const AddtoWaitingList = () => {
                         }}
                       />
                       {errors[`parentLastName-${index}`] && (
-                        <p className="text-red-500 text-xs mt-1">{errors[`parentLastName-${index}`]}</p>
+                        <p className="text-[#F04438] text-xs mt-1">{errors[`parentLastName-${index}`]}</p>
                       )}
                     </div>
                   </div>
@@ -1553,7 +1553,7 @@ const AddtoWaitingList = () => {
                         type="email"
                         id={`parentEmail-${index}`}
                         className={`w-full mt-2 px-4 py-3 rounded-xl border
-              ${errors[`parentEmail-${index}`] ? "border-red-500" : "border-gray-300"}`}
+              ${errors[`parentEmail-${index}`] ? "border-[#F04438]" : "border-gray-300"}`}
                         placeholder="Enter email address"
                         value={parent.parentEmail}
                         onChange={(e) => {
@@ -1563,13 +1563,13 @@ const AddtoWaitingList = () => {
                         }
                       />
                       {errors[`parentEmail-${index}`] && (
-                        <p className="text-red-500 text-xs mt-1">{errors[`parentEmail-${index}`]}</p>
+                        <p className="text-[#F04438] text-xs mt-1">{errors[`parentEmail-${index}`]}</p>
                       )}
                     </div>
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">Phone number</label>
 
-                      <div className={errors[`parentPhoneNumber-${index}`] ? "border border-red-500 rounded-xl bg-red-50" : ""}>
+                      <div className={errors[`parentPhoneNumber-${index}`] ? "border border-[#F04438] rounded-xl bg-red-50" : ""}>
                         <PhoneNumberInput
                           id={`parentPhoneNumber-${index}`}
                           value={parent.parentPhoneNumber}
@@ -1581,7 +1581,7 @@ const AddtoWaitingList = () => {
                         />
                       </div>
                       {errors[`parentPhoneNumber-${index}`] && (
-                        <p className="text-red-500 text-xs mt-1">{errors[`parentPhoneNumber-${index}`]}</p>
+                        <p className="text-[#F04438] text-xs mt-1">{errors[`parentPhoneNumber-${index}`]}</p>
                       )}
 
                     </div>
@@ -1607,7 +1607,7 @@ const AddtoWaitingList = () => {
                               clearError(`interestReason-${index}`);
                             }}
                             className={`w-full mt-2 border rounded-xl px-4 py-3 pr-28 text-base
-                            ${errors[`interestReason-${index}`] ? "border-red-500" : "border-gray-300"}`}
+                            ${errors[`interestReason-${index}`] ? "border-[#F04438]" : "border-gray-300"}`}
                           />
 
                           {/* Back Button */}
@@ -1651,7 +1651,7 @@ const AddtoWaitingList = () => {
                         />
                       )}
                       {errors[`interestReason-${index}`] && (
-                        <p className="text-red-500 text-xs mt-1">{errors[`interestReason-${index}`]}</p>
+                        <p className="text-[#F04438] text-xs mt-1">{errors[`interestReason-${index}`]}</p>
                       )}
                     </div>
 
@@ -1694,7 +1694,7 @@ const AddtoWaitingList = () => {
                         }}
                       />
                       {errors[`relationToChild-${index}`] && (
-                        <p className="text-red-500 text-xs mt-1">{errors[`relationToChild-${index}`]}</p>
+                        <p className="text-[#F04438] text-xs mt-1">{errors[`relationToChild-${index}`]}</p>
                       )}
                     </div>
                     <div className="w-1/2">
@@ -1718,7 +1718,7 @@ const AddtoWaitingList = () => {
                         }}
                       />
                       {errors[`howDidYouHear-${index}`] && (
-                        <p className="text-red-500 text-xs mt-1">{errors[`howDidYouHear-${index}`]}</p>
+                        <p className="text-[#F04438] text-xs mt-1">{errors[`howDidYouHear-${index}`]}</p>
                       )}
                     </div>
                   </div>
@@ -1749,7 +1749,7 @@ const AddtoWaitingList = () => {
                   <label className="block text-[16px] font-semibold">First name</label>
                   <input
                     id="emergencyFirstName"
-                    className={`w-full mt-2 border ${errors["emergencyFirstName"] ? "border-red-500" : "border-gray-300"} rounded-xl px-4 py-3 text-base`}
+                    className={`w-full mt-2 border ${errors["emergencyFirstName"] ? "border-[#F04438]" : "border-gray-300"} rounded-xl px-4 py-3 text-base`}
                     placeholder="Enter first name"
                     value={emergency.emergencyFirstName}
                     onChange={e =>
@@ -1760,14 +1760,14 @@ const AddtoWaitingList = () => {
                     }
                   />
                   {errors["emergencyFirstName"] && (
-                    <p className="text-red-500 text-xs mt-1">{errors["emergencyFirstName"]}</p>
+                    <p className="text-[#F04438] text-xs mt-1">{errors["emergencyFirstName"]}</p>
                   )}
                 </div>
                 <div className="w-1/2">
                   <label className="block text-[16px] font-semibold">Last name</label>
                   <input
                     id="emergencyLastName"
-                    className={`w-full mt-2 border ${errors["emergencyLastName"] ? "border-red-500" : "border-gray-300"} rounded-xl px-4 py-3 text-base`}
+                    className={`w-full mt-2 border ${errors["emergencyLastName"] ? "border-[#F04438]" : "border-gray-300"} rounded-xl px-4 py-3 text-base`}
                     placeholder="Enter last name"
                     value={emergency.emergencyLastName}
                     onChange={e =>
@@ -1778,7 +1778,7 @@ const AddtoWaitingList = () => {
                     }
                   />
                   {errors["emergencyLastName"] && (
-                    <p className="text-red-500 text-xs mt-1">{errors["emergencyLastName"]}</p>
+                    <p className="text-[#F04438] text-xs mt-1">{errors["emergencyLastName"]}</p>
                   )}
                 </div>
               </div>
@@ -1796,7 +1796,7 @@ const AddtoWaitingList = () => {
                     placeholder="Enter phone number"
                   />
                   {errors["emergencyPhoneNumber"] && (
-                    <p className="text-red-500 text-xs mt-1">{errors["emergencyPhoneNumber"]}</p>
+                    <p className="text-[#F04438] text-xs mt-1">{errors["emergencyPhoneNumber"]}</p>
                   )}
                 </div>
                 <div className="w-1/2">
@@ -1812,11 +1812,11 @@ const AddtoWaitingList = () => {
                       }))
                     }
                     placeholder="Select Relation"
-                    className={`mt-2 ${errors["emergencyRelation"] ? "border-red-500 rounded-xl" : ""}`}
+                    className={`mt-2 ${errors["emergencyRelation"] ? "border-[#F04438] rounded-xl" : ""}`}
                     classNamePrefix="react-select"
                   />
                   {errors["emergencyRelation"] && (
-                    <p className="text-red-500 text-xs mt-1">{errors["emergencyRelation"]}</p>
+                    <p className="text-[#F04438] text-xs mt-1">{errors["emergencyRelation"]}</p>
                   )}
                 </div>
               </div>
@@ -1843,7 +1843,7 @@ const AddtoWaitingList = () => {
               </div>
             </div>
             {errors["level"] && (
-              <p className="text-red-500 text-sm mt-[-30px] mb-[20px] ml-5">{errors["level"]}</p>
+              <p className="text-[#F04438] text-sm mt-[-30px] mb-[20px] ml-5">{errors["level"]}</p>
             )}
 
             {/* Premium Key Information Accordion */}
@@ -1918,7 +1918,7 @@ const AddtoWaitingList = () => {
                 onClick={handleSubmit}
                 disabled={isSubmitting || isBooked}
                 className={`${isBooked
-                  ? "bg-green-600 border-green-600 cursor-default"
+                  ? "bg-[#027A48] border-[#027A48] cursor-default"
                   : isSubmitting
                     ? "bg-gray-400 border-gray-400 cursor-not-allowed"
                     : "bg-[#237FEA] border-[#237FEA] hover:bg-[#1f6dc9] cursor-pointer"

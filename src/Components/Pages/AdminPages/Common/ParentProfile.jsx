@@ -472,16 +472,16 @@ const ParentProfile = ({ ParentProfile }) => {
 
                         </div>
                     ))} */}
-                  <Comments
-        adminInfo={adminInfo}
-        comment={comment}
-        setComment={setComment}
-        handleSubmitComment={handleSubmitComment}
-        loadingComment={loadingComment}
-        commentsList={commentsList}
-        currentComments={currentComments}
-        formatTimeAgo={formatTimeAgo}
-      />
+                    <Comments
+                        adminInfo={adminInfo}
+                        comment={comment}
+                        setComment={setComment}
+                        handleSubmitComment={handleSubmitComment}
+                        loadingComment={loadingComment}
+                        commentsList={commentsList}
+                        currentComments={currentComments}
+                        formatTimeAgo={formatTimeAgo}
+                    />
                 </div>
                 <div className="max-h-fit rounded-full md:w-4/12 text-base space-y-5">
                     {/* Card Wrapper */}
@@ -702,7 +702,7 @@ const ParentProfile = ({ ParentProfile }) => {
 
                                         {status === 'cancelled' && (
                                             <div className="flex gap-7">
-                                                <button className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium">
+                                                <button className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-[#d32929] font-medium">
                                                     Declined Membership
                                                 </button>
 

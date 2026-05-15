@@ -38,13 +38,13 @@ const Create = ({ groups, termGroup }) => {
 
   const fieldClass = (key) =>
     `w-full border rounded-xl p-4 text-sm ${fieldErrors[key]
-      ? "border-red-500 bg-red-50"
+      ? "border-[#F04438] bg-red-50"
       : "border-[#E2E1E5]"
     }`;
 
   const ErrorMsg = ({ name }) =>
     fieldErrors[name] ? (
-      <p className="text-red-500 text-[12px] mt-1">{fieldErrors[name]}</p>
+      <p className="text-[#F04438] text-[12px] mt-1">{fieldErrors[name]}</p>
     ) : null;
 
   // ── validation ──
@@ -362,7 +362,7 @@ const Create = ({ groups, termGroup }) => {
               className={`w-full border rounded-xl p-4 text-sm text-[#717073] bg-white relative cursor-pointer
                 after:content-[''] after:absolute after:right-4 after:top-1/2 after:-translate-y-1/2
                 after:w-2 after:h-2 after:border-r-2 after:border-b-2 after:border-[#717073] after:rotate-45
-                ${fieldErrors.termGroupId ? "border-red-500 bg-red-50" : "border-[#E2E1E5]"}`}
+                ${fieldErrors.termGroupId ? "border-[#F04438] bg-red-50" : "border-[#E2E1E5]"}`}
             >
               {labels.length > 0 ? labels.join(", ") : "Select Term Date Group"}
             </div>

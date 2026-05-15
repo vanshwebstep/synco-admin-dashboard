@@ -592,7 +592,7 @@ const LeadsDashboard = () => {
                     <div className="flex items-center gap-2">
                       <h3 className="text-xl font-semibold mt-1">{card.value}</h3>
                       {card.change && (
-                        <p className="text-green-600 text-xs mt-1">({card.change})</p>
+                        <p className="text-[#027A48] text-xs mt-1">({card.change})</p>
                       )}
                     </div>
                   </div>

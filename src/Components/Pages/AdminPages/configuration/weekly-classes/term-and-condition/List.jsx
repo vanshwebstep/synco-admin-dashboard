@@ -224,7 +224,7 @@ const filteredData = useMemo(() => {
             </button>
           }
         </div>
-        <div className="text-center p-4 border-dotted text-red-500 rounded-md text-sm md:text-base">
+        <div className="text-center p-4 border-dotted text-[#F04438] rounded-md text-sm md:text-base">
           No Term Groups or Term Data Available
         </div>
       </>
@@ -249,7 +249,7 @@ const filteredData = useMemo(() => {
           </button>
         }
       </div>
-        <div className="text-center p-4 border-dotted text-red-500 rounded-md text-sm md:text-base">
+        <div className="text-center p-4 border-dotted text-[#F04438] rounded-md text-sm md:text-base">
           No Term Groups Available
         </div>
       </>

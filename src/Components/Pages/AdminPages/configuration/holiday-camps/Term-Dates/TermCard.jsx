@@ -106,7 +106,7 @@ const TermCard = ({ item, sessionData }) => {
             </button>
           )}
           {canDelete && (
-            <button onClick={() => handleDelete(item.id)} className="text-gray-500 hover:text-red-500">
+            <button onClick={() => handleDelete(item.id)} className="text-gray-500 hover:text-[#F04438]">
               <img className="w-5 h-5" src="/images/icons/deleteIcon.png" alt="Delete" />
             </button>
           )}

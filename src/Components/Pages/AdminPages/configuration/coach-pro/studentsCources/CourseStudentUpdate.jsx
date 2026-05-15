@@ -392,7 +392,7 @@ export default function CourseStudentUpdate() {
                                 <button
                                     type="button"
                                     onClick={() => removeVideo(video.id)}
-                                    className="absolute top-2 right-2 text-red-500 font-bold"
+                                    className="absolute top-2 right-2 text-[#F04438] font-bold"
                                 >
                                     &times;
                                 </button>
@@ -476,7 +476,7 @@ export default function CourseStudentUpdate() {
                                                     onClick={() =>
                                                         removeChildFeature(video.id, idx)
                                                     }
-                                                    className="text-red-500 font-bold"
+                                                    className="text-[#F04438] font-bold"
                                                 >
                                                     &times;
                                                 </button>

@@ -414,7 +414,7 @@ const Create = () => {
                                                                 <button
                                                                     onClick={() => removeExclusionDate(term.id, idx)}
                                                                     type="button"
-                                                                    className="text-red-500 hover:text-red-700 font-bold text-xl"
+                                                                    className="text-[#F04438] hover:text-red-700 font-bold text-xl"
                                                                     title="Remove"
                                                                 >
                                                                     &times;

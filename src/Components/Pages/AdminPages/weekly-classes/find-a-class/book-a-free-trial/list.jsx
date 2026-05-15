@@ -657,7 +657,7 @@ const List = () => {
         <div className="flex justify-between">
             <span>{option.label}</span>
             {option.capacity === 0 && (
-                <span className="text-red-500 text-sm">(Capacity 0)</span>
+                <span className="text-[#F04438] text-sm">(Capacity 0)</span>
             )}
         </div>
     );
@@ -1502,11 +1502,11 @@ const List = () => {
                         </div>
                     </div>
 
-                    <div className={`space-y-3 bg-white p-6 rounded-3xl shadow-sm border ${trialErrors.selectedDate ? 'border-red-500' : 'border-transparent'}`} id="trial-date-calendar">
+                    <div className={`space-y-3 bg-white p-6 rounded-3xl shadow-sm border ${trialErrors.selectedDate ? 'border-[#F04438]' : 'border-transparent'}`} id="trial-date-calendar">
                         <div className="">
                             <h2 className="text-[24px] font-semibold">Select Trial Date</h2>
                             {trialErrors.selectedDate && (
-                                <p className="text-red-500 text-sm mt-2">{trialErrors.selectedDate}</p>
+                                <p className="text-[#F04438] text-sm mt-2">{trialErrors.selectedDate}</p>
                             )}
 
                             <div className="rounded p-4 mt-6 text-center text-base w-full max-w-md mx-auto">
@@ -1581,7 +1581,7 @@ const List = () => {
                                                                         : "cursor-not-allowed opacity-40 bg-white"
                                                                 }
     ${isSelected ? "selectedDate text-white font-bold" : ""}
-    ${trialErrors.selectedDate ? "ring-2 ring-red-500" : ""}
+    ${trialErrors.selectedDate ? "ring-2 ring-[#F04438]" : ""}
   `}
                                                         >
                                                             {date.getDate()}
@@ -1614,7 +1614,7 @@ const List = () => {
                                     {students.length > 1 && (
                                         <button
                                             onClick={() => handleRemoveStudent(index)}
-                                            className="absolute top-4 right-4 text-red-500 hover:text-red-700 text-xl"
+                                            className="absolute top-4 right-4 text-[#F04438] hover:text-red-700 text-xl"
                                         >
                                             ✕
                                         </button>
@@ -1629,7 +1629,7 @@ const List = () => {
                                             <label className="block text-[16px] font-semibold">First name</label>
                                             <input
                                                 id={`student-${index}-studentFirstName`}
-                                                className={`w-full mt-2 border ${studentErrors[index]?.studentFirstName ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                                                className={`w-full mt-2 border ${studentErrors[index]?.studentFirstName ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                                                 placeholder="Enter first name"
                                                 value={student.studentFirstName}
                                                 onChange={(e) => {
@@ -1642,14 +1642,14 @@ const List = () => {
                                                 }}
                                             />
                                             {studentErrors[index]?.studentFirstName && (
-                                                <p className="text-red-500 text-sm mt-1">{studentErrors[index].studentFirstName}</p>
+                                                <p className="text-[#F04438] text-sm mt-1">{studentErrors[index].studentFirstName}</p>
                                             )}
                                         </div>
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Last name</label>
                                             <input
                                                 id={`student-${index}-studentLastName`}
-                                                className={`w-full mt-2 border ${studentErrors[index]?.studentLastName ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                                                className={`w-full mt-2 border ${studentErrors[index]?.studentLastName ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                                                 placeholder="Enter last name"
                                                 value={student.studentLastName}
                                                 onChange={(e) => {
@@ -1662,7 +1662,7 @@ const List = () => {
                                                 }}
                                             />
                                             {studentErrors[index]?.studentLastName && (
-                                                <p className="text-red-500 text-sm mt-1">{studentErrors[index].studentLastName}</p>
+                                                <p className="text-[#F04438] text-sm mt-1">{studentErrors[index].studentLastName}</p>
                                             )}
                                         </div>
                                     </div>
@@ -1687,11 +1687,11 @@ const List = () => {
                                                     }
                                                 }}
                                                 placeholder="DD/MM/YYYY (e.g., 15/10/2026)"
-                                                className={`w-full mt-2 border ${studentErrors[index]?.dateOfBirth ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                                                className={`w-full mt-2 border ${studentErrors[index]?.dateOfBirth ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                                                 maxLength={10}
                                             />
                                             {studentErrors[index]?.dateOfBirth && (
-                                                <p className="text-red-500 text-sm mt-1">{studentErrors[index].dateOfBirth}</p>
+                                                <p className="text-[#F04438] text-sm mt-1">{studentErrors[index].dateOfBirth}</p>
                                             )}
                                         </div>
 
@@ -1737,7 +1737,7 @@ const List = () => {
                                                 }}
                                             />
                                             {studentErrors[index]?.gender && (
-                                                <p className="text-red-500 text-sm mt-1">{studentErrors[index].gender}</p>
+                                                <p className="text-[#F04438] text-sm mt-1">{studentErrors[index].gender}</p>
                                             )}
                                         </div>
                                         <div className="w-1/2">
@@ -1757,10 +1757,10 @@ const List = () => {
                                                         setStudentErrors(newErrs);
                                                     }
                                                 }}
-                                                className={`mt-2 w-full px-4 py-3 border ${studentErrors[index]?.medicalInformation ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                                                className={`mt-2 w-full px-4 py-3 border ${studentErrors[index]?.medicalInformation ? 'border-[#F04438]' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
                                             />
                                             {studentErrors[index]?.medicalInformation && (
-                                                <p className="text-red-500 text-sm mt-1">{studentErrors[index].medicalInformation}</p>
+                                                <p className="text-[#F04438] text-sm mt-1">{studentErrors[index].medicalInformation}</p>
                                             )}
 
                                         </div>
@@ -1804,7 +1804,7 @@ const List = () => {
                                                 }}
                                             />
                                             {studentErrors[index]?.selectedClassId && (
-                                                <p className="text-red-500 text-sm mt-1">
+                                                <p className="text-[#F04438] text-sm mt-1">
                                                     {studentErrors[index].selectedClassId}
                                                 </p>
                                             )}
@@ -1859,7 +1859,7 @@ const List = () => {
                                             {index > 0 && (
                                                 <button
                                                     onClick={() => handleRemoveParent(parent.id)}
-                                                    className="text-gray-500 hover:text-red-600"
+                                                    className="text-gray-500 hover:text-[#B42318]"
                                                 >
                                                     <X className="w-5 h-5" />
                                                 </button>
@@ -1873,7 +1873,7 @@ const List = () => {
                                              <label className="block text-[16px] font-semibold">First name</label>
                                              <input
                                                  id={`parent-${index}-parentFirstName`}
-                                                 className={`w-full mt-2 border ${parentErrors[index]?.parentFirstName ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                                                 className={`w-full mt-2 border ${parentErrors[index]?.parentFirstName ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                                                  placeholder="Enter first name"
                                                  disabled={isPrefilled} // Disable if pre-filled from existing parent data
                                                  value={parent.parentFirstName}
@@ -1892,7 +1892,7 @@ const List = () => {
                                                  }}
                                              />
                                              {parentErrors[index]?.parentFirstName && (
-                                                 <p className="text-red-500 text-sm mt-1">{parentErrors[index].parentFirstName}</p>
+                                                 <p className="text-[#F04438] text-sm mt-1">{parentErrors[index].parentFirstName}</p>
                                              )}
                                          </div>
 
@@ -1900,7 +1900,7 @@ const List = () => {
                                              <label className="block text-[16px] font-semibold">Last name</label>
                                              <input
                                                  id={`parent-${index}-parentLastName`}
-                                                 className={`w-full mt-2 border ${parentErrors[index]?.parentLastName ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                                                 className={`w-full mt-2 border ${parentErrors[index]?.parentLastName ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                                                  placeholder="Enter last name"
                                                  disabled={isPrefilled} // Disable if pre-filled from existing parent data
                                                  value={parent.parentLastName}
@@ -1919,7 +1919,7 @@ const List = () => {
                                                  }}
                                              />
                                              {parentErrors[index]?.parentLastName && (
-                                                 <p className="text-red-500 text-sm mt-1">{parentErrors[index].parentLastName}</p>
+                                                 <p className="text-[#F04438] text-sm mt-1">{parentErrors[index].parentLastName}</p>
                                              )}
                                          </div>
                                      </div>
@@ -1932,7 +1932,7 @@ const List = () => {
                                             <input
                                                 id={`parent-${index}-parentEmail`}
                                                 type="email"
-                                                className={`w-full mt-2 border ${parentErrors[index]?.parentEmail ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                                                className={`w-full mt-2 border ${parentErrors[index]?.parentEmail ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                                                 placeholder="Enter email address"
                                                 disabled={isPrefilled} // Disable if pre-filled from existing parent data
                                                 value={parent.parentEmail}
@@ -1947,7 +1947,7 @@ const List = () => {
                                                 }}
                                             />
                                             {parentErrors[index]?.parentEmail && (
-                                                <p className="text-red-500 text-sm mt-1">{parentErrors[index].parentEmail}</p>
+                                                <p className="text-[#F04438] text-sm mt-1">{parentErrors[index].parentEmail}</p>
                                             )}
                                         </div>
                                         <div className="w-1/2" id={`parent-${index}-parentPhoneNumber`}>
@@ -1967,7 +1967,7 @@ const List = () => {
                                                 error={parentErrors[index]?.parentPhoneNumber}
                                             />
                                             {parentErrors[index]?.parentPhoneNumber && (
-                                                <p className="text-red-500 text-sm mt-1">{parentErrors[index].parentPhoneNumber}</p>
+                                                <p className="text-[#F04438] text-sm mt-1">{parentErrors[index].parentPhoneNumber}</p>
                                             )}
                                         </div>
                                     </div>
@@ -1994,7 +1994,7 @@ const List = () => {
                                                                 setParentErrors(newErrs);
                                                             }
                                                         }}
-                                                        className={`w-full mt-2 border ${parentErrors[index]?.interestReason ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 pr-28 text-base`}
+                                                        className={`w-full mt-2 border ${parentErrors[index]?.interestReason ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 pr-28 text-base`}
                                                     />
 
                                                     {/* Back Button */}
@@ -2044,7 +2044,7 @@ const List = () => {
                                                 />
                                             )}
                                             {parentErrors[index]?.interestReason && (
-                                                <p className="text-red-500 text-sm mt-1">{parentErrors[index].interestReason}</p>
+                                                <p className="text-[#F04438] text-sm mt-1">{parentErrors[index].interestReason}</p>
                                             )}
                                         </div>
 
@@ -2096,7 +2096,7 @@ const List = () => {
                                                 }}
                                             />
                                             {parentErrors[index]?.relationToChild && (
-                                                <p className="text-red-500 text-sm mt-1">{parentErrors[index].relationToChild}</p>
+                                                <p className="text-[#F04438] text-sm mt-1">{parentErrors[index].relationToChild}</p>
                                             )}
                                         </div>
                                         <div className="w-1/2" id={`parent-${index}-howDidYouHear`}>
@@ -2127,7 +2127,7 @@ const List = () => {
                                                 }}
                                             />
                                             {parentErrors[index]?.howDidYouHear && (
-                                                <p className="text-red-500 text-sm mt-1">{parentErrors[index].howDidYouHear}</p>
+                                                <p className="text-[#F04438] text-sm mt-1">{parentErrors[index].howDidYouHear}</p>
                                             )}
                                         </div>
                                     </div>
@@ -2158,7 +2158,7 @@ const List = () => {
                                     <label className="block text-[16px] font-semibold">First name (optional)</label>
                                     <input
                                         id="emergencyFirstName"
-                                        className={`w-full mt-2 border ${emergencyErrors.emergencyFirstName ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                                        className={`w-full mt-2 border ${emergencyErrors.emergencyFirstName ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                                         placeholder="Enter first name"
                                         value={emergency.emergencyFirstName}
                                         onChange={e => {
@@ -2172,14 +2172,14 @@ const List = () => {
                                         }}
                                     />
                                     {emergencyErrors.emergencyFirstName && (
-                                        <p className="text-red-500 text-sm mt-1">{emergencyErrors.emergencyFirstName}</p>
+                                        <p className="text-[#F04438] text-sm mt-1">{emergencyErrors.emergencyFirstName}</p>
                                     )}
                                 </div>
                                 <div className="w-1/2">
                                     <label className="block text-[16px] font-semibold">Last name (optional)</label>
                                     <input
                                         id="emergencyLastName"
-                                        className={`w-full mt-2 border ${emergencyErrors.emergencyLastName ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                                        className={`w-full mt-2 border ${emergencyErrors.emergencyLastName ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                                         placeholder="Enter last name"
                                         value={emergency.emergencyLastName}
                                         onChange={e => {
@@ -2193,7 +2193,7 @@ const List = () => {
                                         }}
                                     />
                                     {emergencyErrors.emergencyLastName && (
-                                        <p className="text-red-500 text-sm mt-1">{emergencyErrors.emergencyLastName}</p>
+                                        <p className="text-[#F04438] text-sm mt-1">{emergencyErrors.emergencyLastName}</p>
                                     )}
                                 </div>
                             </div>
@@ -2215,7 +2215,7 @@ const List = () => {
                                         error={emergencyErrors.emergencyPhoneNumber}
                                     />
                                     {emergencyErrors.emergencyPhoneNumber && (
-                                        <p className="text-red-500 text-sm mt-1">{emergencyErrors.emergencyPhoneNumber}</p>
+                                        <p className="text-[#F04438] text-sm mt-1">{emergencyErrors.emergencyPhoneNumber}</p>
                                     )}
                                 </div>
                                 <div className="w-1/2" id="emergencyRelation">
@@ -2246,7 +2246,7 @@ const List = () => {
                                         }}
                                     />
                                     {emergencyErrors.emergencyRelation && (
-                                        <p className="text-red-500 text-sm mt-1">{emergencyErrors.emergencyRelation}</p>
+                                        <p className="text-[#F04438] text-sm mt-1">{emergencyErrors.emergencyRelation}</p>
                                     )}
                                 </div>
                             </div>
@@ -2335,7 +2335,7 @@ const List = () => {
                                 disabled={isSubmitting || selectedDate == null || isBooked}
                                 className={`
         ${isBooked
-                                        ? "bg-green-600 border-green-600 cursor-default"
+                                        ? "bg-[#027A48] border-[#027A48] cursor-default"
                                         : isSubmitting || selectedDate == null
                                             ? "bg-gray-400 border-gray-400 cursor-not-allowed"
                                             : "bg-[#237FEA] border-[#237FEA] hover:bg-[#1f6dc9] cursor-pointer"

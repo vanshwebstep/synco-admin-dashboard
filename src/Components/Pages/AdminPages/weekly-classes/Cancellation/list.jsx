@@ -354,7 +354,7 @@ const CancellationList = () => {
             change: statsFreeTrial?.totalRequests?.change != null
                 ? `${statsFreeTrial.totalRequests.change}`
                 : "0%",
-            color: "text-green-500",
+            color: "text-[#12B76A]",
             bg: "bg-[#F3FAF5]"
         },
         {
@@ -362,7 +362,7 @@ const CancellationList = () => {
             value: statsFreeTrial?.avgTenure?.value ? `${statsFreeTrial.avgTenure.value}`.trim() : "0",
             subValue: `${statsFreeTrial?.avgTenure?.change ?? ""}`,
             icon: "/DashboardIcons/📊.png",
-            color: "text-green-500",
+            color: "text-[#12B76A]",
             bg: "bg-[#F3FAFD]"
         },
         {
@@ -372,7 +372,7 @@ const CancellationList = () => {
             change: statsFreeTrial?.mostRequestedVenue?.change != null
                 ? `${statsFreeTrial.mostRequestedVenue.change}`
                 : "0%",
-            color: "text-green-500",
+            color: "text-[#12B76A]",
             bg: "bg-[#F0F9F9]"
         },
         {
@@ -382,7 +382,7 @@ const CancellationList = () => {
             subValue: statsFreeTrial?.commonReason?.change != null
                 ? `${statsFreeTrial.commonReason.change}`
                 : "0%",
-            color: "text-green-500",
+            color: "text-[#12B76A]",
             bg: "bg-[#FEF6FB]"
         },
         {
@@ -392,7 +392,7 @@ const CancellationList = () => {
                 ? `${statsFreeTrial.highestRiskAgeGroup.change}`
                 : "0%",
             icon: "/DashboardIcons/🎯.png",
-            color: "text-green-500",
+            color: "text-[#12B76A]",
             bg: "bg-[#F3FAFD]"
         },
     ], [statsFreeTrial]);

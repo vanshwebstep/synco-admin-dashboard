@@ -110,7 +110,7 @@ const filteredTermData = React.useMemo(() => {
           )}
         </div>
 
-        <div className="text-center p-4 border-dotted text-red-500 rounded-md text-sm md:text-base">
+        <div className="text-center p-4 border-dotted text-[#F04438] rounded-md text-sm md:text-base">
           No Term Groups or Term Data Available
         </div>
       </>
@@ -136,7 +136,7 @@ const filteredTermData = React.useMemo(() => {
           )}
         </div>
 
-        <div className="text-center p-4 border-dotted text-red-500 rounded-md text-sm md:text-base">
+        <div className="text-center p-4 border-dotted text-[#F04438] rounded-md text-sm md:text-base">
           No Term Groups Available
         </div>
       </>
@@ -238,7 +238,7 @@ const filteredTermData = React.useMemo(() => {
                 )}
 
                 {canDelete && (
-                  <button onClick={() => handleDelete(item.id)} className="text-gray-500 hover:text-red-500">
+                  <button onClick={() => handleDelete(item.id)} className="text-gray-500 hover:text-[#F04438]">
                     <img className="w-5 h-5" src="/images/icons/deleteIcon.png" alt="Delete" />
                   </button>
                 )}

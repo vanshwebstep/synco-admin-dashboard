@@ -127,7 +127,7 @@ const Account = () => {
 
           <button
             onClick={handleDelete}
-            className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl hover:bg-red-100 transition-colors font-semibold"
+            className="flex items-center gap-2 px-4 py-2 bg-red-50 text-[#B42318] border border-red-200 rounded-xl hover:bg-red-100 transition-colors font-semibold"
           >
             <Trash2 size={18} />
             Delete Account

@@ -423,7 +423,7 @@ export default function MusicPlayer() {
                                                 <img src="/images/icons/edit.png" className="w-6" alt="" />
                                             </button>
 
-                                            <button onClick={() => handleDelete(track?.id)} className="text-gray-500 hover:text-red-500">
+                                            <button onClick={() => handleDelete(track?.id)} className="text-gray-500 hover:text-[#F04438]">
                                                 <img src="/images/icons/deleteIcon.png" className="w-6" alt="" />
                                             </button>
                                             <MoreVertical size={16} className="text-gray-500" />
@@ -487,10 +487,10 @@ export default function MusicPlayer() {
                                 setErrors((prev) => ({ ...prev, title: '' }));
                             }}
                             placeholder="Enter title"
-                            className={`w-full border ${errors.title ? 'border-red-500 outline-none' : 'border-gray-200'} rounded-lg px-3 py-2 ${errors.title ? 'mb-1' : 'mb-4'}`}
+                            className={`w-full border ${errors.title ? 'border-[#F04438] outline-none' : 'border-gray-200'} rounded-lg px-3 py-2 ${errors.title ? 'mb-1' : 'mb-4'}`}
                             autoFocus
                         />
-                        {errors.title && <p className="text-red-500 text-sm mb-4">{errors.title}</p>}
+                        {errors.title && <p className="text-[#F04438] text-sm mb-4">{errors.title}</p>}
 
                         <div className="flex justify-end gap-3">
                             <button
@@ -527,7 +527,7 @@ export default function MusicPlayer() {
                         <label
                             ref={audioLabelRef}
                             tabIndex={0}
-                            className={`w-full h-30 border-2 border-dashed ${errors.audio ? 'border-red-500' : 'border-gray-300'} rounded-xl flex gap-3 justify-center items-center cursor-pointer text-gray-500 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500/50`}
+                            className={`w-full h-30 border-2 border-dashed ${errors.audio ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl flex gap-3 justify-center items-center cursor-pointer text-gray-500 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#F04438]/50`}
                         >
                             <Upload size={16} />
                             {audioFile ? audioFile.name : "Choose Audio"}
@@ -541,13 +541,13 @@ export default function MusicPlayer() {
                                 }}
                             />
                         </label>
-                        {errors.audio && <p className="text-red-500 text-sm mt-1">{errors.audio}</p>}
+                        {errors.audio && <p className="text-[#F04438] text-sm mt-1">{errors.audio}</p>}
 
                         {/* Cover */}
                         <label
                             ref={coverLabelRef}
                             tabIndex={0}
-                            className={`w-full h-30 mt-4 border-2 border-dashed ${errors.cover ? 'border-red-500' : 'border-gray-300'} rounded-xl flex gap-3 justify-center items-center cursor-pointer text-gray-500 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500/50`}
+                            className={`w-full h-30 mt-4 border-2 border-dashed ${errors.cover ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl flex gap-3 justify-center items-center cursor-pointer text-gray-500 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#F04438]/50`}
                         >
                             <Upload size={16} />
                             {coverFile ? coverFile.name : "Cover Photo"}
@@ -561,7 +561,7 @@ export default function MusicPlayer() {
                                 }}
                             />
                         </label>
-                        {errors.cover && <p className="text-red-500 text-sm mt-1">{errors.cover}</p>}
+                        {errors.cover && <p className="text-[#F04438] text-sm mt-1">{errors.cover}</p>}
 
                         <div className="flex justify-end gap-3 mt-4">
                             <button

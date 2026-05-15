@@ -197,7 +197,7 @@ export default function CommunicationsList() {
                                 <p className="font-semibold text-gray-900 mb-2">Status</p>
 
                                 <div className="flex items-center gap-2 w-32">
-                                    <span className={`w-2.5 h-2.5 rounded-full ${item.status === "Sent" ? "bg-green-500" : item.status === "Scheduled" ? "bg-yellow-500" : "bg-gray-500"
+                                    <span className={`w-2.5 h-2.5 rounded-full ${item.status === "Sent" ? "bg-[#12B76A]" : item.status === "Scheduled" ? "bg-yellow-500" : "bg-gray-500"
                                         }`} />
                                     <p className="text-sm text-gray-700 font-medium">{item.status}</p>
                                 </div></div>

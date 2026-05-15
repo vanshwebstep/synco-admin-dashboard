@@ -288,8 +288,8 @@ console.log('summary',summary)
       sub1: `vs. previous period `,
       sub2: `${summary?.totalLeads?.lastYear ?? 0}`,
       color: Number(summary?.totalLeads?.thisYear) <= Number(summary?.totalLeads?.lastYear)
-        ? "text-green-600"
-        : "text-red-600",
+        ? "text-[#027A48]"
+        : "text-[#B42318]",
 
     },
     {
@@ -300,8 +300,8 @@ console.log('summary',summary)
       sub1: `vs. previous period `,
       sub2: `${summary?.numberOfSales?.lastYear ?? 0}`,
       color: Number(summary?.numberOfSales?.thisYear) <= Number(summary?.numberOfSales?.lastYear)
-        ? "text-green-600"
-        : "text-red-600",
+        ? "text-[#027A48]"
+        : "text-[#B42318]",
     },
     {
       icon: '/reportsIcons/Percent.png',
@@ -311,8 +311,8 @@ console.log('summary',summary)
       sub1: `vs. previous period `,
       sub2: `${summary?.conversionRate?.lastYear ?? "0%"}`,
       color: parsePercent(summary?.conversionRate?.thisYear) <= parsePercent(summary?.conversionRate?.lastYear)
-        ? "text-green-600"
-        : "text-red-600",
+        ? "text-[#027A48]"
+        : "text-[#B42318]",
     },
     {
       icon: '/reportsIcons/pound.png',
@@ -324,8 +324,8 @@ console.log('summary',summary)
       color:
         Number(summary?.revenueGenerated?.thisYear ?? 0) <=
           Number(summary?.revenueGenerated?.lastYear ?? 0)
-          ? "text-green-600"
-          : "text-red-600",
+          ? "text-[#027A48]"
+          : "text-[#B42318]",
 
     },
     {
@@ -336,8 +336,8 @@ console.log('summary',summary)
       sub1: `vs. previous period `,
       sub2: `£${summary?.packageRevenue?.gold?.lastYear}`,
       color: Number(summary?.packageRevenue?.gold?.thisYear) <= Number(summary?.packageRevenue?.gold?.lastYear)
-        ? "text-green-600"
-        : "text-red-600",
+        ? "text-[#027A48]"
+        : "text-[#B42318]",
 
     },
     {
@@ -348,8 +348,8 @@ console.log('summary',summary)
       sub1: `vs. previous period `,
       sub2: `£${summary?.packageRevenue?.silver?.lastYear}`,
       color: Number(summary?.packageRevenue?.silver?.thisYear) <= Number(summary?.packageRevenue?.silver?.lastYear)
-        ? "text-green-600"
-        : "text-red-600",
+        ? "text-[#027A48]"
+        : "text-[#B42318]",
     },
   ];
 
@@ -815,7 +815,7 @@ console.log('summary',summary)
                           <div className="text-[16px] font-semibold">Revenue Growth</div>
                           <div className="font-semibold  ">{pkg.revenueGrowth}%</div>
                           <div
-                            className={`text-xs font-semibold ${pkg.revenueGrowth < 0 ? "text-red-500" : "text-[#717073]"
+                            className={`text-xs font-semibold ${pkg.revenueGrowth < 0 ? "text-[#F04438]" : "text-[#717073]"
                               }`}
                           >
                             vs last month {pkg.lastRevenue}%

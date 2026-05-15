@@ -192,7 +192,7 @@ console.log('isOpenForm', isOpenForm)
           )}
         </div>
       ) : (
-        <p className="text-center p-6 text-red-500 font-semibold">
+        <p className="text-center p-6 text-[#F04438] font-semibold">
           Not Authorized
         </p>
       )}

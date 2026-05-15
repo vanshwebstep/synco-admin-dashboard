@@ -17,88 +17,135 @@ const GlobalSearch = () => {
 
     const results = (() => {
         const q = searchQuery?.trim();
+
         if (!q || q.length < 2) return [];
 
         const queryWords = q.toLowerCase().split(/\s+/).filter(Boolean);
-        const seenKeys = new Set(); // ✅ dedup tracker
 
-        return registeredData.filter((row) => {
-            // ── Dedup by parent phone + parent name ──
-            const parentsList =
-                row?.parents?.length
-                    ? row.parents
-                    : row?.parent?.parents?.length
-                        ? row.parent.parents
-                        : [];
+        const seenKeys = new Set();
 
-            const dedupKey =
-                parentsList[0]?.parentPhoneNumber ||
-                parentsList[0]?.parentEmail ||
-                row?.id ||
-                row?.bookingId;
+        return registeredData
+            .filter((row) => {
+                // ── parents list ─────────────────────────────────────
+                const parentsList =
+                    row?.parents?.length
+                        ? row.parents
+                        : row?.parent?.parents?.length
+                            ? row.parent.parents
+                            : [];
 
-            if (dedupKey && seenKeys.has(dedupKey)) return false; // ✅ duplicate skip
-            if (dedupKey) seenKeys.add(dedupKey);
+                // ── dedup ────────────────────────────────────────────
+                const dedupKey =
+                    parentsList[0]?.parentPhoneNumber ||
+                    parentsList[0]?.parentEmail ||
+                    row?.id ||
+                    row?.bookingId;
 
-            const normalizedPhones = parentsList
-                .map((p) => (p?.parentPhoneNumber || "").replace(/[^\d]/g, ""))
-                .join(" ");
+                if (dedupKey && seenKeys.has(dedupKey)) return false;
 
-            const parentInfo = parentsList
-                .map((p) =>
-                    [p?.parentFirstName, p?.parentLastName, p?.parentEmail]
-                        .filter(Boolean)
-                        .join(" ")
-                )
-                .join(" ")
-                .toLowerCase();
-
-            const studentInfo = [
-                // single student (flattenedData)
-                row?.student
-                    ? [row.student.studentFirstName, row.student.studentLastName]
-                        .filter(Boolean)
-                        .join(" ")
-                    : "",
-                // multiple students array (groupedData)
-                ...(row?.students || []).map((s) =>
-                    [s?.studentFirstName, s?.studentLastName]
-                        .filter(Boolean)
-                        .join(" ")
-                ),
-                // parent ke andar students (nested)
-                ...(row?.parent?.students || []).map((s) =>
-                    [s?.studentFirstName, s?.studentLastName]
-                        .filter(Boolean)
-                        .join(" ")
-                ),
-            ]
-                .filter(Boolean)
-                .join(" ")
-                .toLowerCase();
-
-            const searchString = [studentInfo, parentInfo].join(" ").toLowerCase();
-            const tokens = searchString.split(/[\s@.,_\-+]+/).filter(Boolean);
-
-            return queryWords.every((word) => {
-                const clean = word.trim().toLowerCase();
-                if (!clean) return true;
-
-                if (/^[\d+\s\-()]{2,}$/.test(clean)) {
-                    const cleanDigits = clean.replace(/[^\d]/g, "");
-                    if (cleanDigits.length >= 2) {
-                        return normalizedPhones.includes(cleanDigits);
-                    }
+                if (dedupKey) {
+                    seenKeys.add(dedupKey);
                 }
 
-                return tokens.some((token) => {
-                    if (/^\d+$/.test(clean) && /^\d+$/.test(token)) {
-                        return token === clean;
+                // ── phones ───────────────────────────────────────────
+                const normalizedPhones = parentsList
+                    .map((p) =>
+                        (p?.parentPhoneNumber || "").replace(/[^\d]/g, "")
+                    )
+                    .join(" ");
+
+                // ── parent info ──────────────────────────────────────
+                const parentInfo = parentsList
+                    .map((p) =>
+                        [
+                            p?.parentFirstName,
+                            p?.parentLastName,
+                            p?.parentEmail,
+                        ]
+                            .filter(Boolean)
+                            .join(" ")
+                    )
+                    .join(" ")
+                    .toLowerCase();
+
+                // ── all students ─────────────────────────────────────
+                const studentsList = row?.students?.length
+                    ? row.students
+                    : row?.parent?.students?.length
+                        ? row.parent.students
+                        : row?.student
+                            ? [row.student]
+                            : [];
+
+                // ── student names ────────────────────────────────────
+                const studentInfo = studentsList
+                    .map((s) =>
+                        [
+                            s?.studentFirstName,
+                            s?.studentLastName,
+                        ]
+                            .filter(Boolean)
+                            .join(" ")
+                    )
+                    .join(" ")
+                    .toLowerCase();
+
+                // ── all student ages ─────────────────────────────────
+                const allStudentAges = studentsList
+                    .map((s) => s?.age)
+                    .filter(
+                        (age) =>
+                            age !== null &&
+                            age !== undefined &&
+                            age !== ""
+                    )
+                    .map((age) => String(age));
+
+                // ── searchable string ────────────────────────────────
+                const searchString = [studentInfo, parentInfo]
+                    .join(" ")
+                    .toLowerCase();
+
+                const tokens = searchString
+                    .split(/[\s@.,_\-+]+/)
+                    .filter(Boolean);
+
+                // ── query matching ───────────────────────────────────
+                return queryWords.every((word) => {
+                    const clean = word.trim().toLowerCase();
+
+                    if (!clean) return true;
+
+                    // Phone search
+                    if (/^[\d+\s\-()]{2,}$/.test(clean)) {
+                        const cleanDigits = clean.replace(/[^\d]/g, "");
+
+                        if (cleanDigits.length >= 2) {
+                            return normalizedPhones.includes(cleanDigits);
+                        }
                     }
-                    return token.startsWith(clean);
+
+                    // Age search
+                    if (allStudentAges.includes(clean)) {
+                        return true;
+                    }
+
+                    // Token matching
+                    return tokens.some((token) => {
+                        // Exact numeric match
+                        if (
+                            /^\d+$/.test(clean) &&
+                            /^\d+$/.test(token)
+                        ) {
+                            return token === clean;
+                        }
+
+                        // Prefix match
+                        return token.startsWith(clean);
+                    });
                 });
-            });
-        }).slice(0, 8);
+            })
+            .slice(0, 8);
     })();
 
     const getParentName = (row) => {
@@ -123,27 +170,27 @@ const GlobalSearch = () => {
         return parentsList[0]?.parentPhoneNumber || "—";
     };
 
-   const getChildName = (row) => {
-  // Single student
-  if (row?.student) {
-    return `${row.student.studentFirstName || ""} ${row.student.studentLastName || ""}`.trim();
-  }
-  // Students array
-  if (row?.students?.length) {
-    return row.students
-      .map((s) => `${s.studentFirstName || ""} ${s.studentLastName || ""}`.trim())
-      .filter(Boolean)
-      .join(", ");
-  }
-  // Nested
-  if (row?.parent?.students?.length) {
-    return row.parent.students
-      .map((s) => `${s.studentFirstName || ""} ${s.studentLastName || ""}`.trim())
-      .filter(Boolean)
-      .join(", ");
-  }
-  return "—";
-};
+    const getChildName = (row) => {
+        // Students array
+        if (row?.students?.length) {
+            return row.students
+                .map((s) => `${s.studentFirstName || ""} ${s.studentLastName || ""}`.trim())
+                .filter(Boolean)
+                .join(", ");
+        }
+        // Nested
+        if (row?.parent?.students?.length) {
+            return row.parent.students
+                .map((s) => `${s.studentFirstName || ""} ${s.studentLastName || ""}`.trim())
+                .filter(Boolean)
+                .join(", ");
+        }
+        // Single student
+        if (row?.student) {
+            return `${row.student.studentFirstName || ""} ${row.student.studentLastName || ""}`.trim();
+        }
+        return "—";
+    };
 
     const initials = (name) =>
         name

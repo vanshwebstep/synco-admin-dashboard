@@ -63,10 +63,10 @@ const ServiceHistory = ({ serviceHistory }) => {
                 {/* Status */}
                 <div
                   className={`flex gap-2 items-center p-2 rounded-xl flex-wrap ${status === "attended"
-                    ? "bg-green-500"
+                    ? "bg-[#12B76A]"
                     : status === "pending"
                       ? "bg-yellow-500"
-                      : "bg-red-500"
+                      : "bg-[#F04438]"
                     }`}
                 >
                   <div className="block">

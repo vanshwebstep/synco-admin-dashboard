@@ -1299,7 +1299,7 @@ const CandidateInfo = ({ steps, setSteps }) => {
                           ✓
                         </button>
                       </div>
-                      {practicalErrors.qualifyLead && <p className="text-red-500 text-xs mt-1">{practicalErrors.qualifyLead}</p>}
+                      {practicalErrors.qualifyLead && <p className="text-[#F04438] text-xs mt-1">{practicalErrors.qualifyLead}</p>}
                     </>
                   )}
 
@@ -1371,10 +1371,10 @@ const CandidateInfo = ({ steps, setSteps }) => {
                         <option value="1 day before">1 day before</option>
                       </select>
 
-                      {practicalErrors.telephoneCallSetupDate && <p className="text-red-500 text-xs mt-1">{practicalErrors.telephoneCallSetupDate}</p>}
-                      {practicalErrors.telephoneCallSetupTime && <p className="text-red-500 text-xs mt-1">{practicalErrors.telephoneCallSetupTime}</p>}
-                      {practicalErrors.telephoneCallSetupEmail && <p className="text-red-500 text-xs mt-1">{practicalErrors.telephoneCallSetupEmail}</p>}
-                      {practicalErrors.telephoneCallSetupReminder && <p className="text-red-500 text-xs mt-1">{practicalErrors.telephoneCallSetupReminder}</p>}
+                      {practicalErrors.telephoneCallSetupDate && <p className="text-[#F04438] text-xs mt-1">{practicalErrors.telephoneCallSetupDate}</p>}
+                      {practicalErrors.telephoneCallSetupTime && <p className="text-[#F04438] text-xs mt-1">{practicalErrors.telephoneCallSetupTime}</p>}
+                      {practicalErrors.telephoneCallSetupEmail && <p className="text-[#F04438] text-xs mt-1">{practicalErrors.telephoneCallSetupEmail}</p>}
+                      {practicalErrors.telephoneCallSetupReminder && <p className="text-[#F04438] text-xs mt-1">{practicalErrors.telephoneCallSetupReminder}</p>}
 
                       <button
                         className="w-full bg-blue-600 text-white py-2 rounded-xl"
@@ -1391,7 +1391,7 @@ const CandidateInfo = ({ steps, setSteps }) => {
                       <span className="bg-blue-600 text-white px-3 py-2 rounded-xl">
                         {step.resultPercent}
                       </span>
-                      <span className="text-green-600 mt-2">
+                      <span className="text-[#027A48] mt-2">
                         ✓ {step.resultStatus}
                       </span>
                     </div>
@@ -1464,12 +1464,12 @@ const CandidateInfo = ({ steps, setSteps }) => {
                     </h3>
                     <ul className="mt-4 space-y-4">
                       <li className="flex items-start gap-2">
-                        <span className="text-green-600 text-xl"><IoMdCheckmarkCircle />
+                        <span className="text-[#027A48] text-xl"><IoMdCheckmarkCircle />
                         </span>
                         <p className='font-semibold text-[16px]'>Check they are free and in a quiet space for the call</p>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="text-green-600 text-xl"><IoMdCheckmarkCircle />
+                        <span className="text-[#027A48] text-xl"><IoMdCheckmarkCircle />
                         </span>
                         <div>
                           <p className="font-semibold text-[16px]">Give them break down for the call</p>
@@ -1482,11 +1482,11 @@ const CandidateInfo = ({ steps, setSteps }) => {
                         </div>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="text-green-600 text-xl"><IoMdCheckmarkCircle />
+                        <span className="text-[#027A48] text-xl"><IoMdCheckmarkCircle />
                         </span>
                         <div>
                           <p className="font-semibold text-[16px]">Process</p>
-                          <span className="text-green-600">2 steps</span>
+                          <span className="text-[#027A48]">2 steps</span>
                           <ul className=" list-disc text-gray-600 mt-2">
                             <li className='list-none'>(A) Phone call</li>
                             <li className='list-none'>(B) Practical assessment - taking place next week and week after</li>
@@ -1495,11 +1495,11 @@ const CandidateInfo = ({ steps, setSteps }) => {
                         </div>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="text-green-600 text-xl"><IoMdCheckmarkCircle />
+                        <span className="text-[#027A48] text-xl"><IoMdCheckmarkCircle />
                         </span>
                         <div>
                           <p className="font-semibold text-[16px]">Title Name</p>
-                          <span className="text-green-600">2 steps</span>
+                          <span className="text-[#027A48]">2 steps</span>
                           <ul className=" list-disc text-gray-600 mt-2">
                             <li className='list-none'>(A) Phone call</li>
                             <li className='list-none'>(B) Practical assessment - taking place next week and week after</li>
@@ -1517,7 +1517,7 @@ const CandidateInfo = ({ steps, setSteps }) => {
                     </h3>
                     <div className="mt-4">
                       <div className="flex items-start gap-2">
-                        <span className="text-green-600 text-xl"><IoMdCheckmarkCircle />
+                        <span className="text-[#027A48] text-xl"><IoMdCheckmarkCircle />
                         </span>
 
                         <div>
@@ -1564,7 +1564,7 @@ const CandidateInfo = ({ steps, setSteps }) => {
                             </label>
                           ))}
                         </div>
-                        {practicalErrors[scoreKeyMap[label]] && <p className="text-red-500 text-xs mt-1">{practicalErrors[scoreKeyMap[label]]}</p>}
+                        {practicalErrors[scoreKeyMap[label]] && <p className="text-[#F04438] text-xs mt-1">{practicalErrors[scoreKeyMap[label]]}</p>}
                       </div>
                     ))}
                   </div>
@@ -1633,7 +1633,7 @@ const CandidateInfo = ({ steps, setSteps }) => {
                       </option>
                     ))}
                   </select>
-                  {practicalErrors.venueState && <p className="text-red-500 text-xs mt-1">{practicalErrors.venueState}</p>}
+                  {practicalErrors.venueState && <p className="text-[#F04438] text-xs mt-1">{practicalErrors.venueState}</p>}
                 </div>
 
                 <div className="mb-3">
@@ -1646,7 +1646,7 @@ const CandidateInfo = ({ steps, setSteps }) => {
                     value={selectedClass}
                     onChange={setSelectedClass}
                   />
-                  {practicalErrors.selectedClass && <p className="text-red-500 text-xs mt-1">{practicalErrors.selectedClass}</p>}
+                  {practicalErrors.selectedClass && <p className="text-[#F04438] text-xs mt-1">{practicalErrors.selectedClass}</p>}
                 </div>
 
                 <div className="mb-3">
@@ -1658,7 +1658,7 @@ const CandidateInfo = ({ steps, setSteps }) => {
                     className="border border-[#E2E1E5] w-full rounded-2xl p-3"
                     dateFormat="dd/MM/yyyy"
                   />
-                  {practicalErrors.selectedDate && <p className="text-red-500 text-xs mt-1">{practicalErrors.selectedDate}</p>}
+                  {practicalErrors.selectedDate && <p className="text-[#F04438] text-xs mt-1">{practicalErrors.selectedDate}</p>}
                 </div>
 
                 <div className="mb-3">
@@ -1671,7 +1671,7 @@ const CandidateInfo = ({ steps, setSteps }) => {
                     value={venueManager}
                     onChange={setVenueManager}
                   />
-                  {practicalErrors.venueManager && <p className="text-red-500 text-xs mt-1">{practicalErrors.venueManager}</p>}
+                  {practicalErrors.venueManager && <p className="text-[#F04438] text-xs mt-1">{practicalErrors.venueManager}</p>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mt-12">

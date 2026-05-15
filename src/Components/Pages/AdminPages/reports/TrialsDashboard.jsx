@@ -527,9 +527,9 @@ const TrialsDashboard = () => {
                         <div>
                             <span className="font-semibold text-[#717073] text-sm">{s.title}</span>
 
-                            <h3 className="text-[20px] font-semibold text-gray-900">{s.value} <small className="text-green-500 font-normal text-xs">{s.diff}</small></h3>
+                            <h3 className="text-[20px] font-semibold text-gray-900">{s.value} <small className="text-[#12B76A] font-normal text-xs">{s.diff}</small></h3>
                             <p className="text-xs font-semibold text-[#717073]">
-                                {s.sub} <span className="text-red-500">{s.subvalue}</span>
+                                {s.sub} <span className="text-[#F04438]">{s.subvalue}</span>
                             </p>
                         </div>
                     </div>
@@ -942,13 +942,13 @@ const TrialsDashboard = () => {
                                             </p>
                                             <p className="text-lg font-semibold text-gray-900 flex items-center">
                                                 {item.value}
-                                                <span className="text-green-500 text-sm font-normal ml-1">
+                                                <span className="text-[#12B76A] text-sm font-normal ml-1">
                                                     ({item.change})
                                                 </span>
                                             </p>
                                             <p className="text-sm text-gray-400">
                                                 vs. prev period{" "}
-                                                <span className="text-red-500 font-medium">{item.prev}</span>
+                                                <span className="text-[#F04438] font-medium">{item.prev}</span>
                                             </p>
                                         </div>
                                     </div>
@@ -956,7 +956,7 @@ const TrialsDashboard = () => {
                                     {item.conversion && (
                                         <div className="text-right">
                                             <p className="text-gray-800 font-semibold">{item.conversion}</p>
-                                            <p className="text-green-500 text-sm">(Conversion)</p>
+                                            <p className="text-[#12B76A] text-sm">(Conversion)</p>
                                         </div>
                                     )}
                                 </div>

@@ -14,7 +14,7 @@ const DynamicTable = ({
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const { searchQuery,registerTableData  } = useGlobalSearch();
+  const { searchQuery, registerTableData } = useGlobalSearch();
   /* =============================
      Selection
   ============================== */
@@ -104,12 +104,12 @@ const DynamicTable = ({
             ? row.parent.parents
             : [];
 
-      // ── parent phone (only for 6+ digit queries) ───────────────
+      // ── parent phone ───────────────────────────────────────────
       const normalizedPhones = parentsList
         .map((p) => (p?.parentPhoneNumber || "").replace(/[^\d]/g, ""))
         .join(" ");
 
-      // ── parent info (name, email) ──────────────────────────────
+      // ── parent info ────────────────────────────────────────────
       const parentInfo = parentsList
         .map((p) =>
           [p?.parentFirstName, p?.parentLastName, p?.parentEmail]
@@ -119,30 +119,30 @@ const DynamicTable = ({
         .join(" ")
         .toLowerCase();
 
-      // ── student info (names) ───────────────────────────────────
-      const studentInfo = row?.student
-        ? [row.student.studentFirstName, row.student.studentLastName]
-          .filter(Boolean)
-          .join(" ")
-        : (row?.students || [])
-          .map((s) =>
-            [s?.studentFirstName, s?.studentLastName]
-              .filter(Boolean)
-              .join(" ")
-          )
-          .join(" ");
+      // ── all students ───────────────────────────────────────────
+      const studentsList = row?.students?.length
+        ? row.students
+        : row?.parent?.students?.length
+          ? row.parent.students
+          : row?.student
+            ? [row.student]
+            : [];
 
-      // ── student age ────────────────────────────────────────────
-      const rawAge =
-        row?.student?.age ??
-        row?.students?.[0]?.age ??
-        row?.parent?.students?.[0]?.age ??
-        null;
+      // ── student info ───────────────────────────────────────────
+      const studentInfo = studentsList
+        .map((s) =>
+          [s?.studentFirstName, s?.studentLastName]
+            .filter(Boolean)
+            .join(" ")
+        )
+        .join(" ")
+        .toLowerCase();
 
-      const ageStr =
-        rawAge !== null && rawAge !== undefined && rawAge !== ""
-          ? String(rawAge)
-          : "";
+      // ── all student ages ───────────────────────────────────────
+      const allStudentAges = studentsList
+        .map((s) => s?.age)
+        .filter((age) => age !== null && age !== undefined && age !== "")
+        .map((age) => String(age));
 
       // ── booking/id ─────────────────────────────────────────────
       const idStr = String(row?.bookingId || row?.id || "").toLowerCase();
@@ -152,7 +152,7 @@ const DynamicTable = ({
         .join(" ")
         .toLowerCase();
 
-      // split into whole-word tokens
+      // ── tokens ─────────────────────────────────────────────────
       const tokens = searchString
         .split(/[\s@.,_\-+]+/)
         .filter(Boolean);
@@ -160,25 +160,31 @@ const DynamicTable = ({
       // ── match every query word ─────────────────────────────────
       return queryWords.every((word) => {
         const clean = word.trim().toLowerCase();
+
         if (!clean) return true;
 
-        // 1. Phone matching (6+ digits)
-     if (/^[\d+\s\-()]{2,}$/.test(clean)) {
-  const cleanDigits = clean.replace(/[^\d]/g, "");
-  if (cleanDigits.length >= 2) {
-    return normalizedPhones.includes(cleanDigits);
-  }
-}
-        // 2. Exact age match
-        if (ageStr && ageStr === clean) return true;
+        // 1. Phone matching
+        if (/^[\d+\s\-()]{2,}$/.test(clean)) {
+          const cleanDigits = clean.replace(/[^\d]/g, "");
+
+          if (cleanDigits.length >= 2) {
+            return normalizedPhones.includes(cleanDigits);
+          }
+        }
+
+        // 2. Exact age match for any student
+        if (allStudentAges.includes(clean)) {
+          return true;
+        }
 
         // 3. Token-based matching
         return tokens.some((token) => {
-          // If both are numeric, require exact match (prevents "7" matching "71")
+          // Exact numeric match
           if (/^\d+$/.test(clean) && /^\d+$/.test(token)) {
             return token === clean;
           }
-          // Otherwise, prefix match (e.g., "don" matches "donald")
+
+          // Prefix text match
           return token.startsWith(clean);
         });
       });
@@ -214,9 +220,9 @@ const DynamicTable = ({
   useEffect(() => {
     setCurrentPage(1);
   }, [rowsPerPage]);
-useEffect(() => {
-  registerTableData(finalData);
-}, [finalData]);
+  useEffect(() => {
+    registerTableData(finalData);
+  }, [finalData]);
   /* =============================
      Render
   ============================== */

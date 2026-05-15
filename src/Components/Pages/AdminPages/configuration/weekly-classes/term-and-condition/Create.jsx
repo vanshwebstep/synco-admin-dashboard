@@ -71,12 +71,12 @@ const Create = () => {
     };
 
     const termFieldClass = (termId, field) =>
-        `w-full px-4 font-semibold text-base py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${termErrors[termId]?.[field] ? "border-red-500 bg-red-50" : "border-gray-200"
+        `w-full px-4 font-semibold text-base py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${termErrors[termId]?.[field] ? "border-[#F04438] bg-red-50" : "border-gray-200"
         }`;
 
     const TermErrorMsg = ({ termId, field }) =>
         termErrors[termId]?.[field] ? (
-            <p className="text-red-500 text-[12px] mt-1">{termErrors[termId][field]}</p>
+            <p className="text-[#F04438] text-[12px] mt-1">{termErrors[termId][field]}</p>
         ) : null;
 
     const validateTerm = (term) => {
@@ -629,11 +629,11 @@ const Create = () => {
                                     if (e.target.value.trim()) setGroupNameError("");
                                 }}
                                 onBlur={handleGroupNameSave}
-                                className={`md:w-1/2 px-4 font-semibold text-base py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${groupNameError ? "border-red-500 bg-red-50" : "border-gray-200"}`}
+                                className={`md:w-1/2 px-4 font-semibold text-base py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${groupNameError ? "border-[#F04438] bg-red-50" : "border-gray-200"}`}
                                 disabled={isGroupSaved && !isEditMode}
                             />
                             {groupNameError && (
-                                <p className="text-red-500 text-[12px] mt-1">{groupNameError}</p>
+                                <p className="text-[#F04438] text-[12px] mt-1">{groupNameError}</p>
                             )}
                             {!isGroupSaved && (
                                 <button
@@ -833,7 +833,7 @@ const Create = () => {
                                                                 <button
                                                                     onClick={() => removeExclusionDate(term.id, idx)}
                                                                     type="button"
-                                                                    className="text-red-500 absolute top-[10px] right-[15px] hover:text-red-700 font-bold text-xl"
+                                                                    className="text-[#F04438] absolute top-[10px] right-[15px] hover:text-red-700 font-bold text-xl"
                                                                     title="Remove"
                                                                 >&times;</button>
                                                             </div>

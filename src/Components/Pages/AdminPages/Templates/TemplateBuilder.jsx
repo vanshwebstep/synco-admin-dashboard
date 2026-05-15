@@ -24,7 +24,7 @@ export default function TemplateBuilder({
   setIsPreview
 }) {
   const [selectedBlockId, setSelectedBlockId] = useState(null);
-  const [sidebarTab, setSidebarTab] = useState("blocks"); // "blocks" or "settings"
+  const [sidebarTab, setSidebarTab] = useState("blocks");
 
   useEffect(() => {
     if (selectedBlockId) {
@@ -33,89 +33,73 @@ export default function TemplateBuilder({
   }, [selectedBlockId]);
 
   const { apiTemplates } = useCommunicationTemplate();
-const safeParseJSON = (data) => {
-  try {
-    // If already object → return directly
-    if (typeof data === "object") return data;
 
-    // First parse
-    let parsed = JSON.parse(data);
+  // ✅ FIX 1: Safe JSON parse — handles object, string, and double-encoded JSON
+  const safeParseJSON = (data) => {
+    try {
+      if (typeof data === "object" && data !== null) return data;
+      let parsed = JSON.parse(data);
+      while (typeof parsed === "string") {
+        parsed = JSON.parse(parsed);
+      }
+      return parsed;
+    } catch (err) {
+      console.warn("JSON parse failed, returning null:", err);
+      return null;
+    }
+  };
 
-    // Keep parsing until it's not string anymore (handles nested JSON)
-    while (typeof parsed === "string") {
-      parsed = JSON.parse(parsed);
+  useEffect(() => {
+    if (!apiTemplates?.content) return;
+
+    const parsed = safeParseJSON(apiTemplates.content);
+    if (!parsed) {
+      console.error("Invalid template format");
+      return;
     }
 
-    return parsed;
-  } catch (err) {
-    console.warn("JSON parse failed, returning raw data:", err);
-    return null;
-  }
-};
-useEffect(() => {
-  if (!apiTemplates?.content) return;
+    setSubject(parsed?.subject || "");
 
-  const parsed = safeParseJSON(apiTemplates.content);
-
-  if (!parsed) {
-    console.error("Invalid template format");
-    return;
-  }
-
-  // ✅ Subject
-  setSubject(parsed?.subject || "");
-
-  // ✅ HTML fallback
-  if (parsed?.htmlContent && !parsed?.blocks) {
-    setBlocks([
-      {
-        id: crypto.randomUUID(),
-        type: "customHTML",
-        content: parsed.htmlContent,
-        style: {
-          backgroundColor: "transparent",
-          padding: 10,
+    if (parsed?.htmlContent && !parsed?.blocks) {
+      setBlocks([
+        {
+          id: crypto.randomUUID(),
+          type: "customHTML",
+          content: parsed.htmlContent,
+          style: { backgroundColor: "transparent", padding: 10 },
         },
-      },
-    ]);
-    return;
-  }
+      ]);
+      return;
+    }
 
-  // ✅ Blocks
-  if (Array.isArray(parsed?.blocks) && parsed.blocks.length > 0) {
-    setBlocks(parsed.blocks);
-    return;
-  }
+    if (Array.isArray(parsed?.blocks) && parsed.blocks.length > 0) {
+      // ✅ FIX 2: Guarantee every block has a valid string id before handing to Draggable
+      const sanitizedBlocks = parsed.blocks.map((block, i) => ({
+        ...block,
+        id: block.id ? String(block.id) : `block-${Date.now()}-${i}`,
+      }));
+      setBlocks(sanitizedBlocks);
+      return;
+    }
 
-  // ❗ Fallback (nothing valid)
-  setBlocks([]);
-}, [apiTemplates]);
-
-
+    setBlocks([]);
+  }, [apiTemplates]);
 
   const updateStyle = (key, value, rootKey = null) => {
     setBlocks((prev) =>
       prev.map((b) => {
         if (b.id !== selectedBlockId) return b;
 
-        // ✅ Handle Nested Child Updates (from AdvancedStyleControls)
         if (key === "childUpdate") {
           const { childId, key: childKey, value: childValue, rootKey: childRootKey } = value;
-
           if (b.type === "sectionGrid" && Array.isArray(b.columns)) {
             const newColumns = b.columns.map(col =>
               col.map(child => {
                 if (child.id === childId) {
-                  // Apply update to the specific child
                   if (childRootKey === true) return { ...child, [childKey]: childValue };
-
                   if (typeof childRootKey === 'string') {
-                    return {
-                      ...child,
-                      [childRootKey]: { ...(child[childRootKey] || {}), [childKey]: childValue }
-                    };
+                    return { ...child, [childRootKey]: { ...(child[childRootKey] || {}), [childKey]: childValue } };
                   }
-
                   return { ...child, style: { ...(child.style || {}), [childKey]: childValue } };
                 }
                 return child;
@@ -126,23 +110,14 @@ useEffect(() => {
           return b;
         }
 
-        // If rootKey is true, update the property on the block root
         if (rootKey === true) return { ...b, [key]: value };
-
-        // If rootKey is a string (e.g., 'titleStyle'), update property within that object
         if (typeof rootKey === 'string') {
-          return {
-            ...b,
-            [rootKey]: { ...(b[rootKey] || {}), [key]: value }
-          };
+          return { ...b, [rootKey]: { ...(b[rootKey] || {}), [key]: value } };
         }
-
-        // Default: update property within the 'style' object
         return { ...b, style: { ...(b.style || {}), [key]: value } };
       })
     );
   };
-
 
   const sidebarBlocks = [
     { id: "text", label: "Text field", icon: <FaFont /> },
@@ -186,6 +161,7 @@ useEffect(() => {
       boxShadow: "none",
     };
 
+    // ✅ FIX 3: Always use crypto.randomUUID() so id is always a valid non-empty string
     const newBlock = {
       id: crypto.randomUUID(),
       type,
@@ -193,15 +169,14 @@ useEffect(() => {
       url: "",
       placeholder: "Enter value",
       style: { ...defaultStyle },
-      items: [], // For grids, lists, or accordions
-      links: [], // For social/nav
-      title: "", // For Card
-      description: "", // For Card
-      children: [], // For Custom Section
-      backgroundImage: "", // For Custom Section
+      items: [],
+      links: [],
+      title: "",
+      description: "",
+      children: [],
+      backgroundImage: "",
     };
 
-    // Type-specific adjustments
     if (type === "heading") {
       newBlock.style.fontSize = 18;
       newBlock.style.fontWeight = "bold";
@@ -298,22 +273,16 @@ useEffect(() => {
     setBlocks((prev) => [...prev, newBlock]);
   };
 
-
   const deleteBlock = (id) => {
     setBlocks((prev) => prev.filter((b) => b.id !== id));
   };
 
   const duplicateBlock = (id) => {
     const block = blocks.find((b) => b.id === id);
-
-    // ✅ deep clone (break shared references)
     const clonedBlock = JSON.parse(JSON.stringify(block));
 
-    // ✅ assign brand new IDs
     const regenerateIds = (blk) => {
-      blk.id = crypto.randomUUID();
-
-      // sectionGrid → regenerate child IDs
+      blk.id = crypto.randomUUID(); // always a valid string
       if (blk.type === "sectionGrid" && Array.isArray(blk.columns)) {
         blk.columns = blk.columns.map((column) =>
           column.map((child) => {
@@ -323,16 +292,9 @@ useEffect(() => {
           })
         );
       }
-
-      // cardRow → regenerate child card IDs
       if (blk.type === "cardRow" && Array.isArray(blk.cards)) {
-        blk.cards = blk.cards.map((card) => ({
-          ...card,
-          id: crypto.randomUUID()
-        }));
+        blk.cards = blk.cards.map((card) => ({ ...card, id: crypto.randomUUID() }));
       }
-
-      // multipleInfoBox → regenerate child box IDs
       if (blk.type === "multipleInfoBox" && Array.isArray(blk.boxes)) {
         blk.boxes = blk.boxes.map((box) => ({
           ...box,
@@ -343,18 +305,14 @@ useEffect(() => {
     };
 
     regenerateIds(clonedBlock);
-
     setBlocks((prev) => [...prev, clonedBlock]);
   };
 
-
   const onDragEnd = (result) => {
     if (!result.destination) return;
-
     const items = Array.from(blocks);
     const [reordered] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reordered);
-
     setBlocks(items);
   };
 
@@ -375,6 +333,7 @@ useEffect(() => {
             placeholder="Enter subject..."
           />
         </div>
+
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="canvas">
             {(provided, snapshot) => (
@@ -383,77 +342,72 @@ useEffect(() => {
                 ref={provided.innerRef}
                 className={`min-h-[200px] rounded-lg transition-colors ${snapshot.isDraggingOver ? "bg-blue-50 ring-2 ring-blue-100 ring-inset" : ""}`}
               >
-                {blocks.map((block, index) => (
-                  <Draggable
-                    key={block.id}
-                    draggableId={block.id}
-                    index={index}
-                  >
-                    {(provided, snapshot) => (
-                      <div
-                        className={`bg-white rounded-lg border border-gray-200 mb-2 shadow-sm transition-shadow ${snapshot.isDragging ? "shadow-lg ring-2 ring-blue-400 z-50" : ""}`}
-                        {...provided.draggableProps}
-                        ref={provided.innerRef}
-                        style={{
-                          ...provided.draggableProps.style,
-                          // Maintain original transform but ensure z-index in portal if needed (though not using portal here)
-                        }}
-                      >
-                        {/* Block wrapper padding is applied here or inside content. 
-                             Using p-2 to reduce gap. Header takes space. 
-                             BlockRenderer has its own padding/margin from style. 
-                         */}
-                        <div className="p-2 border-b border-gray-50 flex justify-between items-center text-xs bg-gray-50/50 rounded-t-lg">
-                          <div {...provided.dragHandleProps} className="cursor-grab text-gray-400 hover:text-gray-600 px-2 py-1">
-                            <FaLayerGroup className="inline mr-1" /> <span className="uppercase font-bold tracking-wider">{block.type}</span>
+                {blocks.map((block, index) => {
+                  // ✅ FIX 4: Guard — skip rendering if block.id is missing (prevents invariant crash)
+                  if (!block?.id) return null;
+
+                  return (
+                    // ✅ FIX 5: key and draggableId are both String(block.id) — satisfies React + dnd requirements
+                    <Draggable
+                      key={String(block.id)}
+                      draggableId={String(block.id)}
+                      index={index}
+                    >
+                      {(provided, snapshot) => (
+                        <div
+                          className={`bg-white rounded-lg border border-gray-200 mb-2 shadow-sm transition-shadow ${snapshot.isDragging ? "shadow-lg ring-2 ring-blue-400 z-50" : ""}`}
+                          {...provided.draggableProps}
+                          ref={provided.innerRef}
+                        >
+                          <div className="p-2 border-b border-gray-50 flex justify-between items-center text-xs bg-gray-50/50 rounded-t-lg">
+                            <div {...provided.dragHandleProps} className="cursor-grab text-gray-400 hover:text-gray-600 px-2 py-1">
+                              <FaLayerGroup className="inline mr-1" />
+                              <span className="uppercase font-bold tracking-wider">{block.type}</span>
+                            </div>
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => duplicateBlock(block.id)}
+                                className="p-1.5 text-blue-600 hover:bg-blue-100 rounded transition"
+                                title="Duplicate"
+                              >
+                                <FaList />
+                              </button>
+                              <button
+                                onClick={() => deleteBlock(block.id)}
+                                className="p-1.5 text-[#F04438] hover:bg-red-100 rounded transition"
+                                title="Delete"
+                              >
+                                <FaMinus />
+                              </button>
+                            </div>
                           </div>
 
-                          <div className="flex gap-1">
-                            <button
-                              onClick={() => duplicateBlock(block.id)}
-                              className="p-1.5 text-blue-600 hover:bg-blue-100 rounded transition"
-                              title="Duplicate"
-                            >
-                              <FaList />
-                            </button>
-
-                            <button
-                              onClick={() => deleteBlock(block.id)}
-                              className="p-1.5 text-red-500 hover:bg-red-100 rounded transition"
-                              title="Delete"
-                            >
-                              <FaMinus />
-                            </button>
+                          <div className="p-3">
+                            <BlockRenderer
+                              block={block}
+                              blocks={blocks}
+                              setBlocks={setBlocks}
+                              isSelected={selectedBlockId === block.id}
+                              onSelect={() => setSelectedBlockId(block.id)}
+                            />
                           </div>
                         </div>
-
-                        {/* Block Body */}
-                        <div className="p-3">
-                          <BlockRenderer
-                            block={block}
-                            blocks={blocks}
-                            setBlocks={setBlocks}
-                            isSelected={selectedBlockId === block.id}
-                            onSelect={() => setSelectedBlockId(block.id)}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-
+                      )}
+                    </Draggable>
+                  );
+                })}
                 {provided.placeholder}
               </div>
             )}
           </Droppable>
         </DragDropContext>
-
       </div>
+
+      {/* Sidebar */}
       <div
         className="p-4 w-3/12 bg-white flex flex-col border-l border-gray-200 shadow-xl z-30 overflow-y-auto"
         style={{ maxHeight: '100vh', position: 'sticky', top: 0 }}
       >
-        {/* Sidebar Tabs */}
         <div className="flex border-b border-gray-200 mb-6">
           <button
             onClick={() => setSidebarTab("blocks")}
@@ -561,7 +515,7 @@ useEffect(() => {
                   <h3 className="font-semibold text-sm text-gray-400 uppercase tracking-widest">Edit Block</h3>
                   <button
                     onClick={() => setSelectedBlockId(null)}
-                    className="text-[10px] text-gray-400 hover:text-red-500 font-bold uppercase transition"
+                    className="text-[10px] text-gray-400 hover:text-[#F04438] font-bold uppercase transition"
                   >
                     Close
                   </button>
@@ -584,10 +538,6 @@ useEffect(() => {
           </div>
         )}
       </div>
-
-      {/* Sidebar */}
-
-
     </div>
   );
 }

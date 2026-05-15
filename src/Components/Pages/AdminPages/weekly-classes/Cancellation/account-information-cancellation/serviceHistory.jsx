@@ -36,11 +36,11 @@ const ServiceHistory = ({ serviceHistory }) => {
     paymentPlan,
   } = serviceHistory;
   const statusStyles = {
-    attended: "bg-green-500 text-white",
+    attended: "bg-[#12B76A] text-white",
     pending: "bg-yellow-500 text-black",
     waiting_list: "bg-gray-300 text-white",
-    cancelled: "bg-red-500 text-white",
-    request_to_cancel: "bg-white text-red-500 border ",
+    cancelled: "bg-[#F04438] text-white",
+    request_to_cancel: "bg-white text-[#F04438] border ",
   };
   console.log('status', status)
   return (

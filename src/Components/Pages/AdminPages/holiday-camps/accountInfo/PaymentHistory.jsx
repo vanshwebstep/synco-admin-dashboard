@@ -85,8 +85,8 @@ console.log('data',data)
                   <td className="py-3 px-6 flex md:w-5/12 items-center gap-2">
                     <span
                       className={`w-2 h-2 rounded-full ${data?.payment?.payment_status === "paid"
-                        ? "bg-green-500"
-                        : "bg-red-500"
+                        ? "bg-[#12B76A]"
+                        : "bg-[#F04438]"
                         }`}
                     ></span>
                     {data?.payment?.payment_status || "N/A"}

@@ -22,15 +22,6 @@ export default function PreviewModal({ mode_of_communication, title, category, t
 
   const previewRef = useRef(null);
 
-  useEffect(() => {
-    if (previewRef.current) {
-      console.log("------------------------------------------");
-      console.log("PREVIEW HTML CONTENT:");
-      console.log(previewRef.current.innerHTML);
-      console.log("------------------------------------------");
-    }
-  }, [blocks, previewData]);
-
   const convertBlobToBase64 = async (blobUrl) => {
     const response = await fetch(blobUrl);
     const blob = await response.blob();
@@ -73,7 +64,6 @@ export default function PreviewModal({ mode_of_communication, title, category, t
     }
     return blocks;
   };
-  console.log('editMode', editMode)
 
   // ✅ Save final preview data
   const handleSavePreview = async () => {
@@ -196,13 +186,12 @@ export default function PreviewModal({ mode_of_communication, title, category, t
       formData.append("content", contentJSON);
 
       // ✅ DEBUG (this confirms payload is correct)
-      console.log("FORM DATA:", ...formData.entries());
+
 
       await createCommunicationTemplate(formData);
 
       navigate("/templates/settingList");
     } catch (err) {
-      console.error("Save Preview Error:", err);
     }
   };
 
@@ -327,13 +316,11 @@ export default function PreviewModal({ mode_of_communication, title, category, t
       formData.append("content", contentJSON);
 
       // ✅ DEBUG
-      console.log("UPDATE FORM DATA:", [...formData.entries()]);
 
       await updateCommunicationTemplate(templateId, formData);
 
       navigate("/templates/settingList");
     } catch (err) {
-      console.error("Update Preview Error:", err);
     }
     finally {
       setButtonLoading(false);
@@ -375,7 +362,7 @@ export default function PreviewModal({ mode_of_communication, title, category, t
               {globalStyle.backgroundImage && (
                 <button
                   onClick={() => setGlobalStyle(p => ({ ...p, backgroundImage: "" }))}
-                  className="text-xs text-red-500 hover:text-red-700 font-medium"
+                  className="text-xs text-[#F04438] hover:text-red-700 font-medium"
                 >
                   Clear
                 </button>

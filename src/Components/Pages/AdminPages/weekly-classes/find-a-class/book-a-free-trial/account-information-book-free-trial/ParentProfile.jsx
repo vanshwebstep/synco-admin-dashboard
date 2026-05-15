@@ -928,7 +928,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                 {status !== 'attended' && canCancelTrial && (
                                     <button
                                         onClick={() => setshowCancelTrial(true)}
-                                        className="w-full border bg-red-500 border-red-500  text-[#fff]  text-[18px] rounded-xl py-3 hover:shadow-md  hover:bg-red-600 transition-shadow duration-300 font-medium"
+                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 text-[#B42318] border border-red-200 rounded-xl hover:bg-red-100 transition-colors font-semibold"
                                     >
                                         Cancel Trial
                                     </button>
@@ -938,14 +938,14 @@ const ParentProfile = ({ ParentProfile }) => {
                                     {status !== 'not attended' && (
                                         <button
                                             onClick={() => setNoMembershipSelect(true)}
-                                            className="flex-1 border bg-red-500 border-red-500 hover:bg-red-600  rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium"
+                                            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-50 text-[#B42318] border border-red-200 rounded-xl hover:bg-red-100 transition-colors font-semibold"
                                         >
                                             Declined Membership
                                         </button>
                                     )}
                                     <button
                                         onClick={handleBookMembership}
-                                        className="flex-1 border bg-green-500 border-green-500  rounded-xl py-3 flex text-[18px] items-center justify-center  hover:bg-green-600 gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium"
+                                        className="flex-1 border bg-[#24956003] border-[#12B76A] rounded-xl py-3 flex text-[18px]  items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#12B76A]  font-medium"
                                     >
                                         Start Membership
                                     </button>
@@ -1337,10 +1337,10 @@ const ParentProfile = ({ ParentProfile }) => {
                             <div className="space-y-4 px-6 pb-6 pt-4">
                                 <div>
                                     <label className="block text-[16px] font-semibold">
-                                        Select Students to Cancel <span className="text-red-500">*</span>
+                                        Select Students to Cancel <span className="text-[#F04438]">*</span>
                                     </label>
 
-                                    <div className={`mt-3 space-y-2 p-3 rounded-xl border ${cancelErrors.students ? "border-red-500" : "border-transparent"}`}>
+                                    <div className={`mt-3 space-y-2 p-3 rounded-xl border ${cancelErrors.students ? "border-[#F04438]" : "border-transparent"}`}>
                                         {studentsList.map((student) => {
                                             const isCancelled = student.studentStatus === "cancelled";
 
@@ -1378,13 +1378,13 @@ const ParentProfile = ({ ParentProfile }) => {
                                         })}
                                     </div>
                                     {cancelErrors.students && (
-                                        <p className="text-red-500 text-sm mt-1">{cancelErrors.students}</p>
+                                        <p className="text-[#F04438] text-sm mt-1">{cancelErrors.students}</p>
                                     )}
                                 </div>
                                 {/* Reason */}
                                 <div>
                                     <label className="block text-[16px] font-semibold">
-                                        Reason for Cancellation <span className="text-red-500">*</span>
+                                        Reason for Cancellation <span className="text-[#F04438]">*</span>
                                     </label>
                                     <Select
                                         value={reasonOptions.find((opt) => opt.value === formData.cancelReason)}
@@ -1413,7 +1413,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                         }}
                                     />
                                     {cancelErrors.reason && (
-                                        <p className="text-red-500 text-sm mt-1">{cancelErrors.reason}</p>
+                                        <p className="text-[#F04438] text-sm mt-1">{cancelErrors.reason}</p>
                                     )}
                                     {formData.cancelReason === "other" && (
                                         <>
@@ -1428,10 +1428,10 @@ const ParentProfile = ({ ParentProfile }) => {
                                                     }));
                                                     setCancelErrors((prev) => ({ ...prev, otherReason: "" }));
                                                 }}
-                                                className={`w-full border rounded-lg px-3 py-2 mt-3 ${cancelErrors.otherReason ? "border-red-500" : "border-gray-300"}`}
+                                                className={`w-full border rounded-lg px-3 py-2 mt-3 ${cancelErrors.otherReason ? "border-[#F04438]" : "border-gray-300"}`}
                                             />
                                             {cancelErrors.otherReason && (
-                                                <p className="text-red-500 text-sm mt-1">{cancelErrors.otherReason}</p>
+                                                <p className="text-[#F04438] text-sm mt-1">{cancelErrors.otherReason}</p>
                                             )}
                                         </>
                                     )}
@@ -1457,7 +1457,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                 <div className="flex justify-end gap-4 pt-4">
                                     <button
                                         onClick={handleCancel}
-                                        className="w-1/2 bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
+                                        className="w-1/2 bg-[#fef2f2] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
                                     >
                                         Cancel Trial
                                     </button>
@@ -1527,7 +1527,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                     <button
                                         onClick={() => noMembershipSubmit(cancelWaitingList, 'allMembers')}
 
-                                        className="w-1/2  bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
+                                        className="w-1/2 flex items-center justify-center gap-2 px-4 py-3 bg-red-50 text-[#B42318] border border-red-200 rounded-xl hover:bg-red-100 transition-colors font-semibold"
                                     >
                                         Submit
                                     </button>

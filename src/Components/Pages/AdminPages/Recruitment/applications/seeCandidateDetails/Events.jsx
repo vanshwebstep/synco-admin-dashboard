@@ -231,7 +231,7 @@ const goToNextMonth = () => {
                   <button className="px-3 py-1 text-sm rounded-md bg-[#237FEA]  text-white font-medium">
                     Download Call
                   </button>
-                  <button className="px-3 py-1 text-sm rounded-md bg-red-100 text-red-600 font-medium">
+                  <button className="px-3 py-1 text-sm rounded-md bg-red-100 text-[#B42318] font-medium">
                     Call
                   </button>
                 </div>

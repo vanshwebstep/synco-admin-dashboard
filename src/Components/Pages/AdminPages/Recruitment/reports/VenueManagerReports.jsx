@@ -342,9 +342,9 @@ const CustomTooltip = ({ active, payload, label }) => {
                         <div>
                             <span className="font-semibold text-[#717073] text-sm">{s.title}</span>
 
-                            <h3 className="text-[20px] font-semibold text-gray-900">{s.value} <small className="text-green-500 font-normal text-xs">{s.diff}</small></h3>
+                            <h3 className="text-[20px] font-semibold text-gray-900">{s.value} <small className="text-[#12B76A] font-normal text-xs">{s.diff}</small></h3>
                             <p className="text-4 font-semibold text-[#717073]">
-                                {s.sub} <span className="text-red-500">{s.subvalue}</span>
+                                {s.sub} <span className="text-[#F04438]">{s.subvalue}</span>
                             </p>
                         </div>
                     </div>
@@ -601,7 +601,7 @@ const CustomTooltip = ({ active, payload, label }) => {
                                     <p className="text-[16px] ">No. of calls made</p>
                                     <div className="">
                                         <h4 className="text-[22px] font-semibold my-1">{report?.telephoneInterviews?.current ?? 0}</h4>
-                                        <span className="text-xs text-gray-400 block">vs. previous period <span className="text-red-500 font-semibold">{report?.telephoneInterviews?.previous ?? 0}</span></span>
+                                        <span className="text-xs text-gray-400 block">vs. previous period <span className="text-[#F04438] font-semibold">{report?.telephoneInterviews?.previous ?? 0}</span></span>
                                     </div>
                                 </div>
                             </div>
@@ -613,7 +613,7 @@ const CustomTooltip = ({ active, payload, label }) => {
                                     <p className="text-[16px] ">Avg. duration of calls</p>
                                     <div className="">
                                         <h4 className="text-[22px] font-semibold my-1">{data?.recruitmentCallStats?.avgCallDuration?.value ?? "—"}</h4>
-                                        <span className="text-xs text-gray-400 block">vs. previous period <span className="text-red-500 font-semibold">{data?.recruitmentCallStats?.avgCallDuration?.previous ?? "—"}</span></span>
+                                        <span className="text-xs text-gray-400 block">vs. previous period <span className="text-[#F04438] font-semibold">{data?.recruitmentCallStats?.avgCallDuration?.previous ?? "—"}</span></span>
                                     </div>
                                 </div>
                             </div>
@@ -625,7 +625,7 @@ const CustomTooltip = ({ active, payload, label }) => {
                                     <p className="text-[16px] ">Avg. time duration of first contact</p>
                                     <div className="">
                                         <h4 className="text-[22px] font-semibold my-1">{data?.recruitmentCallStats?.timeToFirstContact?.value ?? "—"}</h4>
-                                        <span className="text-xs text-gray-400 block">vs. previous period <span className="text-red-500 font-semibold">{data?.recruitmentCallStats?.timeToFirstContact?.previous ?? "—"}</span> </span>
+                                        <span className="text-xs text-gray-400 block">vs. previous period <span className="text-[#F04438] font-semibold">{data?.recruitmentCallStats?.timeToFirstContact?.previous ?? "—"}</span> </span>
                                     </div>
                                 </div>
                             </div>

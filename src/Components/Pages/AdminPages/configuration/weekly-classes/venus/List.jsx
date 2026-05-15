@@ -789,7 +789,7 @@ const filteredVenues = useMemo(() => {
             className="relative bg-white rounded-2xl shadow-2xl px-6 py-4 min-w-[409px] max-w-[489px]"
           >
             <div className="flex items-start justify-between">
-              <h2 className="text-red-500 font-semibold text-[18px] leading-tight">
+              <h2 className="text-[#F04438] font-semibold text-[18px] leading-tight">
                 Congestion Information
               </h2>
               <img src="/images/icons/infoIcon.png" alt="" />
@@ -814,7 +814,7 @@ const filteredVenues = useMemo(() => {
             className="relative bg-white rounded-2xl shadow-2xl px-6 py-4 min-w-[409px] max-w-[489px]"
           >
             <div className="flex items-start justify-between">
-              <h2 className="text-red-500 font-semibold text-[18px] leading-tight">
+              <h2 className="text-[#F04438] font-semibold text-[18px] leading-tight">
                 Parking Information
               </h2>
               <img src="/images/icons/infoIcon.png" alt="" />

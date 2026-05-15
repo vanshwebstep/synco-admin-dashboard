@@ -391,7 +391,7 @@ const filteredWeeks = useMemo(() => {
                   setWeekList(tempList);   // commit changes
                   setReorderMode(false);
                 }}
-                className="bg-green-500 text-white px-4 py-2 rounded-xl hover:bg-green-600 font-semibold"
+                className="bg-[#12B76A] text-white px-4 py-2 rounded-xl hover:bg-[#027A48] font-semibold"
               >
                 Confirm
               </button>
@@ -415,7 +415,7 @@ const filteredWeeks = useMemo(() => {
           </button>
         ) :
           (
-            <p className="text-red-500 text-[16px] font-medium">
+            <p className="text-[#F04438] text-[16px] font-medium">
               You don't have any  plans
             </p>
           )}
@@ -452,13 +452,13 @@ const filteredWeeks = useMemo(() => {
                               <button
                                 onClick={() => handleSaveWeekTitle(week.id)}
 
-                                className="text-green-600 font-semibold"
+                                className="text-[#027A48] font-semibold"
                               >
                                 {saveLoading === week.id ? "Saving..." : "Save"}
                               </button>
                               <button
                                 onClick={handlecancelledit}
-                                className="text-red-500 font-semibold"
+                                className="text-[#F04438] font-semibold"
                               >
                                 Cancel
                               </button>
@@ -540,7 +540,7 @@ const filteredWeeks = useMemo(() => {
                                     handleDeleteLevel(week.id, group.name);
                                   }
                                 }}
-                                className="text-gray-500 hover:text-red-500"
+                                className="text-gray-500 hover:text-[#F04438]"
                               >
                                 <img
                                   src="/images/icons/deleteIcon.png"

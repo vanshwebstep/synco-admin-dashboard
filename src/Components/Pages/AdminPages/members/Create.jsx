@@ -278,10 +278,10 @@ const Create = () => {
               value={formData.fullName}
               onChange={handleInputChange}
               onBlur={handleFullNameSplit} // split when user leaves the field
-              className={`w-full border ${errors.fullName ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 ${errors.fullName ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+              className={`w-full border ${errors.fullName ? 'border-[#F04438]' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 ${errors.fullName ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
             />
             {errors.fullName && (
-              <p className="text-sm text-red-500 mt-1">{errors.fullName}</p>
+              <p className="text-sm text-[#F04438] mt-1">{errors.fullName}</p>
             )}
           </div>
 
@@ -299,10 +299,10 @@ const Create = () => {
               }}
               value={formData.position}
               onChange={handleInputChange}
-              className={`w-full border ${errors.position ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 ${errors.position ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+              className={`w-full border ${errors.position ? 'border-[#F04438]' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 ${errors.position ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
             />
             {errors.position && (
-              <p className="text-sm text-red-500 mt-1">{errors.position}</p>
+              <p className="text-sm text-[#F04438] mt-1">{errors.position}</p>
             )}
           </div>
 
@@ -313,12 +313,12 @@ const Create = () => {
               name="phoneNumber"
               value={formData.phoneNumber}
               onChange={handleInputChange}
-              className={`w-full border ${errors.phoneNumber ? 'border-red-500' : 'border-[#E2E1E5]'
-                } rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 ${errors.phoneNumber ? 'focus:ring-red-500' : 'focus:ring-blue-500'
+              className={`w-full border ${errors.phoneNumber ? 'border-[#F04438]' : 'border-[#E2E1E5]'
+                } rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 ${errors.phoneNumber ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'
                 }`}
             />
             {errors.phoneNumber && (
-              <p className="text-sm text-red-500 mt-1">{errors.phoneNumber}</p>
+              <p className="text-sm text-[#F04438] mt-1">{errors.phoneNumber}</p>
             )}
           </div>
 
@@ -329,10 +329,10 @@ const Create = () => {
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              className={`w-full border ${errors.email ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 ${errors.email ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+              className={`w-full border ${errors.email ? 'border-[#F04438]' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 ${errors.email ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
             />
             {errors.email && (
-              <p className="text-sm text-red-500 mt-1">{errors.email}</p>
+              <p className="text-sm text-[#F04438] mt-1">{errors.email}</p>
             )}
           </div>
 
@@ -370,7 +370,7 @@ const Create = () => {
               }}
             />
             {errors.role && (
-              <p className="text-sm text-red-500 mt-1">{errors.role}</p>
+              <p className="text-sm text-[#F04438] mt-1">{errors.role}</p>
             )}
           </div>
           {isFranchisee && (
@@ -387,11 +387,11 @@ const Create = () => {
                       gcFranchiseToken: e.target.value,
                     }))
                   }
-                  className={`w-full border ${errors.gcFranchiseToken ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 ${errors.gcFranchiseToken ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                  className={`w-full border ${errors.gcFranchiseToken ? 'border-[#F04438]' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 ${errors.gcFranchiseToken ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
                   placeholder="Enter GC Franchise Token"
                 />
                 {errors.gcFranchiseToken && (
-                  <p className="text-sm text-red-500 mt-1">{errors.gcFranchiseToken}</p>
+                  <p className="text-sm text-[#F04438] mt-1">{errors.gcFranchiseToken}</p>
                 )}
               </div>
               <div>
@@ -406,11 +406,11 @@ const Create = () => {
                       stripeKey: e.target.value,
                     }))
                   }
-                  className={`w-full border ${errors.stripeKey ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 ${errors.stripeKey ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                  className={`w-full border ${errors.stripeKey ? 'border-[#F04438]' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 focus:outline-none focus:ring-2 ${errors.stripeKey ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
                   placeholder="Enter Stripe Key"
                 />
                 {errors.stripeKey && (
-                  <p className="text-sm text-red-500 mt-1">{errors.stripeKey}</p>
+                  <p className="text-sm text-[#F04438] mt-1">{errors.stripeKey}</p>
                 )}
               </div>
             </div>
@@ -422,7 +422,7 @@ const Create = () => {
                 <input
                   type="file"
                   name="fa_level_1"
-                  className={`w-full border ${errors.coachDocs ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 pr-10 focus:outline-none focus:ring-2 ${errors.coachDocs ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                  className={`w-full border ${errors.coachDocs ? 'border-[#F04438]' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 pr-10 focus:outline-none focus:ring-2 ${errors.coachDocs ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
                   onChange={handleCoachDocChange}
                 />
               </div>
@@ -431,7 +431,7 @@ const Create = () => {
                 <label>Futsal Level 1 Qualification</label>
                 <input
                   type="file"
-                  className={`w-full border ${errors.coachDocs ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 pr-10 focus:outline-none focus:ring-2 ${errors.coachDocs ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                  className={`w-full border ${errors.coachDocs ? 'border-[#F04438]' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 pr-10 focus:outline-none focus:ring-2 ${errors.coachDocs ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
                   name="futsal_level_1_qualification"
                   onChange={handleCoachDocChange}
                 />
@@ -441,7 +441,7 @@ const Create = () => {
                 <label>First Aid</label>
                 <input
                   type="file"
-                  className={`w-full border ${errors.coachDocs ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 pr-10 focus:outline-none focus:ring-2 ${errors.coachDocs ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                  className={`w-full border ${errors.coachDocs ? 'border-[#F04438]' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 pr-10 focus:outline-none focus:ring-2 ${errors.coachDocs ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
 
                   name="first_aid"
                   onChange={handleCoachDocChange}
@@ -452,14 +452,14 @@ const Create = () => {
                 <label>Futsal Level 1</label>
                 <input
                   type="file"
-                  className={`w-full border ${errors.coachDocs ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 pr-10 focus:outline-none focus:ring-2 ${errors.coachDocs ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                  className={`w-full border ${errors.coachDocs ? 'border-[#F04438]' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 pr-10 focus:outline-none focus:ring-2 ${errors.coachDocs ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
 
                   name="futsal_level_1"
                   onChange={handleCoachDocChange}
                 />
               </div>
               {errors.coachDocs && (
-                <p className="text-sm text-red-500 mt-1">{errors.coachDocs}</p>
+                <p className="text-sm text-[#F04438] mt-1">{errors.coachDocs}</p>
               )}
             </div>
           )}
@@ -472,7 +472,7 @@ const Create = () => {
               name="password"
               value={formData.password}
               onChange={handleInputChange}
-              className={`w-full border ${errors.password ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 pr-10 focus:outline-none focus:ring-2 ${errors.password ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+              className={`w-full border ${errors.password ? 'border-[#F04438]' : 'border-[#E2E1E5]'} rounded-xl px-3 py-2 mt-1 pr-10 focus:outline-none focus:ring-2 ${errors.password ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
             />
             <button
               type="button"
@@ -483,7 +483,7 @@ const Create = () => {
             </button>
 
             {errors.password && (
-              <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+              <p className="text-[#F04438] text-sm mt-1">{errors.password}</p>
             )}
           </div>
 

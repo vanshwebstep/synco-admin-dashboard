@@ -247,7 +247,7 @@ const SeeDetails = () => {
 
     const ErrorMsg = ({ field }) =>
         touched[field] && errors[field]
-            ? <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
+            ? <p className="mt-1 text-sm text-[#F04438] flex items-center gap-1">
                 <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
@@ -400,7 +400,7 @@ const SeeDetails = () => {
                                 {/* Amount */}
                                 <div>
                                     <label className="block text-[16px] font-medium text-[#282829] mb-2">
-                                        Amount <span className="text-red-500">*</span>
+                                        Amount <span className="text-[#F04438]">*</span>
                                     </label>
                                     <div className="relative">
                                         <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 font-medium">
@@ -422,7 +422,7 @@ const SeeDetails = () => {
                                 {/* Description */}
                                 <div>
                                     <label className="block text-[16px] font-medium text-[#282829] mb-2">
-                                        Description <span className="text-red-500">*</span>
+                                        Description <span className="text-[#F04438]">*</span>
                                     </label>
                                     <textarea
                                         ref={fieldRefs.description}
@@ -488,7 +488,7 @@ const SeeDetails = () => {
                                     {paymentTiming === "specific" && (
                                         <div className="mt-4 animate-in fade-in slide-in-from-top-1 duration-200">
                                             <label className="block text-sm font-medium text-gray-600 mb-1">
-                                                Select Date <span className="text-red-500">*</span>
+                                                Select Date <span className="text-[#F04438]">*</span>
                                             </label>
                                             <input
                                                 ref={fieldRefs.paymentDate}
@@ -565,7 +565,7 @@ const SeeDetails = () => {
                                         {/* Cardholder Name */}
                                         <div>
                                             <label className="block text-sm font-medium text-gray-600 mb-1">
-                                                Cardholder Name <span className="text-red-500">*</span>
+                                                Cardholder Name <span className="text-[#F04438]">*</span>
                                             </label>
                                             <input
                                                 ref={fieldRefs.cardholderName}
@@ -582,7 +582,7 @@ const SeeDetails = () => {
                                         {/* Card Number */}
                                         <div>
                                             <label className="block text-sm font-medium text-gray-600 mb-1">
-                                                Card Number <span className="text-red-500">*</span>
+                                                Card Number <span className="text-[#F04438]">*</span>
                                             </label>
                                             <input
                                                 ref={fieldRefs.cardNumber}
@@ -605,7 +605,7 @@ const SeeDetails = () => {
                                             {/* Expiry Date */}
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-600 mb-1">
-                                                    Expiry Date <span className="text-red-500">*</span>
+                                                    Expiry Date <span className="text-[#F04438]">*</span>
                                                 </label>
                                                 <input
                                                     ref={fieldRefs.expiryDate}
@@ -627,7 +627,7 @@ const SeeDetails = () => {
                                             {/* CVC */}
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-600 mb-1">
-                                                    CVC <span className="text-red-500">*</span>
+                                                    CVC <span className="text-[#F04438]">*</span>
                                                 </label>
                                                 <input
                                                     ref={fieldRefs.cvc}

@@ -1118,10 +1118,10 @@ const Create = () => {
                                         required
                                         disabled={isEditMode}
                                         placeholder="Enter Group Name"
-                                        className={`w-full px-4 font-semibold text-[18px] py-3 border ${errors.groupNameSection ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isEditMode ? 'disabled cursor-not-allowed' : ''}`}
+                                        className={`w-full px-4 font-semibold text-[18px] py-3 border ${errors.groupNameSection ? 'border-[#F04438]' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isEditMode ? 'disabled cursor-not-allowed' : ''}`}
                                     />
                                     {errors.groupNameSection && (
-                                        <p className="text-red-500 text-sm mt-1">{errors.groupNameSection}</p>
+                                        <p className="text-[#F04438] text-sm mt-1">{errors.groupNameSection}</p>
                                     )}
                                 </div>
                                 {/* Description */}
@@ -1278,10 +1278,10 @@ const Create = () => {
                                         }}
                                         type="text"
                                         requiredx
-                                        className={`w-full px-4 font-semibold py-3 border ${errors.player ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                                        className={`w-full px-4 font-semibold py-3 border ${errors.player ? 'border-[#F04438]' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
                                     />
                                     {errors.player && (
-                                        <p className="text-red-500 text-sm mt-1">{errors.player}</p>
+                                        <p className="text-[#F04438] text-sm mt-1">{errors.player}</p>
                                     )}
                                 </div>
                                 <div ref={containerRef}>
@@ -1299,10 +1299,10 @@ const Create = () => {
                                         }}
                                         type="text"
                                         required
-                                        className={`w-full px-4 font-semibold py-3 border ${errors.skillOfTheDay ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                                        className={`w-full px-4 font-semibold py-3 border ${errors.skillOfTheDay ? 'border-[#F04438]' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
                                     />
                                     {errors.skillOfTheDay && (
-                                        <p className="text-red-500 text-sm mt-1">{errors.skillOfTheDay}</p>
+                                        <p className="text-[#F04438] text-sm mt-1">{errors.skillOfTheDay}</p>
                                     )}
                                 </div>
 
@@ -1323,10 +1323,10 @@ const Create = () => {
                                         }}
                                         type="text"
                                         required
-                                        className={`w-full px-4 font-semibold py-3 border ${errors.descriptionSession ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                                        className={`w-full px-4 font-semibold py-3 border ${errors.descriptionSession ? 'border-[#F04438]' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
                                     />
                                     {errors.descriptionSession && (
-                                        <p className="text-red-500 text-sm mt-1">{errors.descriptionSession}</p>
+                                        <p className="text-[#F04438] text-sm mt-1">{errors.descriptionSession}</p>
                                     )}
                                 </div>
 
@@ -1351,7 +1351,7 @@ const Create = () => {
                                     <div className="relative" id="exercises-select-area">
                                         <div
                                             onClick={() => setIsOpen(!isOpen)}
-                                            className={`mt-4 space-y-2 border ${errors.selectedPlans ? 'border-red-500' : 'border-gray-200'} px-4 py-3 rounded-lg max-h-28 overflow-auto`}
+                                            className={`mt-4 space-y-2 border ${errors.selectedPlans ? 'border-[#F04438]' : 'border-gray-200'} px-4 py-3 rounded-lg max-h-28 overflow-auto`}
                                         >
                                             {selectedPlans.length > 0 ? (
                                                 selectedPlans.map((plan, idx) => {
@@ -1415,7 +1415,7 @@ const Create = () => {
                                                                         e.stopPropagation();
                                                                         handleDeletePlan(idx, plan.id); // pass index and id
                                                                     }}
-                                                                    className="text-gray-800 hover:text-red-500"
+                                                                    className="text-gray-800 hover:text-[#F04438]"
                                                                 >
                                                                     <Trash2 size={18} />
                                                                 </button>
@@ -1431,7 +1431,7 @@ const Create = () => {
                                             )}
                                         </div>
                                         {errors.selectedPlans && (
-                                            <p className="text-red-500 text-sm mt-1">{errors.selectedPlans}</p>
+                                            <p className="text-[#F04438] text-sm mt-1">{errors.selectedPlans}</p>
                                         )}
 
                                         <AnimatePresence initial={false}>
@@ -1566,10 +1566,10 @@ const Create = () => {
                                                         setModalErrors({ ...modalErrors, [field.name]: null });
                                                     }
                                                 }}
-                                                className={`w-full px-4 font-semibold text-[18px] py-3 border ${modalErrors[field.name] ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                                                className={`w-full px-4 font-semibold text-[18px] py-3 border ${modalErrors[field.name] ? 'border-[#F04438]' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
                                             />
                                             {modalErrors[field.name] && (
-                                                <p className="text-red-500 text-sm mt-1">{modalErrors[field.name]}</p>
+                                                <p className="text-[#F04438] text-sm mt-1">{modalErrors[field.name]}</p>
                                             )}
                                         </div>
                                     ))}
@@ -1578,7 +1578,7 @@ const Create = () => {
                                         <label className="block text-[18px] font-semibold text-gray-700 mb-2">
                                             Description
                                         </label>
-                                        <div className={`rounded-md border ${modalErrors.description ? 'border-red-500' : 'border-gray-300'} bg-gray-100 p-1`}>
+                                        <div className={`rounded-md border ${modalErrors.description ? 'border-[#F04438]' : 'border-gray-300'} bg-gray-100 p-1`}>
                                             { /* bullist numlist  code */}
                                             <Editor
                                                 apiKey="sqe5er2lyngzjf0armhqaw1u7ffh0xgjyzmb7unv5irietwa"
@@ -1639,7 +1639,7 @@ const Create = () => {
 
                                         </div>
                                         {modalErrors.description && (
-                                            <p className="text-red-500 text-sm mt-1">{modalErrors.description}</p>
+                                            <p className="text-[#F04438] text-sm mt-1">{modalErrors.description}</p>
                                         )}
 
                                     </div>
@@ -1658,12 +1658,12 @@ const Create = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => fileInputRef.current?.click()}
-                                                className={`flex w-full items-center justify-center gap-1 border ${modalErrors.images ? 'border-red-500' : 'border-blue-500'} text-[#237FEA] px-4 py-2 rounded-lg font-semibold hover:bg-blue-50`}
+                                                className={`flex w-full items-center justify-center gap-1 border ${modalErrors.images ? 'border-[#F04438]' : 'border-blue-500'} text-[#237FEA] px-4 py-2 rounded-lg font-semibold hover:bg-blue-50`}
                                             >
                                                 Upload images
                                             </button>
                                             {modalErrors.images && (
-                                                <p className="text-red-500 text-sm mt-1">{modalErrors.images}</p>
+                                                <p className="text-[#F04438] text-sm mt-1">{modalErrors.images}</p>
                                             )}
 
                                             {/* Multiple Previews */}
@@ -1678,7 +1678,7 @@ const Create = () => {
                                                         <button
                                                             type="button"
                                                             onClick={() => handleRemoveImage(index)}
-                                                            className="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full px-1.5"
+                                                            className="absolute top-1 right-1 bg-[#F04438] text-white text-xs rounded-full px-1.5"
                                                         >
                                                             ✕
                                                         </button>

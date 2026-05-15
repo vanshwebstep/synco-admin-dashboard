@@ -737,7 +737,7 @@ const AllDashboard = () => {
                                         <div className="flex items-center gap-2">
                                             <h3 className="text-xl font-semibold mt-1">{card.value}</h3>
                                             {card.change && (
-                                                <p className="text-green-600 text-xs mt-1">({card.change})</p>
+                                                <p className="text-[#027A48] text-xs mt-1">({card.change})</p>
                                             )}
                                         </div>
                                     </div>
@@ -837,11 +837,11 @@ const AllDashboard = () => {
                                                             <button
                                                                 className={`capitalize w-[90px] py-2 rounded-xl text-xs font-medium
     ${lead.status?.trim() === "active"
-                                                                        ? "bg-green-50 text-green-500"
+                                                                        ? "bg-green-50 text-[#12B76A]"
                                                                         : lead.status?.trim() === "pending"
                                                                             ? "bg-yellow-50 text-yellow-600"
                                                                             : lead.status?.trim() === "cancelled"
-                                                                                ? "bg-red-50 text-red-500"
+                                                                                ? "bg-red-50 text-[#F04438]"
                                                                                 : lead.status?.trim() === "completed"
                                                                                     ? "bg-blue-50 text-blue-500"
                                                                                     : "bg-gray-100 text-gray-500"

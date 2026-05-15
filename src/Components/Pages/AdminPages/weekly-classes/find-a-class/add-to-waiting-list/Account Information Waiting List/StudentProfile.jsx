@@ -372,9 +372,9 @@ const StudentProfile = ({ profile }) => {
 
     const getStatusBgColor = (status) => {
         switch (status) {
-            case "active": return "bg-[#43BE4F]";
+            case "active": return "bg-[#12B76A]";
             case "frozen": return "bg-[#509EF9]";
-            case "cancelled": return "bg-[#FC5D5D]";
+            case "cancelled": return "bg-[#fef2f2]";
             case "waiting list": return "bg-[#A4A5A6]";
             default: return "bg-[#A4A5A6]";
         }
@@ -725,102 +725,101 @@ const StudentProfile = ({ profile }) => {
                                         )}
                                     </button>
                                 </div>
+                                {/* Reactivate — Green */}
                                 {(status === "frozen" || status === "cancelled") && canRebooking && (
                                     <button
                                         onClick={() => setReactivateMembership(true)}
-                                        className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+                                        className="w-full bg-green-50 border border-[#12B76A] text-[#0e9355] rounded-xl py-3 text-[18px] font-semibold shadow-sm hover:bg-green-100 transition-all duration-300"
                                     >
                                         Reactivate Membership
                                     </button>
                                 )}
 
+                                {/* Add to Waiting List — Green */}
                                 {(status === "active" || status === "frozen" || status === "cancelled") && (
                                     <button
                                         onClick={() => setaddToWaitingList(true)}
-                                        className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
-            ${addToWaitingList
-                                                ? "bg-[#237FEA] text-white shadow-md"   // Active state
-                                                : "bg-white  border border-gray-300  hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"
+                                        className={`w-full rounded-xl py-3 text-[18px] font-semibold transition-all duration-300 
+      ${addToWaitingList
+                                                ? "bg-[#12B76A] text-white shadow-md"
+                                                : "bg-green-50 border border-[#12B76A] text-[#0e9355] hover:bg-green-100 hover:shadow-md"
                                             }`}
                                     >
                                         Add to the waiting list
                                     </button>
                                 )}
 
-
+                                {/* Freeze — Blue */}
                                 {status == 'active' && canCancelTrial && (
                                     <button
                                         onClick={() => setFreezeMembership(true)}
-                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                        className="w-full bg-blue-50 border border-[#237FEA] text-[#1a6cc7] text-[18px] rounded-xl py-3 hover:bg-blue-100 hover:shadow-md transition-all duration-300 font-medium"
                                     >
                                         Freeze Membership
                                     </button>
                                 )}
+
+                                {/* Transfer — Blue */}
                                 {status == 'active' && canCancelTrial && (
                                     <button
                                         onClick={() => setTransferVenue(true)}
-                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                        className="w-full bg-blue-50 border border-[#237FEA] text-[#1a6cc7] text-[18px] rounded-xl py-3 hover:bg-blue-100 hover:shadow-md transition-all duration-300 font-medium"
                                     >
                                         Transfer Class
                                     </button>
                                 )}
-                                {/* {status !== 'pending' && status !== 'attended' && (
-                                    <button className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md hover:bg-[#237FEA] hover:text-white transition-shadow duration-300 font-medium">
-                                        Book a Membership
-                                    </button>
-                                )} */}
+
+                                {/* Waiting List Actions */}
                                 {status == 'waiting list' && canCancelTrial && (
                                     <div className='grid grid-cols-1 items-center gap-2'>
 
+                                        {/* Remove Waiting List — Red */}
                                         <button
                                             onClick={() => setRemoveWaiting(true)}
-                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                            className="w-full bg-red-50 border border-red-400 text-red-600 text-[18px] rounded-xl py-3 hover:bg-red-100 hover:shadow-md transition-all duration-300 font-medium"
                                         >
                                             Remove Waiting List
                                         </button>
+
+                                        {/* Book a Free Trial — Gray */}
                                         {students?.[0]?.classSchedule?.capacity !== 0 && (
                                             <button
                                                 onClick={handleBookFreeTrial}
-                                                className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                                className="w-full bg-blue-50 border border-blue-400 text-blue-600 text-[18px] rounded-xl py-3 hover:bg-blue-100 hover:shadow-md transition-all duration-300 font-medium"
                                             >
                                                 Book a Free Trial
                                             </button>
                                         )}
-                                        {!profile?.paymentPlans?.length && students?.[0]?.classSchedule?.capacity !== 0 && (
 
+                                        {/* Book a Membership — Gray */}
+                                        {!profile?.paymentPlans?.length && students?.[0]?.classSchedule?.capacity !== 0 && (
                                             <button
                                                 onClick={handleBookMembership}
-                                                className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                                className="w-full bg-green-50 border border-green-400 text-green-600 text-[18px] rounded-xl py-3 hover:bg-green-100 hover:shadow-md transition-all duration-300 font-medium"
                                             >
                                                 Book a Membership
                                             </button>
                                         )}
-
                                     </div>
                                 )}
+
+                                {/* Cancel — Red */}
                                 {(status == 'active' || status == 'frozen') && canCancelTrial && (
                                     <button
                                         onClick={() => setshowCancelTrial(true)}
-                                        className={`w-full border text-[18px] rounded-xl py-3 font-medium transition-shadow duration-300
-    ${showCancelTrial
-                                                ? "bg-[#FF6C6C] text-white shadow-md border-transparent"
-                                                : "border-gray-300 text-[#717073] hover:bg-[#FF6C6C] hover:text-white hover:shadow-md"
-                                            }`}
+                                        className="w-full bg-red-50 border border-red-400 text-red-600 text-[18px] rounded-xl py-3 hover:bg-red-100 hover:shadow-md transition-all duration-300 font-medium"
                                     >
                                         Cancel Membership
                                     </button>
-
                                 )}
 
-
-
+                                {/* Attended — Declined (Red) + Book (Blue) */}
                                 {status === 'attended' && (
                                     <div className="flex gap-7">
-                                        <button className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium">
+                                        <button className="flex-1 bg-red-50 border border-red-400 text-red-600 rounded-xl py-3 flex text-[18px] items-center justify-center hover:bg-red-100 hover:shadow-md transition-all duration-300 gap-2 font-semibold">
                                             Declined Membership
                                         </button>
-
-                                        <button className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium">
+                                        <button className="flex-1 bg-blue-50 border border-[#237FEA] text-[#1a6cc7] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:bg-blue-100 hover:shadow-md transition-all duration-300 font-medium">
                                             Book a Membership
                                         </button>
                                     </div>
@@ -930,7 +929,7 @@ const StudentProfile = ({ profile }) => {
                                 {/* Button */}
                                 <div className="flex gap-4 pt-4">
                                     <button
-                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
+                                        className="w-1/2 bg-[#12B76A] text-white rounded-xl py-3 text-[18px] font-semibold hover:shadow-md transition-all duration-300"
                                         onClick={() => addtoWaitingListSubmit(waitingListData, 'allMembers')}
                                     >
                                         Join Waiting List
@@ -1184,7 +1183,7 @@ const StudentProfile = ({ profile }) => {
                                             // If all validations pass → call submit function
                                             cancelMembershipSubmit(cancelData, "allMembers");
                                         }}
-                                        className="w-1/2 bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
+                                        className="w-1/2 bg-[#fef2f2] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
                                     >
                                         {cancelData.cancellationType !== "immediate"
                                             ? "Request to Cancel"
@@ -1254,7 +1253,7 @@ const StudentProfile = ({ profile }) => {
                                     <button
                                         onClick={() => cancelWaitingListSpot(cancelWaitingList, 'allMembers')}
 
-                                        className="w-1/2  bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
+                                        className="w-1/2  bg-[#fef2f2] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
                                     >
                                         Submit
                                     </button>

@@ -233,9 +233,9 @@ const trialLists = () => {
         const s = status.toLowerCase();
 
         let styles =
-            "bg-red-100 text-red-500"; // default fallback
+            "bg-red-100 text-[#F04438]"; // default fallback
         if (s == "attended" || s == "active")
-            styles = "bg-green-100 text-green-600";
+            styles = "bg-green-100 text-[#027A48]";
         else if (s === "pending") styles = "bg-yellow-100 text-yellow-600";
         else if (s === "frozen") styles = "bg-blue-100 text-blue-600";
         else if (s === "waiting list") styles = "bg-gray-200 text-gray-700";
@@ -365,7 +365,7 @@ const trialLists = () => {
             change: statsFreeTrial?.totalFreeTrials?.change != null
                 ? `${statsFreeTrial.totalFreeTrials.change}%`
                 : "0%",
-            color: "text-green-500",
+            color: "text-[#12B76A]",
             bg: "bg-[#F3FAF5]"
         },
         {
@@ -376,7 +376,7 @@ const trialLists = () => {
                     : "0",
             subValue: "",
             icon: "/DashboardIcons/topPerformer.png",
-            color: "text-green-500",
+            color: "text-[#12B76A]",
             bg: "bg-[#F3FAFD]"
         },
         {
@@ -386,7 +386,7 @@ const trialLists = () => {
             change: statsFreeTrial?.freeTrialAttendanceRate?.change != null
                 ? `${statsFreeTrial.freeTrialAttendanceRate.change}%`
                 : "0%",
-            color: "text-green-500",
+            color: "text-[#12B76A]",
             bg: "bg-[#FEF6FB]"
         },
         {
@@ -396,7 +396,7 @@ const trialLists = () => {
             change: statsFreeTrial?.trialsToMembers?.change != null
                 ? `${statsFreeTrial.trialsToMembers.change}%`
                 : "0%",
-            color: "text-green-500",
+            color: "text-[#12B76A]",
             bg: "bg-[#F0F9F9]"
         }
     ];
@@ -633,14 +633,14 @@ const trialLists = () => {
             render: (item, student) => (
                 <div
                     className={`flex text-center justify-center rounded-lg p-1 px-2 saa gap-2 ${student?.studentStatus?.toLowerCase() === "attended"
-                        ? "bg-green-100 text-green-600"
+                        ? "bg-green-100 text-[#027A48]"
                         : student?.studentStatus?.toLowerCase() === "pending"
                             ? "bg-yellow-100 text-yellow-600"
                             : student?.studentStatus?.toLowerCase() === "active"
-                                ? "bg-green-100 text-green-600"
+                                ? "bg-green-100 text-[#027A48]"
                                 : student?.studentStatus?.toLowerCase() === "rebooked"
                                     ? "bg-blue-100 text-blue-600"
-                                    : "bg-red-100 text-red-500"
+                                    : "bg-red-100 text-[#F04438]"
                         } capitalize`}
 
                 >

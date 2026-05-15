@@ -45,8 +45,8 @@ const BookingCard = ({ booking, leadId }) => {
   const navigate = useNavigate();
   const serviceTypeForUrl = getServiceTypePath(booking?.serviceType || "");
   const statusColors = {
-    active: "bg-green-500 text-white",
-    cancelled: "bg-red-500 text-white",
+    active: "bg-[#12B76A] text-white",
+    cancelled: "bg-[#F04438] text-white",
     hold: "bg-orange-500 text-white",
     pending: "bg-yellow-500 text-white",
     "waiting list": "bg-gray-200 text-black",

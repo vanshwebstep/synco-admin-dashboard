@@ -58,9 +58,9 @@ const BookingCard = ({ booking }) => {
   const navigate = useNavigate();
   const { data } = useAccountsInfo();
   const statusColors = {
-    active: "bg-green-500 text-white",
-    cancelled: "bg-red-500 text-white",
-    request_to_cancel: "bg-red-500 text-white",
+    active: "bg-[#12B76A] text-white",
+    cancelled: "bg-[#F04438] text-white",
+    request_to_cancel: "bg-[#F04438] text-white",
     "waiting list": "bg-gray-200 text-black ",
     "not attended": "bg-gray-200 text-black ",
     pending: "bg-orange-500 text-white",
@@ -116,7 +116,7 @@ const BookingCard = ({ booking }) => {
 
       {/* Details */}
       <div className="bg-[#FCF9F6] rounded-2xl p-4 mt-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-8 gap-4 mb-4">
+        <div className={`grid grid-cols-1 relative sm:grid-cols-2 ${serviceType === "weekly class trial" ? "lg:grid-cols-7" : "lg:grid-cols-8"} gap-4 mb-4`}>
 
           {/* WEEKLY CLASS MEMBERSHIP */}
           {serviceType === "weekly class membership" && (
@@ -132,7 +132,6 @@ const BookingCard = ({ booking }) => {
               {renderField("KGo/Cardless ID", booking?.bookingId)}
               {renderField("Monthly Price", `£${booking?.paymentPlan?.priceLesson}`)}
               {renderField("Date Of Booking", booking?.startDate)}
-              {renderField("Progress", `${booking?.progressBar?.filledBars}/${booking?.progressBar?.totalBars}`)}
               {renderField(
                 "Booking Source",
                 booking?.bookedByAdmin
@@ -148,6 +147,7 @@ const BookingCard = ({ booking }) => {
               {renderField("Date of Trial", booking?.trialDate || booking?.startDate)}
               {renderField("Students", booking?.totalStudents)}
               {renderField("Venue", booking?.venue?.name)}
+              {renderField("ID", booking?.bookingId)}
               {renderField("Trial Attempt", booking?.attempt || "N/A")}
               {renderField("Date Of Booking", formatPrettyDate(booking?.createdAt))}
               {renderField(
@@ -224,7 +224,6 @@ const BookingCard = ({ booking }) => {
               )}
               {renderField("Venue", booking?.holidayVenue?.name)}
               {renderField("Discount", booking?.discount?.code)}
-              {renderField("Coach", booking?.bookedByAdmin?.firstName)}
               {renderField("Booking Source", booking?.marketingChannel)}
             </>
           )}
@@ -242,7 +241,9 @@ const BookingCard = ({ booking }) => {
               {renderField("Booking Source", booking?.source)}
             </>
           )}
-
+          <button className="ml-auto text-gray-500 absolute top-4 right-3 hover:text-gray-800">
+            <FaEllipsisV />
+          </button>
         </div>
 
 
@@ -250,7 +251,7 @@ const BookingCard = ({ booking }) => {
         <div className="flex gap-3">
           <button
             onClick={() => navigate(`/weekly-classes/account-information/see-details?id=${booking?.id || booking?.bookingId || ""}&serviceType=${serviceTypeForUrl}`, {
-              state: { itemId: booking?.id || booking?.bookingId, serviceTypeForUrl, memberInfo: "allMembers", defaultTab: "General", from: "/weekly-classes/account-information" },
+              state: { itemId: booking?.id || booking?.bookingId, serviceTypeForUrl, memberInfo: serviceTypeForUrl, defaultTab: "General", from: "/weekly-classes/account-information" },
             })}
             className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50"
           >
@@ -259,28 +260,32 @@ const BookingCard = ({ booking }) => {
 
           {serviceType !== "Merchandise" && (
             <>
-              <button
-                onClick={() => navigate(`/weekly-classes/account-information/see-details?id=${booking?.id || booking?.bookingId || ""}&serviceType=${serviceTypeForUrl}`, {
-                  state: { itemId: booking?.id || booking?.bookingId, serviceTypeForUrl, memberInfo: "allMembers", defaultTab: "History of Payments", from: "/weekly-classes/account-information" },
-                })}
-                className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50"
-              >
-                See payments
-              </button>
+              {serviceTypeForUrl == "trial" || serviceTypeForUrl == "waiting" && (
+                <button
+                  onClick={() => navigate(`/weekly-classes/account-information/see-details?id=${booking?.id || booking?.bookingId || ""}&serviceType=${serviceTypeForUrl}`, {
+                    state: { itemId: booking?.id || booking?.bookingId, serviceTypeForUrl, memberInfo: serviceTypeForUrl, defaultTab: "History of Payments", from: "/weekly-classes/account-information" },
+                  })}
+                  className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50"
+                >
+                  See payments
+                </button>
+              )}
 
-              <button
-                onClick={() => navigate(`/weekly-classes/account-information/see-details?id=${booking?.id || booking?.bookingId || ""}&serviceType=${serviceTypeForUrl}`, {
-                  state: { itemId: booking?.id || booking?.bookingId, serviceTypeForUrl, memberInfo: "allMembers", defaultTab: "Credits", from: "/weekly-classes/account-information" },
-                })}
-                className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50"
-              >
-                Credits
-              </button>
+              {serviceTypeForUrl == "trial" || serviceTypeForUrl == "waiting" && (
+                <button
+                  onClick={() => navigate(`/weekly-classes/account-information/see-details?id=${booking?.id || booking?.bookingId || ""}&serviceType=${serviceTypeForUrl}`, {
+                    state: { itemId: booking?.id || booking?.bookingId, serviceTypeForUrl, memberInfo: serviceTypeForUrl, defaultTab: "Credits", from: "/weekly-classes/account-information" },
+                  })}
+                  className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50"
+                >
+                  Credits
+                </button>
+              )}
 
               {booking?.students && (
                 <button
                   onClick={() => navigate(`/weekly-classes/account-information/see-details?id=${booking?.id || booking?.bookingId || ""}&serviceType=${serviceTypeForUrl}`, {
-                    state: { itemId: booking?.id || booking?.bookingId, serviceTypeForUrl, memberInfo: "allMembers", defaultTab: "Attendance", from: "/weekly-classes/account-information" },
+                    state: { itemId: booking?.id || booking?.bookingId, serviceTypeForUrl, memberInfo: serviceTypeForUrl, defaultTab: "Attendance", from: "/weekly-classes/account-information" },
                   })}
                   className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50"
                 >
@@ -290,9 +295,7 @@ const BookingCard = ({ booking }) => {
             </>
           )}
 
-          <button className="ml-auto text-gray-500 hover:text-gray-800">
-            <FaEllipsisV />
-          </button>
+
         </div>
 
       </div>

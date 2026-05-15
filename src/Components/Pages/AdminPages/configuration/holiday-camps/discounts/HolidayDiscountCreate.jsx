@@ -258,7 +258,7 @@ const HolidayDiscountCreate = () => {
                             Automatic Discount
                         </div>
                         {errors.type && (
-                            <p className="text-sm text-red-500 mb-2">{errors.type}</p>
+                            <p className="text-sm text-[#F04438] mb-2">{errors.type}</p>
                         )}
 
                         {/* Discount Code Input */}
@@ -282,7 +282,7 @@ const HolidayDiscountCreate = () => {
                                     className={`w-full md:flex-1 border rounded-xl px-3 py-3 
         ${formData.type === "automatic"
                                             ? "bg-gray-100 cursor-not-allowed"
-                                            : errors.code ? "border-red-500" : "border-[#E2E1E5]"} focus:outline-none focus:ring-2 ${errors.code ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                                            : errors.code ? "border-[#F04438]" : "border-[#E2E1E5]"} focus:outline-none focus:ring-2 ${errors.code ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
                                 />
 
                                 <button
@@ -298,7 +298,7 @@ const HolidayDiscountCreate = () => {
                                 </button>
                             </div>
                             {errors.code && (
-                                <p className="text-sm text-red-500 mt-1">{errors.code}</p>
+                                <p className="text-sm text-[#F04438] mt-1">{errors.code}</p>
                             )}
                         </div>
 
@@ -316,7 +316,7 @@ const HolidayDiscountCreate = () => {
                                 className={`py-2 px-4 rounded-xl text-[16px] transition w-full md:w-auto ${formData.valueType === "percentage"
                                     ? "bg-[#237FEA] text-white hover:bg-blue-700"
                                     : "bg-[#F5F5F5] text-black hover:bg-gray-200"
-                                    } ${errors.valueType ? 'border-red-500 border' : ''}`}
+                                    } ${errors.valueType ? 'border-[#F04438] border' : ''}`}
                             >
                                 Percentage
                             </button>
@@ -327,7 +327,7 @@ const HolidayDiscountCreate = () => {
                                 className={`py-2 px-4 rounded-xl text-[16px] transition w-full md:w-auto ${formData.valueType === "fixed"
                                     ? "bg-[#237FEA] text-white hover:bg-blue-700"
                                     : "bg-[#F5F5F5] text-black hover:bg-gray-200"
-                                    } ${errors.valueType ? 'border-red-500 border' : ''}`}
+                                    } ${errors.valueType ? 'border-[#F04438] border' : ''}`}
                             >
                                 Fixed amount
                             </button>
@@ -338,7 +338,7 @@ const HolidayDiscountCreate = () => {
                                     name="value"
                                     value={formData.value}
                                     onChange={handleInputChange}
-                                    className={`w-full bg-white border ${errors.value ? 'border-red-500' : 'border-gray-200'} py-2 px-3 rounded-xl text-[16px] pr-8 focus:outline-none focus:ring-2 ${errors.value ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                                    className={`w-full bg-white border ${errors.value ? 'border-[#F04438]' : 'border-gray-200'} py-2 px-3 rounded-xl text-[16px] pr-8 focus:outline-none focus:ring-2 ${errors.value ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
                                 />
                                 <img
                                     className="absolute top-3 right-3 w-4 h-4"
@@ -346,12 +346,12 @@ const HolidayDiscountCreate = () => {
                                     alt="%"
                                 />
                                 {errors.value && (
-                                    <p className="text-sm text-red-500 mt-1">{errors.value}</p>
+                                    <p className="text-sm text-[#F04438] mt-1">{errors.value}</p>
                                 )}
                             </div>
                         </div>
                         {errors.valueType && (
-                            <p className="text-sm text-red-500 mb-4">{errors.valueType}</p>
+                            <p className="text-sm text-[#F04438] mb-4">{errors.valueType}</p>
                         )}
 
 
@@ -425,7 +425,7 @@ const HolidayDiscountCreate = () => {
                                     Birthday party
                                 </label>
                                 {errors.appliesTo && (
-                                    <p className="text-sm text-red-500 mt-2">{errors.appliesTo}</p>
+                                    <p className="text-sm text-[#F04438] mt-2">{errors.appliesTo}</p>
                                 )}
                                 <hr className="text-gray-200 my-5" />
                                 <label className="flex items-center gap-2 mt-4">
@@ -521,11 +521,11 @@ const HolidayDiscountCreate = () => {
                                     onChange={(date) => setFormData({ ...formData, startDate: date })}
                                     dateFormat="P"
                                     minDate={new Date()}
-                                    className={`w-full px-3 py-2 border ${errors.startDate ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 ${errors.startDate ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                                    className={`w-full px-3 py-2 border ${errors.startDate ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 ${errors.startDate ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
                                     withPortal
                                 />
                                 {errors.startDate && (
-                                    <p className="text-sm text-red-500 mt-1">{errors.startDate}</p>
+                                    <p className="text-sm text-[#F04438] mt-1">{errors.startDate}</p>
                                 )}
                             </div>
                             <div className="flex flex-col w-full md:w-3/12">
@@ -539,11 +539,11 @@ const HolidayDiscountCreate = () => {
                                     timeIntervals={15}
                                     dateFormat="h:mm aa"
                                     timeCaption="Time"
-                                    className={`w-full px-3 py-2 border ${errors.startTime ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 ${errors.startTime ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                                    className={`w-full px-3 py-2 border ${errors.startTime ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 ${errors.startTime ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
                                     withPortal
                                 />
                                 {errors.startTime && (
-                                    <p className="text-sm text-red-500 mt-1">{errors.startTime}</p>
+                                    <p className="text-sm text-[#F04438] mt-1">{errors.startTime}</p>
                                 )}
                             </div>
                         </div>
@@ -577,12 +577,12 @@ const HolidayDiscountCreate = () => {
                                                 onChange={(date) => setFormData({ ...formData, endDate: date })}
                                                 dateFormat="P"
                                                 minDate={formData.startDate || new Date()}
-                                                className={`w-full px-3 py-2 border ${errors.endDate ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 ${errors.endDate ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                                                className={`w-full px-3 py-2 border ${errors.endDate ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 ${errors.endDate ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
                                                 disabled={!formData.startDate}
                                                 withPortal
                                             />
                                             {errors.endDate && (
-                                                <p className="text-sm text-red-500 mt-1">{errors.endDate}</p>
+                                                <p className="text-sm text-[#F04438] mt-1">{errors.endDate}</p>
                                             )}
                                         </div>
                                         <div className="flex flex-col w-full md:w-3/12">
@@ -596,12 +596,12 @@ const HolidayDiscountCreate = () => {
                                                 timeIntervals={15}
                                                 dateFormat="h:mm aa"
                                                 timeCaption="Time"
-                                                className={`w-full px-3 py-2 border ${errors.endTime ? 'border-red-500' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 ${errors.endTime ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                                                className={`w-full px-3 py-2 border ${errors.endTime ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 ${errors.endTime ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
                                                 x disabled={!formData.endDate}
                                                 withPortal
                                             />
                                             {errors.endTime && (
-                                                <p className="text-sm text-red-500 mt-1">{errors.endTime}</p>
+                                                <p className="text-sm text-[#F04438] mt-1">{errors.endTime}</p>
                                             )}
                                         </div>
                                     </div>

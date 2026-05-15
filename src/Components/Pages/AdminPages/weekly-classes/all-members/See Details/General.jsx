@@ -44,7 +44,7 @@ const ParentProfile = (stateData) => {
         addtoWaitingListSubmit, cancelMembershipSubmit,
         sendBookMembershipMail, transferMembershipSubmit,
         addToWaitingList, setaddToWaitingList,
-        freezerMembershipSubmit, reactivateDataSubmit, cancelWaitingListSpot, fetchComments, commentsList, setComment, comment, handleSubmitComment, loadingComment, updateBookMembershipFamily, removeWaiting, setRemoveWaiting, showCancelTrial, setshowCancelTrial
+        freezerMembershipSubmit, reactivateDataSubmit, cancelWaitingListSpot, fetchComments, commentsList, setComment, comment, handleSubmitComment, loadingComment, updateBookMembershipFamily, removeWaiting, setRemoveWaiting, showCancelTrial, setshowCancelTrial, rebookFreeTrialsubmit, noMembershipSubmit
     } = useBookFreeTrial() || {};
     const classSchedule = profile?.classSchedule;
     const bookingId = profile?.bookingId;
@@ -170,7 +170,7 @@ const ParentProfile = (stateData) => {
                     <div className="flex items-center justify-between">
                         <div className="w-[90%] bg-[#fff] h-3 rounded-full overflow-hidden">
                             <div
-                                className="bg-green-500 h-4 rounded-full"
+                                className="bg-[#12B76A] h-4 rounded-full"
                                 style={{ width: `${progressPercent}%` }}
                             ></div>
                         </div>
@@ -246,6 +246,13 @@ const ParentProfile = (stateData) => {
         cancelReason: "",
         additionalNote: "",
     });
+    const [showRebookTrial, setshowRebookTrial] = useState(false);
+    const [noMembershipSelect, setNoMembershipSelect] = useState(false);
+    const [selectedDate, setSelectedDate] = useState(null);
+    const [selectedTime, setSelectedTime] = useState(null);
+    const [reason, setReason] = useState("");
+    const [additionalNote, setAdditionalNote] = useState("");
+
     const [emergencyContacts, setEmergencyContacts] = useState(profile?.emergency || []);
     const [editingEmergency, setEditingEmergency] = useState(null);
 
@@ -330,6 +337,8 @@ const ParentProfile = (stateData) => {
         bookingId: bookingId,
         removedReason: "",           // corresponds to DatePicker
         removedNotes: "",        // textarea
+        noMembershipReason: "",
+        noMembershipNotes: "",
     });
     const [transferData, setTransferData] = useState({
         bookingId: bookingId || null,
@@ -572,9 +581,9 @@ const ParentProfile = (stateData) => {
 
     const getStatusBgColor = (status) => {
         switch (status) {
-            case "active": return "bg-[#43BE4F]";
+            case "active": return "bg-[#12B76A]";
             case "frozen": return "bg-[#509EF9]";
-            case "cancelled": return "bg-[#FC5D5D]";
+            case "cancelled": return "bg-[#fef2f2]";
             case "waiting list": return "bg-[#A4A5A6]";
             default: return "bg-[#A4A5A6]";
         }
@@ -621,6 +630,42 @@ const ParentProfile = (stateData) => {
                 });
             }
         });
+    };
+
+    const handleReBooktrial = () => {
+        showConfirm(
+            "Are you sure?",
+            "Do you want to re book the trial?",
+            "Yes, Book it!"
+        ).then((result) => {
+            if (result.isConfirmed) {
+                navigate("/weekly-classes/find-a-class/book-a-free-trial", {
+                    state: { TrialData: profile, comesFrom: "trials", useofRebook: "useofRebook", mainBookingId: profile?.id },
+                });
+            }
+        });
+    };
+
+    const handleBookMembershipForTrial = () => {
+        navigate("/weekly-classes/find-a-class/book-a-membership", {
+            state: { TrialData: profile, comesFrom: "trials", mainBookingId: profile?.id },
+        });
+    };
+
+    const handleReasonChange = (selectedOption) => {
+        setReason(selectedOption);
+        setRebookFreeTrial((prev) => ({
+            ...prev,
+            reasonForNonAttendance: selectedOption ? selectedOption.value : "",
+        }));
+    };
+
+    const handleNoteChange = (e) => {
+        setAdditionalNote(e.target.value);
+        setRebookFreeTrial((prev) => ({
+            ...prev,
+            additionalNote: e.target.value,
+        }));
     };
 
     const handleReinstateMembership = () => {
@@ -709,12 +754,7 @@ const ParentProfile = (stateData) => {
                                     {/* Header + Pencil/Save */}
                                     <div className="flex justify-between items-start">
                                         <h2 className="text-[20px] font-semibold">Parent information</h2>
-                                        <button
-                                            onClick={() => toggleEditParent(index)}
-                                            className="text-gray-600 hover:text-blue-600"
-                                        >
-                                            {editingIndex === index ? <FaSave /> : <FaEdit />}
-                                        </button>
+
                                     </div>
 
                                     {/* First/Last Name */}
@@ -820,12 +860,7 @@ const ParentProfile = (stateData) => {
                                     {/* Top Header */}
                                     <div className="flex justify-between items-start">
                                         <h2 className="text-[20px] font-semibold">Student Information</h2>
-                                        <button
-                                            onClick={() => toggleEditStudent(index)}
-                                            className="text-gray-600 hover:text-blue-600"
-                                        >
-                                            {editingIndex === index ? <FaSave /> : <FaEdit />}
-                                        </button>
+
                                     </div>
 
                                     {/* Row 1 */}
@@ -1088,14 +1123,14 @@ const ParentProfile = (stateData) => {
                             {status !== "active" ? (
                                 <button
                                     onClick={handleRenewBirthdayPackage}
-                                    className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700"
+                                    className="w-full bg-green-50 border border-[#12B76A] text-[#12B76A] rounded-xl py-3 text-[18px] font-semibold shadow-sm hover:bg-green-100 transition-all duration-300"
                                 >
                                     Renew Package
                                 </button>
                             ) : (
                                 <button
                                     onClick={handleCancelBirthdayPackage}
-                                    className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 font-medium hover:bg-[#FF6C6C] hover:text-white"
+                                    className="w-full bg-red-50 border border-[#B42318] text-[#B42318] text-[18px] rounded-xl py-3 font-semibold shadow-sm hover:bg-red-100 transition-all duration-300"
                                 >
                                     Cancel Package
                                 </button>
@@ -1252,14 +1287,14 @@ const ParentProfile = (stateData) => {
                                 {status !== "active" ? (
                                     <button
                                         onClick={handleRenewPackage}
-                                        className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+                                        className="w-full bg-green-50 border border-[#12B76A] text-[#12B76A] rounded-xl py-3 text-[18px] font-semibold shadow-sm hover:bg-green-100 transition-all duration-300"
                                     >
                                         Renew Package
                                     </button>
                                 ) : (
                                     <button
                                         onClick={handleCancelPackage}
-                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 font-medium hover:bg-[#FF6C6C] hover:text-white hover:shadow-md transition-shadow duration-300"
+                                        className="w-full bg-red-50 border border-[#B42318] text-[#B42318] text-[18px] rounded-xl py-3 font-semibold shadow-sm hover:bg-red-100 transition-all duration-300"
                                     >
                                         Cancel Package
                                     </button>
@@ -1415,11 +1450,7 @@ const ParentProfile = (stateData) => {
                                         {status !== "cancelled" && (
                                             <button
                                                 onClick={() => setshowCancelTrial(true)}
-                                                className={`w-full border text-[18px] rounded-xl py-3 font-medium transition-shadow duration-300
-                          ${showCancelTrial
-                                                        ? "bg-[#FF6C6C] text-white shadow-md border-transparent"
-                                                        : "border-gray-300 text-[#717073] hover:bg-[#FF6C6C] hover:text-white hover:shadow-md"
-                                                    }`}
+                                                className="w-full bg-red-50 border border-[#B42318] text-[#B42318] text-[18px] rounded-xl py-3 font-semibold shadow-sm hover:bg-red-100 transition-all duration-300"
                                             >
                                                 Cancel Membership
                                             </button>
@@ -1486,7 +1517,7 @@ const ParentProfile = (stateData) => {
                                                             setshowCancelTrial(false);
                                                             cancelHolidaySubmit(cancelData, "allMembers");
                                                         }}
-                                                        className="w-full bg-[#FF6C6C] text-white text-[18px] py-3 rounded-xl font-medium hover:bg-red-600"
+                                                        className="w-full bg-[#B42318] text-white text-[18px] py-3 rounded-xl font-bold shadow-md hover:bg-red-700 transition-all duration-300"
                                                     >
                                                         Cancel Camp
                                                     </button>
@@ -1743,6 +1774,46 @@ const ParentProfile = (stateData) => {
                                                 </button>
                                             </div>
 
+                                            {/* Trials-only actions */}
+                                            {isTrials && (
+                                                <>
+                                                    {status === 'not attended' && (
+                                                        <button
+                                                            onClick={handleReBooktrial}
+                                                            className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+                                                        >
+                                                            Rebook FREE Trials
+                                                        </button>
+                                                    )}
+
+                                                    {status !== 'attended' && canCancelTrial && (
+                                                        <button
+                                                            onClick={() => setshowCancelTrial(true)}
+                                                            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 text-[#B42318] border border-red-200 rounded-xl hover:bg-red-100 transition-colors font-semibold"
+                                                        >
+                                                            Cancel Trial
+                                                        </button>
+                                                    )}
+
+                                                    <div className="flex gap-7">
+                                                        {status !== 'not attended' && (
+                                                            <button
+                                                                onClick={() => setNoMembershipSelect(true)}
+                                                                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-50 text-[#B42318] border border-red-200 rounded-xl hover:bg-red-100 transition-colors font-semibold"
+                                                            >
+                                                                Declined Membership
+                                                            </button>
+                                                        )}
+                                                        <button
+                                                            onClick={handleBookMembershipForTrial}
+                                                            className="flex-1 border bg-[#24956003] border-[#12B76A] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#12B76A] font-medium"
+                                                        >
+                                                            Start Membership
+                                                        </button>
+                                                    </div>
+                                                </>
+                                            )}
+
                                             {/* Membership-only actions */}
                                             {isMembership && (
                                                 <>
@@ -1751,8 +1822,7 @@ const ParentProfile = (stateData) => {
                                                         profile?.students?.every((s) => s.studentStatus === "active") && (
                                                             <button
                                                                 onClick={() => setaddToWaitingList(true)}
-                                                                className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
-                                                                ${addToWaitingList ? "bg-[#237FEA] text-white shadow-md" : "bg-white border border-gray-300 hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"}`}
+                                                                className="w-full bg-green-50 border border-[#12B76A] text-[#12B76A] rounded-xl py-3 text-[18px] font-semibold shadow-sm hover:bg-green-100 transition-all duration-300"
                                                             >
                                                                 Add to the waiting list
                                                             </button>
@@ -1762,7 +1832,7 @@ const ParentProfile = (stateData) => {
                                                         profile?.students?.every((s) => s.studentStatus === "active") && (
                                                             <button
                                                                 onClick={() => setFreezeMembership(true)}
-                                                                className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                                                className="w-full bg-blue-50 border border-[#237FEA] text-[#237FEA] text-[18px] rounded-xl py-3 font-semibold shadow-sm hover:bg-blue-100 transition-all duration-300"
                                                             >
                                                                 Freeze Membership
                                                             </button>)}
@@ -1770,7 +1840,7 @@ const ParentProfile = (stateData) => {
                                                     {status === "frozen" && (
                                                         <button
                                                             onClick={() => setReactivateMembership(true)}
-                                                            className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+                                                            className="w-full bg-blue-50 border border-[#237FEA] text-[#237FEA] rounded-xl py-3 text-[18px] font-semibold shadow-sm hover:bg-[#237FEA] hover:text-white transition-all duration-300"
                                                         >
                                                             Reactivate Membership
                                                         </button>
@@ -1782,7 +1852,7 @@ const ParentProfile = (stateData) => {
                                                         profile?.students?.every((s) => s.studentStatus === "active") && (
                                                             <button
                                                                 onClick={() => setTransferVenue(true)}
-                                                                className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                                                className="w-full bg-blue-50 border border-[#237FEA] text-[#237FEA] text-[18px] rounded-xl py-3 font-semibold shadow-sm hover:bg-blue-100 transition-all duration-300"
                                                             >
                                                                 Transfer Class
                                                             </button>
@@ -1791,7 +1861,7 @@ const ParentProfile = (stateData) => {
                                                     {status === 'waiting list' && canCancelTrial && (
                                                         <button
                                                             onClick={() => setRemoveWaiting(true)}
-                                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                                            className="w-full bg-red-50 border border-[#B42318] text-[#B42318] text-[18px] rounded-xl py-3 font-semibold shadow-sm hover:bg-red-100 transition-all duration-300"
                                                         >
                                                             Remove Waiting List
                                                         </button>
@@ -1800,8 +1870,7 @@ const ParentProfile = (stateData) => {
                                                     {(status === 'active' || status === 'frozen' || status === "request_to_cancel") && canCancelTrial && (
                                                         <button
                                                             onClick={() => setshowCancelTrial(true)}
-                                                            className={`w-full border text-[18px] rounded-xl py-3 font-medium transition-shadow duration-300
-                                                                ${showCancelTrial ? "bg-[#FF6C6C] text-white shadow-md border-transparent" : "border-gray-300 text-[#717073] hover:bg-[#FF6C6C] hover:text-white hover:shadow-md"}`}
+                                                            className="w-full bg-red-50 border border-[#B42318] text-[#B42318] text-[18px] rounded-xl py-3 font-semibold shadow-sm hover:bg-red-100 transition-all duration-300"
                                                         >
                                                             Cancel Membership
                                                         </button>
@@ -1811,9 +1880,7 @@ const ParentProfile = (stateData) => {
                                                         profile?.students?.some((s) => s.studentStatus === "request_to_cancel") && (
                                                             <button
                                                                 onClick={() => { console.log('Revert click', id); openRevertPopup(id, profile?.students); }}
-
-                                                                // onClick={() => handleRevertMembership(id)}
-                                                                className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                                                className="w-full bg-blue-50 border border-[#237FEA] text-[#237FEA] text-[18px] rounded-xl py-3 font-semibold shadow-sm hover:bg-blue-100 transition-all duration-300"
                                                             >
                                                                 Revert Membership
                                                             </button>
@@ -1822,7 +1889,7 @@ const ParentProfile = (stateData) => {
                                                     {!profile?.paymentPlan && profile?.classSchedule?.capacity !== 0 && status !== 'active' && status !== "request_to_cancel" && (
                                                         <button
                                                             onClick={handleBookMembership}
-                                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                                            className="w-full bg-green-50 border border-[#12B76A] text-[#12B76A] text-[18px] rounded-xl py-3 font-semibold shadow-sm hover:bg-green-100 transition-all duration-300"
                                                         >
                                                             Book a Membership
                                                         </button>
@@ -1837,8 +1904,7 @@ const ParentProfile = (stateData) => {
                                             {(isBirthdayParty || isOneToOne) && canCancelTrial && (
                                                 <button
                                                     onClick={() => setshowCancelTrial(true)}
-                                                    className={`w-full border text-[18px] rounded-xl py-3 font-medium transition-shadow duration-300
-                                                        ${showCancelTrial ? "bg-[#FF6C6C] text-white shadow-md border-transparent" : "border-gray-300 text-[#717073] hover:bg-[#FF6C6C] hover:text-white hover:shadow-md"}`}
+                                                    className="w-full bg-red-50 border border-[#B42318] text-[#B42318] text-[18px] rounded-xl py-3 font-semibold shadow-sm hover:bg-red-100 transition-all duration-300"
                                                 >
                                                     Cancel Booking
                                                 </button>
@@ -1850,7 +1916,7 @@ const ParentProfile = (stateData) => {
                                         <div className="bg-white rounded-3xl p-6 space-y-4 mt-4">
                                             <div className="flex gap-7">
                                                 <button
-                                                    className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-[#717073] font-medium"
+                                                    className="flex-1 bg-blue-50 border border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 text-[#237FEA] font-semibold shadow-sm hover:bg-blue-100 transition-all duration-300"
                                                     onClick={() => {
                                                         const parentEmails = parents.map(p => p.parentEmail).filter(Boolean);
                                                         openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
@@ -1893,7 +1959,7 @@ const ParentProfile = (stateData) => {
                                                     {classSchedule?.capacity > 0 && canRebooking && (
                                                         <button
                                                             onClick={() => setReactivateMembership(true)}
-                                                            className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+                                                            className="w-full bg-green-50 border border-[#12B76A] text-[#12B76A] rounded-xl py-3 text-[18px] font-semibold shadow-sm hover:bg-green-100 transition-all duration-300"
                                                         >
                                                             Reactivate Membership
                                                         </button>
@@ -1901,17 +1967,30 @@ const ParentProfile = (stateData) => {
 
                                                 </>
                                             )}
+                                            {isTrials && (() => {
+                                                const today = new Date();
+                                                const trialDateObj = new Date(profile?.trialDate);
+
+                                                // ✅ Strip time portion for fair date-only comparison
+                                                today.setHours(0, 0, 0, 0);
+                                                trialDateObj.setHours(0, 0, 0, 0);
+
+                                                // ✅ Only show if trial date is *before* today
+                                                return trialDateObj < today;
+                                            })() && (
+                                                <button
+                                                    onClick={() => setshowRebookTrial(true)}
+                                                    className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+                                                >
+                                                    Rebook FREE Trial
+                                                </button>
+                                            )}
                                             {location.state?.memberInfo == "cancellation" || location.state?.memberInfo == "cancelled" ? (
                                                 <button
                                                     onClick={handleReinstateMembership}
-                                                    className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
-            ${addToWaitingList
-                                                            ? "bg-[#237FEA] text-white shadow-md"   // Active state
-                                                            : "bg-white  border border-gray-300  hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"
-                                                        }`}
+                                                    className="w-full bg-green-50 border border-[#12B76A] text-[#12B76A] text-[18px] rounded-xl py-3 font-semibold shadow-sm hover:bg-green-100 transition-all duration-300"
                                                 >
                                                     Reinstate Membership
-
                                                 </button>
                                             )
                                                 : null}
@@ -2091,7 +2170,7 @@ const ParentProfile = (stateData) => {
                                 {/* Button */}
                                 <div className="justify-end flex gap-4 pt-4">
                                     <button
-                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="w-1/2 bg-[#12B76A] text-white rounded-xl py-3 text-[18px] font-bold shadow-md hover:bg-green-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                                         disabled={waitingListData.selectedStudents.length === 0}
                                         onClick={() => {
                                             // Validation: at least one student
@@ -2189,9 +2268,9 @@ const ParentProfile = (stateData) => {
                                         type="button"
                                         disabled={!paymentPlan}
                                         onClick={() => setIsOpen(!isOpen)}
-                                        className={`bg-[#237FEA] text-white text-[18px]  font-semibold border w-full border-[#237FEA] px-6 py-3 rounded-lg flex items-center justify-center  ${paymentPlan
-                                            ? "bg-[#237FEA] border border-[#237FEA]"
-                                            : "bg-gray-400 border-gray-400 cursor-not-allowed"
+                                        className={`w-full border text-[18px] font-semibold shadow-sm px-6 py-3 rounded-lg flex items-center justify-center transition-all duration-300 ${paymentPlan
+                                            ? "bg-blue-50 border-[#237FEA] text-[#237FEA] hover:bg-blue-100"
+                                            : "bg-gray-50 border-gray-400 text-gray-400 cursor-not-allowed"
                                             }`}
                                     >
                                         Review Membership Plan
@@ -2199,7 +2278,7 @@ const ParentProfile = (stateData) => {
                                         <img
                                             src={isOpen ? "/images/icons/whiteArrowDown.png" : "/images/icons/whiteArrowUp.png"}
                                             alt={isOpen ? "Collapse" : "Expand"}
-                                            className="ml-2 inline-block"
+                                            className="ml-2 inline-block brightness-0 contrast-100"
                                         />
 
                                     </button>
@@ -2246,7 +2325,7 @@ const ParentProfile = (stateData) => {
                                 {/* Button */}
                                 <div className="flex gap-4 pt-4 justify-end ">
                                     <button
-                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
+                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-semibold shadow-md hover:bg-[#1E6CD9] transition-all duration-300"
                                         onClick={() => {
                                             if (!reactivateData?.reactivateOn) {
                                                 showWarning("Validation Error", "Please select a reactivation date first.");
@@ -2464,7 +2543,7 @@ const ParentProfile = (stateData) => {
                                             // 🔥 Then call API (don’t wait for response)
                                             cancelMembershipSubmit(cancelData, "allMembers", selectedStudents, location.state?.memberInfo);
                                         }}
-                                        className="w-1/2 bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
+                                        className="w-1/2 bg-[#B42318] text-white rounded-xl py-3 text-[18px] font-bold shadow-md hover:bg-red-700 transition-all duration-300 flex items-center justify-center gap-2"
                                     >
                                         {cancelData.cancellationType !== "immediate"
                                             ? "Request to Cancel"
@@ -2536,8 +2615,7 @@ const ParentProfile = (stateData) => {
                                 <div className="flex justify-end gap-4 pt-4">
                                     <button
                                         onClick={() => cancelWaitingListSpot(cancelWaitingList, 'allMembers')}
-
-                                        className="w-1/2  bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
+                                        className="w-1/2 bg-[#B42318] text-white rounded-xl py-3 text-[18px] font-bold shadow-md hover:bg-red-700 transition-all duration-300 flex items-center justify-center gap-2"
                                     >
                                         Submit
                                     </button>
@@ -2685,7 +2763,7 @@ const ParentProfile = (stateData) => {
 
 
                                     <button
-                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-bold shadow-md hover:bg-blue-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                                         disabled={transferData.selectedStudents.length === 0}
                                         onClick={() => {
                                             if (!transferData.selectedStudents.length) {
@@ -2808,7 +2886,7 @@ const ParentProfile = (stateData) => {
                                 {/* Buttons */}
                                 <div className="flex w-full justify-end gap-4 pt-4">
                                     <button
-                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
+                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-bold shadow-md hover:bg-blue-700 transition-all duration-300"
                                         onClick={() => {
                                             if (!freezeData.freezeStartDate || !freezeData.freezeDurationMonths || !freezeData.reactivateOn) {
                                                 showWarning("Incomplete Form", "Please fill in all the required fields before submitting.");
@@ -2829,6 +2907,224 @@ const ParentProfile = (stateData) => {
                 )}
 
 
+                {showRebookTrial && (
+                    <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
+                        <div className="bg-white rounded-2xl w-[541px] max-h-[90%] overflow-y-auto relative scrollbar-hide">
+                            <button
+                                className="absolute top-4 left-4 p-2"
+                                onClick={() => setshowRebookTrial(false)}
+                            >
+                                <img src="/images/icons/cross.png" alt="Close" />
+                            </button>
+
+                            <div className="text-center py-6 border-b border-gray-300">
+                                <h2 className="font-semibold text-[24px]">Rebook Free Trial</h2>
+                            </div>
+
+                            <div className="space-y-4 px-6 pb-6 pt-4">
+                                {/* Venue */}
+                                <div>
+                                    <label className="block text-[16px] font-semibold">Venue</label>
+                                    <input
+                                        type="text"
+                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                        placeholder="Select Venue"
+                                        value={classSchedule?.venue?.name || profile?.venue?.name}
+                                        readOnly
+                                    />
+                                </div>
+
+                                {/* Class */}
+                                <div>
+                                    <label className="block text-[16px] font-semibold">Class</label>
+                                    <input
+                                        type="text"
+                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                        placeholder="Select Class"
+                                        value={classSchedule?.className || "-"}
+                                        readOnly
+                                    />
+                                </div>
+
+                                {/* Date */}
+                                <div>
+                                    <label className="block text-[16px] font-semibold">Date</label>
+                                    <DatePicker
+                                        withPortal
+                                        selected={selectedDate}
+                                        onChange={(date) => {
+                                            setSelectedDate(date);
+                                            setRebookFreeTrial((prev) => ({
+                                                ...prev,
+                                                trialDate: date ? date.toISOString().split("T")[0] : "",
+                                            }));
+                                        }}
+                                        dateFormat="EEEE, dd MMMM yyyy"
+                                        placeholderText="Select a date"
+                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                    />
+                                </div>
+
+                                {/* Time */}
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-[16px] font-semibold">Time</label>
+                                        <DatePicker
+                                            withPortal
+                                            selected={selectedTime}
+                                            onChange={setSelectedTime}
+                                            showTimeSelect
+                                            showTimeSelectOnly
+                                            timeIntervals={60}
+                                            timeCaption="Time"
+                                            dateFormat="h:mm aa"
+                                            placeholderText="Select Time"
+                                            className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                        />
+                                    </div>
+
+                                    {/* Reason */}
+                                    <div>
+                                        <label className="block text-[16px] font-semibold">
+                                            Reason for Non-Attendance
+                                        </label>
+                                        <Select
+                                            value={reason}
+                                            onChange={handleReasonChange}
+                                            options={reasonOptions}
+                                            placeholder="Select Reason"
+                                            className="rounded-lg mt-2"
+                                            styles={{
+                                                control: (base) => ({
+                                                    ...base,
+                                                    borderRadius: "0.7rem",
+                                                    boxShadow: "none",
+                                                    padding: "4px 8px",
+                                                    minHeight: "48px",
+                                                }),
+                                                placeholder: (base) => ({ ...base, fontWeight: 600 }),
+                                                dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
+                                                indicatorSeparator: () => ({ display: "none" }),
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Additional Notes */}
+                                <div>
+                                    <label className="block text-[16px] font-semibold">Additional Notes (Optional)</label>
+                                    <textarea
+                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                        rows={3}
+                                        placeholder="Add any notes here..."
+                                        value={additionalNote}
+                                        onChange={handleNoteChange}
+                                    />
+                                </div>
+
+                                {/* Buttons */}
+                                <div className="flex gap-4 pt-4">
+                                    <button
+                                        className="flex-1 border border-gray-400 rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
+                                        onClick={() => setshowRebookTrial(false)}
+                                    >
+                                        Cancel
+                                    </button>
+
+                                    <button
+                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
+                                        onClick={() => {
+                                            if (!selectedDate) {
+                                                showWarning("Please select a date first!");
+                                                return;
+                                            }
+
+                                            if (!reason) {
+                                                showWarning("Please select a reason for non-attendance!");
+                                                return;
+                                            }
+
+                                            // ✅ Proceed only if both selectedDate and reason exist
+                                            rebookFreeTrialsubmit(rebookFreeTrial);
+                                        }}
+                                    >
+                                        Rebook Trial
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {noMembershipSelect && (
+                    <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
+                        <div className="bg-white rounded-2xl w-[541px] max-h-[90%] overflow-y-auto relative scrollbar-hide">
+                            <button
+                                className="absolute top-4 left-4 p-2"
+                                onClick={() => setNoMembershipSelect(false)}
+                            >
+                                <img src="/images/icons/cross.png" alt="Close" />
+                            </button>
+
+                            <div className="text-center py-6 border-b border-gray-300">
+                                <h2 className="font-semibold text-[24px]">Declined Membership  </h2>
+                            </div>
+
+                            <div className="space-y-4 px-6 pb-6 pt-4">
+                                <div>
+                                    <label className="block text-[16px] font-semibold">
+                                        Reason for Declining Membership
+                                    </label>
+                                    <Select
+                                        value={reasonOptions.find((opt) => opt.value === cancelWaitingList.noMembershipReason)}
+                                        onChange={(selected) => handleSelectChange(selected, "noMembershipReason", setCancelWaitingList)}
+                                        options={reasonOptions}
+                                        placeholder=""
+                                        className="rounded-lg mt-2"
+                                        styles={{
+                                            control: (base) => ({
+                                                ...base,
+                                                borderRadius: "0.7rem",
+                                                boxShadow: "none",
+                                                padding: "6px 8px",
+                                                minHeight: "48px",
+                                            }),
+                                            placeholder: (base) => ({ ...base, fontWeight: 600 }),
+                                            dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
+                                            indicatorSeparator: () => ({ display: "none" }),
+                                        }}
+                                    />
+                                </div>
+
+                                {/* Notes */}
+                                <div>
+                                    <label className="block text-[16px] font-semibold">
+                                        Additional Notes (Optional)
+                                    </label>
+                                    <textarea
+                                        className="w-full bg-gray-100  mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                        rows={6}
+                                        name="noMembershipNotes"    // <-- MUST match state key
+                                        value={cancelWaitingList.noMembershipNotes}
+                                        onChange={(e) => handleInputChange(e, setCancelWaitingList)}
+                                        placeholder=""
+                                    />
+                                </div>
+
+                                {/* Buttons */}
+                                <div className="flex justify-end gap-4 pt-4">
+                                    <button
+                                        onClick={() => noMembershipSubmit(cancelWaitingList, 'allMembers')}
+
+                                        className="w-1/2 flex items-center justify-center gap-2 px-4 py-3 bg-red-50 text-[#B42318] border border-red-200 rounded-xl hover:bg-red-100 transition-colors font-semibold"
+                                    >
+                                        Submit
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div >
         </>
     );

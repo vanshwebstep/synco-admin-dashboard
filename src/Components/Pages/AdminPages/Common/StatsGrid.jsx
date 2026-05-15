@@ -58,7 +58,7 @@ const StatsGrid = ({ stats, variant = "A" }) => {
 
                 {item.subValue && (
                   <span
-                    className="text-[14px] font-normal text-green-500 truncate whitespace-nowrap"
+                    className="text-[14px] font-normal text-[#12B76A] truncate whitespace-nowrap"
                     title={item.subValue}
                   >
                     {item.subValue}

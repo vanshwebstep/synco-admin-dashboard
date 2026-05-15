@@ -201,9 +201,9 @@ export default function AttendanceReport() {
                         <div>
                             <span className="font-semibold text-[#717073] text-sm">{s.title}</span>
 
-                            <h3 className="text-[20px] font-semibold text-gray-900">{s.value} <small className="text-green-500 font-normal text-xs">{s.diff}</small></h3>
+                            <h3 className="text-[20px] font-semibold text-gray-900">{s.value} <small className="text-[#12B76A] font-normal text-xs">{s.diff}</small></h3>
                             <p className="text-4 font-semibold text-[#717073]">
-                                {s.sub} <span className="text-red-500">{s.subvalue}</span>
+                                {s.sub} <span className="text-[#F04438]">{s.subvalue}</span>
                             </p>
                         </div>
                     </div>
@@ -318,7 +318,7 @@ export default function AttendanceReport() {
                                     <p className="text-[16px] text-[#717073]">Percentage of sessions which require a cover coach</p>
                                     <div className="">
                                         <h4 className="text-[22px] font-semibold my-1">25%</h4>
-                                        <span className="text-xs text-gray-400 block">vs. Last Month <span className="text-red-500 font-semibold">34%</span></span>
+                                        <span className="text-xs text-gray-400 block">vs. Last Month <span className="text-[#F04438] font-semibold">34%</span></span>
                                     </div>
                                 </div>
                             </div>

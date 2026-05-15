@@ -577,16 +577,16 @@ const StudentProfile = () => {
       )}
 
       {/* Comment list */}
-     <Comments
-             adminInfo={adminInfo}
-             comment={comment}
-             setComment={setComment}
-             handleSubmitComment={handleSubmitComment}
-             loadingComment={loadingComment}
-             commentsList={commentsList}
-             currentComments={currentComments}
-             formatTimeAgo={formatTimeAgo}
-           />
+      <Comments
+        adminInfo={adminInfo}
+        comment={comment}
+        setComment={setComment}
+        handleSubmitComment={handleSubmitComment}
+        loadingComment={loadingComment}
+        commentsList={commentsList}
+        currentComments={currentComments}
+        formatTimeAgo={formatTimeAgo}
+      />
     </div>
   );
 };

@@ -275,10 +275,10 @@ export default function StudentCourceAdd() {
     /* ---------------- Shared style helpers ---------------- */
 
     const inputCls = (hasError) =>
-        `border rounded-xl px-3 py-3 ${hasError ? "border-red-500 focus:outline-red-500" : "border-[#E2E1E5]"}`;
+        `border rounded-xl px-3 py-3 ${hasError ? "border-[#F04438] focus:outline-[#F04438]" : "border-[#E2E1E5]"}`;
 
     const ErrorMsg = ({ msg }) =>
-        msg ? <p className="text-red-500 text-sm mt-1">{msg}</p> : null;
+        msg ? <p className="text-[#F04438] text-sm mt-1">{msg}</p> : null;
 
     /* ---------------- JSX ---------------- */
 
@@ -377,7 +377,7 @@ export default function StudentCourceAdd() {
                                 <button
                                     type="button"
                                     onClick={() => fileInputRef.current.click()}
-                                    className={`border rounded-2xl p-3 px-5 ${errors.coverImage ? "border-red-500" : "border-[#E2E1E5]"}`}
+                                    className={`border rounded-2xl p-3 px-5 ${errors.coverImage ? "border-[#F04438]" : "border-[#E2E1E5]"}`}
                                 >
                                     Add Image
                                 </button>
@@ -412,7 +412,7 @@ export default function StudentCourceAdd() {
                                 <button
                                     type="button"
                                     onClick={() => removeVideo(video.id)}
-                                    className="absolute top-2 right-2 text-red-500 font-bold text-xl"
+                                    className="absolute top-2 right-2 text-[#F04438] font-bold text-xl"
                                 >
                                     &times;
                                 </button>
@@ -446,7 +446,7 @@ export default function StudentCourceAdd() {
                                     <button
                                         type="button"
                                         onClick={() => videoInputRefs.current[video.id].click()}
-                                        className={`border rounded-2xl p-3 px-5 ${errors[`videoFile_${video.id}`] ? "border-red-500" : "border-[#E2E1E5]"}`}
+                                        className={`border rounded-2xl p-3 px-5 ${errors[`videoFile_${video.id}`] ? "border-[#F04438]" : "border-[#E2E1E5]"}`}
                                     >
                                         Add Video
                                     </button>
@@ -489,7 +489,7 @@ export default function StudentCourceAdd() {
                                                 <button
                                                     type="button"
                                                     onClick={() => removeChildFeature(video.id, idx)}
-                                                    className="text-red-500 font-bold text-xl"
+                                                    className="text-[#F04438] font-bold text-xl"
                                                 >
                                                     &times;
                                                 </button>

@@ -260,10 +260,10 @@ console.log("Final holidayCampId:", holidayCampId);
             name="area"
             value={formData.area}
             onChange={handleInputChange}
-            className={`w-full border ${errors.area ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl p-4 text-sm focus:outline-none focus:ring-2 ${errors.area ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+            className={`w-full border ${errors.area ? 'border-[#F04438]' : 'border-[#E2E1E5]'} rounded-xl p-4 text-sm focus:outline-none focus:ring-2 ${errors.area ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
           />
           {errors.area && (
-            <p className="text-xs text-red-500 mt-1">{errors.area}</p>
+            <p className="text-xs text-[#F04438] mt-1">{errors.area}</p>
           )}
         </div>
 
@@ -274,10 +274,10 @@ console.log("Final holidayCampId:", holidayCampId);
             name="name"
             value={formData.name}
             onChange={handleInputChange}
-            className={`w-full border ${errors.name ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl p-4 text-sm focus:outline-none focus:ring-2 ${errors.name ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+            className={`w-full border ${errors.name ? 'border-[#F04438]' : 'border-[#E2E1E5]'} rounded-xl p-4 text-sm focus:outline-none focus:ring-2 ${errors.name ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
           />
           {errors.name && (
-            <p className="text-xs text-red-500 mt-1">{errors.name}</p>
+            <p className="text-xs text-[#F04438] mt-1">{errors.name}</p>
           )}
         </div>
 
@@ -288,10 +288,10 @@ console.log("Final holidayCampId:", holidayCampId);
             name="address"
             value={formData.address}
             onChange={handleInputChange}
-            className={`w-full border ${errors.address ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl p-4 text-sm focus:outline-none focus:ring-2 ${errors.address ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+            className={`w-full border ${errors.address ? 'border-[#F04438]' : 'border-[#E2E1E5]'} rounded-xl p-4 text-sm focus:outline-none focus:ring-2 ${errors.address ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
           />
           {errors.address && (
-            <p className="text-xs text-red-500 mt-1">{errors.address}</p>
+            <p className="text-xs text-[#F04438] mt-1">{errors.address}</p>
           )}
         </div>
 
@@ -321,7 +321,7 @@ console.log("Final holidayCampId:", holidayCampId);
             }}
           />
           {errors.facility && (
-            <p className="text-xs text-red-500 mt-1">{errors.facility}</p>
+            <p className="text-xs text-[#F04438] mt-1">{errors.facility}</p>
           )}
         </div>
 
@@ -385,10 +385,10 @@ console.log("Final holidayCampId:", holidayCampId);
               value={formData.parkingNote}
               onChange={handleInputChange}
               placeholder="Add a parking note"
-              className={`w-full border bg-[#FAFAFA] ${errors.parkingNote ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl p-4 text-sm focus:outline-none focus:ring-2 ${errors.parkingNote ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+              className={`w-full border bg-[#FAFAFA] ${errors.parkingNote ? 'border-[#F04438]' : 'border-[#E2E1E5]'} rounded-xl p-4 text-sm focus:outline-none focus:ring-2 ${errors.parkingNote ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
             />
             {errors.parkingNote && (
-              <p className="text-xs text-red-500 mt-1">{errors.parkingNote}</p>
+              <p className="text-xs text-[#F04438] mt-1">{errors.parkingNote}</p>
             )}
           </div>
         )}
@@ -400,12 +400,12 @@ console.log("Final holidayCampId:", holidayCampId);
             name="howToEnterFacility"
             value={formData.howToEnterFacility}
             onChange={handleInputChange}
-            className={`w-full border bg-[#FAFAFA] ${errors.howToEnterFacility ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl p-4 text-sm focus:outline-none focus:ring-2 ${errors.howToEnterFacility ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+            className={`w-full border bg-[#FAFAFA] ${errors.howToEnterFacility ? 'border-[#F04438]' : 'border-[#E2E1E5]'} rounded-xl p-4 text-sm focus:outline-none focus:ring-2 ${errors.howToEnterFacility ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
             rows={3}
             placeholder="Add notes"
           />
           {errors.howToEnterFacility && (
-            <p className="text-xs text-red-500 mt-1">{errors.howToEnterFacility}</p>
+            <p className="text-xs text-[#F04438] mt-1">{errors.howToEnterFacility}</p>
           )}
         </div>
 
@@ -420,7 +420,7 @@ console.log("Final holidayCampId:", holidayCampId);
             </label>
             <div
               onClick={() => setShowTermDropdown(!showTermDropdown)}
-              className={`w-full border ${errors.holidayCampId ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl p-4 text-sm text-[#717073] bg-white relative cursor-pointer 
+              className={`w-full border ${errors.holidayCampId ? 'border-[#F04438]' : 'border-[#E2E1E5]'} rounded-xl p-4 text-sm text-[#717073] bg-white relative cursor-pointer 
   after:content-[''] after:absolute after:right-4 after:top-1/2 after:-translate-y-1/2 
   after:w-2 after:h-2 after:border-r-2 after:border-b-2 after:border-[#717073] after:rotate-45`}
             >
@@ -429,7 +429,7 @@ console.log("Final holidayCampId:", holidayCampId);
                 : "Select Camp Date Group"}
             </div>
             {errors.holidayCampId && (
-              <p className="text-xs text-red-500 mt-1">{errors.holidayCampId}</p>
+              <p className="text-xs text-[#F04438] mt-1">{errors.holidayCampId}</p>
             )}
 
             <AnimatePresence>

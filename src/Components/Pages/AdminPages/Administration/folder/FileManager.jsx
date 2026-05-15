@@ -412,7 +412,7 @@ const handleDownload = async (fileId, fileUrl) => {
                                                                     onClick={() =>
                                                                         deleteFile(file.id, url)
                                                                     }
-                                                                    className="hover:text-red-500 cursor-pointer"
+                                                                    className="hover:text-[#F04438] cursor-pointer"
                                                                 />
                                                             </div>
                                                         </div>

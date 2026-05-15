@@ -271,7 +271,7 @@ const ParentProfile = (fetchedData) => {
             <button
               type="button"
               onClick={onClose}
-              className="text-gray-500 hover:text-red-500 transition text-xl"
+              className="text-gray-500 hover:text-[#F04438] transition text-xl"
             >
               ✕
             </button>
@@ -362,7 +362,7 @@ const ParentProfile = (fetchedData) => {
             <h2 className="text-2xl font-semibold text-gray-800">Send Email</h2>
             <button
               onClick={close}
-              className="text-gray-500 hover:text-red-500 transition text-xl"
+              className="text-gray-500 hover:text-[#F04438] transition text-xl"
             >✕</button>
           </div>
 
@@ -433,7 +433,7 @@ const ParentProfile = (fetchedData) => {
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-500 hover:text-red-500 transition text-xl"
+            className="text-gray-500 hover:text-[#F04438] transition text-xl"
           >
             ✕
           </button>

@@ -59,13 +59,13 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
   } = serviceHistory;
   console.log('serviceHistory', serviceHistory)
   const statusStyles = {
-    attended: "bg-green-500 text-white",
-    active: "bg-green-500 text-white",
+    attended: "bg-[#12B76A] text-white",
+    active: "bg-[#12B76A] text-white",
     rebooked: "bg-blue-500 text-white",
     waiting_list: "bg-gray-300 text-white",
     pending: "bg-yellow-500 text-white",
-    cancelled: "bg-red-500 text-white",
-    request_to_cancel: "bg-white text-red-500 ",
+    cancelled: "bg-[#F04438] text-white",
+    request_to_cancel: "bg-white text-[#F04438] ",
   };
   const recurringPayment = payments?.find(
     (p) => p.paymentCategory === "recurring"

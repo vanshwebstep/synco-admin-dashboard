@@ -260,7 +260,7 @@ const filteredSessionGroup = useMemo(() => {
                                 setWeekList(tempList);
                                 setReorderMode(false);
                             }}
-                            className="bg-green-500 text-white px-4 py-2 rounded-xl hover:bg-green-600 font-semibold"
+                            className="bg-[#12B76A] text-white px-4 py-2 rounded-xl hover:bg-[#027A48] font-semibold"
                         >
                             Confirm
                         </button>

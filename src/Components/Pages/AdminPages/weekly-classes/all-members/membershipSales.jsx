@@ -380,7 +380,7 @@ const trialLists = () => {
             value: statsMembership?.totalSales?.value || "0",
             icon: "/members/allmemberTotalRevenue.png",
             change: `${(statsMembership?.totalSales?.change)}`,
-            color: "text-green-500",
+            color: "text-[#12B76A]",
             bg: "bg-[#F3FAF5]"
         },
         {
@@ -389,7 +389,7 @@ const trialLists = () => {
             change: `${(statsMembership?.totalRevenue?.change)}`,
 
             icon: "/members/allmemberMonthlyRevenue.png",
-            color: "text-green-500",
+            color: "text-[#12B76A]",
             bg: "bg-[#F3FAFD]"
         },
         {
@@ -398,7 +398,7 @@ const trialLists = () => {
             value: `£${statsMembership?.avgMonthlyFee?.value} `,
             icon: "/members/allmemberMonthlyFee.png",
             change: `${(statsMembership?.avgMonthlyFee?.change)}`,
-            color: "text-green-500",
+            color: "text-[#12B76A]",
             bg: "bg-[#FEF6FB]"
         },
         {
@@ -406,7 +406,7 @@ const trialLists = () => {
             value: statsMembership?.topSaleAgent?.value || "0.00",
             icon: "/members/allmemberLifeCycle.png",
             change: `${(statsMembership?.topSaleAgent?.change)}`,
-            color: "text-green-500",
+            color: "text-[#12B76A]",
             bg: "bg-[#F0F9F9]"
         }
     ];
@@ -414,9 +414,9 @@ const trialLists = () => {
     const getStatusBadge = (status) => {
         const s = status.toLowerCase();
         let styles =
-            "bg-red-100 text-red-500"; // default fallback
+            "bg-red-100 text-[#F04438]"; // default fallback
         if (s === "attended" || s === "active")
-            styles = "bg-green-100 text-green-600";
+            styles = "bg-green-100 text-[#027A48]";
         else if (s === "pending") styles = "bg-yellow-100 text-yellow-600";
         else if (s === "frozen") styles = "bg-blue-100 text-blue-600";
         else if (s === "waiting list") styles = "bg-gray-200 text-gray-700";
@@ -614,7 +614,7 @@ const trialLists = () => {
 
                     <div className="flex justify-end items-center gap-2">
                         <div className="bg-white min-w-[40px] min-h-[38px] border border-gray-300 p-2 rounded-full flex items-center justify-center">
-                            <Trash2 size={18} className='cursor-pointer text-red-500' onClick={handleDelete} />
+                            <Trash2 size={18} className='cursor-pointer text-[#F04438]' onClick={handleDelete} />
                         </div>
                         <div className="bg-white min-w-[38px] min-h-[38px]   border border-gray-300 p-2 rounded-full flex items-center justify-center"> <Filter size={16} className='cursor-pointer' onClick={() => setShowFilter(!showFilter)} />
                         </div>

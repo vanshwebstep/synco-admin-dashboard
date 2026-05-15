@@ -342,9 +342,9 @@ const ParentProfile = ({ profile }) => {
 
     const getStatusBgColor = (status) => {
         switch (status) {
-            case "active": return "bg-[#43BE4F]";
+            case "active": return "bg-[#12B76A]";
             case "frozen": return "bg-[#509EF9]";
-            case "cancelled": return "bg-[#FC5D5D]";
+            case "cancelled": return "bg-[#fef2f2]";
             case "waiting list": return "bg-[#A4A5A6]";
             default: return "bg-[#A4A5A6]";
         }
@@ -780,7 +780,7 @@ const ParentProfile = ({ profile }) => {
                                     <div className="flex items-center justify-between">
                                         <div className="w-[90%] bg-[#fff] h-3 rounded-full overflow-hidden">
                                             <div
-                                                className="bg-green-500 h-4 rounded-full"
+                                                className="bg-[#12B76A] h-4 rounded-full"
                                                 style={{ width: `${progressPercent}%` }}
                                             ></div>
                                         </div>
@@ -886,8 +886,8 @@ const ParentProfile = ({ profile }) => {
                                         onClick={() => setshowCancelTrial(true)}
                                         className={`w-full border text-[18px] rounded-xl py-3 font-medium transition-shadow duration-300
     ${showCancelTrial
-                                                ? "bg-[#FF6C6C] text-white shadow-md border-transparent"
-                                                : "border-gray-300 text-[#717073] hover:bg-[#FF6C6C] hover:text-white hover:shadow-md"
+                                                ? "bg-[#fef2f2] text-[#b92e2e] shadow-md border-transparent"
+                                                : "border-gray-300 text-[#717073] hover:shadow-md"
                                             }`}
                                     >
                                         Cancel Membership
@@ -899,11 +899,11 @@ const ParentProfile = ({ profile }) => {
 
                                 {status === 'attended' && (
                                     <div className="flex gap-7">
-                                        <button className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium">
+                                        <button className="flex-1 border bg-[#fef2f2] border-[#F04438] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-[#b92e2e] font-medium">
                                             Declined Membership
                                         </button>
 
-                                        <button className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium">
+                                        <button className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#b92e2e] font-medium">
                                             Book a Membership
                                         </button>
                                     </div>
@@ -1275,7 +1275,7 @@ const ParentProfile = ({ profile }) => {
                                             // If all validations pass → call submit function
                                             cancelMembershipSubmit(cancelData, "allMembers");
                                         }}
-                                        className="w-1/2 bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
+                                        className="w-1/2 bg-[#fef2f2] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
                                     >
                                         {cancelData.cancellationType !== "immediate"
                                             ? "Request to Cancel"
@@ -1347,7 +1347,7 @@ const ParentProfile = ({ profile }) => {
                                     <button
                                         onClick={() => cancelWaitingListSpot(cancelWaitingList, 'waitingList')}
 
-                                        className="w-1/2  bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
+                                        className="w-1/2  bg-[#fef2f2] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
                                     >
                                         Submit
                                     </button>

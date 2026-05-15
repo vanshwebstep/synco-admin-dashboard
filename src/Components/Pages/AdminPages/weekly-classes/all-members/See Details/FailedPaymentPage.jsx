@@ -65,13 +65,13 @@ const FailedPayment = () => {
                                     className="flex gap-2 items-center cursor-pointer"
                                     onClick={() => setShowPopup(!showPopup)}
                                 >
-                                    <div className="text-red-500">●</div>
+                                    <div className="text-[#F04438]">●</div>
                                     <span>May Membership fee</span>
                                 </div>
 
                                 {showPopup && (
                                     <div className="absolute right-[200px] top-[-30px] mt-2 w-140 bg-white shadow-lg rounded-xl p-4 z-10">
-                                        <div className="text-red-500 font-semibold mb-2">Payment Failed</div>
+                                        <div className="text-[#F04438] font-semibold mb-2">Payment Failed</div>
                                         <div className="text-gray-700 mb-2">
                                             Unsuccessful payment of John Smith's subscription for the month of May.
                                         </div>
@@ -98,7 +98,7 @@ const FailedPayment = () => {
                         {/* Successful payments */}
                         <tr>
                             <td className="py-3 flex  gap-2 font-medium px-6 ">
-                                <div className="text-green-600">● </div> April Membership fee
+                                <div className="text-[#027A48]">● </div> April Membership fee
                             </td>
                             <td>-</td>
                             <td>01/06/2023</td>
@@ -109,7 +109,7 @@ const FailedPayment = () => {
 
                         <tr>
                             <td className="py-3 flex gap-2 font-medium px-6">
-                                <div className="text-green-600">● </div> April Membership fee
+                                <div className="text-[#027A48]">● </div> April Membership fee
                             </td>
                             <td>-</td>
                             <td>01/06/2023</td>

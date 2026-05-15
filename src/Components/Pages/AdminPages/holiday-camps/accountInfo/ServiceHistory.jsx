@@ -35,10 +35,10 @@ const BookingCard = ({ bookingInfo, booking }) => {
 
   const navigate = useNavigate();
   const statusColors = {
-    active: "bg-green-500 text-white",
-    expired: "bg-red-500 text-white",
-    cancelled: "bg-red-500 text-white",
-    cancel: "bg-red-500 text-white",
+    active: "bg-[#12B76A] text-white",
+    expired: "bg-[#F04438] text-white",
+    cancelled: "bg-[#F04438] text-white",
+    cancel: "bg-[#F04438] text-white",
     pending: "bg-orange-500 text-white",
      "waiting list": "bg-gray-200 text-black",
   };

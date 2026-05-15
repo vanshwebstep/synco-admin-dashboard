@@ -57,7 +57,7 @@ const HistoryOfPayments = ({ stateData }) => {
 
   const PAYMENT_TYPES = {
     ACCESS_PAY_SUITE: "accesspaysuite",
-    GOCARDLESS: "gocardless",
+    GOCARDLESS: "bank",
     STRIPE: "stripe",
   };
 
@@ -76,9 +76,6 @@ const HistoryOfPayments = ({ stateData }) => {
     lastName: "",
     email: "",
     price: "",
-    line1: "",
-    city: "",
-    postalCode: "",
     account_number: "",
     branch_code: "",
     account_holder_name: "",
@@ -170,9 +167,7 @@ const HistoryOfPayments = ({ stateData }) => {
     return filtered;
   }, [singleClassSchedulesOnly, numberOfStudents, stateData]);
 
-  const countryOptions = useMemo(() => {
-    return getNames().map((name) => ({ label: name, value: name }));
-  }, []);
+
 
   // ── SESSION & EXCLUSION DATES ──
   const sessionDates = singleClassSchedulesOnly?.venue?.termGroups?.flatMap(group =>
@@ -272,7 +267,9 @@ const HistoryOfPayments = ({ stateData }) => {
     let finalProRata = safeProRataCost;
     if (!isFullMonth && proRataDiscountData?.finalProRata != null) finalProRata = proRataDiscountData.finalProRata;
 
-    const effectiveLessonCharge = isFullMonth ? monthlyPrice : finalProRata;
+    const effectiveLessonCharge = isFullMonth
+      ? monthlyPrice
+      : finalProRata;
 
     let starterDiscountAmount = 0;
     if (isApplied && appliedDiscount?.data) {
@@ -287,9 +284,7 @@ const HistoryOfPayments = ({ stateData }) => {
     const totalToday = Number(finalTotal.toFixed(2));
     const nextMonthPayment = Number(monthlyPrice.toFixed(2));
 
-    setRemainingLessons(proRataLessons);
-    setCalculatedAmount(totalToday);
-    setPricingBreakdown({
+    const breakdown = {
       pricePerClassPerChild: pricePerLesson,
       numberOfLessonsProRated: proRataLessons,
       costOfProRatedLessons: safeProRataCost,
@@ -300,9 +295,13 @@ const HistoryOfPayments = ({ stateData }) => {
       totalAmountToday: totalToday,
       nextMonthPayment,
       isFullMonthCharge: isFullMonth,
-    });
+    };
 
-    return totalToday;
+    setRemainingLessons(proRataLessons);
+    setCalculatedAmount(totalToday);
+    setPricingBreakdown(breakdown);
+
+    return { totalToday, breakdown };
   };
 
   const handleApplyDiscount = async () => {
@@ -380,24 +379,18 @@ const HistoryOfPayments = ({ stateData }) => {
         return !value?.trim() ? "Email is required" : (!/\S+@\S+\.\S+/.test(value) ? "Invalid email address" : null);
       case "account_holder_name":
         return !value?.trim() ? "Account holder name is required" : null;
-      case "line1":
-        return !value?.trim() ? "Address line 1 is required" : null;
-      case "city":
-        return !value?.trim() ? "City is required" : null;
-      case "postalCode":
-        return !value?.trim() ? "Postal code is required" : null;
       case "branch_code":
-        return !value || value.length !== 6 ? "Sort code must be 6 digits" : null;
+        return !value?.trim() ? "Sort code is required" : null;
       case "account_number":
-        return !value || value.length !== 8 ? "Account number must be 8 digits" : null;
+        return !value?.trim() ? "Account number is required" : null;
       case "nameOnCard":
         return !value?.trim() ? "Name on card is required" : null;
       case "cardNumber":
-        return value.replace(/\s/g, "").length !== 16 ? "Card number must be 16 digits" : null;
+        return !value ? "Card number is required" : null;
       case "expiryDate":
-        return !/^\d{2}\/\d{2}$/.test(value) ? "Enter expiry as MM/YY" : null;
+        return !value ? "Expiry date is required" : null;
       case "cvc":
-        return value.length < 3 ? "CVC must be at least 3 digits" : null;
+        return !value ? "CVC is required" : null;
       case "zipCode":
         return !value?.trim() ? "Postal Code is required" : null;
       case "checkoutCountry":
@@ -418,34 +411,6 @@ const HistoryOfPayments = ({ stateData }) => {
     });
   };
 
-  const handleCheckoutChange = (field, rawValue) => {
-    let value = rawValue;
-    if (field === "cardNumber") value = rawValue.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
-    if (field === "expiryDate") {
-      const digits = rawValue.replace(/\D/g, "").slice(0, 4);
-      value = digits.length >= 3 ? digits.slice(0, 2) + "/" + digits.slice(2) : digits;
-    }
-    if (field === "cvc") value = rawValue.replace(/\D/g, "").slice(0, 4);
-    if (field === "zipCode") value = rawValue.replace(/[^a-zA-Z0-9 ]/g, "").slice(0, 10);
-
-    const setters = {
-      nameOnCard: setCardHolderName,
-      cardNumber: setCardNumber,
-      expiryDate: setExpiryDate,
-      cvc: setCvc,
-      checkoutCountry: setCheckoutCountry,
-      zipCode: setZipCode,
-    };
-    setters[field]?.(value);
-
-    const msg = validateField(field, value);
-    setErrors((prev) => {
-      const copy = { ...prev };
-      if (msg) copy[field] = msg;
-      else delete copy[field];
-      return copy;
-    });
-  };
 
   const handleSubmit = async () => {
     if (!selectedDate) {
@@ -453,20 +418,12 @@ const HistoryOfPayments = ({ stateData }) => {
       return;
     }
 
-    const checkoutFields = ["nameOnCard", "cardNumber", "expiryDate", "cvc", "checkoutCountry", "zipCode"];
+    const fieldsToValidate = ["email", "account_holder_name", "branch_code", "account_number"];
     const newErrors = {};
     let firstErrorField = null;
 
-    checkoutFields.forEach(field => {
-      let val = "";
-      if (field === "nameOnCard") val = nameOnCard;
-      else if (field === "cardNumber") val = cardNumber;
-      else if (field === "expiryDate") val = expiryDate;
-      else if (field === "cvc") val = cvc;
-      else if (field === "zipCode") val = zipCode;
-      else if (field === "checkoutCountry") val = checkoutCountry;
-
-      const msg = validateField(field, val);
+    fieldsToValidate.forEach(field => {
+      const msg = validateField(field, payment[field]);
       if (msg) {
         newErrors[field] = msg;
         if (!firstErrorField) firstErrorField = field;
@@ -475,37 +432,32 @@ const HistoryOfPayments = ({ stateData }) => {
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      // Focus first error
       const refs = {
-        nameOnCard: nameOnCardRef,
-        cardNumber: cardNumberRef,
-        expiryDate: expiryDateRef,
-        cvc: cvcRef,
-        zipCode: zipCodeRef
+        email: emailRef,
+        account_holder_name: accountHolderNameRef,
+        branch_code: branchCodeRef,
+        account_number: accountNumberRef
       };
       refs[firstErrorField]?.current?.focus();
       return;
     }
 
     setIsSubmitting(true);
-    const amountToSend = calculateAmount(selectedDate);
-    const proRataToSend = pricingBreakdown.isFullMonthCharge
+    const { totalToday, breakdown } = calculateAmount(selectedDate) || {};
+    if (!breakdown) return;
+
+    const proRataToSend = breakdown.isFullMonthCharge
       ? 0
-      : pricingBreakdown.finalProRataCost;
+      : breakdown.finalProRataCost;
 
     const payload = {
       newPaymentPlanId: membershipPlan?.value ?? null,
       startDate: selectedDate,
       payment: {
         ...payment, // existing fields
-        price: pricingBreakdown.nextMonthPayment,
+        price: breakdown.nextMonthPayment,
         proRataAmount: proRataToSend,
-        nameOnCard,
-        cardNumber,
-        expiryDate,
-        cvc,
-        country: checkoutCountry,
-        zipCode,
+
       },
 
     };
@@ -524,40 +476,6 @@ const HistoryOfPayments = ({ stateData }) => {
     }
   };
 
-  const handleContinueToStep2 = () => {
-    let step1Fields = ["email", "account_holder_name", "branch_code", "account_number"];
-
-    if (!isFranchisee) {
-      step1Fields = ["email", "account_holder_name", "line1", "city", "postalCode", "branch_code", "account_number"];
-    }
-
-    const newErrors = {};
-    let firstErrorField = null;
-
-    step1Fields.forEach(field => {
-      const msg = validateField(field, payment[field]);
-      if (msg) {
-        newErrors[field] = msg;
-        if (!firstErrorField) firstErrorField = field;
-      }
-    });
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      const refs = {
-        email: emailRef,
-        account_holder_name: accountHolderNameRef,
-        line1: line1Ref,
-        city: cityRef,
-        postalCode: postalCodeRef,
-        branch_code: branchCodeRef,
-        account_number: accountNumberRef
-      };
-      refs[firstErrorField]?.current?.focus();
-      return;
-    }
-    setStep(2);
-  };
 
   // ── RENDER ──
   return (
@@ -583,7 +501,7 @@ const HistoryOfPayments = ({ stateData }) => {
         <h2 className="text-[24px] font-semibold mb-4">Details</h2>
         <div className="grid grid-cols-2 gap-y-4 text-[16px]">
           <div className="col-span-1 text-gray-500 border-b border-gray-200 pb-4">Status</div>
-          <div className="col-span-1 font-medium text-green-600 text-end border-b border-gray-200 pb-4 capitalize">
+          <div className="col-span-1 font-medium text-[#027A48] text-end border-b border-gray-200 pb-4 capitalize">
             {safeValue(stateData.status)}
           </div>
 
@@ -660,10 +578,10 @@ const HistoryOfPayments = ({ stateData }) => {
                             setShowPopup(showPopup === payment.id ? null : payment.id)
                           }
                         >
-                          <div className={isFailed ? "text-red-500" : "text-green-500"}>●</div>
+                          <div className={isFailed ? "text-[#F04438]" : "text-[#12B76A]"}>●</div>
                           <div>
                             {payment.paymentStatus === "failed" ? (
-                              <button className="text-red-500 text-sm font-medium">
+                              <button className="text-[#F04438] text-sm font-medium">
                                 Retry Payment
                               </button>
                             ) : payment.paymentStatus === "pending" ? (
@@ -671,11 +589,11 @@ const HistoryOfPayments = ({ stateData }) => {
                                 Payment Pending
                               </span>
                             ) : payment.paymentStatus === "cancelled" ? (
-                              <span className="text-red-500 whitespace-nowrap text-sm font-semibold">
+                              <span className="text-[#F04438] whitespace-nowrap text-sm font-semibold">
                                 Payment Cancelled
                               </span>
                             ) : (
-                              <span className="text-green-600 text-sm font-semibold">
+                              <span className="text-[#027A48] text-sm font-semibold">
                                 Paid Successfully
                               </span>
                             )}
@@ -684,7 +602,7 @@ const HistoryOfPayments = ({ stateData }) => {
 
                         {showPopup === payment.id && isFailed && (
                           <div className="absolute right-[200px] top-[-30px] mt-2 w-72 bg-white shadow-lg rounded-xl p-4 z-10">
-                            <div className="text-red-500 font-semibold mb-2">Payment Failed</div>
+                            <div className="text-[#F04438] font-semibold mb-2">Payment Failed</div>
                             <div className="text-gray-700 mb-2">
                               Unsuccessful payment of {safeValue(payment.firstName)}{" "}
                               {safeValue(payment.lastName)}'s subscription for{" "}
@@ -858,24 +776,14 @@ const HistoryOfPayments = ({ stateData }) => {
                           <span>£{pricingBreakdown.nextMonthPayment?.toFixed(2)}</span>
                         </div>
                       ) : (
-                        <>
-                          {pricingBreakdown.numberOfLessonsProRated <= 3 && (
-                            <>
-                              <div className="flex justify-between text-[#333]">
-                                <span>Number of Pro-Rata Lessons</span>
-                                <span>{pricingBreakdown.numberOfLessonsProRated}</span>
-                              </div>
-
-                              <div className="flex justify-between text-[#000]">
-                                <span>Total Pro-Rata Cost</span>
-                                <span>
-                                  £{pricingBreakdown.finalProRataCost?.toFixed(2)}
-                                </span>
-                              </div>
-                            </>
-                          )}
-                        </>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-[#333]">
+                            <span>Pro-Rata ({pricingBreakdown.numberOfLessonsProRated} lessons)</span>
+                            <span>£{pricingBreakdown.finalProRataCost?.toFixed(2)}</span>
+                          </div>
+                        </div>
                       )}
+
 
                       {/* {pricingBreakdown.starterPack > 0 &&
                         pricingBreakdown.numberOfLessonsProRated <= 3 && (
@@ -928,9 +836,9 @@ const HistoryOfPayments = ({ stateData }) => {
                         placeholder="Email address"
                         value={payment.email}
                         onChange={(e) => handlePaymentChange("email", e.target.value)}
-                        className={`w-full bg-white border ${errors.email ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
+                        className={`w-full bg-white border ${errors.email ? "border-[#F04438]" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
                       />
-                      {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                      {errors.email && <p className="text-[#F04438] text-xs mt-1">{errors.email}</p>}
                     </label>
 
                     <p className="text-[14px] font-medium text-[#34353B]">
@@ -947,8 +855,15 @@ const HistoryOfPayments = ({ stateData }) => {
                           value={payment.account_holder_name}
                           onChange={(e) => {
                             const fullName = e.target.value;
-                            const parts = fullName.trim().split(" ");
-                            setPayment({ ...payment, account_holder_name: fullName, firstName: parts[0] || "", lastName: parts.slice(1).join(" ") });
+                            setPayment(prev => {
+                              const parts = fullName.trim().split(" ");
+                              return {
+                                ...prev,
+                                account_holder_name: fullName,
+                                firstName: parts[0] || "",
+                                lastName: parts.slice(1).join(" ")
+                              };
+                            });
                             const msg = validateField("account_holder_name", fullName);
                             setErrors(prev => {
                               const copy = { ...prev };
@@ -957,9 +872,9 @@ const HistoryOfPayments = ({ stateData }) => {
                               return copy;
                             });
                           }}
-                          className={`w-full bg-white border ${errors.account_holder_name ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
+                          className={`w-full bg-white border ${errors.account_holder_name ? "border-[#F04438]" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
                         />
-                        {errors.account_holder_name && <p className="text-red-500 text-xs mt-1">{errors.account_holder_name}</p>}
+                        {errors.account_holder_name && <p className="text-[#F04438] text-xs mt-1">{errors.account_holder_name}</p>}
                       </label>
 
                       {!isFranchisee && (
@@ -971,9 +886,9 @@ const HistoryOfPayments = ({ stateData }) => {
                               type="text"
                               value={payment.line1}
                               onChange={(e) => handlePaymentChange("line1", e.target.value)}
-                              className={`w-full bg-white border ${errors.line1 ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
+                              className={`w-full bg-white border ${errors.line1 ? "border-[#F04438]" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
                             />
-                            {errors.line1 && <p className="text-red-500 text-xs mt-1">{errors.line1}</p>}
+                            {errors.line1 && <p className="text-[#F04438] text-xs mt-1">{errors.line1}</p>}
                           </label>
 
                           <div className="md:flex gap-4">
@@ -984,9 +899,9 @@ const HistoryOfPayments = ({ stateData }) => {
                                 type="text"
                                 value={payment.city}
                                 onChange={(e) => handlePaymentChange("city", e.target.value)}
-                                className={`w-full bg-white border ${errors.city ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
+                                className={`w-full bg-white border ${errors.city ? "border-[#F04438]" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
                               />
-                              {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
+                              {errors.city && <p className="text-[#F04438] text-xs mt-1">{errors.city}</p>}
                             </label>
                             <label className="flex-1">
                               <span className="block poppins text-gray-700 text-[14px] mb-1">Postal Code</span>
@@ -995,9 +910,9 @@ const HistoryOfPayments = ({ stateData }) => {
                                 type="text"
                                 value={payment.postalCode}
                                 onChange={(e) => handlePaymentChange("postalCode", e.target.value)}
-                                className={`w-full bg-white border ${errors.postalCode ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
+                                className={`w-full bg-white border ${errors.postalCode ? "border-[#F04438]" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
                               />
-                              {errors.postalCode && <p className="text-red-500 text-xs mt-1">{errors.postalCode}</p>}
+                              {errors.postalCode && <p className="text-[#F04438] text-xs mt-1">{errors.postalCode}</p>}
                             </label>
                           </div>
                         </>
@@ -1012,9 +927,9 @@ const HistoryOfPayments = ({ stateData }) => {
                             placeholder="Sort Code"
                             value={payment.branch_code}
                             onChange={(e) => handlePaymentChange("branch_code", e.target.value.replace(/\D/g, "").slice(0, 6))}
-                            className={`w-full bg-white border ${errors.branch_code ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
+                            className={`w-full bg-white border ${errors.branch_code ? "border-[#F04438]" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
                           />
-                          {errors.branch_code && <p className="text-red-500 text-xs mt-1">{errors.branch_code}</p>}
+                          {errors.branch_code && <p className="text-[#F04438] text-xs mt-1">{errors.branch_code}</p>}
                         </label>
                         <label className="block w-full">
                           <span className="block text-gray-700 text-[14px] mb-1">Account Number</span>
@@ -1024,9 +939,9 @@ const HistoryOfPayments = ({ stateData }) => {
                             placeholder="Account Number"
                             value={payment.account_number}
                             onChange={(e) => handlePaymentChange("account_number", e.target.value.replace(/\D/g, "").slice(0, 8))}
-                            className={`w-full bg-white border ${errors.account_number ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
+                            className={`w-full bg-white border ${errors.account_number ? "border-[#F04438]" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
                           />
-                          {errors.account_number && <p className="text-red-500 text-xs mt-1">{errors.account_number}</p>}
+                          {errors.account_number && <p className="text-[#F04438] text-xs mt-1">{errors.account_number}</p>}
                         </label>
                       </div>
                     </div>
@@ -1046,142 +961,9 @@ const HistoryOfPayments = ({ stateData }) => {
                         Back
                       </button>
                       <button
-                        onClick={handleContinueToStep2}
-                        className="bg-[#042C89] text-white px-6 py-2 rounded-md"
-                      >
-                        Continue
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* ── Step 2: Checkout (Stripe) ── */}
-                {step === 2 && (
-                  <div className="max-w-xl mx-auto space-y-4">
-                    <h2 className="text-2xl font-semibold poppins pb-4">Checkout</h2>
-                    <p className="text-gray-600 mb-4 poppins text-[14px]">
-                      Fill out your card details below to pay for the Starter Pack
-                      {pricingBreakdown?.numberOfLessonsProRated > 0 && " and Pro-Rata lessons"}
-                      {" "}via Stripe. This payment goes directly to Head Office.
-                    </p>
-
-                    {/* Stripe destination badge */}
-                    <div className="mb-6 bg-green-50 border border-green-200 rounded-xl px-4 py-2 text-xs text-green-800 font-medium">
-                      💳 Stripe → Head Office &nbsp;·&nbsp; Amount: <strong>£{pricingBreakdown.totalAmountToday?.toFixed(2)}</strong>
-                      {IS_SANDBOX && <span className="ml-2 text-orange-600">🧪 Sandbox</span>}
-                    </div>
-
-                    <label className="block">
-                      <span className="block text-gray-700 text-[14px] font-medium mb-1">Name on card<span className="text-red-500 ml-0.5">*</span></span>
-                      <input
-                        ref={nameOnCardRef}
-                        placeholder="Enter name on card"
-                        value={nameOnCard}
-                        onChange={(e) => handleCheckoutChange("nameOnCard", e.target.value)}
-                        className={`w-full bg-white border ${errors.nameOnCard ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
-                      />
-                      {errors.nameOnCard && (
-                        <p className="text-red-500 text-xs mt-1">{errors.nameOnCard}</p>
-                      )}
-                    </label>
-
-                    <label className="block">
-                      <span className="block text-gray-700 text-[14px] font-medium mb-1">Card number<span className="text-red-500 ml-0.5">*</span></span>
-                      <input
-                        ref={cardNumberRef}
-                        placeholder="1234 1234 1234 1234"
-                        value={cardNumber}
-                        onChange={(e) => handleCheckoutChange("cardNumber", e.target.value)}
-                        className={`w-full bg-white border ${errors.cardNumber ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
-                      />
-                      {errors.cardNumber && (
-                        <p className="text-red-500 text-xs mt-1">{errors.cardNumber}</p>
-                      )}
-                    </label>
-
-                    <div className="flex gap-4 w-full">
-                      <label className="block flex-1">
-                        <span className="block text-gray-700 text-[14px] font-medium mb-1">Expiration date<span className="text-red-500 ml-0.5">*</span></span>
-                        <input
-                          ref={expiryDateRef}
-                          placeholder="MM/YY"
-                          value={expiryDate}
-                          onChange={(e) => handleCheckoutChange("expiryDate", e.target.value)}
-                          className={`w-full bg-white border ${errors.expiryDate ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
-                        />
-                        {errors.expiryDate && (
-                          <p className="text-red-500 text-xs mt-1">{errors.expiryDate}</p>
-                        )}
-                      </label>
-                      <label className="block flex-1">
-                        <span className="block text-gray-700 text-[14px] font-medium mb-1">CVC<span className="text-red-500 ml-0.5">*</span></span>
-                        <input
-                          ref={cvcRef}
-                          placeholder="CVC"
-                          value={cvc}
-                          onChange={(e) => handleCheckoutChange("cvc", e.target.value)}
-                          className={`w-full bg-white border ${errors.cvc ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
-                        />
-                        {errors.cvc && (
-                          <p className="text-red-500 text-xs mt-1">{errors.cvc}</p>
-                        )}
-                      </label>
-                    </div>
-
-                    <div className="flex gap-4 w-full">
-                      <div className="flex-1">
-                        <label className="block text-gray-700 text-[14px] font-medium mb-1">Country or region<span className="text-red-500 ml-0.5">*</span></label>
-                        <Select
-                          options={countryOptions}
-                          value={countryOptions.find(opt => opt.value === checkoutCountry)}
-                          onChange={(selectedOption) => handleCheckoutChange("checkoutCountry", selectedOption?.value)}
-                          className="mt-1"
-                          classNamePrefix="react-select"
-                          styles={{
-                            control: (base) => ({
-                              ...base,
-                              borderColor: errors.country ? "#ef4444" : "#e5e7eb",
-                              borderRadius: "6px",
-                              padding: "2px",
-                              boxShadow: "none",
-                              "&:hover": {
-                                borderColor: errors.country ? "#ef4444" : "#3b82f6"
-                              }
-                            })
-                          }}
-                        />
-                        {errors.country && <span className="text-red-500 text-xs mt-1 block">{errors.country}</span>}
-                      </div>
-                      <div className="flex-1">
-                        <label className="block text-gray-700 text-[14px] font-medium mb-1">Postal Code<span className="text-red-500 ml-0.5">*</span></label>
-                        <input
-                          ref={zipCodeRef}
-                          type="text"
-                          value={zipCode}
-                          onChange={(e) => handleCheckoutChange("zipCode", e.target.value)}
-                          placeholder="Enter Postal Code"
-                          className={`w-full bg-white border ${errors.zipCode ? "border-red-500" : "border-gray-200"} rounded-[6px] px-4 py-2 focus:outline-none focus:border-blue-500`}
-                        />
-                        {errors.zipCode && <span className="text-red-500 text-xs mt-1 block">{errors.zipCode}</span>}
-                      </div>
-                    </div>
-
-                    <p className="font-semibold text-[#34353B] poppins text-md">
-                      Total to pay now <span className="float-right poppins text-blue-900" style={{ fontSize: "22px" }}>£{pricingBreakdown?.totalAmountToday?.toFixed(2)}</span>
-                    </p>
-
-                    <div className="flex justify-between">
-                      <button
-                        onClick={() => setStep(1)}
-                        className="bg-gray-200 text-gray-700 px-6 py-2 rounded-md"
-                      >
-                        Back
-                      </button>
-                      {/* ✅ FIX 7: button is disabled while submitting + shows spinner */}
-                      <button
                         onClick={handleSubmit}
                         disabled={isSubmitting}
-                        className="bg-green-600 text-white px-6 py-2 rounded-md flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="bg-[#027A48] text-white px-6 py-2 rounded-md flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         {isSubmitting ? (
                           <>
@@ -1195,6 +977,9 @@ const HistoryOfPayments = ({ stateData }) => {
                     </div>
                   </div>
                 )}
+
+                {/* ── Step 2: Checkout (Stripe) ── */}
+
               </motion.div>
             )}
 

@@ -1006,10 +1006,10 @@ const HolidaySessionCreate = () => {
                                         type="text"
                                         disabled={isEditMode}
                                         placeholder="Enter Group Name"
-                                        className={`w-full px-4 font-semibold text-[18px] py-3 border ${errors.groupNameSection ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${errors.groupNameSection ? 'focus:ring-red-500' : 'focus:ring-blue-500'} ${isEditMode ? 'disabled cursor-not-allowed' : ''}`}
+                                        className={`w-full px-4 font-semibold text-[18px] py-3 border ${errors.groupNameSection ? 'border-[#F04438]' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${errors.groupNameSection ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'} ${isEditMode ? 'disabled cursor-not-allowed' : ''}`}
                                     />
                                     {errors.groupNameSection && (
-                                        <p className="text-sm text-red-500 mt-1">{errors.groupNameSection}</p>
+                                        <p className="text-sm text-[#F04438] mt-1">{errors.groupNameSection}</p>
                                     )}
                                 </div>
                                 {/* Description */}
@@ -1022,10 +1022,10 @@ const HolidaySessionCreate = () => {
                                         value={player}
                                         onChange={(e) => { setPlayer(e.target.value); if (errors.player) setErrors(prev => ({ ...prev, player: null })); }}
                                         type="text"
-                                        className={`w-full px-4 font-semibold py-3 border ${errors.player ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${errors.player ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                                        className={`w-full px-4 font-semibold py-3 border ${errors.player ? 'border-[#F04438]' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${errors.player ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
                                     />
                                     {errors.player && (
-                                        <p className="text-sm text-red-500 mt-1">{errors.player}</p>
+                                        <p className="text-sm text-[#F04438] mt-1">{errors.player}</p>
                                     )}
                                 </div>
                                 <div className="flex w-full  gap-4 items-center">
@@ -1092,10 +1092,10 @@ const HolidaySessionCreate = () => {
                                         value={skillOfTheDay}
                                         onChange={(e) => { setSkillOfTheDay(e.target.value); if (errors.skillOfTheDay) setErrors(prev => ({ ...prev, skillOfTheDay: null })); }}
                                         type="text"
-                                        className={`w-full px-4 font-semibold py-3 border ${errors.skillOfTheDay ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${errors.skillOfTheDay ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                                        className={`w-full px-4 font-semibold py-3 border ${errors.skillOfTheDay ? 'border-[#F04438]' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${errors.skillOfTheDay ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
                                     />
                                     {errors.skillOfTheDay && (
-                                        <p className="text-sm text-red-500 mt-1">{errors.skillOfTheDay}</p>
+                                        <p className="text-sm text-[#F04438] mt-1">{errors.skillOfTheDay}</p>
                                     )}
                                 </div>
                                 <div className="flex w-full   gap-4 items-center">
@@ -1192,10 +1192,10 @@ const HolidaySessionCreate = () => {
                                         value={descriptionSession}
                                         onChange={(e) => { setDescriptionSession(e.target.value); if (errors.descriptionSession) setErrors(prev => ({ ...prev, descriptionSession: null })); }}
                                         type="text"
-                                        className={`w-full px-4 font-semibold py-3 border ${errors.descriptionSession ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${errors.descriptionSession ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                                        className={`w-full px-4 font-semibold py-3 border ${errors.descriptionSession ? 'border-[#F04438]' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${errors.descriptionSession ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
                                     />
                                     {errors.descriptionSession && (
-                                        <p className="text-sm text-red-500 mt-1">{errors.descriptionSession}</p>
+                                        <p className="text-sm text-[#F04438] mt-1">{errors.descriptionSession}</p>
                                     )}
                                 </div>
 
@@ -1221,7 +1221,7 @@ const HolidaySessionCreate = () => {
                                         <div
                                             id="selectedPlans"
                                             onClick={() => setIsOpen(!isOpen)}
-                                            className={`mt-4 space-y-2 border ${errors.selectedPlans ? 'border-red-500' : 'border-gray-200'} px-4 py-3 rounded-lg max-h-28 overflow-auto`}
+                                            className={`mt-4 space-y-2 border ${errors.selectedPlans ? 'border-[#F04438]' : 'border-gray-200'} px-4 py-3 rounded-lg max-h-28 overflow-auto`}
                                         >
                                             {selectedPlans.length > 0 ? (
                                                 selectedPlans.map((plan, idx) => {
@@ -1287,7 +1287,7 @@ const HolidaySessionCreate = () => {
                                                                         e.stopPropagation();
                                                                         handleDeletePlan(idx, plan.id); // pass index and id
                                                                     }}
-                                                                    className="text-gray-800 hover:text-red-500"
+                                                                    className="text-gray-800 hover:text-[#F04438]"
                                                                 >
                                                                     <Trash2 size={18} />
                                                                 </button>
@@ -1303,7 +1303,7 @@ const HolidaySessionCreate = () => {
                                             )}
                                         </div>
                                         {errors.selectedPlans && (
-                                            <p className="text-sm text-red-500 mt-1">{errors.selectedPlans}</p>
+                                            <p className="text-sm text-[#F04438] mt-1">{errors.selectedPlans}</p>
                                         )}
 
                                         <AnimatePresence initial={false}>
@@ -1436,10 +1436,10 @@ const HolidaySessionCreate = () => {
                                                 name={field.name}
                                                 value={formData[field.name]}
                                                 onChange={(e) => { setFormData({ ...formData, [field.name]: e.target.value }); if (planErrors[field.name]) setPlanErrors(prev => ({ ...prev, [field.name]: null })); }}
-                                                className={`w-full px-4 font-semibold text-[18px] py-3 border ${planErrors[field.name] ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${planErrors[field.name] ? 'focus:ring-red-500' : 'focus:ring-blue-500'}`}
+                                                className={`w-full px-4 font-semibold text-[18px] py-3 border ${planErrors[field.name] ? 'border-[#F04438]' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 ${planErrors[field.name] ? 'focus:ring-[#F04438]' : 'focus:ring-blue-500'}`}
                                             />
                                             {planErrors[field.name] && (
-                                                <p className="text-sm text-red-500 mt-1">{planErrors[field.name]}</p>
+                                                <p className="text-sm text-[#F04438] mt-1">{planErrors[field.name]}</p>
                                             )}
                                         </div>
                                     ))}
@@ -1448,7 +1448,7 @@ const HolidaySessionCreate = () => {
                                         <label className="block text-[18px] font-semibold text-gray-700 mb-2">
                                             Description
                                         </label>
-                                        <div id="description" className={`rounded-md border ${planErrors.description ? 'border-red-500' : 'border-gray-300'} bg-gray-100 p-1`}>
+                                        <div id="description" className={`rounded-md border ${planErrors.description ? 'border-[#F04438]' : 'border-gray-300'} bg-gray-100 p-1`}>
                                             { /* bullist numlist  code */}
                                             <Editor
                                                 apiKey="sqe5er2lyngzjf0armhqaw1u7ffh0xgjyzmb7unv5irietwa"
@@ -1502,7 +1502,7 @@ const HolidaySessionCreate = () => {
                                             />
                                         </div>
                                         {planErrors.description && (
-                                            <p className="text-sm text-red-500 mt-1">{planErrors.description}</p>
+                                            <p className="text-sm text-[#F04438] mt-1">{planErrors.description}</p>
                                         )}
                                     </div>
 
@@ -1521,12 +1521,12 @@ const HolidaySessionCreate = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => fileInputRef.current?.click()}
-                                                className={`flex w-full items-center justify-center gap-1 border ${planErrors.images ? 'border-red-500 text-red-500' : 'border-blue-500 text-[#237FEA]'} px-4 py-2 rounded-lg font-semibold hover:bg-blue-50`}
+                                                className={`flex w-full items-center justify-center gap-1 border ${planErrors.images ? 'border-[#F04438] text-[#F04438]' : 'border-blue-500 text-[#237FEA]'} px-4 py-2 rounded-lg font-semibold hover:bg-blue-50`}
                                             >
                                                 Upload images
                                             </button>
                                             {planErrors.images && (
-                                                <p className="text-sm text-red-500 mt-1">{planErrors.images}</p>
+                                                <p className="text-sm text-[#F04438] mt-1">{planErrors.images}</p>
                                             )}
 
                                             {/* Multiple Previews */}
@@ -1541,7 +1541,7 @@ const HolidaySessionCreate = () => {
                                                         <button
                                                             type="button"
                                                             onClick={() => handleRemoveImage(index)}
-                                                            className="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full px-1.5"
+                                                            className="absolute top-1 right-1 bg-[#F04438] text-white text-xs rounded-full px-1.5"
                                                         >
                                                             ✕
                                                         </button>

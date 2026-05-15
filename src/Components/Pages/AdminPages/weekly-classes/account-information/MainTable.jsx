@@ -137,12 +137,12 @@ const MainTable = () => {
 
 
   const statusColors = {
-    active: "bg-green-500 text-white",
-    cancelled: "bg-red-500 text-white",
-    request_to_cancel: "bg-red-500 text-white",
+    active: "bg-[#12B76A] text-white",
+    cancelled: "bg-[#F04438] text-white",
+    request_to_cancel: "bg-[#F04438] text-white",
     pending: "bg-yellow-500 text-white",
     frozen: "bg-blue-500 text-white",
-    attended: "bg-green-500 text-white",
+    attended: "bg-[#12B76A] text-white",
 
   };
 

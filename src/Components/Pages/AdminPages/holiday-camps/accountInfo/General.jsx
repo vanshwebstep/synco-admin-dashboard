@@ -649,8 +649,8 @@ const General = () => {
                                     onClick={() => setshowCancelTrial(true)}
                                     className={`w-full border text-[18px] rounded-xl py-3 font-medium transition-shadow duration-300
       ${showCancelTrial
-                                            ? "bg-[#FF6C6C] text-white shadow-md border-transparent"
-                                            : "border-gray-300 text-[#717073] hover:bg-[#FF6C6C] hover:text-white hover:shadow-md"
+                                            ? "bg-[#fef2f2] text-[#b92e2e] shadow-md border-transparent"
+                                            : "border-gray-300 text-[#717073]  hover:text-white hover:shadow-md"
                                         }`}
                                 >
                                     Cancel Membership
@@ -733,7 +733,7 @@ const General = () => {
                                                 // 🔥 Then call API (don’t wait for response)
                                                 cancelHolidaySubmit(cancelData, "allMembers");
                                             }}
-                                            className="w-full bg-[#FF6C6C] text-white my-3 text-[18px] py-3 rounded-xl  font-medium hover:bg-red-600 transition flex items-center justify-center">
+                                            className="w-full bg-[#fef2f2] text-[#b92e2e] my-3 text-[18px] py-3 rounded-xl  font-medium  transition flex items-center justify-center">
                                             Cancel Camp
                                         </button>
 

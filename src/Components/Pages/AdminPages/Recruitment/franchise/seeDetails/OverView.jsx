@@ -1068,13 +1068,13 @@ const OverView = ({ steps, setSteps }) => {
                               type="date"
                               disabled={recruitedMode}
                               value={telephoneCall.date}
-                              className={`border rounded-xl p-2 ${errors.date ? "border-red-500" : ""}`}
+                              className={`border rounded-xl p-2 ${errors.date ? "border-[#F04438]" : ""}`}
                               onChange={(e) => {
                                 setTelephoneCall({ ...telephoneCall, date: e.target.value });
                                 setErrors(prev => ({ ...prev, date: "" }));
                               }}
                             />
-                            {errors.date && <span className="text-red-500 text-xs mt-1">{errors.date}</span>}
+                            {errors.date && <span className="text-[#F04438] text-xs mt-1">{errors.date}</span>}
                           </div>
 
                           <div className="flex flex-col">
@@ -1082,13 +1082,13 @@ const OverView = ({ steps, setSteps }) => {
                               type="time"
                               disabled={recruitedMode}
                               value={telephoneCall.time}
-                              className={`border rounded-xl p-2 ${errors.time ? "border-red-500" : ""}`}
+                              className={`border rounded-xl p-2 ${errors.time ? "border-[#F04438]" : ""}`}
                               onChange={(e) => {
                                 setTelephoneCall({ ...telephoneCall, time: e.target.value });
                                 setErrors(prev => ({ ...prev, time: "" }));
                               }}
                             />
-                            {errors.time && <span className="text-red-500 text-xs mt-1">{errors.time}</span>}
+                            {errors.time && <span className="text-[#F04438] text-xs mt-1">{errors.time}</span>}
                           </div>
                         </div>
 
@@ -1096,7 +1096,7 @@ const OverView = ({ steps, setSteps }) => {
                           <select
                             disabled={recruitedMode}
                             value={telephoneCall.reminder}
-                            className={`border rounded-xl p-2 w-full bg-white ${errors.reminder ? "border-red-500" : ""}`}
+                            className={`border rounded-xl p-2 w-full bg-white ${errors.reminder ? "border-[#F04438]" : ""}`}
                             onChange={(e) => {
                               setTelephoneCall({ ...telephoneCall, reminder: e.target.value });
                               setErrors(prev => ({ ...prev, reminder: "" }));
@@ -1108,7 +1108,7 @@ const OverView = ({ steps, setSteps }) => {
                             <option value="1 hour before">1 hour before</option>
                             <option value="1 day before">1 day before</option>
                           </select>
-                          {errors.reminder && <span className="text-red-500 text-xs mt-1">{errors.reminder}</span>}
+                          {errors.reminder && <span className="text-[#F04438] text-xs mt-1">{errors.reminder}</span>}
                         </div>
 
                         <button
@@ -1128,7 +1128,7 @@ const OverView = ({ steps, setSteps }) => {
                           {step.resultPercent}
                         </span>
 
-                        <span className="text-green-600 font-semibold text-sm">
+                        <span className="text-[#027A48] font-semibold text-sm">
                           ✓ {step.resultStatus}
                         </span>
 
@@ -1140,7 +1140,7 @@ const OverView = ({ steps, setSteps }) => {
                         </button>
 
                         <button
-                          className="bg-green-600 text-white px-3 py-2 rounded-xl text-sm"
+                          className="bg-[#027A48] text-white px-3 py-2 rounded-xl text-sm"
                           onClick={() => setOpenOfferModal(true)}
                         >
                           Send Offer
@@ -1232,12 +1232,12 @@ const OverView = ({ steps, setSteps }) => {
                     </h3>
                     <ul className="mt-4 space-y-4">
                       <li className="flex items-start gap-2">
-                        <span className="text-green-600 text-xl"><IoMdCheckmarkCircle />
+                        <span className="text-[#027A48] text-xl"><IoMdCheckmarkCircle />
                         </span>
                         <p className='font-semibold text-[16px]'>Check they are free and in a quiet space for the call</p>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="text-green-600 text-xl"><IoMdCheckmarkCircle />
+                        <span className="text-[#027A48] text-xl"><IoMdCheckmarkCircle />
                         </span>
                         <div>
                           <p className="font-semibold text-[16px]">Give them break down for the call</p>
@@ -1250,11 +1250,11 @@ const OverView = ({ steps, setSteps }) => {
                         </div>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="text-green-600 text-xl"><IoMdCheckmarkCircle />
+                        <span className="text-[#027A48] text-xl"><IoMdCheckmarkCircle />
                         </span>
                         <div>
                           <p className="font-semibold text-[16px]">Process</p>
-                          <span className="text-green-600">2 steps</span>
+                          <span className="text-[#027A48]">2 steps</span>
                           <ul className=" list-disc text-gray-600 mt-2">
                             <li className='list-none'>(A) Phone call</li>
                             <li className='list-none'>(B) Practical assessment - taking place next week and week after</li>
@@ -1263,11 +1263,11 @@ const OverView = ({ steps, setSteps }) => {
                         </div>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="text-green-600 text-xl"><IoMdCheckmarkCircle />
+                        <span className="text-[#027A48] text-xl"><IoMdCheckmarkCircle />
                         </span>
                         <div>
                           <p className="font-semibold text-[16px]">Title Name</p>
-                          <span className="text-green-600">2 steps</span>
+                          <span className="text-[#027A48]">2 steps</span>
                           <ul className=" list-disc text-gray-600 mt-2">
                             <li className='list-none'>(A) Phone call</li>
                             <li className='list-none'>(B) Practical assessment - taking place next week and week after</li>
@@ -1285,7 +1285,7 @@ const OverView = ({ steps, setSteps }) => {
                     </h3>
                     <div className="mt-4">
                       <div className="flex items-start gap-2">
-                        <span className="text-green-600 text-xl"><IoMdCheckmarkCircle />
+                        <span className="text-[#027A48] text-xl"><IoMdCheckmarkCircle />
                         </span>
 
                         <div>
@@ -1333,7 +1333,7 @@ const OverView = ({ steps, setSteps }) => {
                             </label>
                           ))}
                         </div>
-                        {errors[label.split(' ')[0].toLowerCase()] && <p className="text-red-500 text-xs mt-1">{errors[label.split(' ')[0].toLowerCase()]}</p>}
+                        {errors[label.split(' ')[0].toLowerCase()] && <p className="text-[#F04438] text-xs mt-1">{errors[label.split(' ')[0].toLowerCase()]}</p>}
                       </div>
                     ))}
                   </div>
@@ -1582,9 +1582,9 @@ const OverView = ({ steps, setSteps }) => {
                         handleDateChange("discoveryDayDate", e.target.value);
                         setErrors(prev => ({ ...prev, discoveryDate: "" }));
                       }}
-                      className={`border ${errors.discoveryDate ? "border-red-500" : "#E2E1E5"} w-full rounded-2xl p-3`}
+                      className={`border ${errors.discoveryDate ? "border-[#F04438]" : "#E2E1E5"} w-full rounded-2xl p-3`}
                     />
-                    {errors.discoveryDate && <p className="text-red-500 text-xs mt-1">{errors.discoveryDate}</p>}
+                    {errors.discoveryDate && <p className="text-[#F04438] text-xs mt-1">{errors.discoveryDate}</p>}
                   </div>
 
                   <div className="mb-3">
@@ -1600,9 +1600,9 @@ const OverView = ({ steps, setSteps }) => {
                         setErrors(prev => ({ ...prev, discoveryTime: "" }));
                       }}
 
-                      className={`border ${errors.discoveryTime ? "border-red-500" : "#E2E1E5"} w-full rounded-2xl p-3`}
+                      className={`border ${errors.discoveryTime ? "border-[#F04438]" : "#E2E1E5"} w-full rounded-2xl p-3`}
                     />
-                    {errors.discoveryTime && <p className="text-red-500 text-xs mt-1">{errors.discoveryTime}</p>}
+                    {errors.discoveryTime && <p className="text-[#F04438] text-xs mt-1">{errors.discoveryTime}</p>}
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-6">

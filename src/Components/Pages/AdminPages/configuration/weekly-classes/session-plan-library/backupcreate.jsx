@@ -670,7 +670,7 @@ useEffect(() => {
                                                             e.stopPropagation(); // Prevents triggering setIsOpen
                                                             handleRemovePlan(idx);
                                                         }}
-                                                        className="text-gray-500 hover:text-red-500"
+                                                        className="text-gray-500 hover:text-[#F04438]"
                                                     >
                                                         <Trash2 size={18} />
                                                     </button>

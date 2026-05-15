@@ -620,7 +620,7 @@ const Coach = () => {
                                 <div className="flex items-center gap-2">
                                     <h3 className="text-xl font-semibold">{card.value}</h3>
                                     {card.change && (
-                                        <p className="text-green-600 text-xs">{card.change}</p>
+                                        <p className="text-[#027A48] text-xs">{card.change}</p>
                                     )}
                                 </div>
                             </div>
@@ -855,9 +855,9 @@ const Coach = () => {
                                         placeholder="First Name"
                                         value={formData.firstName}
                                         onChange={(e) => { setFormData({ ...formData, firstName: e.target.value }); setErrors((p) => ({ ...p, firstName: "" })); }}
-                                        className={`px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 ${errors.firstName ? "border-red-500" : "border-[#E2E1E5]"}`}
+                                        className={`px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 ${errors.firstName ? "border-[#F04438]" : "border-[#E2E1E5]"}`}
                                     />
-                                    {errors.firstName && <p className="text-red-500 text-xs">{errors.firstName}</p>}
+                                    {errors.firstName && <p className="text-[#F04438] text-xs">{errors.firstName}</p>}
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <label className="text-sm text-gray-500">Surname</label>
@@ -866,9 +866,9 @@ const Coach = () => {
                                         placeholder="Surname"
                                         value={formData.lastName}
                                         onChange={(e) => { setFormData({ ...formData, lastName: e.target.value }); setErrors((p) => ({ ...p, lastName: "" })); }}
-                                        className={`px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 ${errors.lastName ? "border-red-500" : "border-[#E2E1E5]"}`}
+                                        className={`px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 ${errors.lastName ? "border-[#F04438]" : "border-[#E2E1E5]"}`}
                                     />
-                                    {errors.lastName && <p className="text-red-500 text-xs">{errors.lastName}</p>}
+                                    {errors.lastName && <p className="text-[#F04438] text-xs">{errors.lastName}</p>}
                                 </div>
                             </div>
 
@@ -881,15 +881,15 @@ const Coach = () => {
                                     placeholder="Email Address"
                                     value={formData.email}
                                     onChange={(e) => { setFormData({ ...formData, email: e.target.value }); setErrors((p) => ({ ...p, email: "" })); }}
-                                    className={`px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 ${errors.email ? "border-red-500" : "border-[#E2E1E5]"}`}
+                                    className={`px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 ${errors.email ? "border-[#F04438]" : "border-[#E2E1E5]"}`}
                                 />
-                                {errors.email && <p className="text-red-500 text-xs">{errors.email}</p>}
+                                {errors.email && <p className="text-[#F04438] text-xs">{errors.email}</p>}
                             </div>
 
                             {/* Phone */}
                             <div className="flex flex-col gap-1">
                                 <label className="text-sm text-gray-500">Telephone Number</label>
-                                <div className={`flex items-center border rounded-xl px-3 py-3 focus-within:ring-2 focus-within:ring-blue-100 ${errors.phoneNumber ? "border-red-500" : "border-[#E2E1E5]"}`}>
+                                <div className={`flex items-center border rounded-xl px-3 py-3 focus-within:ring-2 focus-within:ring-blue-100 ${errors.phoneNumber ? "border-[#F04438]" : "border-[#E2E1E5]"}`}>
                                     <PhoneInput
                                         country="uk"
                                         value={dialCode}
@@ -908,7 +908,7 @@ const Coach = () => {
                                         className="border-none w-full focus:outline-none text-sm"
                                     />
                                 </div>
-                                {errors.phoneNumber && <p className="text-red-500 text-xs">{errors.phoneNumber}</p>}
+                                {errors.phoneNumber && <p className="text-[#F04438] text-xs">{errors.phoneNumber}</p>}
                             </div>
 
                             {/* Age */}
@@ -919,9 +919,9 @@ const Coach = () => {
                                     placeholder="Age"
                                     value={formData.age}
                                     onChange={(e) => { setFormData({ ...formData, age: e.target.value }); setErrors((p) => ({ ...p, age: "" })); }}
-                                    className={`px-4 py-3 border rounded-xl bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 ${errors.age ? "border-red-500" : "border-[#E2E1E5]"}`}
+                                    className={`px-4 py-3 border rounded-xl bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 ${errors.age ? "border-[#F04438]" : "border-[#E2E1E5]"}`}
                                 />
-                                {errors.age && <p className="text-red-500 text-xs">{errors.age}</p>}
+                                {errors.age && <p className="text-[#F04438] text-xs">{errors.age}</p>}
                             </div>
 
                             {/* Postcode */}
@@ -932,9 +932,9 @@ const Coach = () => {
                                     placeholder="London Postcode"
                                     value={formData.postcode}
                                     onChange={(e) => { setFormData({ ...formData, postcode: e.target.value }); setErrors((p) => ({ ...p, postcode: "" })); }}
-                                    className={`px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 ${errors.postcode ? "border-red-500" : "border-[#E2E1E5]"}`}
+                                    className={`px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 ${errors.postcode ? "border-[#F04438]" : "border-[#E2E1E5]"}`}
                                 />
-                                {errors.postcode && <p className="text-red-500 text-xs">{errors.postcode}</p>}
+                                {errors.postcode && <p className="text-[#F04438] text-xs">{errors.postcode}</p>}
                             </div>
 
                             {/* Vehicle access */}
@@ -949,7 +949,7 @@ const Coach = () => {
                                                 value={value}
                                                 checked={formData.accessToOwnVehicle === value}
                                                 onChange={() => setFormData({ ...formData, accessToOwnVehicle: value })}
-                                                className="accent-green-500 w-4 h-4"
+                                                className="accent-[#12B76A] w-4 h-4"
                                             />
                                             {label}
                                         </label>
@@ -975,7 +975,7 @@ const Coach = () => {
                                                             : [...current, q],
                                                     });
                                                 }}
-                                                className="accent-green-500 w-4 h-4"
+                                                className="accent-[#12B76A] w-4 h-4"
                                             />
                                             {q}
                                         </label>
@@ -995,9 +995,9 @@ const Coach = () => {
                                         setFormData({ ...formData, footballExperience: selected?.value || "" });
                                         setErrors((p) => ({ ...p, footballExperience: "" }));
                                     }}
-                                    className={errors.footballExperience ? "border border-red-500 rounded-xl" : ""}
+                                    className={errors.footballExperience ? "border border-[#F04438] rounded-xl" : ""}
                                 />
-                                {errors.footballExperience && <p className="text-red-500 text-xs">{errors.footballExperience}</p>}
+                                {errors.footballExperience && <p className="text-[#F04438] text-xs">{errors.footballExperience}</p>}
                             </div>
 
                             {/* Available Venues */}
@@ -1013,15 +1013,15 @@ const Coach = () => {
                                         setFormData({ ...formData, availableVenueWork: selected ? selected.map((o) => o.value) : [] });
                                         setErrors((p) => ({ ...p, availableVenueWork: "" }));
                                     }}
-                                    className={errors.availableVenueWork ? "border border-red-500 rounded-xl" : ""}
+                                    className={errors.availableVenueWork ? "border border-[#F04438] rounded-xl" : ""}
                                 />
-                                {errors.availableVenueWork && <p className="text-red-500 text-xs">{errors.availableVenueWork}</p>}
+                                {errors.availableVenueWork && <p className="text-[#F04438] text-xs">{errors.availableVenueWork}</p>}
                             </div>
 
                             {/* Upload CV */}
                             <div className="flex flex-col gap-1">
                                 <label className="text-sm text-gray-500">Please upload your CV</label>
-                                <label className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-5 cursor-pointer hover:border-blue-400 transition bg-white ${errors.uploadCv ? "border-red-500" : "border-gray-300"}`}>
+                                <label className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-5 cursor-pointer hover:border-blue-400 transition bg-white ${errors.uploadCv ? "border-[#F04438]" : "border-gray-300"}`}>
                                     <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 text-gray-400 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 12V4m0 0L8 8m4-4l4 4" />
                                     </svg>
@@ -1031,7 +1031,7 @@ const Coach = () => {
                                     </span>
                                     <span className="text-xs text-gray-400 mt-1">SVG, PNG, JPG or GIF (max. 800×400px)</span>
                                     {formData.uploadCv && (
-                                        <span className="text-xs text-green-600 mt-2 font-medium truncate max-w-full px-2">{formData.uploadCv.name}</span>
+                                        <span className="text-xs text-[#027A48] mt-2 font-medium truncate max-w-full px-2">{formData.uploadCv.name}</span>
                                     )}
                                     <input
                                         type="file"
@@ -1043,7 +1043,7 @@ const Coach = () => {
                                         }}
                                     />
                                 </label>
-                                {errors.uploadCv && <p className="text-red-500 text-xs">{errors.uploadCv}</p>}
+                                {errors.uploadCv && <p className="text-[#F04438] text-xs">{errors.uploadCv}</p>}
                             </div>
 
                             {/* Cover Note */}
@@ -1056,9 +1056,9 @@ const Coach = () => {
                                     maxLength={3000}
                                     value={formData.coverNote}
                                     onChange={(e) => { setFormData({ ...formData, coverNote: e.target.value }); setErrors((p) => ({ ...p, coverNote: "" })); }}
-                                    className={`px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 resize-none text-sm ${errors.coverNote ? "border-red-500" : "border-[#E2E1E5]"}`}
+                                    className={`px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 resize-none text-sm ${errors.coverNote ? "border-[#F04438]" : "border-[#E2E1E5]"}`}
                                 />
-                                {errors.coverNote && <p className="text-red-500 text-xs">{errors.coverNote}</p>}
+                                {errors.coverNote && <p className="text-[#F04438] text-xs">{errors.coverNote}</p>}
                             </div>
 
                             {/* How did you hear */}
@@ -1073,13 +1073,13 @@ const Coach = () => {
                                                 value={source}
                                                 checked={formData.howDidYouHear === source}
                                                 onChange={() => { setFormData({ ...formData, howDidYouHear: source }); setErrors((p) => ({ ...p, howDidYouHear: "" })); }}
-                                                className="accent-green-500 w-4 h-4"
+                                                className="accent-[#12B76A] w-4 h-4"
                                             />
                                             {source}
                                         </label>
                                     ))}
                                 </div>
-                                {errors.howDidYouHear && <p className="text-red-500 text-xs">{errors.howDidYouHear}</p>}
+                                {errors.howDidYouHear && <p className="text-[#F04438] text-xs">{errors.howDidYouHear}</p>}
                             </div>
 
                             {/* Actions */}

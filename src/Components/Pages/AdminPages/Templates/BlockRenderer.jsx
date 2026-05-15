@@ -1385,7 +1385,17 @@ const convertHtmlToBlocks = (html) => {
 
   return processNodeList(doc.body.childNodes);
 };
-
+// ✅ Opens all <a> tags in rendered HTML in a new tab
+const openLinksInNewTab = (html) => {
+  if (!html) return html;
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+  doc.querySelectorAll("a").forEach((anchor) => {
+    anchor.setAttribute("target", "_blank");
+    anchor.setAttribute("rel", "noopener noreferrer");
+  });
+  return doc.body.innerHTML;
+};
 const VariableTextarea = ({ value, onChange, className, placeholder, style, showVariables = true }) => {
   const textareaRef = useRef(null);
 
@@ -2295,19 +2305,19 @@ const FooterBlockRenderer = ({ block = {} }) => {
             <tr> {/* Logo */} <td style={{ width: "12%", padding: "0px", textAlign: "left" }}>
               <img src="https://uploads.grabbite.com/uploads/temp/admin/3/templates/1774530953394_122047572.png" alt="" style={{ maxWidth: "32px", width: "100%" }} />
             </td> {/* Text */} <td style={{ width: "40.33%", padding: "0px 7px", textAlign: "left", color: "#fff", }}>
-                <p style={{ margin: "0px", lineHeight: "11px", fontSize: "18px", }}> Let’s be friends </p>
+                <p style={{ marginBottom: "10px", lineHeight: "11px", fontSize: "18px", }}> Let’s be friends </p>
                 <p style={{ margin: "0px", fontSize: "10px", lineHeight: "11px", }}> If we are not playing football you can find us socialising on… </p>
               </td> {/* Social Icons */}
               <td style={{ width: "30.33%", padding: "0px", textAlign: "left" }}>
                 <table role="presentation">
                   <tr> {[{ href: "https://www.facebook.com/sambasoccerschools", src: "https://uploads.grabbite.com/emailIcons/facebook.png", }, { href: "https://www.instagram.com/sambasoccer_uk/", src: "https://uploads.grabbite.com/emailIcons/instagram.png", }, { href: "https://www.youtube.com/channel/UCtt-dIsSs2zi_IIUm0-BmUQ", src: "https://uploads.grabbite.com/emailIcons/youtube.png", }, { href: "https://www.linkedin.com/uas/login?session_redirect=%2Fcompany%2F3529892", src: "https://uploads.grabbite.com/emailIcons/linkedin.png", }, { href: "https://x.com/Samba_Soccer?mx=2", src: "https://uploads.grabbite.com/emailIcons/twitter.png", },].map((icon, i) => (<td key={i} style={{ paddingRight: "3px" }}>
-                    <a href={icon.href}>
+                    <a href={icon.href} target="_blank">
                       <img src={icon.src} alt="" style={{ width: "30px" }} />
                     </a>
                   </td>))} </tr>
                 </table>
               </td> {/* Button */} <td style={{ width: "25.666%", textAlign: "center" }}>
-                <a href="https://shop.sambasoccerschools.com/">
+                <a href="https://shop.sambasoccerschools.com/" target="_blank">
                   <img src="https://uploads.grabbite.com/emailIcons/shopnow.png" alt="" style={{ width: "120px" }} />
                 </a>
               </td>
@@ -2491,7 +2501,7 @@ const InfoBoxRenderer = ({ block, update, readOnly }) => {
                           fontFamily: style.fontFamily,
                         }}
                         dangerouslySetInnerHTML={{
-                          __html: item.value || "",
+                          __html: openLinksInNewTab(item.value || "") || "",
                         }}
                       />
                     </a>
@@ -2521,7 +2531,7 @@ const InfoBoxRenderer = ({ block, update, readOnly }) => {
                           fontFamily: style.fontFamily,
                         }}
                         dangerouslySetInnerHTML={{
-                          __html: item.value || "",
+                          __html: openLinksInNewTab(item.value || "") || "",
                         }}
                       />
                     </>
@@ -2601,7 +2611,7 @@ const InfoBoxRenderer = ({ block, update, readOnly }) => {
                   const newItems = (block.items || []).filter((_, idx) => idx !== i);
                   update("items", newItems);
                 }}
-                className="absolute -top-2 right-0 text-red-500 text-xs opacity-0 group-hover:opacity-100 z-10"
+                className="absolute -top-2 right-0 text-[#F04438] text-xs opacity-0 group-hover:opacity-100 z-10"
               >
                 ✕
               </button>
@@ -2618,14 +2628,14 @@ const InfoBoxRenderer = ({ block, update, readOnly }) => {
                   <div style={{ textAlign: 'left', fontWeight: style.labelFontWeight || 800, fontSize: style.labelFontSize ? `${style.labelFontSize}px` : "14px", color: style.labelColor || "#34353B", marginBottom: "6px", whiteSpace: "pre-wrap", overflowWrap: "break-word" }}>
                     {item.label}
                   </div>
-                  <div style={{ textAlign: 'left', fontSize: style.valueFontSize ? `${style.valueFontSize}px` : "14px", color: style.valueColor || "#111827", lineHeight: "1.5", whiteSpace: "pre-wrap", wordBreak: "break-word", overflowWrap: "break-word", width: "100%" }} dangerouslySetInnerHTML={{ __html: item.value || "" }} />
+                  <div style={{ textAlign: 'left', fontSize: style.valueFontSize ? `${style.valueFontSize}px` : "14px", color: style.valueColor || "#111827", lineHeight: "1.5", whiteSpace: "pre-wrap", wordBreak: "break-word", overflowWrap: "break-word", width: "100%" }} dangerouslySetInnerHTML={{ __html: openLinksInNewTab(item.value || "") || "" }} />
                 </a>
               ) : (
                 <>
                   <div style={{ textAlign: 'left', fontWeight: style.labelFontWeight || 800, fontSize: style.labelFontSize ? `${style.labelFontSize}px` : "14px", color: style.labelColor || "#111827", marginBottom: "6px", whiteSpace: "pre-wrap", overflowWrap: "break-word" }}>
                     {item.label}
                   </div>
-                  <div style={{ textAlign: 'left', fontSize: style.valueFontSize ? `${style.valueFontSize}px` : "14px", color: style.valueColor || "#111827", lineHeight: "1.5", whiteSpace: "pre-wrap", wordBreak: "break-word", overflowWrap: "break-word", width: "100%" }} dangerouslySetInnerHTML={{ __html: item.value || "" }} />
+                  <div style={{ textAlign: 'left', fontSize: style.valueFontSize ? `${style.valueFontSize}px` : "14px", color: style.valueColor || "#111827", lineHeight: "1.5", whiteSpace: "pre-wrap", wordBreak: "break-word", overflowWrap: "break-word", width: "100%" }} dangerouslySetInnerHTML={{ __html: openLinksInNewTab(item.value || "") || "" }} />
                 </>
               )
             ) : (
@@ -2892,7 +2902,7 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
                                               verticalAlign: 'top',
                                               // Add font family support
                                               fontFamily: style.fontFamily
-                                            }} dangerouslySetInnerHTML={{ __html: item.value || "" }} />
+                                            }} dangerouslySetInnerHTML={{ __html: openLinksInNewTab(item.value || "") || "" }} />
                                           </td>
                                         );
                                       })}
@@ -2970,7 +2980,7 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
                   <FaCopy size={8} />
                 </button>
                 <button
-                  className="bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center hover:bg-red-600 shadow-lg"
+                  className="bg-[#F04438] text-white w-5 h-5 rounded-full flex items-center justify-center  shadow-lg"
                   onClick={(e) => { e.stopPropagation(); removeBox(box.id); }}
                 >
                   ×
@@ -3011,7 +3021,7 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
                           const newItems = (box.items || []).filter((_, i) => i !== idx);
                           updateBox(box.id, "items", newItems);
                         }}
-                        className="absolute -right-2 top-0 text-red-300 hover:text-red-500 opacity-0 group-hover/item:opacity-100 transition"
+                        className="absolute -right-2 top-0 text-red-300 hover:text-[#F04438] opacity-0 group-hover/item:opacity-100 transition"
                       >
                         ×
                       </button>
@@ -3030,7 +3040,7 @@ const MultipleInfoBoxRenderer = ({ block, update, readOnly }) => {
                           fontSize: "14px",
                           color: boxStyle.valueColor || style.textColor || "#111827",
                           textAlign: boxStyle.itemLayout === 'inline' ? "right" : (boxStyle.textAlign || "left")
-                        }} dangerouslySetInnerHTML={{ __html: item.value || "" }} />
+                        }} dangerouslySetInnerHTML={{ __html: openLinksInNewTab(item.value || "") || "" }} />
                       </>
                     ) : (
                       <>
@@ -3625,7 +3635,7 @@ export default function BlockRenderer({ block, blocks, setBlocks, readOnly = fal
                       <FaCopy size={8} />
                     </button>
                     <button
-                      className="bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center hover:bg-red-600 shadow-lg"
+                      className="bg-[#F04438] text-white w-5 h-5 rounded-full flex items-center justify-center  shadow-lg"
                       onClick={(e) => {
                         e.stopPropagation();
                         removeSectionChild(child.id);
@@ -4162,7 +4172,7 @@ export default function BlockRenderer({ block, blocks, setBlocks, readOnly = fal
                         {block.columns.length > 1 && (
                           <button
                             onClick={() => removeColumn(i)}
-                            className="text-red-400 hover:text-red-600 transition"
+                            className="text-red-400 hover:text-[#B42318] transition"
                             title="Delete Column"
                           >
                             <FaTrashAlt size={12} />
@@ -4482,7 +4492,7 @@ export default function BlockRenderer({ block, blocks, setBlocks, readOnly = fal
                   </button>
 
                   <button
-                    className="bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center hover:bg-red-600 shadow-lg"
+                    className="bg-[#F04438] text-white w-5 h-5 rounded-full flex items-center justify-center  shadow-lg"
                     onClick={(e) => {
                       e.stopPropagation();
                       removeCardFromRow(card.id);

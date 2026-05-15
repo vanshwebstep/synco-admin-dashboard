@@ -24,7 +24,6 @@ import { useTextPopup } from '../../contexts/messages/SendTextContext';
 import { useRevertMembership } from '../../contexts/RevertMembershipContext';
 import RevertMembershipPopup from '../../Common/RevertMembershipPoppup';
 import { useLocation } from "react-router-dom";
-import { DIAL_CODES, stripDialCode, detectCountryFromPhone as matchDialCode } from '../../../../../utils/phoneHelper';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: Normalize profile data so the component works for all service types:
@@ -250,6 +249,31 @@ const ParentProfile = ({ profile: rawProfile }) => {
         if (diff < 86400) return `${Math.floor(diff / 3600)} hour${Math.floor(diff / 3600) !== 1 ? 's' : ''} ago`;
         if (diff < 604800) return `${Math.floor(diff / 86400)} day${Math.floor(diff / 86400) !== 1 ? 's' : ''} ago`;
         return past.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    };
+    const stripDialCode = (phoneNumber) => {
+        if (!phoneNumber) return "";
+
+        // Longest match pehle try karo
+        for (const { dialCode } of DIAL_CODES) {
+            if (phoneNumber.startsWith(dialCode)) {
+                return phoneNumber.slice(dialCode.length).trim();
+            }
+        }
+
+        // Fallback: agar koi match nahi + ke baad digits hain
+        const match = phoneNumber.match(/^\+\d{1,4}/);
+        if (match) return phoneNumber.slice(match[0].length).trim();
+
+        return phoneNumber;
+    };
+    const matchDialCode = (phone) => {
+        if (!phone) return null;
+        for (const entry of DIAL_CODES) {
+            if (phone.startsWith(entry.dialCode)) {
+                return entry;
+            }
+        }
+        return null;
     };
 
     const commentData = {
@@ -660,6 +684,105 @@ const ParentProfile = ({ profile: rawProfile }) => {
             setEditingEmergency(index);
         }
     };
+    const DIAL_CODES = [
+        { dialCode: "+1", countryCode: "us" },
+        { dialCode: "+7", countryCode: "ru" },
+        { dialCode: "+20", countryCode: "eg" },
+        { dialCode: "+27", countryCode: "za" },
+        { dialCode: "+30", countryCode: "gr" },
+        { dialCode: "+31", countryCode: "nl" },
+        { dialCode: "+32", countryCode: "be" },
+        { dialCode: "+33", countryCode: "fr" },
+        { dialCode: "+34", countryCode: "es" },
+        { dialCode: "+36", countryCode: "hu" },
+        { dialCode: "+39", countryCode: "it" },
+        { dialCode: "+40", countryCode: "ro" },
+        { dialCode: "+41", countryCode: "ch" },
+        { dialCode: "+43", countryCode: "at" },
+        { dialCode: "+44", countryCode: "gb" },
+        { dialCode: "+45", countryCode: "dk" },
+        { dialCode: "+46", countryCode: "se" },
+        { dialCode: "+47", countryCode: "no" },
+        { dialCode: "+48", countryCode: "pl" },
+        { dialCode: "+49", countryCode: "de" },
+        { dialCode: "+51", countryCode: "pe" },
+        { dialCode: "+52", countryCode: "mx" },
+        { dialCode: "+53", countryCode: "cu" },
+        { dialCode: "+54", countryCode: "ar" },
+        { dialCode: "+55", countryCode: "br" },
+        { dialCode: "+56", countryCode: "cl" },
+        { dialCode: "+57", countryCode: "co" },
+        { dialCode: "+58", countryCode: "ve" },
+        { dialCode: "+60", countryCode: "my" },
+        { dialCode: "+61", countryCode: "au" },
+        { dialCode: "+62", countryCode: "id" },
+        { dialCode: "+63", countryCode: "ph" },
+        { dialCode: "+64", countryCode: "nz" },
+        { dialCode: "+65", countryCode: "sg" },
+        { dialCode: "+66", countryCode: "th" },
+        { dialCode: "+81", countryCode: "jp" },
+        { dialCode: "+82", countryCode: "kr" },
+        { dialCode: "+84", countryCode: "vn" },
+        { dialCode: "+86", countryCode: "cn" },
+        { dialCode: "+90", countryCode: "tr" },
+        { dialCode: "+91", countryCode: "in" },
+        { dialCode: "+92", countryCode: "pk" },
+        { dialCode: "+93", countryCode: "af" },
+        { dialCode: "+94", countryCode: "lk" },
+        { dialCode: "+95", countryCode: "mm" },
+        { dialCode: "+98", countryCode: "ir" },
+        { dialCode: "+212", countryCode: "ma" },
+        { dialCode: "+213", countryCode: "dz" },
+        { dialCode: "+216", countryCode: "tn" },
+        { dialCode: "+218", countryCode: "ly" },
+        { dialCode: "+220", countryCode: "gm" },
+        { dialCode: "+221", countryCode: "sn" },
+        { dialCode: "+234", countryCode: "ng" },
+        { dialCode: "+254", countryCode: "ke" },
+        { dialCode: "+255", countryCode: "tz" },
+        { dialCode: "+256", countryCode: "ug" },
+        { dialCode: "+260", countryCode: "zm" },
+        { dialCode: "+263", countryCode: "zw" },
+        { dialCode: "+351", countryCode: "pt" },
+        { dialCode: "+352", countryCode: "lu" },
+        { dialCode: "+353", countryCode: "ie" },
+        { dialCode: "+354", countryCode: "is" },
+        { dialCode: "+355", countryCode: "al" },
+        { dialCode: "+356", countryCode: "mt" },
+        { dialCode: "+358", countryCode: "fi" },
+        { dialCode: "+359", countryCode: "bg" },
+        { dialCode: "+370", countryCode: "lt" },
+        { dialCode: "+371", countryCode: "lv" },
+        { dialCode: "+372", countryCode: "ee" },
+        { dialCode: "+380", countryCode: "ua" },
+        { dialCode: "+381", countryCode: "rs" },
+        { dialCode: "+385", countryCode: "hr" },
+        { dialCode: "+386", countryCode: "si" },
+        { dialCode: "+420", countryCode: "cz" },
+        { dialCode: "+421", countryCode: "sk" },
+        { dialCode: "+880", countryCode: "bd" },
+        { dialCode: "+960", countryCode: "mv" },
+        { dialCode: "+961", countryCode: "lb" },
+        { dialCode: "+962", countryCode: "jo" },
+        { dialCode: "+963", countryCode: "sy" },
+        { dialCode: "+964", countryCode: "iq" },
+        { dialCode: "+966", countryCode: "sa" },
+        { dialCode: "+967", countryCode: "ye" },
+        { dialCode: "+968", countryCode: "om" },
+        { dialCode: "+971", countryCode: "ae" },
+        { dialCode: "+972", countryCode: "il" },
+        { dialCode: "+973", countryCode: "bh" },
+        { dialCode: "+974", countryCode: "qa" },
+        { dialCode: "+975", countryCode: "bt" },
+        { dialCode: "+976", countryCode: "mn" },
+        { dialCode: "+977", countryCode: "np" },
+        { dialCode: "+992", countryCode: "tj" },
+        { dialCode: "+993", countryCode: "tm" },
+        { dialCode: "+994", countryCode: "az" },
+        { dialCode: "+995", countryCode: "ge" },
+        { dialCode: "+996", countryCode: "kg" },
+        { dialCode: "+998", countryCode: "uz" },
+    ].sort((a, b) => b.dialCode.length - a.dialCode.length); // longest first ✅
 
     const getStatusBgColor = (status) => {
         switch (status) {
@@ -1378,11 +1501,10 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                 <div className="flex gap-7">
                                     <button
                                         onClick={() => {
-                                            const parentEmails = profile?.parents?.map(p => p.parentEmail).filter(Boolean) || [];
-                                            if (parentEmails.length > 0) {
-                                                openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
+                                            if (bookingId) {
+                                                sendOnetoOneMail(bookingId);
                                             } else {
-                                                showWarning("No Email Found", "No parent email available to send email.");
+                                                showWarning("Booking ID not found. Cannot send email.");
                                             }
                                         }}
                                         className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 text-[#717073] font-medium hover:shadow-md transition-shadow duration-300"
@@ -1391,27 +1513,6 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                     </button>
 
                                     <button
-                                        onClick={() => {
-                                            const formattedParents = profile?.parents
-                                                ?.filter(p => p.parentPhoneNumber)
-                                                .map(p => ({
-                                                    name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
-                                                    phone: p.parentPhoneNumber
-                                                })) || [];
-
-                                            if (formattedParents.length > 0) {
-                                                openTextPopup(
-                                                    formattedParents,
-                                                    "/api/admin/send-manual-text",
-                                                    { token, showError, showSuccess }
-                                                );
-                                            } else {
-                                                showWarning(
-                                                    "No Phone Numbers",
-                                                    "No parent phone numbers available to send text."
-                                                );
-                                            }
-                                        }}
                                         className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium"
                                     >
                                         Send Text
@@ -1552,11 +1653,10 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                         <div className="flex gap-7">
                                             <button
                                                 onClick={() => {
-                                                    const parentEmails = profile?.parents?.map(p => p.parentEmail).filter(Boolean) || [];
-                                                    if (parentEmails.length > 0) {
-                                                        openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
+                                                    if (bookingId) {
+                                                        sendEmail();
                                                     } else {
-                                                        showWarning("No Email Found", "No parent email available to send email.");
+                                                        showWarning("No Booking ID", "No booking ID found to send email.");
                                                     }
                                                 }}
                                                 className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 text-[#717073] font-medium hover:shadow-md transition-shadow duration-300"
@@ -1566,24 +1666,10 @@ const ParentProfile = ({ profile: rawProfile }) => {
 
                                             <button
                                                 onClick={() => {
-                                                    const formattedParents = profile?.parents
-                                                        ?.filter(p => p.parentPhoneNumber)
-                                                        .map(p => ({
-                                                            name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
-                                                            phone: p.parentPhoneNumber
-                                                        })) || [];
-
-                                                    if (formattedParents.length > 0) {
-                                                        openTextPopup(
-                                                            formattedParents,
-                                                            "/api/admin/send-manual-text",
-                                                            { token, showError, showSuccess }
-                                                        );
+                                                    if (bookingId) {
+                                                        sendText();
                                                     } else {
-                                                        showWarning(
-                                                            "No Phone Numbers",
-                                                            "No parent phone numbers available to send text."
-                                                        );
+                                                        showWarning("No Booking ID", "No booking ID found to send email.");
                                                     }
                                                 }}
                                                 className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium"
@@ -1954,10 +2040,10 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                                         profile?.students?.every((s) => s.studentStatus === "active") && (
                                                             <button
                                                                 onClick={() => setaddToWaitingList(true)}
-                                                                className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
-            ${addToWaitingList
-                                                                        ? "bg-[#237FEA] text-white shadow-md"
-                                                                        : "bg-white border border-gray-300 hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"
+                                                                className={`w-full rounded-xl py-3 text-[18px] font-semibold transition-all duration-300 
+                                                                    ${addToWaitingList
+                                                                        ? "bg-[#12B76A] text-white shadow-md border-transparent"
+                                                                        : "bg-green-50 border border-[#12B76A] text-[#12B76A] hover:bg-[#12B76A] hover:text-white hover:shadow-md"
                                                                     }`}
                                                             >
                                                                 Add to the waiting list
@@ -1970,7 +2056,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                                         profile?.students?.every((s) => s.studentStatus === "active") && (
                                                             <button
                                                                 onClick={() => setFreezeMembership(true)}
-                                                                className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                                                className="w-full bg-blue-50 border border-[#237FEA] text-[#237FEA] text-[18px] rounded-xl py-3 hover:shadow-md transition-all duration-300 font-semibold"
                                                             >
                                                                 Freeze Membership
                                                             </button>
@@ -1978,7 +2064,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                                     {status == "frozen" && (
                                                         <button
                                                             onClick={() => setReactivateMembership(true)}
-                                                            className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+                                                            className="w-full bg-blue-50 border border-[#237FEA] text-[#237FEA] rounded-xl py-3 text-[18px] font-semibold hover:bg-[#237FEA] hover:text-white hover:shadow-md transition-all duration-300"
                                                         >
                                                             Reactivate Membership
                                                         </button>
@@ -1990,7 +2076,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                                         profile?.students?.every((s) => s.studentStatus === "active") && (
                                                             <button
                                                                 onClick={() => setTransferVenue(true)}
-                                                                className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                                                className="w-full bg-blue-50 border border-[#237FEA] text-[#237FEA] text-[18px] rounded-xl py-3 hover:shadow-md transition-all duration-300 font-semibold"
                                                             >
                                                                 Transfer Class
                                                             </button>
@@ -1999,7 +2085,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                                     {status === 'waiting list' && canCancelTrial && (
                                                         <button
                                                             onClick={() => setRemoveWaiting(true)}
-                                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                                            className="w-full bg-red-50 border border-[#D92D20] text-[#D92D20] text-[18px] rounded-xl py-3 hover:bg-[#D92D20] hover:text-white hover:shadow-md transition-all duration-300 font-semibold"
                                                         >
                                                             Remove Waiting List
                                                         </button>
@@ -2010,8 +2096,8 @@ const ParentProfile = ({ profile: rawProfile }) => {
 
                                                             <button
                                                                 onClick={() => setshowCancelTrial(true)}
-                                                                className={`w-full border text-[18px] rounded-xl py-3 font-medium transition-shadow duration-300
-                                                ${showCancelTrial ? "bg-[#FF6C6C] text-white shadow-md border-transparent" : "border-gray-300 text-[#717073] hover:bg-[#FF6C6C] hover:text-white hover:shadow-md"}`}
+                                                                className={`w-full border text-[18px] rounded-xl py-3 font-semibold transition-all duration-300
+                                                ${showCancelTrial ? "bg-[#D92D20] text-white shadow-md border-transparent" : "bg-red-50 border-[#D92D20] text-[#D92D20] hover:bg-[#D92D20] hover:text-white hover:shadow-md"}`}
                                                             >
                                                                 Cancel Memberships
                                                             </button>
@@ -2064,27 +2150,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                                 </button>
                                                 <button
                                                     disabled={textloading}
-                                                    onClick={() => {
-                                                        const formattedParents = parents
-                                                            .filter(p => p.parentPhoneNumber)
-                                                            .map(p => ({
-                                                                name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
-                                                                phone: p.parentPhoneNumber
-                                                            }));
-
-                                                        if (formattedParents.length > 0) {
-                                                            openTextPopup(
-                                                                formattedParents,
-                                                                "/api/admin/send-manual-text",
-                                                                { token, showError, showSuccess }
-                                                            );
-                                                        } else {
-                                                            showWarning(
-                                                                "No Phone Numbers",
-                                                                "Selected parents do not have valid phone numbers."
-                                                            );
-                                                        }
-                                                    }}
+                                                    onClick={() => sendText([bookingId])}
                                                     className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium"
                                                 >
                                                     <img src="/images/icons/sendText.png" alt="" />
@@ -2311,8 +2377,8 @@ const ParentProfile = ({ profile: rawProfile }) => {
 
                                 {/* Button */}
                                 <div className="justify-end flex gap-4 pt-4">
-                                    <button
-                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                                        <button
+                                        className="w-1/2 bg-[#12B76A] text-white rounded-xl py-3 text-[18px] font-semibold hover:bg-[#0E9456] hover:shadow-md transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                                         disabled={waitingListData.selectedStudents.length === 0}
                                         onClick={() => {
                                             // Validation: at least one student
@@ -2472,7 +2538,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                 </div>
                                 <div className="flex gap-4 pt-4 justify-end">
                                     <button
-                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
+                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-semibold hover:bg-[#1E6CD9] hover:shadow-md transition-all duration-300"
                                         onClick={() => {
                                             if (!reactivateData?.reactivateOn) { showWarning("Validation Error", "Please select a reactivation date first."); return; }
                                             reactivateDataSubmit(reactivateData, "allMembers");
@@ -2603,7 +2669,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                             setshowCancelTrial(false);
                                             cancelMembershipSubmit(cancelData, "allMembers", isMembership ? selectedStudents : studentsList.map(s => ({ id: s.id, studentFirstName: s.studentFirstName, studentLastName: s.studentLastName })));
                                         }}
-                                        className="w-1/2 bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
+                                        className="w-1/2 bg-[#D92D20] text-white rounded-xl py-3 text-[18px] font-semibold hover:bg-[#B42318] hover:shadow-md transition-all duration-300"
                                     >
                                         {cancelData.cancellationType !== "immediate" ? "Request to Cancel" : isBirthdayParty || isOneToOne ? "Cancel Booking" : "Cancel Membership"}
                                     </button>
@@ -2644,7 +2710,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                     <textarea className="w-full bg-gray-100 mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base" rows={6} name="removedNotes" value={cancelWaitingList.removedNotes} onChange={(e) => handleInputChange(e, setCancelWaitingList)} />
                                 </div>
                                 <div className="flex justify-end gap-4 pt-4">
-                                    <button onClick={() => cancelWaitingListSpot(cancelWaitingList, 'allMembers')} className="w-1/2 bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow">
+                                    <button onClick={() => cancelWaitingListSpot(cancelWaitingList, 'allMembers')} className="w-1/2 bg-[#D92D20] text-white rounded-xl py-3 text-[18px] font-semibold hover:bg-[#B42318] hover:shadow-md transition-all duration-300">
                                         Submit
                                     </button>
                                 </div>
@@ -2811,7 +2877,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
 
 
                                     <button
-                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-semibold hover:bg-[#1E6CD9] hover:shadow-md transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                                         disabled={transferData.selectedStudents.length === 0}
                                         onClick={() => {
                                             if (!transferData.selectedStudents.length) {
@@ -2886,7 +2952,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                 </div>
                                 <div className="flex w-full justify-end gap-4 pt-4">
                                     <button
-                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
+                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-semibold hover:bg-[#1E6CD9] hover:shadow-md transition-all duration-300"
                                         onClick={() => {
                                             if (!freezeData.freezeStartDate || !freezeData.freezeDurationMonths || !freezeData.reactivateOn) { showWarning("Incomplete Form", "Please fill in all the required fields before submitting."); return; }
                                             setFreezeMembership(false);

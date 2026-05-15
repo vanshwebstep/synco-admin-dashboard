@@ -281,7 +281,7 @@ export default function StudentCourse() {
 
                           <div className="w-full h-[9px] bg-[#ECEEF1] rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-[#43BE4F]"
+                              className="h-full bg-[#12B76A]"
                               style={{ width: `${course?.videos?.length ? 60 : 0}%` }}
                             />
                           </div>

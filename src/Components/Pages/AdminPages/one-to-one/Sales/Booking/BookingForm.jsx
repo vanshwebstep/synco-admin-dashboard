@@ -1237,7 +1237,7 @@ const List = () => {
                       if (errors.locationValue) setErrors(prev => ({ ...prev, locationValue: null }));
                       // fetchSuggestions(val, setLocationSuggestions);
                     }}
-                    className={`w-full border ${errors.locationValue ? 'border-red-500' : 'border-gray-300'} rounded-xl px-3 text-[16px] py-3 pl-9 focus:outline-none`}
+                    className={`w-full border ${errors.locationValue ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-3 text-[16px] py-3 pl-9 focus:outline-none`}
                   />
                   <FiSearch className="absolute left-3 top-4 text-[20px]" />
 
@@ -1259,7 +1259,7 @@ const List = () => {
                     </ul>
                   )}
                 </div>
-                {errors.locationValue && <p className="text-red-500 text-sm mt-1">{errors.locationValue}</p>}
+                {errors.locationValue && <p className="text-[#F04438] text-sm mt-1">{errors.locationValue}</p>}
               </div>
 
               {/* 🔸 Address Input */}
@@ -1297,7 +1297,7 @@ const List = () => {
                     </ul>
                   )}
                 </div>
-                {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
+                {errors.address && <p className="text-[#F04438] text-sm mt-1">{errors.address}</p>}
               </div>
             </div>
             <div className="w-full" id="error-selectedDate">
@@ -1306,13 +1306,13 @@ const List = () => {
                 withPortal
                 selected={selectedDate}
                 onChange={(date) => { setSelectedDate(date); if (errors.selectedDate) setErrors(prev => ({ ...prev, selectedDate: null })); }}
-                className={`w-full mt-2 border ${errors.selectedDate ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                className={`w-full mt-2 border ${errors.selectedDate ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                 showYearDropdown
                 scrollableYearDropdown
                 dateFormat="dd/MM/yyyy"
                 placeholderText="Select date"
               />
-              {errors.selectedDate && <p className="text-red-500 text-sm mt-1">{errors.selectedDate}</p>}
+              {errors.selectedDate && <p className="text-[#F04438] text-sm mt-1">{errors.selectedDate}</p>}
             </div>
             <div className="" id="error-time">
               <label htmlFor="" className="text-base font-semibold">Time </label>
@@ -1327,11 +1327,11 @@ const List = () => {
                   timeCaption="Time"
                   dateFormat="h:mm aa"
                   placeholderText="Select time"
-                  className={`w-full mt-2 border ${errors.time ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                  className={`w-full mt-2 border ${errors.time ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                 />
 
               </div>
-              {errors.time && <p className="text-red-500 text-sm mt-1">{errors.time}</p>}
+              {errors.time && <p className="text-[#F04438] text-sm mt-1">{errors.time}</p>}
             </div>
             <div className="mb-5" id="error-numberOfStudents">
               <label htmlFor="" className="text-base font-semibold">Students</label>
@@ -1349,11 +1349,11 @@ const List = () => {
                     // Do nothing if invalid
                   }}
                   placeholder="Choose number of students"
-                  className={`w-full border ${errors.numberOfStudents ? 'border-red-500' : 'border-gray-300'} rounded-xl px-3 text-[16px] py-3 focus:outline-none`}
+                  className={`w-full border ${errors.numberOfStudents ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-3 text-[16px] py-3 focus:outline-none`}
                 />
 
               </div>
-              {errors.numberOfStudents && <p className="text-red-500 text-sm mt-1">{errors.numberOfStudents}</p>}
+              {errors.numberOfStudents && <p className="text-[#F04438] text-sm mt-1">{errors.numberOfStudents}</p>}
             </div>
             <div className="">
               <label htmlFor="" className="text-base font-semibold">Areas To Work On </label>
@@ -1383,7 +1383,7 @@ const List = () => {
                 }}
                 options={coachOptions}
               />
-              {errors.selectedCoach && <p className="text-red-500 text-sm mt-1">{errors.selectedCoach}</p>}
+              {errors.selectedCoach && <p className="text-[#F04438] text-sm mt-1">{errors.selectedCoach}</p>}
             </div>
             <div className="w-full" id="error-selectedPackage">
               <label className="block text-[16px] font-semibold">Package</label>
@@ -1400,7 +1400,7 @@ const List = () => {
                 }}
                 options={filteredPackages}
               />
-              {errors.selectedPackage && <p className="text-red-500 text-sm mt-1">{errors.selectedPackage}</p>}
+              {errors.selectedPackage && <p className="text-[#F04438] text-sm mt-1">{errors.selectedPackage}</p>}
             </div>
             <div className="w-full">
               <label className="block text-[16px] font-semibold">Apply discount</label>
@@ -1498,7 +1498,7 @@ const List = () => {
                     <div className="w-1/2" id={`error-student_${index}_firstName`}>
                       <label className="block text-[16px] font-semibold">First name</label>
                       <input
-                        className={`w-full mt-2 border ${errors[`student_${index}_firstName`] ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                        className={`w-full mt-2 border ${errors[`student_${index}_firstName`] ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                         placeholder="Enter first name"
                         value={student.studentFirstName}
                         onChange={(e) => {
@@ -1506,12 +1506,12 @@ const List = () => {
                           if (errors[`student_${index}_firstName`]) setErrors(prev => ({ ...prev, [`student_${index}_firstName`]: null }));
                         }}
                       />
-                      {errors[`student_${index}_firstName`] && <p className="text-red-500 text-sm mt-1">{errors[`student_${index}_firstName`]}</p>}
+                      {errors[`student_${index}_firstName`] && <p className="text-[#F04438] text-sm mt-1">{errors[`student_${index}_firstName`]}</p>}
                     </div>
                     <div className="w-1/2" id={`error-student_${index}_lastName`}>
                       <label className="block text-[16px] font-semibold">Last name</label>
                       <input
-                        className={`w-full mt-2 border ${errors[`student_${index}_lastName`] ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                        className={`w-full mt-2 border ${errors[`student_${index}_lastName`] ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                         placeholder="Enter last name"
                         value={student.studentLastName}
                         onChange={(e) => {
@@ -1519,7 +1519,7 @@ const List = () => {
                           if (errors[`student_${index}_lastName`]) setErrors(prev => ({ ...prev, [`student_${index}_lastName`]: null }));
                         }}
                       />
-                      {errors[`student_${index}_lastName`] && <p className="text-red-500 text-sm mt-1">{errors[`student_${index}_lastName`]}</p>}
+                      {errors[`student_${index}_lastName`] && <p className="text-[#F04438] text-sm mt-1">{errors[`student_${index}_lastName`]}</p>}
                     </div>
                   </div>
 
@@ -1536,7 +1536,7 @@ const List = () => {
                           handleDOBChange(index, date);
                           if (errors[`student_${index}_dob`]) setErrors(prev => ({ ...prev, [`student_${index}_dob`]: null }));
                         }}
-                        className={`w-full mt-2 border ${errors[`student_${index}_dob`] ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                        className={`w-full mt-2 border ${errors[`student_${index}_dob`] ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                         showYearDropdown
                         scrollableYearDropdown
                         yearDropdownItemNumber={100}
@@ -1546,7 +1546,7 @@ const List = () => {
                         placeholderText="Select date of birth"
 
                       />
-                      {errors[`student_${index}_dob`] && <p className="text-red-500 text-sm mt-1">{errors[`student_${index}_dob`]}</p>}
+                      {errors[`student_${index}_dob`] && <p className="text-[#F04438] text-sm mt-1">{errors[`student_${index}_dob`]}</p>}
                     </div>
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">Age</label>
@@ -1579,7 +1579,7 @@ const List = () => {
 
                         options={genderOptions}
                       />
-                      {errors[`student_${index}_gender`] && <p className="text-red-500 text-sm mt-1">{errors[`student_${index}_gender`]}</p>}
+                      {errors[`student_${index}_gender`] && <p className="text-[#F04438] text-sm mt-1">{errors[`student_${index}_gender`]}</p>}
                     </div>
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">
@@ -1631,7 +1631,7 @@ const List = () => {
                       {index > 0 && (
                         <button
                           onClick={() => handleRemoveParent(parent.id)}
-                          className="text-gray-500 hover:text-red-600"
+                          className="text-gray-500 hover:text-[#B42318]"
                         >
                           <X className="w-5 h-5" />
                         </button>
@@ -1644,7 +1644,7 @@ const List = () => {
                     <div className="w-1/2" id={`error-parent_${index}_firstName`}>
                       <label className="block text-[16px] font-semibold">First name</label>
                       <input
-                        className={`w-full mt-2 border ${errors[`parent_${index}_firstName`] ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                        className={`w-full mt-2 border ${errors[`parent_${index}_firstName`] ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                         placeholder="Enter first name"
                         value={parent.parentFirstName}
                         onChange={(e) => {
@@ -1657,13 +1657,13 @@ const List = () => {
                           if (!/[A-Za-z\s]/.test(e.key)) e.preventDefault(); // block numbers & special chars
                         }}
                       />
-                      {errors[`parent_${index}_firstName`] && <p className="text-red-500 text-sm mt-1">{errors[`parent_${index}_firstName`]}</p>}
+                      {errors[`parent_${index}_firstName`] && <p className="text-[#F04438] text-sm mt-1">{errors[`parent_${index}_firstName`]}</p>}
                     </div>
 
                     <div className="w-1/2" id={`error-parent_${index}_lastName`}>
                       <label className="block text-[16px] font-semibold">Last name</label>
                       <input
-                        className={`w-full mt-2 border ${errors[`parent_${index}_lastName`] ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                        className={`w-full mt-2 border ${errors[`parent_${index}_lastName`] ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                         placeholder="Enter last name"
                         value={parent.parentLastName}
                         onChange={(e) => {
@@ -1676,7 +1676,7 @@ const List = () => {
                           if (!/[A-Za-z\s]/.test(e.key)) e.preventDefault(); // block numbers & special chars
                         }}
                       />
-                      {errors[`parent_${index}_lastName`] && <p className="text-red-500 text-sm mt-1">{errors[`parent_${index}_lastName`]}</p>}
+                      {errors[`parent_${index}_lastName`] && <p className="text-[#F04438] text-sm mt-1">{errors[`parent_${index}_lastName`]}</p>}
                     </div>
                   </div>
 
@@ -1687,7 +1687,7 @@ const List = () => {
                       <label className="block text-[16px] font-semibold">Email</label>
                       <input
                         type="email"
-                        className={`w-full mt-2 border ${errors[`parent_${index}_email`] ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                        className={`w-full mt-2 border ${errors[`parent_${index}_email`] ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                         placeholder="Enter email address"
                         value={parent.parentEmail}
                         onChange={(e) => {
@@ -1695,11 +1695,11 @@ const List = () => {
                           if (errors[`parent_${index}_email`]) setErrors(prev => ({ ...prev, [`parent_${index}_email`]: null }));
                         }}
                       />
-                      {errors[`parent_${index}_email`] && <p className="text-red-500 text-sm mt-1">{errors[`parent_${index}_email`]}</p>}
+                      {errors[`parent_${index}_email`] && <p className="text-[#F04438] text-sm mt-1">{errors[`parent_${index}_email`]}</p>}
                     </div>
                     <div className="w-1/2" id={`error-parent_${index}_phone`}>
                       <label className="block text-[16px] font-semibold">Phone number</label>
-                      <div className={`flex items-center border ${errors[`parent_${index}_phone`] ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 mt-2`}>
+                      <div className={`flex items-center border ${errors[`parent_${index}_phone`] ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 mt-2`}>
                         {/* Flag Dropdown */}
                         <PhoneInput
                           country="uk"
@@ -1730,7 +1730,7 @@ const List = () => {
                           className='border-none w-full focus:outline-none'
                         />
                       </div>
-                      {errors[`parent_${index}_phone`] && <p className="text-red-500 text-sm mt-1">{errors[`parent_${index}_phone`]}</p>}
+                      {errors[`parent_${index}_phone`] && <p className="text-[#F04438] text-sm mt-1">{errors[`parent_${index}_phone`]}</p>}
                     </div>
                   </div>
 
@@ -1750,7 +1750,7 @@ const List = () => {
                           if (errors[`parent_${index}_relation`]) setErrors(prev => ({ ...prev, [`parent_${index}_relation`]: null }));
                         }}
                       />
-                      {errors[`parent_${index}_relation`] && <p className="text-red-500 text-sm mt-1">{errors[`parent_${index}_relation`]}</p>}
+                      {errors[`parent_${index}_relation`] && <p className="text-[#F04438] text-sm mt-1">{errors[`parent_${index}_relation`]}</p>}
                     </div>
                     <div className="w-1/2">
                       <label className="block text-[16px] font-semibold">How did you hear about us?</label>
@@ -1792,7 +1792,7 @@ const List = () => {
                 <div className="w-1/2" id="error-emergencyFirstName">
                   <label className="block text-[16px] font-semibold">First name</label>
                   <input
-                    className={`w-full mt-2 border ${errors.emergencyFirstName ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                    className={`w-full mt-2 border ${errors.emergencyFirstName ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                     placeholder="Enter first name"
                     value={emergency.emergencyFirstName}
                     onChange={e => {
@@ -1803,12 +1803,12 @@ const List = () => {
                       if (errors.emergencyFirstName) setErrors(prev => ({ ...prev, emergencyFirstName: null }));
                     }}
                   />
-                  {errors.emergencyFirstName && <p className="text-red-500 text-sm mt-1">{errors.emergencyFirstName}</p>}
+                  {errors.emergencyFirstName && <p className="text-[#F04438] text-sm mt-1">{errors.emergencyFirstName}</p>}
                 </div>
                 <div className="w-1/2" id="error-emergencyLastName">
                   <label className="block text-[16px] font-semibold">Last name</label>
                   <input
-                    className={`w-full mt-2 border ${errors.emergencyLastName ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                    className={`w-full mt-2 border ${errors.emergencyLastName ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                     placeholder="Enter last name"
                     value={emergency.emergencyLastName}
                     onChange={e => {
@@ -1819,14 +1819,14 @@ const List = () => {
                       if (errors.emergencyLastName) setErrors(prev => ({ ...prev, emergencyLastName: null }));
                     }}
                   />
-                  {errors.emergencyLastName && <p className="text-red-500 text-sm mt-1">{errors.emergencyLastName}</p>}
+                  {errors.emergencyLastName && <p className="text-[#F04438] text-sm mt-1">{errors.emergencyLastName}</p>}
                 </div>
               </div>
 
               <div className="flex gap-4">
                 <div className="w-1/2" id="error-emergencyPhoneNumber">
                   <label className="block text-[16px] font-semibold">Phone number</label>
-                  <div className={`flex items-center border ${errors.emergencyPhoneNumber ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 mt-2`}>
+                  <div className={`flex items-center border ${errors.emergencyPhoneNumber ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 mt-2`}>
                     {/* Flag Dropdown */}
                     <PhoneInput
                       country="uk"
@@ -1860,7 +1860,7 @@ const List = () => {
                     />
 
                   </div>
-                  {errors.emergencyPhoneNumber && <p className="text-red-500 text-sm mt-1">{errors.emergencyPhoneNumber}</p>}
+                  {errors.emergencyPhoneNumber && <p className="text-[#F04438] text-sm mt-1">{errors.emergencyPhoneNumber}</p>}
                 </div>
                 <div className="w-1/2" id="error-emergencyRelation">
                   <label className="block text-[16px] font-semibold">Relation to child</label>
@@ -1879,7 +1879,7 @@ const List = () => {
                     classNamePrefix="react-select"
                     styles={{ control: (base) => ({ ...base, borderColor: errors.emergencyRelation ? '#ef4444' : base.borderColor }) }}
                   />
-                  {errors.emergencyRelation && <p className="text-red-500 text-sm mt-1">{errors.emergencyRelation}</p>}
+                  {errors.emergencyRelation && <p className="text-[#F04438] text-sm mt-1">{errors.emergencyRelation}</p>}
                 </div>
               </div>
             </div>
@@ -2007,7 +2007,7 @@ const List = () => {
                       <div id="error-paymentFirstName">
                         <label className="block text-[16px] font-semibold">First name</label>
                         <input
-                          className={`w-full mt-2 border ${errors.paymentFirstName ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                          className={`w-full mt-2 border ${errors.paymentFirstName ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                           type="text"
                           value={payment.firstName}
                           onChange={(e) => {
@@ -2015,34 +2015,34 @@ const List = () => {
                             if (errors.paymentFirstName) setErrors(prev => ({ ...prev, paymentFirstName: null }));
                           }}
                         />
-                        {errors.paymentFirstName && <p className="text-red-500 text-sm mt-1">{errors.paymentFirstName}</p>}
+                        {errors.paymentFirstName && <p className="text-[#F04438] text-sm mt-1">{errors.paymentFirstName}</p>}
                       </div>
                       <div id="error-paymentLastName">
                         <label className="block text-[16px] font-semibold">Last name </label>
                         <input
                           type="text"
-                          className={`w-full mt-2 border ${errors.paymentLastName ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                          className={`w-full mt-2 border ${errors.paymentLastName ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                           value={payment.lastName}
                           onChange={(e) => {
                             setPayment({ ...payment, lastName: e.target.value });
                             if (errors.paymentLastName) setErrors(prev => ({ ...prev, paymentLastName: null }));
                           }}
                         />
-                        {errors.paymentLastName && <p className="text-red-500 text-sm mt-1">{errors.paymentLastName}</p>}
+                        {errors.paymentLastName && <p className="text-[#F04438] text-sm mt-1">{errors.paymentLastName}</p>}
                       </div>
                     </div>
                     <div id="error-paymentEmail">
                       <label className="block text-[16px] font-semibold">Email address </label>
                       <input
                         type="email"
-                        className={`w-full mt-2 border ${errors.paymentEmail ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                        className={`w-full mt-2 border ${errors.paymentEmail ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                         value={payment.email}
                         onChange={(e) => {
                           setPayment({ ...payment, email: e.target.value });
                           if (errors.paymentEmail) setErrors(prev => ({ ...prev, paymentEmail: null }));
                         }}
                       />
-                      {errors.paymentEmail && <p className="text-red-500 text-sm mt-1">{errors.paymentEmail}</p>}
+                      {errors.paymentEmail && <p className="text-[#F04438] text-sm mt-1">{errors.paymentEmail}</p>}
                     </div>
                     <div id="error-paymentBillingAddress">
                       <label className="block text-[16px] font-semibold">Billing Address</label>
@@ -2050,7 +2050,7 @@ const List = () => {
                         type="text"
                         required={payment.paymentType === "card"}
                         placeholder=""
-                        className={`w-full mt-2 border ${errors.paymentBillingAddress ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                        className={`w-full mt-2 border ${errors.paymentBillingAddress ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                         value={payment.billingAddress}
                         onChange={(e) => {
                           setPayment({
@@ -2060,7 +2060,7 @@ const List = () => {
                           if (errors.paymentBillingAddress) setErrors(prev => ({ ...prev, paymentBillingAddress: null }));
                         }}
                       />
-                      {errors.paymentBillingAddress && <p className="text-red-500 text-sm mt-1">{errors.paymentBillingAddress}</p>}
+                      {errors.paymentBillingAddress && <p className="text-[#F04438] text-sm mt-1">{errors.paymentBillingAddress}</p>}
                     </div>
 
                     <h3 className="font-semibold text-[20px] pt-2">Bank Details</h3>
@@ -2077,7 +2077,7 @@ const List = () => {
                           inputMode="numeric"
                           placeholder="**** **** **** ****"
                           maxLength={19}
-                          className={`w-full mt-2 border ${errors.paymentCardNumber ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base tracking-widest`}
+                          className={`w-full mt-2 border ${errors.paymentCardNumber ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base tracking-widest`}
                           value={payment.cardNumber}
                           onChange={(e) => {
                             let value = e.target.value.replace(/\D/g, ""); // only digits
@@ -2086,7 +2086,7 @@ const List = () => {
                             if (errors.paymentCardNumber) setErrors(prev => ({ ...prev, paymentCardNumber: null }));
                           }}
                         />
-                        {errors.paymentCardNumber && <p className="text-red-500 text-sm mt-1">{errors.paymentCardNumber}</p>}
+                        {errors.paymentCardNumber && <p className="text-[#F04438] text-sm mt-1">{errors.paymentCardNumber}</p>}
                       </div>
 
                       <div className="w-full" id="error-paymentExpiryDate">
@@ -2097,7 +2097,7 @@ const List = () => {
                           inputMode="numeric"
                           placeholder="MM/YY"
                           maxLength={5}
-                          className={`w-full mt-2 border ${errors.paymentExpiryDate ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                          className={`w-full mt-2 border ${errors.paymentExpiryDate ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                           value={payment.expiryDate}
                           onChange={(e) => {
                             let value = e.target.value.replace(/\D/g, ""); // only digits
@@ -2108,7 +2108,7 @@ const List = () => {
                             if (errors.paymentExpiryDate) setErrors(prev => ({ ...prev, paymentExpiryDate: null }));
                           }}
                         />
-                        {errors.paymentExpiryDate && <p className="text-red-500 text-sm mt-1">{errors.paymentExpiryDate}</p>}
+                        {errors.paymentExpiryDate && <p className="text-[#F04438] text-sm mt-1">{errors.paymentExpiryDate}</p>}
                       </div>
 
                       {/* PAN (Card Number) */}
@@ -2120,7 +2120,7 @@ const List = () => {
                           inputMode="numeric"
                           placeholder="123"
                           maxLength={4}
-                          className={`w-full mt-2 border ${errors.paymentSecurityCode ? 'border-red-500' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                          className={`w-full mt-2 border ${errors.paymentSecurityCode ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
                           value={payment.securityCode}
                           onChange={(e) => {
                             setPayment({
@@ -2130,7 +2130,7 @@ const List = () => {
                             if (errors.paymentSecurityCode) setErrors(prev => ({ ...prev, paymentSecurityCode: null }));
                           }}
                         />
-                        {errors.paymentSecurityCode && <p className="text-red-500 text-sm mt-1">{errors.paymentSecurityCode}</p>}
+                        {errors.paymentSecurityCode && <p className="text-[#F04438] text-sm mt-1">{errors.paymentSecurityCode}</p>}
                       </div>
 
                       {/* Billing Address */}

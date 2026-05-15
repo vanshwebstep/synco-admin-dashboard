@@ -698,7 +698,7 @@ const All = () => {
                                 <div className="flex items-center gap-2">
                                     <h3 className="text-xl font-semibold">{card.value}</h3>
                                     {card.change && (
-                                        <p className="text-green-600 text-xs">{card.change}</p>
+                                        <p className="text-[#027A48] text-xs">{card.change}</p>
                                     )}
                                 </div>
                             </div>

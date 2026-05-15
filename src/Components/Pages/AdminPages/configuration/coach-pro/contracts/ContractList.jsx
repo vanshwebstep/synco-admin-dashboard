@@ -250,7 +250,7 @@ const ContractList = () => {
                                     )
                                 }
                             />
-                            <button onClick={() => handleDelete(item?.id)} className="text-gray-500 hover:text-red-500">
+                            <button onClick={() => handleDelete(item?.id)} className="text-gray-500 hover:text-[#F04438]">
                                 <img src="/reportsIcons/delete-02.png" className="w-6" alt="" />
                             </button>
                         </div>
@@ -286,7 +286,7 @@ const ContractList = () => {
                                 className="w-full border border-[#EFEEF2] rounded-lg px-4 py-2 mt-1"
                             />
                             {errors.pdfFile && (
-                                <p className="text-red-500 text-xs mt-1">{errors.pdfFile}</p>
+                                <p className="text-[#F04438] text-xs mt-1">{errors.pdfFile}</p>
                             )}
                         </div>
 
@@ -304,7 +304,7 @@ const ContractList = () => {
                                 className="w-full border border-[#EFEEF2] rounded-lg px-4 py-2 mt-1"
                             />
                             {errors.title && (
-                                <p className="text-red-500 text-xs mt-1">{errors.title}</p>
+                                <p className="text-[#F04438] text-xs mt-1">{errors.title}</p>
                             )}
                         </div>
 
@@ -324,7 +324,7 @@ const ContractList = () => {
                             />
 
                             {errors.description && (
-                                <p className="text-red-500 text-xs mt-1">{errors.description}</p>
+                                <p className="text-[#F04438] text-xs mt-1">{errors.description}</p>
                             )}
                         </div>
 
@@ -354,7 +354,7 @@ const ContractList = () => {
                                 </option>
                             </select>
                             {errors.contractType && (
-                                <p className="text-red-500 text-xs mt-1">{errors.contractType}</p>
+                                <p className="text-[#F04438] text-xs mt-1">{errors.contractType}</p>
                             )}
                         </div>
 
@@ -375,7 +375,7 @@ const ContractList = () => {
                                                 const updated = formData.tags.filter((_, i) => i !== index);
                                                 setFormData({ ...formData, tags: updated });
                                             }}
-                                            className="text-gray-500 hover:text-red-500"
+                                            className="text-gray-500 hover:text-[#F04438]"
                                         >
                                             ✕
                                         </button>

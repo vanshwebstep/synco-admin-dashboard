@@ -578,7 +578,7 @@ const exportToExcel = () => {
                                         <div className="flex items-center gap-2">
                                             <h3 className="text-xl font-semibold mt-1">{card.value}</h3>
                                             {card.change && (
-                                                <p className="text-green-600 text-xs mt-1">({card.change})</p>
+                                                <p className="text-[#027A48] text-xs mt-1">({card.change})</p>
                                             )}
                                         </div>
                                     </div>
@@ -678,7 +678,7 @@ const exportToExcel = () => {
                                                             <span
                                                                 className={`capitalize px-7 py-2 rounded-xl text-xs font-medium
     ${camp.status === "cancelled"
-                                                                        ? "bg-red-50 text-red-600"
+                                                                        ? "bg-red-50 text-[#B42318]"
                                                                         : camp.status === "pending"
                                                                             ? "bg-yellow-50 text-yellow-600"
                                                                             : "bg-green-50 text-[#34AE56]"

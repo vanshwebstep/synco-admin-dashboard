@@ -540,16 +540,16 @@ const General = () => {
                         ))}
                     </section>
 
-                  <Comments
-                          adminInfo={adminInfo}
-                          comment={comment}
-                          setComment={setComment}
-                          handleSubmitComment={handleSubmitComment}
-                          loadingComment={loadingComment}
-                          commentsList={commentsList}
-                          currentComments={currentComments}
-                          formatTimeAgo={formatTimeAgo}
-                        />
+                    <Comments
+                        adminInfo={adminInfo}
+                        comment={comment}
+                        setComment={setComment}
+                        handleSubmitComment={handleSubmitComment}
+                        loadingComment={loadingComment}
+                        commentsList={commentsList}
+                        currentComments={currentComments}
+                        formatTimeAgo={formatTimeAgo}
+                    />
                 </div>
                 <div className="md:w-[34%]">
                     <div className="md:max-w-[510px]">
@@ -676,7 +676,7 @@ const General = () => {
                                     Renew Package
                                 </button>
                             ) : (
-                                <button onClick={handleCancelPackage} className="w-full bg-[#FF6C6C] text-white my-3 text-[18px] py-3 rounded-xl  font-medium hover:bg-red-600 transition flex items-center justify-center">
+                                <button onClick={handleCancelPackage} className="w-full bg-[#F04438] text-white my-3 text-[18px] py-3 rounded-xl  font-medium  transition flex items-center justify-center">
                                     Cancel Package
                                 </button>
                             )}

@@ -904,13 +904,13 @@ const BookACamp = () => {
 
                                 {/* ERROR TEXTAREA */}
                                 {section === "general" && validateErrors[input.name] && (
-                                    <p className="text-red-500 text-sm mt-1">{validateErrors[input.name]}</p>
+                                    <p className="text-[#F04438] text-sm mt-1">{validateErrors[input.name]}</p>
                                 )}
                                 {section === "students" && validateErrors[`${input.name}_${index}`] && (
-                                    <p className="text-red-500 text-sm mt-1">{validateErrors[`${input.name}_${index}`]}</p>
+                                    <p className="text-[#F04438] text-sm mt-1">{validateErrors[`${input.name}_${index}`]}</p>
                                 )}
                                 {section === "parent" && validateErrors[`${input.name}_${index}`] && (
-                                    <p className="text-red-500 text-sm mt-1">{validateErrors[`${input.name}_${index}`]}</p>
+                                    <p className="text-[#F04438] text-sm mt-1">{validateErrors[`${input.name}_${index}`]}</p>
                                 )}
                             </>
                         ) : (
@@ -947,13 +947,13 @@ const BookACamp = () => {
 
                                     {/* ERROR BELOW INPUT */}
                                     {section === "general" && validateErrors[input.name] && (
-                                        <p className="text-red-500 text-sm mt-1">{validateErrors[input.name]}</p>
+                                        <p className="text-[#F04438] text-sm mt-1">{validateErrors[input.name]}</p>
                                     )}
                                     {section === "students" && validateErrors[`${input.name}_${index}`] && (
-                                        <p className="text-red-500 text-sm mt-1">{validateErrors[`${input.name}_${index}`]}</p>
+                                        <p className="text-[#F04438] text-sm mt-1">{validateErrors[`${input.name}_${index}`]}</p>
                                     )}
                                     {section === "parent" && validateErrors[`${input.name}_${index}`] && (
-                                        <p className="text-red-500 text-sm mt-1">{validateErrors[`${input.name}_${index}`]}</p>
+                                        <p className="text-[#F04438] text-sm mt-1">{validateErrors[`${input.name}_${index}`]}</p>
                                     )}
                                 </>
                             )
@@ -979,7 +979,7 @@ const BookACamp = () => {
                                 }}
                             />
                             {validateErrors[`class_${index}`] && (
-                                <p className="text-red-500 text-sm mt-1">{validateErrors[`class_${index}`]}</p>
+                                <p className="text-[#F04438] text-sm mt-1">{validateErrors[`class_${index}`]}</p>
                             )}
                         </>
                     )}
@@ -1013,13 +1013,13 @@ const BookACamp = () => {
 
                             {/* ERROR */}
                             {section === "general" && validateErrors[input.name] && (
-                                <p className="text-red-500 text-sm mt-1">{validateErrors[input.name]}</p>
+                                <p className="text-[#F04438] text-sm mt-1">{validateErrors[input.name]}</p>
                             )}
                             {section === "students" && validateErrors[`${input.name}_${index}`] && (
-                                <p className="text-red-500 text-sm mt-1">{validateErrors[`${input.name}_${index}`]}</p>
+                                <p className="text-[#F04438] text-sm mt-1">{validateErrors[`${input.name}_${index}`]}</p>
                             )}
                             {section === "parent" && validateErrors[`${input.name}_${index}`] && (
-                                <p className="text-red-500 text-sm mt-1">{validateErrors[`${input.name}_${index}`]}</p>
+                                <p className="text-[#F04438] text-sm mt-1">{validateErrors[`${input.name}_${index}`]}</p>
                             )}
                         </>
                     )}
@@ -1051,7 +1051,7 @@ const BookACamp = () => {
 
                             {/* ERROR */}
                             {section === "students" && validateErrors[`dateOfBirth_${index}`] && (
-                                <p className="text-red-500 text-sm mt-1">
+                                <p className="text-[#F04438] text-sm mt-1">
                                     {validateErrors[`dateOfBirth_${index}`]}
                                 </p>
                             )}
@@ -1094,7 +1094,7 @@ const BookACamp = () => {
 
                             {/* PHONE ERROR */}
                             {section === "parent" && validateErrors[`parentPhoneNumber_${index}`] && (
-                                <p className="text-red-500 text-sm mt-1">
+                                <p className="text-[#F04438] text-sm mt-1">
                                     {validateErrors[`parentPhoneNumber_${index}`]}
                                 </p>
                             )}
@@ -1282,7 +1282,7 @@ const BookACamp = () => {
                                         <button
                                             type="button"
                                             onClick={() => handleRemoveParent(index)}
-                                            className="text-gray-500 hover:text-red-600"
+                                            className="text-gray-500 hover:text-[#B42318]"
                                         >
                                             <X className="w-5 h-5" />
                                         </button>
@@ -1416,10 +1416,10 @@ const BookACamp = () => {
                                             id="firstName"
                                             value={paymentData.firstName}
                                             onChange={handlePaymentChange}
-                                            className={`w-full mt-2 border rounded-xl px-4 py-2 text-base ${errors.firstName ? "border-red-500" : "border-gray-300"
+                                            className={`w-full mt-2 border rounded-xl px-4 py-2 text-base ${errors.firstName ? "border-[#F04438]" : "border-gray-300"
                                                 }`}
                                         />
-                                        {errors.firstName && <span className="text-red-500 text-sm">{errors.firstName}</span>}
+                                        {errors.firstName && <span className="text-[#F04438] text-sm">{errors.firstName}</span>}
                                     </div>
                                     <div className="flex flex-col">
                                         <label htmlFor="lastName" className="text-[#282829] text-[16px] font-semibold">
@@ -1431,10 +1431,10 @@ const BookACamp = () => {
                                             id="lastName"
                                             value={paymentData.lastName}
                                             onChange={handlePaymentChange}
-                                            className={`w-full mt-2 border rounded-xl px-4 py-2 text-base ${errors.lastName ? "border-red-500" : "border-gray-300"
+                                            className={`w-full mt-2 border rounded-xl px-4 py-2 text-base ${errors.lastName ? "border-[#F04438]" : "border-gray-300"
                                                 }`}
                                         />
-                                        {errors.lastName && <span className="text-red-500 text-sm">{errors.lastName}</span>}
+                                        {errors.lastName && <span className="text-[#F04438] text-sm">{errors.lastName}</span>}
                                     </div>
                                 </div>
 
@@ -1448,10 +1448,10 @@ const BookACamp = () => {
                                         id="email"
                                         value={paymentData.email}
                                         onChange={handlePaymentChange}
-                                        className={`w-full border rounded-xl px-4 py-2 text-base ${errors.email ? "border-red-500" : "border-gray-300"
+                                        className={`w-full border rounded-xl px-4 py-2 text-base ${errors.email ? "border-[#F04438]" : "border-gray-300"
                                             }`}
                                     />
-                                    {errors.email && <span className="text-red-500 text-sm">{errors.email}</span>}
+                                    {errors.email && <span className="text-[#F04438] text-sm">{errors.email}</span>}
                                 </div>
 
                                 <div className="flex flex-col mt-4">
@@ -1464,11 +1464,11 @@ const BookACamp = () => {
                                         id="billingAddress"
                                         value={paymentData.billingAddress}
                                         onChange={handlePaymentChange}
-                                        className={`w-full border rounded-xl px-4 py-2 text-base ${errors.billingAddress ? "border-red-500" : "border-gray-300"
+                                        className={`w-full border rounded-xl px-4 py-2 text-base ${errors.billingAddress ? "border-[#F04438]" : "border-gray-300"
                                             }`}
                                     />
                                     {errors.billingAddress && (
-                                        <span className="text-red-500 text-sm">{errors.billingAddress}</span>
+                                        <span className="text-[#F04438] text-sm">{errors.billingAddress}</span>
                                     )}
                                 </div>
                             </div>
@@ -1485,13 +1485,13 @@ const BookACamp = () => {
                                         id="cardNumber"
                                         value={paymentData.cardNumber}
                                         onChange={handlePaymentChange}
-                                        className={`w-full border rounded-xl px-4 py-2 text-base ${errors.cardNumber ? "border-red-500" : "border-gray-300"
+                                        className={`w-full border rounded-xl px-4 py-2 text-base ${errors.cardNumber ? "border-[#F04438]" : "border-gray-300"
                                             }`}
                                         maxLength={19}
                                         inputMode="numeric"
                                         placeholder="1234 5678 9012 3456"
                                     />
-                                    {errors.cardNumber && <span className="text-red-500 text-sm">{errors.cardNumber}</span>}
+                                    {errors.cardNumber && <span className="text-[#F04438] text-sm">{errors.cardNumber}</span>}
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-4 mt-4">
@@ -1505,13 +1505,13 @@ const BookACamp = () => {
                                             id="expiryDate"
                                             value={paymentData.expiryDate}
                                             onChange={handlePaymentChange}
-                                            className={`w-full border rounded-xl px-4 py-2 text-base ${errors.expiryDate ? "border-red-500" : "border-gray-300"
+                                            className={`w-full border rounded-xl px-4 py-2 text-base ${errors.expiryDate ? "border-[#F04438]" : "border-gray-300"
                                                 }`}
                                             placeholder="MM/YY"
                                             maxLength={5}
                                             inputMode="numeric"
                                         />
-                                        {errors.expiryDate && <span className="text-red-500 text-sm">{errors.expiryDate}</span>}
+                                        {errors.expiryDate && <span className="text-[#F04438] text-sm">{errors.expiryDate}</span>}
                                     </div>
                                     <div className="flex flex-col">
                                         <label htmlFor="securityCode" className="text-[#282829] text-[16px] font-semibold mb-1">
@@ -1523,14 +1523,14 @@ const BookACamp = () => {
                                             id="securityCode"
                                             value={paymentData.securityCode}
                                             onChange={handlePaymentChange}
-                                            className={`w-full border rounded-xl px-4 py-2 text-base ${errors.securityCode ? "border-red-500" : "border-gray-300"
+                                            className={`w-full border rounded-xl px-4 py-2 text-base ${errors.securityCode ? "border-[#F04438]" : "border-gray-300"
                                                 }`}
                                             maxLength={4}
                                             inputMode="numeric"
                                             placeholder="123"
                                         />
                                         {errors.securityCode && (
-                                            <span className="text-red-500 text-sm">{errors.securityCode}</span>
+                                            <span className="text-[#F04438] text-sm">{errors.securityCode}</span>
                                         )}
                                     </div>
                                 </div>

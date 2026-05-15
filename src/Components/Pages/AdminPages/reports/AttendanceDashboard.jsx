@@ -368,10 +368,10 @@ const previousYearKey = "PreviousYear";
                             <span className="font-semibold text-[#717073] text-sm">{card.title}</span>
                             <h3 className="text-[20px] font-semibold text-gray-900">
                                 {card.value}{" "}
-                                <small className="text-green-500 font-normal text-xs">{card.change}</small>
+                                <small className="text-[#12B76A] font-normal text-xs">{card.change}</small>
                             </h3>
                             <p className="text-xs font-semibold text-[#717073]">
-                                {card.sub} <span className="text-red-500">{card.subvalue}</span>
+                                {card.sub} <span className="text-[#F04438]">{card.subvalue}</span>
                             </p>
                             {/* If you want a subtext you can place it here */}
                         </div>

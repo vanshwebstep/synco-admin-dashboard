@@ -34,7 +34,7 @@ const Field = ({ label, error, children }) => (
         {label && <label className="text-sm text-gray-500">{label}</label>}
         {children}
         {error && (
-            <p className="text-red-500 text-xs mt-0.5 flex items-center gap-1">
+            <p className="text-[#F04438] text-xs mt-0.5 flex items-center gap-1">
                 <span>⚠</span> {error}
             </p>
         )}
@@ -43,7 +43,7 @@ const Field = ({ label, error, children }) => (
 
 // ─── shared input class builder ────────────────────────────────────────────────
 const inputCls = (hasError) =>
-    `px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 text-sm transition-colors ${hasError ? "border-red-500 bg-red-50 focus:ring-red-100" : "border-[#E2E1E5]"
+    `px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 text-sm transition-colors ${hasError ? "border-[#F04438] bg-red-50 focus:ring-red-100" : "border-[#E2E1E5]"
     }`;
 
 const FranchiseLeads = () => {
@@ -554,7 +554,7 @@ const FranchiseLeads = () => {
                                 <p className="text-sm text-gray-500">{card.title}</p>
                                 <div className="flex items-center gap-2">
                                     <h3 className="text-xl font-semibold">{card.value}</h3>
-                                    {card.change && <p className="text-green-600 text-xs">{card.change}</p>}
+                                    {card.change && <p className="text-[#027A48] text-xs">{card.change}</p>}
                                 </div>
                             </div>
                         </div>
@@ -790,7 +790,7 @@ const FranchiseLeads = () => {
 
                             {/* Phone */}
                             <Field label="Telephone Number" error={errors.phoneNumber}>
-                                <div className={`flex items-center border rounded-xl px-4 py-3 focus-within:ring-2 focus-within:ring-blue-100 ${errors.phoneNumber ? "border-red-500 bg-red-50" : "border-[#E2E1E5]"}`}>
+                                <div className={`flex items-center border rounded-xl px-4 py-3 focus-within:ring-2 focus-within:ring-blue-100 ${errors.phoneNumber ? "border-[#F04438] bg-red-50" : "border-[#E2E1E5]"}`}>
                                     <PhoneInput
                                         country="uk"
                                         value={dialCode}
@@ -855,13 +855,13 @@ const FranchiseLeads = () => {
                                                     setFormData({ ...formData, howDidYouHear: source });
                                                     setErrors(p => ({ ...p, howDidYouHear: '' }));
                                                 }}
-                                                className="accent-green-500 w-4 h-4"
+                                                className="accent-[#12B76A] w-4 h-4"
                                             />
                                             {source}
                                         </label>
                                     ))}
                                 </div>
-                                {errors.howDidYouHear && <p className="text-red-500 text-sm mt-1">{errors.howDidYouHear}</p>}
+                                {errors.howDidYouHear && <p className="text-[#F04438] text-sm mt-1">{errors.howDidYouHear}</p>}
 
 
                             </Field>

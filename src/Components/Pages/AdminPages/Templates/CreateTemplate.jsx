@@ -8,6 +8,7 @@ import { HiArrowUturnLeft, HiArrowUturnRight } from "react-icons/hi2";
 import PreviewModal from "./PreviewModal";
 import { FiSearch } from "react-icons/fi";
 import { useCommunicationTemplate } from "../contexts/CommunicationContext";
+import BlockRenderer from "./BlockRenderer";
 
 export default function CreateTemplateSteps() {
     const { fetchTemplateCategories, createTemplateCategories, templateCategories, fetchCommunicationTemplateById, createCommunicationTemplate, apiTemplates, updateCommunicationTemplate } = useCommunicationTemplate();
@@ -32,6 +33,8 @@ export default function CreateTemplateSteps() {
     const [communicationMode, setCommunicationMode] = useState(null);
     const [categoryOpen, setCategoryOpen] = useState(false);
     const [categorySearch, setCategorySearch] = useState("");
+    const [buttonLoading, setButtonLoading] = useState(false);
+    const previewRef = useRef(null);
     const isEmailMode = communicationMode?.value === "email";
     const isTextMode = communicationMode?.value === "text";
     const [textform, setTextForm] = useState({
@@ -90,26 +93,26 @@ export default function CreateTemplateSteps() {
 
             // ✅ 2. Parse content correctly
             // 📧 Email: content is escaped JSON → must parse
-           let emailContent = {};
+            let emailContent = {};
 
-if (t.mode_of_communication === "email" && t.content) {
-    try {
-        let parsed = JSON.parse(t.content);
+            if (t.mode_of_communication === "email" && t.content) {
+                try {
+                    let parsed = JSON.parse(t.content);
 
-        // 🔥 Handle double encoded JSON
-        if (typeof parsed === "string") {
-            try {
-                parsed = JSON.parse(parsed);
-            } catch (e) {
-                console.warn("Second parse failed");
+                    // 🔥 Handle double encoded JSON
+                    if (typeof parsed === "string") {
+                        try {
+                            parsed = JSON.parse(parsed);
+                        } catch (e) {
+                            console.warn("Second parse failed");
+                        }
+                    }
+
+                    emailContent = parsed;
+                } catch (e) {
+                    console.error("Email content parse error:", e);
+                }
             }
-        }
-
-        emailContent = parsed;
-    } catch (e) {
-        console.error("Email content parse error:", e);
-    }
-}
             // ✉️ Text: content is a plain string → no parsing
             const textMessage = t.mode_of_communication === "text" ? t.content.replace(/^"+|"+$/g, "") : "";
 
@@ -200,7 +203,7 @@ if (t.mode_of_communication === "email" && t.content) {
             return {
                 ...prev,
                 category: [...prev.category, newCat.id], // ✅ store IDs
-               categoryNames: [...prev.categoryNames, newCat.category].filter(Boolean) // ✅ store UI names
+                categoryNames: [...prev.categoryNames, newCat.category].filter(Boolean) // ✅ store UI names
             };
         });
 
@@ -265,7 +268,227 @@ if (t.mode_of_communication === "email" && t.content) {
         console.log("Template Updated ✅", payload);
         navigate('/templates/settingList');
     };
-console.log(`templateCategories`,templateCategories        )
+
+    const handleSavePreview = async () => {
+        setButtonLoading(true);
+        try {
+            const formData = new FormData();
+            const finalBlocks = JSON.parse(JSON.stringify(builderBlocks));
+            let imageIndex = 1;
+            const imageMap = new Map();
+
+            const collectImages = async (block) => {
+                const checkAndReplace = async (url, prefix) => {
+                    if (url?.startsWith("blob")) {
+                        const response = await fetch(url);
+                        const blob = await response.blob();
+                        const fieldName = `${prefix}_${imageIndex++}`;
+                        const file = new File([blob], `${fieldName}.png`, { type: blob.type });
+                        formData.append(fieldName, file);
+                        imageMap.set(url, fieldName);
+                        return fieldName;
+                    }
+                    return url;
+                };
+
+                if (block === "global") {
+                    if (builderGlobalStyle?.backgroundImage?.startsWith("blob")) {
+                        await checkAndReplace(builderGlobalStyle.backgroundImage, "global_bg");
+                    }
+                    return;
+                }
+
+                if (block.type === "image" || block.type === "card") {
+                    block.url = await checkAndReplace(block.url, "image");
+                }
+
+                if (block.style?.backgroundImage) {
+                    const rawUrl = block.style.backgroundImage.replace(/url\(["']?|["']?\)/g, '');
+                    if (rawUrl.startsWith("blob")) {
+                        const placeholder = await checkAndReplace(rawUrl, "style_bg");
+                        block.style.backgroundImage = `url("${placeholder}")`;
+                    }
+                }
+
+                if (block.type === "sectionGrid" && Array.isArray(block.columns)) {
+                    for (const column of block.columns) {
+                        for (const child of column) await collectImages(child);
+                    }
+                }
+
+                if (block.type === "heroSection") {
+                    if (block.style?.backgroundImage) {
+                        const raw = block.style.backgroundImage.replace(/url\(["']?|["']?\)/g, '');
+                        if (raw.startsWith("blob")) {
+                            const ph = await checkAndReplace(raw, "hero_style_bg");
+                            block.style.backgroundImage = `url("${ph}")`;
+                        }
+                    }
+                    if (block.backgroundImage) {
+                        block.backgroundImage = await checkAndReplace(block.backgroundImage, "hero_bg_prop");
+                    }
+                }
+
+                if (block.type === "cardRow" && Array.isArray(block.cards)) {
+                    for (const card of block.cards) {
+                        card.url = await checkAndReplace(card.url, "card_row_image");
+                    }
+                }
+
+                if (block.type === "footerBlock" && block.logoUrl) {
+                    block.logoUrl = await checkAndReplace(block.logoUrl, "footer_logo");
+                }
+            };
+
+            await collectImages("global");
+            for (const block of finalBlocks) {
+                await collectImages(block);
+            }
+
+            let htmlContent = previewRef.current ? previewRef.current.innerHTML : "";
+            imageMap.forEach((fieldName, blobUrl) => {
+                const escapedUrl = blobUrl.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                const regex = new RegExp(escapedUrl, 'g');
+                htmlContent = htmlContent.replace(regex, fieldName);
+            });
+
+            const contentJSON = JSON.stringify({
+                subject: builderSubject,
+                htmlContent,
+                globalStyle: {
+                    ...builderGlobalStyle,
+                    backgroundImage: builderGlobalStyle?.backgroundImage?.startsWith("blob")
+                        ? imageMap.get(builderGlobalStyle.backgroundImage)
+                        : builderGlobalStyle?.backgroundImage
+                },
+                blocks: finalBlocks
+            });
+
+            formData.append("mode_of_communication", communicationMode.value);
+            formData.append("title", form.title);
+            formData.append("template_category_id", JSON.stringify(Array.isArray(form.category) ? form.category : [form.category]));
+            formData.append("tags", JSON.stringify(form.tags));
+            formData.append("content", contentJSON);
+
+            await createCommunicationTemplate(formData);
+            navigate("/templates/settingList");
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setButtonLoading(false);
+        }
+    };
+
+    const handleUpdatePreview = async () => {
+        setButtonLoading(true);
+        try {
+            const formData = new FormData();
+            const finalBlocks = JSON.parse(JSON.stringify(builderBlocks));
+            let imageIndex = 1;
+            const imageMap = new Map();
+
+            const collectImages = async (block) => {
+                const checkAndReplace = async (url, prefix) => {
+                    if (url?.startsWith("blob")) {
+                        const response = await fetch(url);
+                        const blob = await response.blob();
+                        const fieldName = `${prefix}_${imageIndex++}`;
+                        const file = new File([blob], `${fieldName}.png`, { type: blob.type });
+                        formData.append(fieldName, file);
+                        imageMap.set(url, fieldName);
+                        return fieldName;
+                    }
+                    return url;
+                };
+
+                if (block === "global") {
+                    if (builderGlobalStyle?.backgroundImage?.startsWith("blob")) {
+                        await checkAndReplace(builderGlobalStyle.backgroundImage, "global_bg");
+                    }
+                    return;
+                }
+
+                if (block.type === "image" || block.type === "card") {
+                    block.url = await checkAndReplace(block.url, "image");
+                }
+
+                if (block.style?.backgroundImage) {
+                    const rawUrl = block.style.backgroundImage.replace(/url\(["']?|["']?\)/g, '');
+                    if (rawUrl.startsWith("blob")) {
+                        const placeholder = await checkAndReplace(rawUrl, "style_bg");
+                        block.style.backgroundImage = `url("${placeholder}")`;
+                    }
+                }
+
+                if (block.type === "sectionGrid" && Array.isArray(block.columns)) {
+                    for (const column of block.columns) {
+                        for (const child of column) await collectImages(child);
+                    }
+                }
+
+                if (block.type === "heroSection") {
+                    if (block.style?.backgroundImage) {
+                        const raw = block.style.backgroundImage.replace(/url\(["']?|["']?\)/g, '');
+                        if (raw.startsWith("blob")) {
+                            const ph = await checkAndReplace(raw, "hero_style_bg");
+                            block.style.backgroundImage = `url("${ph}")`;
+                        }
+                    }
+                    if (block.backgroundImage) {
+                        block.backgroundImage = await checkAndReplace(block.backgroundImage, "hero_bg_prop");
+                    }
+                }
+
+                if (block.type === "cardRow" && Array.isArray(block.cards)) {
+                    for (const card of block.cards) {
+                        card.url = await checkAndReplace(card.url, "card_row_image");
+                    }
+                }
+
+                if (block.type === "footerBlock" && block.logoUrl) {
+                    block.logoUrl = await checkAndReplace(block.logoUrl, "footer_logo");
+                }
+            };
+
+            await collectImages("global");
+            for (const block of finalBlocks) {
+                await collectImages(block);
+            }
+
+            let htmlContent = previewRef.current ? previewRef.current.innerHTML : "";
+            imageMap.forEach((fieldName, blobUrl) => {
+                const escapedUrl = blobUrl.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                const regex = new RegExp(escapedUrl, 'g');
+                htmlContent = htmlContent.replace(regex, fieldName);
+            });
+
+            const contentJSON = JSON.stringify({
+                subject: builderSubject,
+                htmlContent,
+                globalStyle: {
+                    ...builderGlobalStyle,
+                    backgroundImage: builderGlobalStyle?.backgroundImage?.startsWith("blob")
+                        ? imageMap.get(builderGlobalStyle.backgroundImage)
+                        : builderGlobalStyle?.backgroundImage
+                },
+                blocks: finalBlocks
+            });
+
+            formData.append("mode_of_communication", communicationMode.value);
+            formData.append("title", form.title);
+            formData.append("template_category_id", JSON.stringify(Array.isArray(form.category) ? form.category : [form.category]));
+            formData.append("tags", JSON.stringify(form.tags));
+            formData.append("content", contentJSON);
+
+            await updateCommunicationTemplate(templateId, formData);
+            navigate("/templates/settingList");
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setButtonLoading(false);
+        }
+    };
+    console.log(`templateCategories`, templateCategories)
     return (
         <>
 
@@ -296,6 +519,22 @@ console.log(`templateCategories`,templateCategories        )
 
                                     {/* <img src="/images/icons/flipRight.png" alt="" /> */}
 
+                                </button>
+                            </div>
+
+                            <div className="flex items-center justify-end ml-2">
+                                <button
+                                    disabled={buttonLoading}
+                                    className={`px-6 py-2 rounded-xl font-medium shadow-sm transition-colors ${buttonLoading
+                                        ? "bg-gray-400 cursor-not-allowed"
+                                        : "bg-[#237FEA] hover:bg-blue-600 text-white"}`}
+                                    onClick={isEditMode ? handleUpdatePreview : handleSavePreview}
+                                >
+                                    {buttonLoading
+                                        ? "Processing..."
+                                        : isEditMode
+                                            ? "Update Template"
+                                            : "Save Template"}
                                 </button>
                             </div>
                         </>
@@ -684,6 +923,18 @@ console.log(`templateCategories`,templateCategories        )
                         )}
                     </motion.div>
                 </div>
+            </div>
+
+            {/* Hidden preview for HTML generation */}
+            <div ref={previewRef} style={{ display: 'none' }}>
+                {builderBlocks.map((block, i) => (
+                    <BlockRenderer
+                        key={block.id || i}
+                        block={block}
+                        blocks={builderBlocks}
+                        readOnly={true}
+                    />
+                ))}
             </div>
         </>
     );

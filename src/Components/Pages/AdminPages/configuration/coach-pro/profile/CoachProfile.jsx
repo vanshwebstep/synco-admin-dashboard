@@ -555,7 +555,7 @@ export default function CoachProfile() {
 
                                   />
                                 ) : (
-                                  <span className="text-red-500">Not available</span>
+                                  <span className="text-[#F04438]">Not available</span>
                                 )}
                               </div>
                             </td>
@@ -618,11 +618,11 @@ export default function CoachProfile() {
                                 <div className="space-y-2">
 
                                   <p className="flex justify-between text-[#717073] ">1. What is the purpose of the skill demonstrated in the video?
-                                    <div className="flex items-center gap-2 text-green-500 font-semibold">
+                                    <div className="flex items-center gap-2 text-[#12B76A] font-semibold">
                                       <img src="/reportsIcons/tick-02.png" className="w-5 h-5 cursor-pointer" alt="" />
                                       To help coaches</div></p>
                                   <p className="flex justify-between text-[#717073] ">2. What is the purpose of the skill demonstrated in the video?
-                                    <div className=" flex items-center gap-2  text-red-500 font-semibold">
+                                    <div className=" flex items-center gap-2  text-[#F04438] font-semibold">
                                       <img src="/reportsIcons/cross1.png" className="w-5 h-5 cursor-pointer" alt="" />
                                       Control the ball</div></p>
 

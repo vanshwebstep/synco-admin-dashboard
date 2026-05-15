@@ -491,7 +491,7 @@ const handleSubmit = async (e) => {
 
   if (loading) return <Loader />;
   if (!id) return null;
-  if (error) return <p className="text-red-500 text-center mt-5">{error}</p>;
+  if (error) return <p className="text-[#F04438] text-center mt-5">{error}</p>;
   console.log('formData', formData)
   console.log('localStorage', localStorage)
   // console.log('isImageremove', isImageremove)

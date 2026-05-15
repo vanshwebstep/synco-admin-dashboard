@@ -1151,7 +1151,7 @@ const HolidayAddtoWaitingList = () => {
                       {index > 0 && (
                         <button
                           onClick={() => handleRemoveParent(parent.id)}
-                          className="text-gray-500 hover:text-red-600"
+                          className="text-gray-500 hover:text-[#B42318]"
                         >
                           <X className="w-5 h-5" />
                         </button>

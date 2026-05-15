@@ -474,7 +474,7 @@ const Feedback = ({ profile }) => {
 
           </div>
         ) : (
-          <p className="text-center p-6 text-red-500 font-semibold">
+          <p className="text-center p-6 text-[#F04438] font-semibold">
             Not Authorized
           </p>
         )}
@@ -517,7 +517,7 @@ const Feedback = ({ profile }) => {
                     <>
                       <p className="text-sm text-gray-400 italic">No students found on this booking.</p>
                       {errors.classScheduleIds && (
-                        <p className="text-red-500 text-xs mt-1">{errors.classScheduleIds}</p>
+                        <p className="text-[#F04438] text-xs mt-1">{errors.classScheduleIds}</p>
                       )}
                     </>
                   )}
@@ -561,7 +561,7 @@ const Feedback = ({ profile }) => {
                     }}
                   />
                   {errors.feedbackType && (
-                    <p className="text-red-500 text-xs mt-1">{errors.feedbackType}</p>
+                    <p className="text-[#F04438] text-xs mt-1">{errors.feedbackType}</p>
                   )}
                 </div>
 
@@ -609,7 +609,7 @@ const Feedback = ({ profile }) => {
                         }}
                       />
                       {errors.category && (
-                        <p className="text-red-500 text-xs mt-1">{errors.category}</p>
+                        <p className="text-[#F04438] text-xs mt-1">{errors.category}</p>
                       )}
                     </>
                   ) : (
@@ -617,7 +617,7 @@ const Feedback = ({ profile }) => {
                       <input
                         type="text"
                         autoFocus
-                        className={`w-full border ${errors.category ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl p-2 px-3 text-sm h-[38px]`}
+                        className={`w-full border ${errors.category ? 'border-[#F04438]' : 'border-[#E2E1E5]'} rounded-xl p-2 px-3 text-sm h-[38px]`}
                         placeholder="Enter category name"
                         value={newCategoryName}
                         onChange={(e) => {
@@ -668,11 +668,11 @@ const Feedback = ({ profile }) => {
                         setErrors(prev => ({ ...prev, notes: null }));
                       }
                     }}
-                    className={`w-full border ${errors.notes ? 'border-red-500' : 'border-[#E2E1E5]'} rounded-xl p-3 h-24 resize-none`}
+                    className={`w-full border ${errors.notes ? 'border-[#F04438]' : 'border-[#E2E1E5]'} rounded-xl p-3 h-24 resize-none`}
                     placeholder="Write your notes here..."
                   />
                   {errors.notes && (
-                    <p className="text-red-500 text-xs mt-1">{errors.notes}</p>
+                    <p className="text-[#F04438] text-xs mt-1">{errors.notes}</p>
                   )}
                 </div>
 
@@ -711,7 +711,7 @@ const Feedback = ({ profile }) => {
                     }}
                   />
                   {errors.agentIds && (
-                    <p className="text-red-500 text-xs mt-1">{errors.agentIds}</p>
+                    <p className="text-[#F04438] text-xs mt-1">{errors.agentIds}</p>
                   )}
                 </div>
 

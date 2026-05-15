@@ -190,9 +190,9 @@ const WaitingList = () => {
     const getStatusBadge = (status) => {
         const s = status.toLowerCase();
         let styles =
-            "bg-red-100 text-red-500"; // default fallback
+            "bg-red-100 text-[#F04438]"; // default fallback
         if (s === "attended" || s === "active")
-            styles = "bg-green-100 text-green-600";
+            styles = "bg-green-100 text-[#027A48]";
         else if (s === "pending") styles = "bg-yellow-100 text-yellow-600";
         else if (s === "frozen") styles = "bg-blue-100 text-blue-600";
         else if (s === "waiting list") styles = "bg-gray-200 text-gray-700";
@@ -343,7 +343,7 @@ const WaitingList = () => {
             change: statsFreeTrial?.topReferrer?.percentage != null
                 ? `${statsFreeTrial.topReferrer?.percentage}`
                 : "0%",
-            color: "text-green-500",
+            color: "text-[#12B76A]",
             bg: "bg-[#F3FAF5]"
         },
         {
@@ -353,7 +353,7 @@ const WaitingList = () => {
             change: statsFreeTrial?.totalOnWaitingList?.percentage != null
                 ? `${statsFreeTrial.totalOnWaitingList?.percentage}`
                 : "0%",
-            color: "text-green-500",
+            color: "text-[#12B76A]",
             bg: "bg-[#FEF6FB]"
         },
         {
@@ -363,7 +363,7 @@ const WaitingList = () => {
                 ? `${statsFreeTrial.avgInterest?.percentage}`
                 : "0%",
             icon: "/DashboardIcons/📈.png",
-            color: "text-green-500",
+            color: "text-[#12B76A]",
             bg: "bg-[#F3FAFD]"
         },
 
@@ -374,7 +374,7 @@ const WaitingList = () => {
             change: statsFreeTrial?.avgDaysWaiting?.percentage != null
                 ? `${statsFreeTrial.avgDaysWaiting?.percentage}`
                 : "0%",
-            color: "text-green-500",
+            color: "text-[#12B76A]",
             bg: "bg-[#F0F9F9]"
         },
         {
@@ -384,7 +384,7 @@ const WaitingList = () => {
             change: statsFreeTrial?.mostRequestedVenue?.percentage != null
                 ? `${statsFreeTrial.mostRequestedVenue.percentage}`
                 : "0%",
-            color: "text-green-500",
+            color: "text-[#12B76A]",
             bg: "bg-[#FEF6FB]"
         },
     ];
@@ -633,14 +633,14 @@ const WaitingList = () => {
                 <div
                     className={`flex text-center justify-center rounded-lg p-1 gap-2 ${item.status.toLowerCase() === "attended" ||
                         item.status.toLowerCase() === "active"
-                        ? "bg-green-100 text-green-600"
+                        ? "bg-green-100 text-[#027A48]"
                         : item.status.toLowerCase() === "pending"
                             ? "bg-yellow-100 text-yellow-600"
                             : item.status.toLowerCase() === "frozen"
                                 ? "bg-blue-100 text-blue-600"
                                 : item.status.toLowerCase() === "waiting list"
                                     ? "bg-gray-200 text-gray-700"
-                                    : "bg-red-100 text-red-500"
+                                    : "bg-red-100 text-[#F04438]"
                         } capitalize`}
                 >
                     {item.status}

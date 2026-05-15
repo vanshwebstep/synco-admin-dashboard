@@ -99,7 +99,7 @@ useEffect(() => {
 
     {/* Status */}
     <td className="py-3 px-4">
-        <span className="px-3 py-1 rounded-md text-xs font-medium bg-red-100 text-red-600 capitalize">
+        <span className="px-3 py-1 rounded-md text-xs font-medium bg-red-100 text-[#B42318] capitalize">
             {p.paymentStatus || "failed"}
         </span>
     </td>

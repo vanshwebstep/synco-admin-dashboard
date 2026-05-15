@@ -483,9 +483,9 @@ const StudentProfile = ({ profile }) => {
 
     const getStatusBgColor = (status) => {
         switch (status) {
-            case "active": return "bg-[#43BE4F]";
+            case "active": return "bg-[#12B76A]";
             case "frozen": return "bg-[#509EF9]";
-            case "cancelled": return "bg-[#FC5D5D]";
+            case "cancelled": return "bg-[#fef2f2]";
             case "waiting list": return "bg-[#A4A5A6]";
             default: return "bg-[#A4A5A6]";
         }
@@ -493,14 +493,14 @@ const StudentProfile = ({ profile }) => {
 
     const getStatusColor = (status) => {
         switch (status) {
-            case "active": return "text-[#43BE4F]";
-            case "attended": return "text-[#43BE4F]";
+            case "active": return "text-[#12B76A]";
+            case "attended": return "text-[#12B76A]";
             case "frozen": return "text-[#509EF9]";
-            case "cancelled": return "text-[#FC5D5D]";
-            case "not attended": return "text-[#FC5D5D]";
+            case "cancelled": return "text-[#F04438]";
+            case "not attended": return "text-[#F04438]";
 
             case "waiting list": return "text-[#A4A5A6]";
-            case "request_to_cancel": return "text-[#FC5D5D]";
+            case "request_to_cancel": return "text-[#F04438]";
             case "pending": return "text-[#f1b400]";
 
             default: return "text-[#A4A5A6]";
@@ -859,10 +859,10 @@ const StudentProfile = ({ profile }) => {
                                 {(status === "active" || status === "frozen" || status === "cancelled" || status === "request_to_cancel") && (
                                     <button
                                         onClick={() => setaddToWaitingList(true)}
-                                        className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
-            ${addToWaitingList
-                                                ? "bg-[#237FEA] text-white shadow-md"   // Active state
-                                                : "bg-white  border border-gray-300  hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"
+                                        className={`w-full rounded-xl py-3 text-[18px] font-semibold transition-all duration-300 
+                                            ${addToWaitingList
+                                                ? "bg-green-100 text-[#12B76A] shadow-md border border-[#12B76A]"   // Active state
+                                                : "bg-green-50 border border-[#12B76A] text-[#12B76A] hover:bg-green-100 hover:shadow-md"
                                             }`}
                                     >
                                         Add to the waiting list
@@ -876,14 +876,14 @@ const StudentProfile = ({ profile }) => {
                                 ) ? (
                                     <button
                                         onClick={() => setFreezeMembership(true)}
-                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                        className="w-full bg-blue-50 border border-[#237FEA] text-[#237FEA] text-[18px] rounded-xl py-3 hover:shadow-md transition-all duration-300 font-semibold"
                                     >
                                         Freeze Membership
                                     </button>
                                 ) : profile.freezeBooking ? (
                                     <button
                                         onClick={() => setReactivateMembership(true)}
-                                        className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+                                        className="w-full bg-blue-50 border border-[#237FEA] text-[#237FEA] rounded-xl py-3 text-[18px] font-semibold hover:bg-blue-100 hover:shadow-md transition-all duration-300"
                                     >
                                         Reactivate Membership
                                     </button>
@@ -893,7 +893,7 @@ const StudentProfile = ({ profile }) => {
                                 {(status === "active" || (status === "request_to_cancel" && canCancelTrial)) && (
                                     <button
                                         onClick={() => setTransferVenue(true)}
-                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                        className="w-full bg-blue-50 border border-[#237FEA] text-[#237FEA] text-[18px] rounded-xl py-3 hover:shadow-md transition-all duration-300 font-semibold"
                                     >
                                         Transfer Class
                                     </button>
@@ -901,7 +901,7 @@ const StudentProfile = ({ profile }) => {
                                 {status == 'waiting list' && canCancelTrial && (
                                     <button
                                         onClick={() => setRemoveWaiting(true)}
-                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                        className="w-full bg-red-50 border border-[#B42318] text-[#B42318] text-[18px] rounded-xl py-3 hover:shadow-md transition-all duration-300 font-medium"
                                     >
                                         Remove Waiting List
                                     </button>
@@ -915,10 +915,10 @@ const StudentProfile = ({ profile }) => {
                                                 onSubmit: cancelMembershipSubmit,
                                             })
                                         }
-                                        className={`w-full border text-[18px] rounded-xl py-3 font-medium transition-shadow duration-300
-    ${showCancelTrial
-                                                ? "bg-[#FF6C6C] text-white shadow-md border-transparent"
-                                                : "border-gray-300 text-[#717073] hover:bg-[#FF6C6C] hover:text-white hover:shadow-md"
+                                        className={`w-full border text-[18px] rounded-xl py-3 font-medium transition-all duration-300
+                                            ${showCancelTrial
+                                                ? "bg-red-100 text-[#B42318] shadow-md border-transparent"
+                                                : "bg-red-50 border-[#B42318] text-[#B42318] hover:bg-red-100 hover:shadow-md"
                                             }`}
                                     >
                                         Cancel Membership
@@ -936,11 +936,11 @@ const StudentProfile = ({ profile }) => {
 
                                 {status === 'attended' && (
                                     <div className="flex gap-7">
-                                        <button className="flex-1 border bg-[#FF6C6C] border-[#FF6C6C] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-shadow duration-300 gap-2 text-white font-medium">
+                                        <button className="flex-1 bg-red-50 border border-[#B42318] rounded-xl py-3 flex text-[18px] items-center justify-center hover:shadow-md transition-all duration-300 gap-2 text-[#B42318] font-medium">
                                             Declined Membership
                                         </button>
 
-                                        <button className="flex-1 border bg-[#237FEA] border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-white font-medium">
+                                        <button className="flex-1 bg-green-50 border border-[#12B76A] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-all duration-300 text-[#12B76A] font-medium">
                                             Book a Membership
                                         </button>
                                     </div>
@@ -949,7 +949,7 @@ const StudentProfile = ({ profile }) => {
 
                                     <button
                                         onClick={handleBookMembership}
-                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                        className="w-full bg-green-50 border border-[#12B76A] text-[#12B76A] text-[18px] rounded-xl py-3 hover:shadow-md transition-all duration-300 font-medium"
                                     >
                                         Book a Membership
                                     </button>
@@ -989,7 +989,7 @@ const StudentProfile = ({ profile }) => {
                                     canRebooking && (
                                         <button
                                             onClick={() => setReactivateMembership(true)}
-                                            className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+                                            className="w-full bg-blue-50 border border-[#237FEA] text-[#237FEA] rounded-xl py-3 text-[18px] font-medium hover:bg-blue-100 hover:shadow-md transition-all duration-300"
                                         >
                                             Reactivate Membership
                                         </button>
@@ -999,10 +999,10 @@ const StudentProfile = ({ profile }) => {
                                 {(status === "active" || status === "frozen" || status === "cancelled" || status === "request_to_cancel") && (
                                     <button
                                         onClick={() => setaddToWaitingList(true)}
-                                        className={`w-full rounded-xl py-3 text-[18px] font-medium transition-shadow duration-300 
-            ${addToWaitingList
-                                                ? "bg-[#237FEA] text-white shadow-md"   // Active state
-                                                : "bg-white  border border-gray-300  hover:bg-blue-700 text-[#717073] hover:text-white hover:shadow-md"
+                                        className={`w-full rounded-xl py-3 text-[18px] font-medium transition-all duration-300 
+                                            ${addToWaitingList
+                                                ? "bg-green-100 text-[#12B76A] shadow-md border border-[#12B76A]"   // Active state
+                                                : "bg-green-50 border border-[#12B76A] text-[#12B76A] hover:bg-green-100 hover:shadow-md"
                                             }`}
                                     >
                                         Add to the waiting list
@@ -1227,7 +1227,7 @@ const StudentProfile = ({ profile }) => {
                                 {/* Button */}
                                 <div className="justify-end flex gap-4 pt-4">
                                     <button
-                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="w-1/2 bg-[#12B76A] text-white rounded-xl py-3 text-[18px] font-semibold hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
                                         disabled={waitingListData.selectedStudents.length === 0}
                                         onClick={() => {
                                             // Validation: at least one student
@@ -1427,9 +1427,8 @@ const StudentProfile = ({ profile }) => {
                                 {/* Button */}
                                 <div className="flex gap-4 pt-4 justify-end">
                                     <button
-                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
+                                        className="w-1/2 bg-[#12B76A] text-white rounded-xl py-3 text-[18px] font-semibold hover:shadow-md transition-shadow"
                                         onClick={() => reactivateDataSubmit(reactivateData, 'allMembers')}
-
                                     >
                                         Reactivate Membership
                                     </button>
@@ -1584,7 +1583,7 @@ const StudentProfile = ({ profile }) => {
                                             setshowCancelTrial(false)
                                             cancelMembershipSubmit(cancelData, "allMembers");
                                         }}
-                                        className="w-1/2 bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
+                                        className="w-1/2 bg-[#B42318] text-white rounded-xl py-3 text-[18px] font-semibold hover:shadow-md transition-shadow"
                                     >
                                         {cancelData.cancellationType !== "immediate"
                                             ? "Request to Cancel"
@@ -1656,7 +1655,7 @@ const StudentProfile = ({ profile }) => {
                                     <button
                                         onClick={() => cancelWaitingListSpot(cancelWaitingList, 'allMembers')}
 
-                                        className="w-1/2  bg-[#FF6C6C] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
+                                        className="w-1/2  bg-[#B42318] text-white rounded-xl py-3 text-[18px] font-semibold hover:shadow-md transition-shadow"
                                     >
                                         Submit
                                     </button>
@@ -1824,7 +1823,7 @@ const StudentProfile = ({ profile }) => {
 
 
                                     <button
-                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-semibold hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
                                         disabled={transferData.selectedStudents.length === 0}
                                         onClick={() => {
                                             if (!transferData.selectedStudents.length) {
@@ -1952,7 +1951,7 @@ const StudentProfile = ({ profile }) => {
                                 {/* Buttons */}
                                 <div className="flex w-full justify-end gap-4 pt-4">
                                     <button
-                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
+                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-semibold hover:shadow-md transition-shadow"
                                         onClick={() => {
                                             if (!freezeData.freezeStartDate || !freezeData.freezeDurationMonths || !freezeData.reactivateOn) {
                                                 showWarning("Incomplete Form", "Please fill in all the required fields before submitting:");

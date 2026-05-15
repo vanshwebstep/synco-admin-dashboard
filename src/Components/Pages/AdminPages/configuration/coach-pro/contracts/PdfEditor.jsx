@@ -234,7 +234,7 @@ const PdfEditor = () => {
 
         const box = document.createElement("div");
         box.className =
-            "absolute top-20 left-20 w-40 h-28 border-2 border-green-600 bg-transparent cursor-move";
+            "absolute top-20 left-20 w-40 h-28 border-2 border-[#027A48] bg-transparent cursor-move";
 
         makeDraggable(box);
         overlay.appendChild(box);
@@ -418,7 +418,7 @@ const PdfEditor = () => {
                         <div className="flex gap-3">
                             <button
                                 onClick={() => handleToolClick("shape")}
-                                className="w-10 h-10 bg-green-500 rounded-full text-white"
+                                className="w-10 h-10 bg-[#12B76A] rounded-full text-white"
                             >
                                 S
                             </button>
@@ -471,7 +471,7 @@ const PdfEditor = () => {
                             className="w-full border border-[#EFEEF2] rounded-lg px-4 py-2 mt-1"
                         />
                         {errors.pdfFile && (
-                            <p className="text-red-500 text-xs mt-1">{errors.pdfFile}</p>
+                            <p className="text-[#F04438] text-xs mt-1">{errors.pdfFile}</p>
                         )}
                     </div>
 
@@ -489,7 +489,7 @@ const PdfEditor = () => {
                             className="w-full border border-[#EFEEF2] rounded-lg px-4 py-2 mt-1"
                         />
                         {errors.title && (
-                            <p className="text-red-500 text-xs mt-1">{errors.title}</p>
+                            <p className="text-[#F04438] text-xs mt-1">{errors.title}</p>
                         )}
                     </div>
 
@@ -509,7 +509,7 @@ const PdfEditor = () => {
                         />
 
                         {errors.description && (
-                            <p className="text-red-500 text-xs mt-1">{errors.description}</p>
+                            <p className="text-[#F04438] text-xs mt-1">{errors.description}</p>
                         )}
                     </div>
 
@@ -539,7 +539,7 @@ const PdfEditor = () => {
                             </option>
                         </select>
                         {errors.contractType && (
-                            <p className="text-red-500 text-xs mt-1">{errors.contractType}</p>
+                            <p className="text-[#F04438] text-xs mt-1">{errors.contractType}</p>
                         )}
                     </div>
 
@@ -560,7 +560,7 @@ const PdfEditor = () => {
                                             const updated = formData.tags.filter((_, i) => i !== index);
                                             setFormData({ ...formData, tags: updated });
                                         }}
-                                        className="text-gray-500 hover:text-red-500"
+                                        className="text-gray-500 hover:text-[#F04438]"
                                     >
                                         ✕
                                     </button>

@@ -847,7 +847,7 @@ export default function Create() {
                                                 <button
                                                     type="button"
                                                     onClick={() => ex?.value && deleteExercise(ex.value)}
-                                                    className="text-gray-800 hover:text-red-500"
+                                                    className="text-gray-800 hover:text-[#F04438]"
                                                 >
                                                     <Trash2 size={18} />
                                                 </button>
@@ -1057,7 +1057,7 @@ export default function Create() {
                                                 <button
                                                     type="button"
                                                     onClick={() => removeImage(img.id)}
-                                                    className="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full px-1.5"
+                                                    className="absolute top-1 right-1 bg-[#F04438] text-white text-xs rounded-full px-1.5"
                                                 >
                                                     ✕
                                                 </button>

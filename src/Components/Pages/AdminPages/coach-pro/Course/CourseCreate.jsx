@@ -416,7 +416,7 @@ export default function CourseCreateForm() {
                                     className={`${inputClass} w-full`}
                                 />
                                 {errors.title && (
-                                    <p className="text-red-500 text-sm mt-1">{errors.title}</p>
+                                    <p className="text-[#F04438] text-sm mt-1">{errors.title}</p>
                                 )}
                             </div>
 
@@ -436,7 +436,7 @@ export default function CourseCreateForm() {
                                     className={`${inputClass} bg-gray-50 w-full`}
                                 ></textarea>
                                 {errors.description && (
-                                    <p className="text-red-500 text-sm mt-1">{errors.description}</p>
+                                    <p className="text-[#F04438] text-sm mt-1">{errors.description}</p>
                                 )}
                             </div>
                         </div>
@@ -451,7 +451,7 @@ export default function CourseCreateForm() {
                                     Modules ({formData.modules.length})
                                 </h3>
                                 {errors.modules && (
-                                    <p className="text-red-500 text-sm mt-2">
+                                    <p className="text-[#F04438] text-sm mt-2">
                                         {errors.modules}
                                     </p>
                                 )}
@@ -500,12 +500,12 @@ export default function CourseCreateForm() {
                                                     setErrors((p) => ({ ...p, moduleTitle_0: "" }));
                                                 }
                                             }}
-                                            className={`${inputClass} w-full mt-2 ${index === 0 && errors.moduleTitle_0 ? "border-red-500" : ""
+                                            className={`${inputClass} w-full mt-2 ${index === 0 && errors.moduleTitle_0 ? "border-[#F04438]" : ""
                                                 }`}
                                         />
 
                                         {index === 0 && errors.moduleTitle_0 && (
-                                            <p className="text-red-500 text-sm mt-1">
+                                            <p className="text-[#F04438] text-sm mt-1">
                                                 {errors.moduleTitle_0}
                                             </p>
                                         )}
@@ -547,7 +547,7 @@ export default function CourseCreateForm() {
                                             + Add Media
                                         </div>
                                         {index === 0 && errors.moduleMedia_0 && (
-                                            <p className="text-red-500 text-sm mt-2">
+                                            <p className="text-[#F04438] text-sm mt-2">
                                                 {errors.moduleMedia_0}
                                             </p>
                                         )}
@@ -568,7 +568,7 @@ export default function CourseCreateForm() {
                                                                 );
                                                                 setFormData({ ...formData, modules: updated });
                                                             }}
-                                                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex justify-center items-center text-sm shadow"
+                                                            className="absolute -top-2 -right-2 bg-[#F04438] text-white rounded-full w-6 h-6 flex justify-center items-center text-sm shadow"
                                                         >
                                                             ×
                                                         </button>
@@ -764,7 +764,7 @@ export default function CourseCreateForm() {
                                                         });
                                                         setErrors((p) => ({ ...p, duration: "" }));
                                                     }}
-                                                    className={`${inputClass} ${errors.duration ? "border-red-500" : ""}`}
+                                                    className={`${inputClass} ${errors.duration ? "border-[#F04438]" : ""}`}
                                                 />
 
 
@@ -776,7 +776,7 @@ export default function CourseCreateForm() {
                                                             settings: { ...formData.settings, durationType: e.target.value },
                                                         })
                                                     }
-                                                    className={`${inputClass}  ${errors.duration ? "border-red-500" : ""}`}
+                                                    className={`${inputClass}  ${errors.duration ? "border-[#F04438]" : ""}`}
                                                 >
                                                     <option value=''>Select Duration</option>
                                                     <option value='Minutes'>Minutes</option>
@@ -784,7 +784,7 @@ export default function CourseCreateForm() {
                                                     <option value='Days'>Days</option>
                                                 </select>
                                                 {errors.durationType && (
-                                                    <p className="text-red-500 text-sm pt-1">{errors.durationType}</p>
+                                                    <p className="text-[#F04438] text-sm pt-1">{errors.durationType}</p>
                                                 )}
                                             </div>
 
@@ -817,7 +817,7 @@ export default function CourseCreateForm() {
 
 
                                             {errors.retake && (
-                                                <p className="text-red-500 text-sm mt-1">{errors.retake}</p>
+                                                <p className="text-[#F04438] text-sm mt-1">{errors.retake}</p>
                                             )}
                                             <p className="text-gray-500 text-sm mt-2">
                                                 How many times a user can re-take this course. Set to 0 to disable.
@@ -851,7 +851,7 @@ export default function CourseCreateForm() {
                                                 <span className="text-gray-600 text-lg">%</span>
                                             </div>
                                             {errors.passValue && (
-                                                <p className="text-red-500 text-sm mt-1">{errors.passValue}</p>
+                                                <p className="text-[#F04438] text-sm mt-1">{errors.passValue}</p>
                                             )}
 
                                             <p className="text-gray-500 text-sm mt-2">
@@ -900,7 +900,7 @@ export default function CourseCreateForm() {
                                                 </label>
 
                                                 {errors.compulsory && (
-                                                    <p className="text-red-500 text-sm mt-1">{errors.compulsory}</p>
+                                                    <p className="text-[#F04438] text-sm mt-1">{errors.compulsory}</p>
                                                 )}
 
                                             </div>
@@ -943,12 +943,12 @@ export default function CourseCreateForm() {
                                                     <option value='Days'>Days</option>
                                                 </select>
                                                 {errors.reminderType && (
-                                                    <p className="text-red-500 text-sm mt-1">{errors.reminderType}</p>
+                                                    <p className="text-[#F04438] text-sm mt-1">{errors.reminderType}</p>
                                                 )}
                                             </div>
 
                                             {errors.reminderType && (
-                                                <p className="text-red-500 text-sm mt-1">{errors.reminderType}</p>
+                                                <p className="text-[#F04438] text-sm mt-1">{errors.reminderType}</p>
                                             )}
                                             <p className="text-gray-500 text-sm mt-2">
                                                 Reminder will start once user has completed course.
@@ -981,12 +981,12 @@ export default function CourseCreateForm() {
 
                                             setErrors((p) => ({ ...p, certificateTitle: "" }));
                                         }}
-                                        className={`${inputClass} w-10/12 block mt-2 ${errors.certificateTitle ? "border-red-500" : ""
+                                        className={`${inputClass} w-10/12 block mt-2 ${errors.certificateTitle ? "border-[#F04438]" : ""
                                             }`}
                                     />
 
                                     {errors.certificateTitle && (
-                                        <p className="text-red-500 text-sm mt-1">
+                                        <p className="text-[#F04438] text-sm mt-1">
                                             {errors.certificateTitle}
                                         </p>
                                     )}
@@ -1024,7 +1024,7 @@ export default function CourseCreateForm() {
                                         + Upload Document
                                     </button>
                                     {errors.certificateFile && (
-                                        <p className="text-red-500 text-sm mt-2">
+                                        <p className="text-[#F04438] text-sm mt-2">
                                             {errors.certificateFile}
                                         </p>
                                     )}
@@ -1114,7 +1114,7 @@ export default function CourseCreateForm() {
 
                                 </div>
                                 {errors.notifiedUsers && (
-                                    <p className="text-red-500 text-sm mt-1">
+                                    <p className="text-[#F04438] text-sm mt-1">
                                         {errors.notifiedUsers}
                                     </p>
                                 )}

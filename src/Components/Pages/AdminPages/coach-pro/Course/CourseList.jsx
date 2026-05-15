@@ -135,7 +135,7 @@ export default function CourseList() {
                                             <img src="/images/icons/edit.png" className="w-6" alt="" />
                                         </button>
 
-                                        <button onClick={() => handleDelete(item?.id)} className="text-gray-500 hover:text-red-500">
+                                        <button onClick={() => handleDelete(item?.id)} className="text-gray-500 hover:text-[#F04438]">
                                             <img src="/images/icons/deleteIcon.png" className="w-6" alt="" />
                                         </button>
                                     </div>

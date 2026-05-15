@@ -85,6 +85,7 @@ const List = () => {
         starterPackPrice: 0,
         totalAmount: 0,
         isFullMonthCharge: 0,
+        stripeAmount: 0,
     });
 
     // ── Payment transaction log state (Issue #49) ──────────────
@@ -358,19 +359,7 @@ const List = () => {
     const img2Ref = useRef(null);
     const [showPopup, setShowPopup] = useState(false);
     const [directDebitData, setDirectDebitData] = useState([]);
-    const [payment, setPayment] = useState({
-        paymentType: PAYMENT_TYPES.ACCESS_PAY_SUITE,
-        firstName: "",
-        lastName: "",
-        email: "",
-        price: '',
-        line1: "",
-        city: "",
-        postalCode: "",
-        account_number: "",
-        branch_code: "",
-        account_holder_name: "",
-    });
+
     console.log('comesFrom', comesFrom)
 
     const formatTimeAgo = (timestamp) => {
@@ -415,7 +404,19 @@ const List = () => {
         parentPhoneNumber: '', interestReason: '', interestReasonOther: '',
         relationToChild: '', howDidYouHear: '', isCustomReason: false
     }]);
-
+    const [payment, setPayment] = useState({
+        paymentType: PAYMENT_TYPES.ACCESS_PAY_SUITE,
+        firstName: "",
+        lastName: "",
+        email: parents[0].parentEmail || "",
+        price: '',
+        line1: "",
+        city: "",
+        postalCode: "",
+        account_number: "",
+        branch_code: "",
+        account_holder_name: "",
+    });
     const [fieldErrors, setFieldErrors] = useState({});
     const clearError = (name) => {
         setFieldErrors((prev) => {
@@ -452,7 +453,17 @@ const List = () => {
         ? allPaymentPlans.filter((plan) => plan.all?.students === Number(numberOfStudents))
         : allPaymentPlans;
 
-    const countryOptions = getNames().map(country => ({ value: country, label: country }));
+    const countryOptions = [
+        { value: 'United Kingdom', label: 'United Kingdom' },
+
+        ...getNames()
+            .filter(country => country !== 'United Kingdom')
+            .sort((a, b) => a.localeCompare(b))
+            .map(country => ({
+                value: country,
+                label: country
+            }))
+    ];
 
     const customSelectStyles = {
         control: (base) => ({
@@ -784,7 +795,7 @@ const List = () => {
     // ── Issue #48: Validate fields based on actual payment type ──
     const isCardInvalid =
         !isFranchisee && (
-            !payment.account_holder_name || !payment.firstName || !payment.email ||
+            !payment.account_holder_name || !payment.firstName ||
             !payment.line1 || !payment.city || !payment.postalCode ||
             !payment.account_number || !payment.branch_code
         );
@@ -1044,10 +1055,13 @@ const List = () => {
 
 
         setIsSubmitting(true);
-        const amountToSend = calculateAmount(selectedDate);
-        const proRataToSend = pricingBreakdown.isFullMonthCharge
+        const { totalToday, breakdown } = calculateAmount(selectedDate) || {};
+        if (!breakdown) return;
+
+        const proRataToSend = breakdown.isFullMonthCharge
             ? 0
-            : pricingBreakdown.finalProRataCost;
+            : breakdown.finalProRataCost;
+
         const paymentData =
             Object.keys(filteredPayment).length > 0
                 ? isFranchisee
@@ -1060,14 +1074,14 @@ const List = () => {
                         branch_code: filteredPayment.branch_code,
                         account_holder_name: filteredPayment.account_holder_name,
                         authorise: filteredPayment.authorise,
-                        price: pricingBreakdown.nextMonthPayment,
+                        price: breakdown.nextMonthPayment,
                         proRataAmount: proRataToSend,
                     }
                     : {
                         paymentType: "accesspaysuite",
                         firstName: filteredPayment.firstName,
                         lastName: filteredPayment.lastName,
-                        email: filteredPayment.email,
+                        email: filteredPayment.email || parents[0].parentEmail,
                         line1: filteredPayment.line1,
                         city: filteredPayment.city,
                         postcode: filteredPayment.postalCode,
@@ -1075,8 +1089,8 @@ const List = () => {
                         branch_code: filteredPayment.branch_code,
                         account_holder_name: filteredPayment.account_holder_name,
                         authorise: filteredPayment.authorise,
-                        price: pricingBreakdown.nextMonthPayment,
-                        calculateAmount: amountToSend,
+                        price: breakdown.nextMonthPayment,
+                        calculateAmount: totalToday,
                         proRataAmount: proRataToSend,
                     }
                 : null;
@@ -1097,15 +1111,12 @@ const List = () => {
             keyInformation: selectedKeyInfo,
 
             students: students.map((s, index) => {
-                const { studentStatus, ...rest } = s; // ❌ remove this field
+                const { studentStatus, selectedClassData, ...rest } = s; // ❌ remove this field
 
                 return {
                     ...rest,
                     dateOfBirth: toDateOnly(s.dateOfBirth),
-                    classScheduleId:
-                        index === 0 || comesFrom
-                            ? singleClassSchedulesOnly?.id
-                            : s.selectedClassData?.id,
+                    classScheduleId: s.selectedClassId || s.selectedClassData?.id || singleClassSchedulesOnly?.id,
                 };
             }),
 
@@ -1294,7 +1305,7 @@ const List = () => {
                     expiryDate,
                     cvc,
                     country: checkoutCountry,
-                    zipCode
+                    zipCode,
                 }
             };
 
@@ -1417,7 +1428,8 @@ const List = () => {
         let finalProRata = safeProRataCost;
         if (!isFullMonth && proRataDiscountData?.finalProRata != null) finalProRata = proRataDiscountData.finalProRata;
 
-        const effectiveLessonCharge = isFullMonth ? monthlyPrice : finalProRata;
+        const isProRataApplicableForPreview = !isFirstSessionSelected && sessionsInStartMonth.length > 3;
+        const effectiveLessonCharge = !pricingBreakdown.isFullMonthCharge ? finalProRata : monthlyPrice;
 
         let starterDiscountAmount = 0;
         if (isApplied && appliedDiscount?.data) {
@@ -1432,9 +1444,7 @@ const List = () => {
         const totalToday = Number(finalTotal.toFixed(2));
         const nextMonthPayment = Number(monthlyPrice.toFixed(2));
 
-        setRemainingLessons(proRataLessons);
-        setCalculatedAmount(totalToday);
-        setPricingBreakdown({
+        const breakdown = {
             pricePerClassPerChild: pricePerLesson,
             numberOfLessonsProRated: proRataLessons,
             costOfProRatedLessons: safeProRataCost,
@@ -1445,9 +1455,16 @@ const List = () => {
             totalAmountToday: totalToday,
             nextMonthPayment,
             isFullMonthCharge: isFullMonth,
-        });
+            isProRataApplicableForPreview,
+            stripeAmount: Math.max(starterPack - starterDiscountAmount, 0),
+            goCardlessAmount: Math.max(effectiveLessonCharge, 0),
+        };
 
-        return totalToday;
+        setRemainingLessons(proRataLessons);
+        setCalculatedAmount(totalToday);
+        setPricingBreakdown(breakdown);
+
+        return { totalToday, breakdown };
     };
 
     const handleApplyDiscount = async () => {
@@ -1523,7 +1540,9 @@ const List = () => {
                 {!pricingBreakdown.isFullMonthCharge && (
                     <>
                         <span className="text-gray-600">Pro-rata payments:</span>
-                        <span className="font-semibold text-green-700">Stripe → Head Office</span>
+                        <span className="font-semibold text-green-700">
+                            {isFranchisee ? "GoCardless → Franchisee" : "AccessPaySuite → Head Office"}
+                        </span>
                     </>
                 )}
                 {IS_SANDBOX && (
@@ -2334,7 +2353,7 @@ const List = () => {
                             <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
                                 <div className="flex gap-6 px-6 py-12 max-h-[90%] w-8/12 overflow-auto bg-[#FDFDFF]">
                                     {/* LEFT SUMMARY */}
-                                    <div className="bg-[#F1F4FC] poppins rounded-xl w-[365px] text-sm text-gray-800">
+                                    <div className="bg-[#F1F4FC] poppins rounded-xl w-[365px] text-sm text-gray-800 overflow-auto h-full">
                                         <div className="flex justify-center poppins rounded-t-2xl p-4 bg-[#003288]">
                                             <img className="w-[40px]" src="/images/sss-logo.png" alt="" />
                                         </div>
@@ -2350,12 +2369,11 @@ const List = () => {
                                                         <span className="text-[#34353B] float-right poppins" style={{ fontSize: "12px" }}>per month</span>
                                                     </span>
                                                 </p>
-                                                <div className="mb-4 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm">
-                                                    {/* <span className="text-gray-500">Monthly subscription via: </span> */}
+                                                {/* <div className="mb-4 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm">
                                                     <span className="font-bold text-blue-900">
                                                         {isFranchisee ? "GoCardless (→ Franchisee account)" : "AccessPaySuite (→  Head Office)"}
                                                     </span>
-                                                </div>
+                                                </div> */}
                                                 <p className="mt-[-20px]">
                                                     <span className="font-medium poppins text-[#34353B]" style={{ fontSize: "14px" }}>
                                                         {membershipPlan?.all?.students} Student{membershipPlan?.all?.students === 1 ? "" : "s"}
@@ -2386,12 +2404,20 @@ const List = () => {
                                                 </div>
                                             )}
 
-                                            {pricingBreakdown.numberOfLessonsProRated !== 0 && <hr className="my-4 border-gray-300" />}
-                                            {pricingBreakdown.numberOfLessonsProRated !== 0 && (
-                                                <div className="mb-4 grid gap-2">
-                                                    <p className="poppins"><span className="poppins font-semibold text-[#042C89]" style={{ fontSize: "16px" }}>Pro-rata lessons</span></p>
-                                                    <p className="poppins">Number of lessons <span className="poppins float-right">{pricingBreakdown.numberOfLessonsProRated}</span></p>
-                                                    <p className="poppins">Fee <span className="poppins float-right">£{pricingBreakdown.finalProRataCost}</span></p>
+                                            {!pricingBreakdown.isFullMonthCharge && <hr className="my-4 border-gray-300" />}
+                                            {!pricingBreakdown.isFullMonthCharge && (
+                                                <div className="mb-4 space-y-2">
+                                                    <p className="font-semibold text-[#042C89] poppins" style={{ fontSize: "16px" }}>
+                                                        Pro-rata lessons
+                                                    </p>
+                                                    <p className="poppins flex justify-between" style={{ fontSize: "14px" }}>
+                                                        <span>Number of lessons</span>
+                                                        <span>{pricingBreakdown.numberOfLessonsProRated}</span>
+                                                    </p>
+                                                    <p className="poppins flex justify-between" style={{ fontSize: "14px" }}>
+                                                        <span>Fee</span>
+                                                        <span>£{pricingBreakdown.finalProRataCost?.toFixed(2)}</span>
+                                                    </p>
                                                 </div>
                                             )}
 
@@ -2424,7 +2450,7 @@ const List = () => {
 
                                             <label className="block mb-4">
                                                 <span className="block text-gray-700 text-[14px] mb-1 poppins">Email address</span>
-                                                <input type="email" value={payment.email} onChange={(e) => setPayment({ ...payment, email: e.target.value })}
+                                                <input type="email" value={payment.email || parents[0].parentEmail} onChange={(e) => setPayment({ ...payment, email: e.target.value })}
                                                     className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
                                                 />
                                             </label>
@@ -2534,9 +2560,8 @@ const List = () => {
                                                 <button
                                                     disabled={isSubmitting || !payment.authorise || (isFranchisee ? isBankInvalid : isCardInvalid)}
                                                     onClick={() => {
-                                                        const hasStarterPack = singleClassSchedulesOnly?.venue?.starterPack && comesFrom !== 'cancellation';
-                                                        const hasProrata = pricingBreakdown?.numberOfLessonsProRated !== 0;
-                                                        if (hasStarterPack || hasProrata) {
+                                                        const hasStarterPack = singleClassSchedulesOnly?.venue?.starterPack && comesFrom !== 'cancellation' && (pricingBreakdown?.stripeAmount || 0) > 0;
+                                                        if (hasStarterPack) {
                                                             setDirectDebitData([...directDebitData, payment]);
                                                             setStep(2);
                                                         } else {
@@ -2555,14 +2580,12 @@ const List = () => {
                                         <div className="flex-1 flex flex-col">
                                             <h2 className="text-2xl font-semibold poppins pb-4">Checkout</h2>
                                             <p className="text-gray-600 mb-4 poppins text-[14px]">
-                                                Fill out your card details below to pay for the Starter Pack
-                                                {pricingBreakdown?.numberOfLessonsProRated > 0 && " and Pro-Rata lessons"}
-                                                {" "}via Stripe. This payment goes directly to Head Office.
+                                                Fill out your card details below to pay for the Starter Pack via Stripe. This payment goes directly to Head Office.
                                             </p>
 
                                             {/* Issue #47: Stripe destination badge */}
                                             <div className="mb-6 bg-green-50 border border-green-200 rounded-xl px-4 py-2 text-xs text-green-800 font-medium">
-                                                💳 Stripe → Head Office &nbsp;·&nbsp; Amount: <strong>£{calculatedAmount}</strong>
+                                                💳 Stripe → Head Office &nbsp;·&nbsp; Amount: <strong>£{pricingBreakdown?.stripeAmount?.toFixed(2)}</strong>
                                                 {IS_SANDBOX && <span className="ml-2 text-orange-600">🧪 Sandbox</span>}
                                             </div>
 
@@ -2618,7 +2641,7 @@ const List = () => {
                                             </div>
 
                                             <p className="font-semibold text-[#34353B] poppins text-md">
-                                                Total to pay now <span className="float-right poppins text-blue-900" style={{ fontSize: "22px" }}>£{calculatedAmount}</span>
+                                                Total to pay now <span className="float-right poppins text-blue-900" style={{ fontSize: "22px" }}>£{calculatedAmount?.toFixed(2)}</span>
                                             </p>
 
                                             <div className="flex justify-end">

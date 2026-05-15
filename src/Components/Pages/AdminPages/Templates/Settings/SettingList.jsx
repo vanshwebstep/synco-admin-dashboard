@@ -8,7 +8,7 @@ import Loader from "../../contexts/Loader";
 
 export default function SettingList() {
     const { fetchCommunicationTemplate, loading, apiTemplates, deleteCommunicationTemplate } = useCommunicationTemplate();
-    const navigate = useNavigate();   // ✅ declare navigate
+    const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState("Email");
     const [searchText, setSearchText] = useState("");
@@ -99,14 +99,12 @@ export default function SettingList() {
     const handleEdit = (id, level) => {
         if (!id) return;
 
-        console.log("Edit Clicked, ID:", id);
         navigate(`/templates/create?id=${id}&level=${level ?? ""}`);
     };
 
     const handleDelete = (id) => {
         if (!id) return;
 
-        console.log("Delete Clicked, ID:", id);
 
         showConfirm(
             "Are you sure?",
@@ -123,50 +121,58 @@ export default function SettingList() {
             }
         });
     };
-function cleanHtml(html) {
-  if (!html) return html;
 
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, "text/html");
+    function cleanHtml(html) {
+        if (!html) return html;
 
-  doc.querySelectorAll("*").forEach((el) => {
-    const style = el.getAttribute("style");
-    if (!style) return;
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
 
-    let fixed = style;
+        doc.querySelectorAll("*").forEach((el) => {
+            const style = el.getAttribute("style");
+            if (!style) return;
 
-    // ✅ Fix broken background-image
-    fixed = fixed.replace(/background-image:\s*url\((.*?)\)/gi, (_, urlPart) => {
-      let cleanUrl = urlPart;
+            let fixed = style;
 
-      // remove html entities
-      cleanUrl = cleanUrl.replace(/&quot;/g, "");
+            // ✅ Fix broken background-image
+            fixed = fixed.replace(/background-image:\s*url\((.*?)\)/gi, (_, urlPart) => {
+                let cleanUrl = urlPart;
 
-      // remove garbage chars
-      cleanUrl = cleanUrl.replace(/["'=]/g, "");
+                // remove html entities
+                cleanUrl = cleanUrl.replace(/&quot;/g, "");
 
-      // remove spaces
-      cleanUrl = cleanUrl.replace(/\s+/g, "");
+                // remove garbage chars
+                cleanUrl = cleanUrl.replace(/["'=]/g, "");
 
-      // fix double https
-      cleanUrl = cleanUrl.replace(/(https?:\/\/)+/g, "https://");
+                // remove spaces
+                cleanUrl = cleanUrl.replace(/\s+/g, "");
 
-      // ensure valid url
-      if (!/^https?:\/\//i.test(cleanUrl)) {
-        cleanUrl = "https://" + cleanUrl.replace(/^\/+/, "");
-      }
+                // fix double https
+                cleanUrl = cleanUrl.replace(/(https?:\/\/)+/g, "https://");
 
-      return `background-image: url("${cleanUrl}")`;
-    });
+                // ensure valid url
+                if (!/^https?:\/\//i.test(cleanUrl)) {
+                    cleanUrl = "https://" + cleanUrl.replace(/^\/+/, "");
+                }
 
-    // ❗ remove broken attributes inside style
-    fixed = fixed.replace(/\s*[a-z-]+=""/gi, "");
+                return `background-image: url("${cleanUrl}")`;
+            });
 
-    el.setAttribute("style", fixed);
-  });
+            // ❗ remove broken attributes inside style
+            fixed = fixed.replace(/\s*[a-z-]+=""/gi, "");
 
-  return doc.body.innerHTML;
-}
+            el.setAttribute("style", fixed);
+        });
+
+        // ✅ Open all links in a new tab
+        doc.querySelectorAll("a").forEach((anchor) => {
+            anchor.setAttribute("target", "_blank");
+            anchor.setAttribute("rel", "noopener noreferrer");
+        });
+
+        return doc.body.innerHTML;
+    }
+
     if (loading) {
         return <Loader />
     }
@@ -266,8 +272,6 @@ function cleanHtml(html) {
                 <div className="w-8/12">
                     <div className="bg-white border border-gray-200 rounded-2xl p-6 flex flex-col items-center">
 
-
-
                         {/* EMAIL / TEXT PREVIEW */}
                         {selectedTemplate?.mode_of_communication === "email" && (
                             <div className="bg-white w-full max-w-full overflow-auto p-4 rounded-lg shadow-sm">
@@ -294,13 +298,12 @@ function cleanHtml(html) {
                                     </div>
                                 </div>
 
-                              <div
-  className="text-gray-800 prose prose-blue max-w-[600px] m-auto"
-  dangerouslySetInnerHTML={{
-    __html: cleanHtml(selectedTemplate?.content?.htmlContent)
-  }}
-/>
-                                {/* ✅ ONLY BLOCKS IN LOOP */}
+                                <div
+                                    className="text-gray-800 prose prose-blue max-w-[600px] m-auto"
+                                    dangerouslySetInnerHTML={{
+                                        __html: cleanHtml(selectedTemplate?.content?.htmlContent)
+                                    }}
+                                />
 
                             </div>
                         )}
@@ -359,8 +362,6 @@ function cleanHtml(html) {
                                 Select template
                             </p>
                         )}
-
-
 
                     </div>
                 </div>

@@ -631,7 +631,7 @@ const CandidateVenueDetails = () => {
                   {step.resultPercent && (
                     <div onClick={() => toggleStep(step.id, "completed")} className="mt-3 flex items-center gap-2 ">
                       {step.resultStatus && (
-                        <p className="text-green-600 text-sm font-bold mt-2">✓ {step.resultStatus}</p>
+                        <p className="text-[#027A48] text-sm font-bold mt-2">✓ {step.resultStatus}</p>
                       )}
 
                       <span className="bg-[#237FEA] text-white px-3 py-2 rounded-xl text-sm">
@@ -719,12 +719,12 @@ const CandidateVenueDetails = () => {
                     </h3>
                     <ul className="mt-4 space-y-4">
                       <li className="flex items-start gap-2">
-                        <span className="text-green-600 text-xl"><IoMdCheckmarkCircle />
+                        <span className="text-[#027A48] text-xl"><IoMdCheckmarkCircle />
                         </span>
                         <p className='font-semibold text-[16px]'>Check they are free and in a quiet space for the call</p>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="text-green-600 text-xl"><IoMdCheckmarkCircle />
+                        <span className="text-[#027A48] text-xl"><IoMdCheckmarkCircle />
                         </span>
                         <div>
                           <p className="font-semibold text-[16px]">Give them break down for the call</p>
@@ -737,11 +737,11 @@ const CandidateVenueDetails = () => {
                         </div>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="text-green-600 text-xl"><IoMdCheckmarkCircle />
+                        <span className="text-[#027A48] text-xl"><IoMdCheckmarkCircle />
                         </span>
                         <div>
                           <p className="font-semibold text-[16px]">Process</p>
-                          <span className="text-green-600">2 steps</span>
+                          <span className="text-[#027A48]">2 steps</span>
                           <ul className=" list-disc text-gray-600 mt-2">
                             <li className='list-none'>(A) Phone call</li>
                             <li className='list-none'>(B) Practical assessment - taking place next week and week after</li>
@@ -750,11 +750,11 @@ const CandidateVenueDetails = () => {
                         </div>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="text-green-600 text-xl"><IoMdCheckmarkCircle />
+                        <span className="text-[#027A48] text-xl"><IoMdCheckmarkCircle />
                         </span>
                         <div>
                           <p className="font-semibold text-[16px]">Title Name</p>
-                          <span className="text-green-600">2 steps</span>
+                          <span className="text-[#027A48]">2 steps</span>
                           <ul className=" list-disc text-gray-600 mt-2">
                             <li className='list-none'>(A) Phone call</li>
                             <li className='list-none'>(B) Practical assessment - taking place next week and week after</li>
@@ -772,7 +772,7 @@ const CandidateVenueDetails = () => {
                     </h3>
                     <div className="mt-4">
                       <div className="flex items-start gap-2">
-                        <span className="text-green-600 text-xl"><IoMdCheckmarkCircle />
+                        <span className="text-[#027A48] text-xl"><IoMdCheckmarkCircle />
                         </span>
 
                         <div>
