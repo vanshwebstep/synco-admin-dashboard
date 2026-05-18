@@ -1,14 +1,15 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { X, Search, User, Phone, ChevronRight } from "lucide-react";
 import { useGlobalSearch } from "../contexts/GlobalSearchContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
-const GlobalSearch = ({ onResultClick }) => {
+const GlobalSearch = ({ onResultClick, navigationConfig }) => {
   const { searchQuery, setSearchQuery, registeredData } = useGlobalSearch();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
   const inputRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // ── Close on outside click ──────────────────────────────────────
   useEffect(() => {
@@ -31,8 +32,8 @@ const GlobalSearch = ({ onResultClick }) => {
         item?.parents?.length
           ? item.parents
           : item?.parent?.parents?.length
-          ? item.parent.parents
-          : [];
+            ? item.parent.parents
+            : [];
 
       // Best id to navigate to: prefer parent-level id over booking id
       // because account-info page expects parent/member id
@@ -46,10 +47,10 @@ const GlobalSearch = ({ onResultClick }) => {
       const studentsList = item?.students?.length
         ? item.students
         : item?.parent?.students?.length
-        ? item.parent.students
-        : item?.student
-        ? [item.student]
-        : [];
+          ? item.parent.students
+          : item?.student
+            ? [item.student]
+            : [];
 
       const parentPhone = parentsList[0]?.parentPhoneNumber || "";
       const parentEmail = parentsList[0]?.parentEmail || "";
@@ -91,7 +92,6 @@ const GlobalSearch = ({ onResultClick }) => {
 
     return rows;
   }, [registeredData]);
-
   // ── Filter results ──────────────────────────────────────────────
   const results = useMemo(() => {
     const q = searchQuery?.trim();
@@ -121,9 +121,9 @@ const GlobalSearch = ({ onResultClick }) => {
         // ── student info ────────────────────────────────────────
         const studentInfo = _student
           ? [_student?.studentFirstName, _student?.studentLastName]
-              .filter(Boolean)
-              .join(" ")
-              .toLowerCase()
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase()
           : "";
 
         const studentAge = _student?.age != null ? String(_student.age) : "";
@@ -205,14 +205,14 @@ const GlobalSearch = ({ onResultClick }) => {
   };
 
   // ── Select handler ───────────────────────────────────────────────
+  // In GlobalSearch.jsx — update handleSelect:
   const handleSelect = (row) => {
-    const id = getRowId(row);
     const studentName = getStudentName(row);
     const parentName = getParentName(row);
     const q = searchQuery.trim();
     const matchType = getMatchType(row, q);
 
-    // Update search box text based on what was matched
+    // search box text update
     if (matchType === "student" && studentName) {
       setSearchQuery(studentName);
     } else if (/^[+\d]/.test(q)) {
@@ -223,17 +223,21 @@ const GlobalSearch = ({ onResultClick }) => {
 
     setOpen(false);
 
-    // ── Navigation logic ────────────────────────────────────────
-    if (!id) return;
-
+    // ── Custom callback (jaise pehle tha) ──
     if (onResultClick) {
-      // Custom handler passed from parent (Header)
       onResultClick(row._sourceRow, row._student);
       return;
     }
 
-    // Default navigation — go to account info page
-    navigate(`/weekly-classes/all-members/account-info?id=${id}`);
+    // ── No navigation config = sirf filter, kuch nahi ──
+    if (!navigationConfig) return;
+
+    // ── Navigate using config ──
+    const itemId = getRowId(row);
+    if (!itemId) return;
+
+    const { path, idParam = 'id' } = navigationConfig;
+    navigate(`${path}?${idParam}=${itemId}`);
   };
 
   const handleChange = (e) => {
@@ -267,7 +271,7 @@ const GlobalSearch = ({ onResultClick }) => {
     const idx = (name || "").charCodeAt(0) % colors.length;
     return colors[idx];
   };
-console.log('results',results)
+  console.log('results', results)
   return (
     <div
       ref={wrapRef}
@@ -353,11 +357,10 @@ console.log('results',results)
                           <div className="flex items-center gap-1 mt-0.5 overflow-hidden">
                             <User className="w-3 h-3 text-gray-400 flex-shrink-0" />
                             <p
-                              className={`text-[12px] truncate leading-tight font-medium ${
-                                matchType === "student"
-                                  ? "text-blue-600"
-                                  : "text-gray-500"
-                              }`}
+                              className={`text-[12px] truncate leading-tight font-medium ${matchType === "student"
+                                ? "text-blue-600"
+                                : "text-gray-500"
+                                }`}
                             >
                               {highlight(studentName, searchQuery)}
                               {age && (
@@ -368,7 +371,6 @@ console.log('results',results)
                             </p>
                           </div>
                         )}
-
                         {/* Phone on third line — no truncation risk */}
                         {phone !== "—" && (
                           <div className="flex items-center gap-1 mt-0.5">
@@ -377,7 +379,6 @@ console.log('results',results)
                           </div>
                         )}
                       </div>
-
                       {/* Arrow only */}
                       <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-blue-400 flex-shrink-0 transition-colors" />
                     </button>
@@ -391,5 +392,32 @@ console.log('results',results)
     </div>
   );
 };
-
 export default GlobalSearch;
+{/* <GlobalSearch
+  navigationConfig={{
+    path: '/weekly-classes/all-members/account-info',
+    idParam: 'id'
+  }}
+/> 
+
+// 1. All Members → account-info
+<GlobalSearch navigationConfig={{ path: '/weekly-classes/all-members/account-info', idParam: 'id' }} />
+
+// 2. Trials page → trial-account-info
+<GlobalSearch navigationConfig={{ path: '/weekly-classes/trial/account-info', idParam: 'id' }} />
+
+// 3. Birthday party → birthday-account-info  
+<GlobalSearch navigationConfig={{ path: '/birthday-party/sales/account-information', idParam: 'id' }} />
+
+// 4. Find-a-class → sirf filter, koi navigate nahi
+<GlobalSearch />
+
+// 5. Custom logic chahiye → onResultClick wala purana tarika
+<GlobalSearch
+  onResultClick={(sourceRow, student) => {
+    const id = sourceRow?.parent?.id || sourceRow?.id;
+    navigate(`/some-custom-path`, { state: { id, student } });
+  }}
+/>
+
+*/}

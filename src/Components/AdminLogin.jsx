@@ -14,7 +14,6 @@ const AdminLogin = () => {
   const [token, setToken] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tokenFromURL = params.get("token");
@@ -133,7 +132,7 @@ const AdminLogin = () => {
           const verified = await verifyToken(token);
           // console.log('🔍 Verification result:', verified);
 
-      
+
 
           setTimeout(() => {
             // console.log('➡️ Navigating to dashboard...');

@@ -481,7 +481,7 @@ const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpe
 
           {/* Search Bar */}
           {/* Search Bar */}
-          <GlobalSearch
+          {/* <GlobalSearch
             onResultClick={(sourceRow) => {
               // id nikalo — parent id prefer karo
               console.log("sourceRow",sourceRow)
@@ -498,6 +498,9 @@ const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpe
                 state: { itemId },
               });
             }}
+          /> */}
+          <GlobalSearch
+            onResultClick={() => { }}
           />
           {hasPermission && (
 

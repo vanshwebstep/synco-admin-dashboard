@@ -24,7 +24,7 @@ const customIcon = new L.Icon({
 import { showWarning } from '../../../../../utils/swalHelper';
 import { useGlobalSearch } from '../../contexts/GlobalSearchContext';
 const List = () => {
-    const { searchQuery } = useGlobalSearch();
+  const { searchQuery, registerTableData } = useGlobalSearch();
 
   const { fetchFindClasses, findClasses, loading } = useFindClass();
   const [openMapId, setOpenMapId] = useState(null);
@@ -207,8 +207,8 @@ const List = () => {
 
 
 
- const filteredClasses = Array.isArray(findClasses)
-  ? findClasses.filter((venue) => {
+  const filteredClasses = Array.isArray(findClasses)
+    ? findClasses.filter((venue) => {
       const query = searchQuery?.toLowerCase() || "";
 
       // 🔥 GLOBAL SEARCH (new)
@@ -262,7 +262,7 @@ const List = () => {
         availableMatch
       );
     })
-  : [];
+    : [];
 
 
 
@@ -475,7 +475,25 @@ const List = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+  useEffect(() => {
+    if (!findClasses?.length) return;
 
+    const shaped = findClasses.map((venue) => ({
+      id: venue.venueId,
+      parents: [
+        {
+          parentFirstName: venue.venueName || "",
+          parentLastName: venue.address || "",
+          parentPhoneNumber: "",
+          parentEmail: "",
+        },
+      ],
+      students: [], // ← empty: no per-class rows
+    }));
+
+    registerTableData(shaped);
+  }, [findClasses]);
+  
   const weekOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
   console.log('filteredClasses', filteredClasses)
@@ -733,11 +751,11 @@ const List = () => {
 
 
                                             <div className="font-bold text-[16px] text-[#282829] w-40">
-                                              Class {i + 1} 
+                                              Class {i + 1}
                                               <br />
-                                              {s?.level &&(
-                                              <span className='
-                                              text-[#717073] font-medium text-[15px]'>({s?.level})</span>
+                                              {s?.level && (
+                                                <span className='
+                                                text-[#717073] font-medium text-[15px]'>({s?.level})</span>
                                               )}
                                             </div>
 
@@ -900,11 +918,11 @@ const List = () => {
                                 ref={iconContainerRef}
                                 // ref={iconContainerRef}
                                 className="
-                                      absolute bg-opacity-30 top-15 flex items-center justify-center z-50
-                                      min-w-[200px] sm:min-w-[489px]
-                                      left-2 sm:left-auto right-2
-                                      px-2 sm:px-0
-                                    "
+                                        absolute bg-opacity-30 top-15 flex items-center justify-center z-50
+                                        min-w-[200px] sm:min-w-[489px]
+                                        left-2 sm:left-auto right-2
+                                        px-2 sm:px-0
+                                      "
                               >
                                 <div className="bg-white rounded-3xl w-full max-w-md sm:max-w-lg p-4 sm:p-6 shadow-2xl">
                                   {/* Header */}
