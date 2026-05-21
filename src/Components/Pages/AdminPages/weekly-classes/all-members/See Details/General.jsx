@@ -1780,7 +1780,7 @@ const ParentProfile = (stateData) => {
                                                     {status === 'not attended' && (
                                                         <button
                                                             onClick={handleReBooktrial}
-                                                            className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+                                                            className="w-full bg-blue-50 border border-blue-400 text-blue-600 text-[18px] rounded-xl py-3 hover:bg-blue-100 hover:shadow-md transition-all duration-300 font-medium"
                                                         >
                                                             Rebook FREE Trials
                                                         </button>
@@ -1978,13 +1978,13 @@ const ParentProfile = (stateData) => {
                                                 // ✅ Only show if trial date is *before* today
                                                 return trialDateObj < today;
                                             })() && (
-                                                <button
-                                                    onClick={() => setshowRebookTrial(true)}
-                                                    className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
-                                                >
-                                                    Rebook FREE Trial
-                                                </button>
-                                            )}
+                                                    <button
+                                                        onClick={() => setshowRebookTrial(true)}
+                                                        className="w-full bg-blue-50 border border-blue-400 text-blue-600 text-[18px] rounded-xl py-3 hover:bg-blue-100 hover:shadow-md transition-all duration-300 font-medium"
+                                                    >
+                                                        Rebook FREE Trial
+                                                    </button>
+                                                )}
                                             {location.state?.memberInfo == "cancellation" || location.state?.memberInfo == "cancelled" ? (
                                                 <button
                                                     onClick={handleReinstateMembership}

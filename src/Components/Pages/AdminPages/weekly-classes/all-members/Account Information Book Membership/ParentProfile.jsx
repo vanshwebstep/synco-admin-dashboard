@@ -1096,7 +1096,7 @@ const ParentProfile = ({ profile }) => {
                                 )}
 
                                 {/* {status !== 'pending' && status !== 'attended' && (
-                                    <button className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium">
+                                    <button className="w-full bg-green-50 border border-green-400 text-green-600 text-[18px] rounded-xl py-3 hover:bg-green-100 hover:shadow-md transition-all duration-300 font-medium">
                                         Book a Membership
                                     </button>
                                 )} */}

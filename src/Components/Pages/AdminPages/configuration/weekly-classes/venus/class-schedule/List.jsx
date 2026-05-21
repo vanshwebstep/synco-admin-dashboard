@@ -572,120 +572,91 @@ control: (provided) => ({
                                                                                     const sessionState = sessionStates[session.sessionPlanId] || {};
 
                                                                                     return (
-                                                                                        <div
-                                                                                            key={session.id}
-                                                                                            className="flex justify gap-4 items-start md:items-center border-b border-gray-300 mb-3 px-4 md:px-8 py-3"
-                                                                                        >
-                                                                                            {/* Title and Date */}
-                                                                                            <div className="flex flex-col md:flex-row items-start md:items-center gap-1 md:gap-2 text-sm">
-                                                                                                <span className="text-[15px] font-semibold truncate md:min-w-[250px]">
-                                                                                                    {session?.sessionPlan?.groupName || 'N/A'}
-                                                                                                </span>
-                                                                                                <span className="text-[15px] text-gray-600 truncate md:min-w-[200px]">
-                                                                                                    {new Date(session.sessionDate).toLocaleDateString("en-GB", {
-                                                                                                        weekday: "long",
-                                                                                                        day: "2-digit",
-                                                                                                        month: "2-digit",
-                                                                                                        year: "numeric",
-                                                                                                    })}
-                                                                                                </span>
-                                                                                            </div>
+                                                                                       <div
+    key={session.id}
+    className="flex items-center border-b border-gray-300 mb-3 px-4 md:px-8 py-3 gap-4"
+>
+    {/* Name - fixed width */}
+    <span className="text-[15px] font-semibold w-[320px] min-w-[20px] truncate">
+        {session?.sessionPlan?.groupName || 'N/A'}
+    </span>
 
-                                                                                            {/* Status */}
-                                                                                            <div className="flex items-center gap-2 text-sm">
-                                                                                                <span className="rounded-full flex items-center gap-2 font-medium capitalize text-[15px] md:min-w-[120px]">
-                                                                                                    {session?.sessionPlan?.status === "pending" && (
-                                                                                                        <img src="/images/icons/pending.png" className="w-4 h-4" alt="Pending" />
-                                                                                                    )}
-                                                                                                    {session?.sessionPlan?.status === "completed" && (
-                                                                                                        <img src="/images/icons/complete.png" className="w-4 h-4" alt="Complete" />
-                                                                                                    )}
-                                                                                                    {session?.sessionPlan?.status === "cancelled" && (
-                                                                                                        <img src="/images/icons/cancel.png" className="w-4 h-4" alt="Cancelled" />
-                                                                                                    )}
-                                                                                                    {session?.sessionPlan?.status || (
-                                                                                                        <>
-                                                                                                            <img src="/images/icons/pending.png" className="w-4 h-4 inline" alt="Pending" /> Pending
-                                                                                                        </>
-                                                                                                    )}
-                                                                                                </span>
-                                                                                            </div>
+    {/* Date - fixed width */}
+    <span className="text-[15px] text-gray-600 w-[180px] min-w-[180px]">
+        {new Date(session.sessionDate).toLocaleDateString("en-GB", {
+            weekday: "long",
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+        })}
+    </span>
 
-                                                                                            {/* Action Buttons */}
-                                                                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full md:w-auto">
-                                                                                                {sessionMaps && (
-                                                                                                    <button
-                                                                                                        onClick={() =>
-                                                                                                            navigate('/configuration/weekly-classes/venues/class-schedule/Sessions/viewSessions', {
-                                                                                                                state: {
-                                                                                                                    singleClassSchedules,
-                                                                                                                    sessionMap: session.sessionPlan,
-                                                                                                                    sessionId: session.sessionPlanId,
-                                                                                                                    venueId,
-                                                                                                                    sessionDate: session.sessionDate,
-                                                                                                                    classname: item,
-                                                                                                                    statusIs: session?.sessionPlan?.status,
-                                                                                                                },
-                                                                                                            })
-                                                                                                        }
-                                                                                                        className="px-4 py-3 bg-[#237FEA] text-white font-semibold rounded-xl shadow hover:shadow-lg hover:scale-[1.03] transition-all duration-300"
-                                                                                                    >
-                                                                                                        View Session Plan
-                                                                                                    </button>
-                                                                                                )}
+    {/* Status - fixed width */}
+    <span className="flex items-center gap-2 font-medium capitalize text-[15px] w-[120px] min-w-[120px]">
+        {session?.sessionPlan?.status === "pending" && (
+            <img src="/images/icons/pending.png" className="w-4 h-4" alt="Pending" />
+        )}
+        {session?.sessionPlan?.status === "completed" && (
+            <img src="/images/icons/complete.png" className="w-4 h-4" alt="Complete" />
+        )}
+        {session?.sessionPlan?.status === "cancelled" && (
+            <img src="/images/icons/cancel.png" className="w-4 h-4" alt="Cancelled" />
+        )}
+        {session?.sessionPlan?.status || (
+            <>
+                <img src="/images/icons/pending.png" className="w-4 h-4 inline" alt="Pending" /> Pending
+            </>
+        )}
+    </span>
 
-                                                                                                <button
-                                                                                                    onClick={() =>
-                                                                                                        navigate(`/configuration/weekly-classes/venues/class-schedule/Sessions/completed?id=${item.id}`, {
-                                                                                                            state: {
-                                                                                                                singleClassSchedules,
-                                                                                                                sessionMap: session.sessionPlan,
-                                                                                                                sessionId: session.sessionPlanId,
-                                                                                                                venueId,
-                                                                                                                sessionDate: session.sessionDate,
-                                                                                                                classname: item,
-                                                                                                                statusIs: session?.sessionPlan?.status,
+    {/* Buttons - pushed to the right, fixed widths */}
+    <div className="flex items-center gap-3 ml-auto flex-shrink-0">
+        {sessionMaps && (
+            <button
+                onClick={() => navigate('/configuration/weekly-classes/venues/class-schedule/Sessions/viewSessions', {
+                    state: { singleClassSchedules, sessionMap: session.sessionPlan, sessionId: session.sessionPlanId, venueId, sessionDate: session.sessionDate, classname: item, statusIs: session?.sessionPlan?.status },
+                })}
+                className="px-4 py-2 bg-[#237FEA] text-white font-semibold rounded-xl hover:shadow-lg hover:scale-[1.03] transition-all duration-300 whitespace-nowrap"
+            >
+                View Session Plan
+            </button>
+        )}
 
-                                                                                                            },
-                                                                                                        })
-                                                                                                    }
-                                                                                                    className="hover:bg-blue-500 font-semibold bg-white text-blue-500 border-2 hover:border-transparent border-blue-500 text-[15px] hover:text-white px-3 py-2 rounded-xl transition"
-                                                                                                >
-                                                                                                    View Class Register
-                                                                                                </button>
+        <button
+            onClick={() => navigate(`/configuration/weekly-classes/venues/class-schedule/Sessions/completed?id=${item.id}`, {
+                state: { singleClassSchedules, sessionMap: session.sessionPlan, sessionId: session.sessionPlanId, venueId, sessionDate: session.sessionDate, classname: item, statusIs: session?.sessionPlan?.status },
+            })}
+            className="px-4 py-2 font-semibold bg-white text-blue-500 border-2 border-blue-500 hover:bg-blue-500 hover:text-white rounded-xl transition whitespace-nowrap"
+        >
+            View Class Register
+        </button>
 
-                                                                                                {cancelSession && (
-                                                                                                    <button
-                                                                                                        onClick={() => {
-                                                                                                            console.log("session:", session);
-                                                                                                            console.log("session.classScheduleTermMaps:", session?.classScheduleTermMaps);
-
-                                                                                                            navigate("/configuration/weekly-classes/venues/class-schedule/Sessions/cancel", {
-                                                                                                                state: {
-                                                                                                                    statusIs: session?.sessionPlan?.status,
-                                                                                                                    classScheduleId: session?.sessionPlan?.classScheduleId,
-                                                                                                                    cancelSession: session?.sessionPlan?.cancelSession,
-                                                                                                                    sessionDate: session.sessionDate,
-                                                                                                                    sessionId: session?.sessionPlan?.mapId || session?.sessionPlanId,
-                                                                                                                    schedule: item,
-                                                                                                                    cancelled: session?.sessionPlan?.status === "cancelled",
-                                                                                                                },
-                                                                                                            });
-                                                                                                        }}
-
-                                                                                                        className={`font-semibold text-[15px] px-3 py-2 rounded-xl transition
-          ${session?.sessionPlan?.status === "cancelled"
-                                                                                                                ? "bg-white w-fit text-[#FE7058] border-2 border-[#FE7058] hover:bg-[#FE7058] hover:text-white"
-                                                                                                                : "bg-[#FE7058] text-white border-2 border-transparent hover:bg-white hover:text-[#FE7058] hover:border-[#FE7058]"
-                                                                                                            }`}
-                                                                                                    >
-                                                                                                        {session?.sessionPlan?.status === "cancelled"
-                                                                                                            ? "See details"
-                                                                                                            : "Cancel Session"}
-                                                                                                    </button>
-                                                                                                )}
-                                                                                            </div>
-                                                                                        </div>
+        {cancelSession && (
+            <button
+                onClick={() => {
+                    navigate("/configuration/weekly-classes/venues/class-schedule/Sessions/cancel", {
+                        state: {
+                            statusIs: session?.sessionPlan?.status,
+                            classScheduleId: session?.sessionPlan?.classScheduleId,
+                            cancelSession: session?.sessionPlan?.cancelSession,
+                            sessionDate: session.sessionDate,
+                            sessionId: session?.sessionPlan?.mapId || session?.sessionPlanId,
+                            schedule: item,
+                            cancelled: session?.sessionPlan?.status === "cancelled",
+                        },
+                    });
+                }}
+                className={`font-semibold text-[15px] px-4 py-2 rounded-xl transition whitespace-nowrap
+                    ${session?.sessionPlan?.status === "cancelled"
+                        ? "bg-white text-[#FE7058] border-2 border-[#FE7058] hover:bg-[#FE7058] hover:text-white"
+                        : "bg-[#FE7058] text-white border-2 border-transparent hover:bg-white hover:text-[#FE7058] hover:border-[#FE7058]"
+                    }`}
+            >
+                {session?.sessionPlan?.status === "cancelled" ? "See details" : "Cancel Session"}
+            </button>
+        )}
+    </div>
+</div>
                                                                                     );
                                                                                 });
                                                                             })()}

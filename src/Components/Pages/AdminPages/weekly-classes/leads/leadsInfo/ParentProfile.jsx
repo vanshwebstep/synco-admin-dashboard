@@ -753,7 +753,7 @@ const ParentProfile = (fetchedData) => {
 
               <button
                 type="button"
-                className="w-full bg-[#237FEA] text-white my-3 text-[18px] py-3 rounded-xl font-medium hover:bg-blue-600 transition flex items-center justify-center"
+                className="w-full bg-blue-50 border border-[#237FEA] text-[#237FEA] rounded-xl py-3 text-[18px] font-semibold hover:shadow-md transition-all duration-300"
                 onClick={() => setShowFreeTrialPopup(true)}
               >
                 Book A Free Trial
@@ -787,7 +787,7 @@ const ParentProfile = (fetchedData) => {
 
               <button
                 type="button"
-                className="w-full bg-[#237FEA] text-white my-3 text-[18px] py-3 rounded-xl font-medium hover:bg-blue-600 transition flex items-center justify-center"
+                className="w-full bg-green-50 border border-green-400 text-green-600 text-[18px] rounded-xl py-3 hover:bg-green-100 hover:shadow-md transition-all duration-300 font-medium"
                 onClick={() => setShowMembershipPopup(true)}
               >
                 Book A Membership

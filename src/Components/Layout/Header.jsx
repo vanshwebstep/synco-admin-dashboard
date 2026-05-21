@@ -358,11 +358,9 @@ const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpe
 
 
 
-  console.log('adminInfo in header', adminInfo.role.role)
   return (
     <>
-      {/* HEADER */}
-      {/* HEADER */}
+
       <header className={`flex flex-col lg:flex-row justify-between items-start lg:items-center py-4  bg-gray-50  gap-4 lg:gap-0 ${location.pathname.includes("/members/List") ? "px-8" : ""}`}>
 
         {/* Desktop LEFT: Greeting + Welcome */}
@@ -481,27 +479,7 @@ const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpe
 
           {/* Search Bar */}
           {/* Search Bar */}
-          {/* <GlobalSearch
-            onResultClick={(sourceRow) => {
-              // id nikalo — parent id prefer karo
-              console.log("sourceRow",sourceRow)
-              const itemId =
-                sourceRow?.parent?.id ||
-                sourceRow?.id ||
-                sourceRow?.parent?.bookingId ||
-                sourceRow?.bookingId;
-
-              if (!itemId) return;
-
-              // State mein bhejo + navigate
-              navigate(`/weekly-classes/all-members/account-info`, {
-                state: { itemId },
-              });
-            }}
-          /> */}
-          <GlobalSearch
-            onResultClick={() => { }}
-          />
+          <GlobalSearch />
           {hasPermission && (
 
             <div

@@ -638,7 +638,7 @@ const ParentProfile = ({ ParentProfile }) => {
 
 
                     </div>
-                    {status !== 'casdsncelled' && (
+                    {status !== 'cancelled' && (
                         <>
                             <div className="bg-white rounded-3xl p-6  space-y-4 mt-4 mt-4">
 
@@ -658,7 +658,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                 {status == 'cancelled' && (
                                     <button
                                         onClick={() => setshowRebookTrial(true)}
-                                        className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+                                        className="w-full bg-blue-50 border border-blue-400 text-blue-600 text-[18px] rounded-xl py-3 hover:bg-blue-100 hover:shadow-md transition-all duration-300 font-medium"
                                     >
                                         Reactivate Membership
                                     </button>
@@ -674,13 +674,13 @@ const ParentProfile = ({ ParentProfile }) => {
                                     <>
                                         <button
                                             onClick={() => setshowCancelTrial(true)}
-                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                            className="w-full bg-green-50 border border-green-400 text-green-600 text-[18px] rounded-xl py-3 hover:bg-green-100 hover:shadow-md transition-all duration-300 font-medium"
                                         >
                                             Freeze Membership
                                         </button>
                                         <button
                                             onClick={() => setshowCancelTrial(true)}
-                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                            className="w-full bg-green-50 border border-green-400 text-green-600 text-[18px] rounded-xl py-3 hover:bg-green-100 hover:shadow-md transition-all duration-300 font-medium"
                                         >
                                             Transfer Class
                                         </button>
@@ -695,7 +695,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                         )}
 
                                         {status !== 'request_to_cancel' && status !== 'cancelled' && (
-                                            <button className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium">
+                                            <button className="w-full bg-green-50 border border-green-400 text-green-600 text-[18px] rounded-xl py-3 hover:bg-green-100 hover:shadow-md transition-all duration-300 font-medium">
                                                 Book a Membership
                                             </button>
                                         )}

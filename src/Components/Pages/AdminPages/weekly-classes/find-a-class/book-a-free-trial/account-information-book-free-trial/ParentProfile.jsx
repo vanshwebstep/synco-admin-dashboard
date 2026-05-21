@@ -909,7 +909,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                     })() && (
                                         <button
                                             onClick={() => setshowRebookTrial(true)}
-                                            className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+                                            className="w-full bg-blue-50 border border-blue-400 text-blue-600 text-[18px] rounded-xl py-3 hover:bg-blue-100 hover:shadow-md transition-all duration-300 font-medium"
                                         >
                                             Rebook FREE Trial
                                         </button>
@@ -920,7 +920,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                 {status === 'not attended' && (
                                     <button
                                         onClick={handleReBooktrial}
-                                        className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+                                        className="w-full bg-blue-50 border border-blue-400 text-blue-600 text-[18px] rounded-xl py-3 hover:bg-blue-100 hover:shadow-md transition-all duration-300 font-medium"
                                     >
                                         Rebook FREE Trial
                                     </button>
@@ -956,7 +956,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                 {/* {(status === "attended" || (status === "request_to_cancel" && canCancelTrial)) && ( */}
                                 {/* <button
                                     onClick={() => setTransferVenue(true)}
-                                    className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                    className="w-full bg-green-50 border border-green-400 text-green-600 text-[18px] rounded-xl py-3 hover:bg-green-100 hover:shadow-md transition-all duration-300 font-medium"
                                 >
                                     Transfer Class
                                 </button> */}

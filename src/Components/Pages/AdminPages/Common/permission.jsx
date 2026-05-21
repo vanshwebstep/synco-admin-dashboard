@@ -8,15 +8,18 @@ export const PermissionProvider = ({ children }) => {
   const checkPermission = useCallback(({ module, action }) => {
     const stored = JSON.parse(localStorage.getItem("hasPermission") || "[]");
 
+ 
     if (!module || !action || !Array.isArray(stored)) {
       return false;
     }
-
+console.log()
     const result = stored.some(
       (perm) =>
         perm.module?.toLowerCase() === module.toLowerCase() &&
         perm.action?.toLowerCase() === action.toLowerCase()
     );
+
+ 
     return result;
   }, []);
 

@@ -43,6 +43,105 @@ const ViewSessions = ({ item, sessionData }) => {
         }
     }, [API_BASE_URL, id]);
 
+
+    const [students, setStudents] = useState([]);
+    // REMOVE THIS
+    // const [students, setStudents] = useState([]);
+
+    const handleAbilityChange = async (
+        studentId,
+        value,
+        tabKey,
+        groupIndex,
+        attendance
+    ) => {
+        // Optimistic UI update
+        setData((prev) => {
+            if (!prev) return prev;
+
+            const updatedData = { ...prev };
+
+            const section = updatedData?.[tabKey?.toLowerCase()];
+
+            if (!section) return prev;
+
+            updatedData[tabKey.toLowerCase()] = section.map((group, gIdx) => {
+                if (gIdx !== groupIndex) return group;
+
+                return {
+                    ...group,
+                    students: group.students.map((student) =>
+                        student.id === studentId
+                            ? {
+                                ...student,
+                                abilityLevel: value,
+                            }
+                            : student
+                    ),
+                };
+            });
+
+            return updatedData;
+        });
+
+        // API Call
+        await updateAbility(studentId, value,attendance);
+    };
+
+    const updateAbility = async (studentId, abilityLevel,attendance) => {
+        try {
+            const token = localStorage.getItem("adminToken");
+
+            if (!token) {
+                throw new Error("Token not found");
+            }
+
+            showLoading("Updating ability level...");
+
+            const response = await fetch(
+                `${API_BASE_URL}/api/admin/class-schedule/attendance/${studentId}`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        abilityLevel,
+                        attendance
+                    }),
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`Request failed with status ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            ThemeSwal.close();
+
+            if (result?.status) {
+                showSuccess("Ability level updated!");
+                fetchData("noloading");
+            } else {
+                showError(
+                    "Failed to update ability level",
+                    result?.message || "Something went wrong"
+                );
+            }
+        } catch (error) {
+            ThemeSwal.close();
+
+            showError(
+                "Error",
+                error?.message || "Something went wrong"
+            );
+
+            console.error("Error updating ability:", error);
+        }
+    };
+
     useEffect(() => {
         fetchData();
     }, [fetchData]);
@@ -115,6 +214,7 @@ const ViewSessions = ({ item, sessionData }) => {
             console.error("Error updating attendance:", error);
         }
     };
+
     useEffect(() => {
         if (!loading && scrollRef.current) {
             const savedPosition = sessionStorage.getItem("viewSessionScroll");
@@ -151,8 +251,27 @@ const ViewSessions = ({ item, sessionData }) => {
                                 <span className="font-semibold text-[14px]">
                                     {student?.age || "-"} Years
                                 </span>
-                            </div>
 
+                            </div>
+                            <select
+                                value={student?.abilityLevel || ""}
+                                onChange={(e) =>
+                                    handleAbilityChange(
+                                        student.id,
+                                        e.target.value,
+                                        tabKey,
+                                        gIndex,
+                                        student?.attendance
+                                    )
+                                }
+                                className="border border-gray-300 text-gray-500 rounded-md px-2 py-1 text-[14px] font-semibold outline-none"
+                            >
+                                <option value="">Select Ability</option>
+                                <option value="Beginner">Beginner</option>
+                                <option value="Intermediate">Intermediate</option>
+                                <option value="Advanced">Advanced</option>
+                                <option value="Pro">Pro</option>
+                            </select>
                             {/* Attendance Status */}
                             <div className="md:flex space-y-2 md:space-y-0 items-center gap-2">
                                 {/* ✅ Attended button */}

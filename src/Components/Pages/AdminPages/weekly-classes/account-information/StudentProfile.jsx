@@ -1618,14 +1618,14 @@ const StudentProfile = ({ profile }) => {
               {status !== "active" ? (
                 <button
                   onClick={handleRenewBirthdayPackage}
-                  className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700"
+                  className="w-full bg-green-50 border border-green-400 text-green-600 text-[18px] rounded-xl py-3 hover:bg-green-100 hover:shadow-md transition-all duration-300 font-medium"
                 >
                   Renew Package
                 </button>
               ) : (
                 <button
                   onClick={handleCancelBirthdayPackage}
-                  className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 font-medium hover:bg-[#FF6C6C] hover:text-white"
+                  className="w-full bg-red-50 border border-red-400 text-red-600 text-[18px] rounded-xl py-3 hover:bg-red-100 hover:shadow-md transition-all duration-300 font-medium"
                 >
                   Cancel Package
                 </button>
@@ -1804,14 +1804,14 @@ const StudentProfile = ({ profile }) => {
                 {status !== "active" ? (
                   <button
                     onClick={handleRenewPackage}
-                    className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+                    className="w-full bg-blue-50 border border-blue-400 text-blue-600 text-[18px] rounded-xl py-3 hover:bg-blue-100 hover:shadow-md transition-all duration-300 font-medium"
                   >
                     Renew Package
                   </button>
                 ) : (
                   <button
                     onClick={handleCancelPackage}
-                    className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 font-medium hover:bg-[#FF6C6C] hover:text-white hover:shadow-md transition-shadow duration-300"
+                    className="w-full bg-red-50 border border-red-400 text-red-600 text-[18px] rounded-xl py-3 hover:bg-red-100 hover:shadow-md transition-all duration-300 font-medium"
                   >
                     Cancel Package
                   </button>
@@ -2393,7 +2393,7 @@ const StudentProfile = ({ profile }) => {
                           {status === 'waiting list' && canCancelTrial && (
                             <button
                               onClick={() => setRemoveWaiting(true)}
-                              className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                              className="w-full bg-green-50 border border-green-400 text-green-600 text-[18px] rounded-xl py-3 hover:bg-green-100 hover:shadow-md transition-all duration-300 font-medium"
                             >
                               Remove Waiting List
                             </button>
@@ -2414,7 +2414,7 @@ const StudentProfile = ({ profile }) => {
                           {requestToCancelStudents?.length > 0 && canCancelTrial && (
                             <button
                               onClick={() => openRevertPopup(id, students)}
-                              className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                              className="w-full bg-green-50 border border-green-400 text-green-600 text-[18px] rounded-xl py-3 hover:bg-green-100 hover:shadow-md transition-all duration-300 font-medium"
                             >
                               Revert Membership
                             </button>
@@ -2423,7 +2423,7 @@ const StudentProfile = ({ profile }) => {
                           {!profile?.paymentPlan && profile?.classSchedule?.capacity !== 0 && status !== 'active' && status !== "request_to_cancel" && (
                             <button
                               onClick={handleBookMembership}
-                              className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                              className="w-full bg-green-50 border border-green-400 text-green-600 text-[18px] rounded-xl py-3 hover:bg-green-100 hover:shadow-md transition-all duration-300 font-medium"
                             >
                               Book a Membership
                             </button>

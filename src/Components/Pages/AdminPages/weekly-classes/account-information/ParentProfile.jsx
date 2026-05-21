@@ -1358,14 +1358,14 @@ const ParentProfile = ({ profile: rawProfile }) => {
                             {status !== "active" ? (
                                 <button
                                     onClick={handleRenewBirthdayPackage}
-                                    className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700"
+                                    className="w-full bg-blue-50 border border-blue-400 text-blue-600 text-[18px] rounded-xl py-3 hover:bg-blue-100 hover:shadow-md transition-all duration-300 font-medium"
                                 >
                                     Renew Package
                                 </button>
                             ) : (
                                 <button
                                     onClick={handleCancelBirthdayPackage}
-                                    className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 font-medium hover:bg-[#FF6C6C] hover:text-white"
+                                    className="w-full bg-red-50 border border-red-400 text-red-600 text-[18px] rounded-xl py-3 hover:bg-red-100 hover:shadow-md transition-all duration-300 font-medium"
                                 >
                                     Cancel Package
                                 </button>
@@ -1522,14 +1522,14 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                 {status !== "active" ? (
                                     <button
                                         onClick={handleRenewPackage}
-                                        className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+                                        className="w-full bg-blue-50 border border-blue-400 text-blue-600 text-[18px] rounded-xl py-3 hover:bg-blue-100 hover:shadow-md transition-all duration-300 font-medium"
                                     >
                                         Renew Package
                                     </button>
                                 ) : (
                                     <button
                                         onClick={handleCancelPackage}
-                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 font-medium hover:bg-[#FF6C6C] hover:text-white hover:shadow-md transition-shadow duration-300"
+                                        className="w-full bg-red-50 border border-red-400 text-red-600 text-[18px] rounded-xl py-3 hover:bg-red-100 hover:shadow-md transition-all duration-300 font-medium"
                                     >
                                         Cancel Package
                                     </button>
@@ -2064,7 +2064,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                                     {status == "frozen" && (
                                                         <button
                                                             onClick={() => setReactivateMembership(true)}
-                                                            className="w-full bg-blue-50 border border-[#237FEA] text-[#237FEA] rounded-xl py-3 text-[18px] font-semibold hover:bg-[#237FEA] hover:text-white hover:shadow-md transition-all duration-300"
+                                                            className="w-full bg-blue-50 border border-[#237FEA] text-[#237FEA] rounded-xl py-3 text-[18px] font-semibold  hover:text-white hover:shadow-md transition-all duration-300"
                                                         >
                                                             Reactivate Membership
                                                         </button>
@@ -2106,7 +2106,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                                     {requestToCancelStudents?.length > 0 && canCancelTrial && (
                                                         <button
                                                             onClick={() => openRevertPopup(id, students)}
-                                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                                            className="w-full bg-green-50 border border-green-400 text-green-600 text-[18px] rounded-xl py-3 hover:bg-green-100 hover:shadow-md transition-all duration-300 font-medium"
                                                         >
                                                             Revert Membership
                                                         </button>
@@ -2115,7 +2115,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                                     {!profile?.paymentPlan && profile?.classSchedule?.capacity !== 0 && status !== 'active' && status !== "request_to_cancel" && (
                                                         <button
                                                             onClick={handleBookMembership}
-                                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                                            className="w-full bg-green-50 border border-green-400 text-green-600 text-[18px] rounded-xl py-3 hover:bg-green-100 hover:shadow-md transition-all duration-300 font-medium"
                                                         >
                                                             Book a Membership
                                                         </button>
@@ -2377,7 +2377,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
 
                                 {/* Button */}
                                 <div className="justify-end flex gap-4 pt-4">
-                                        <button
+                                    <button
                                         className="w-1/2 bg-[#12B76A] text-white rounded-xl py-3 text-[18px] font-semibold hover:bg-[#0E9456] hover:shadow-md transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                                         disabled={waitingListData.selectedStudents.length === 0}
                                         onClick={() => {

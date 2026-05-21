@@ -696,7 +696,7 @@ const StudentProfile = ({ profile }) => {
                                 {(status === "frozen" || status === "cancelled") && canRebooking && (
                                     <button
                                         onClick={() => setReactivateMembership(true)}
-                                        className="w-full bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-medium hover:bg-blue-700 hover:shadow-md transition-shadow duration-300"
+                                        className="w-full bg-blue-50 border border-blue-400 text-blue-600 text-[18px] rounded-xl py-3 hover:bg-blue-100 hover:shadow-md transition-all duration-300 font-medium"
                                     >
                                         Reactivate Membership
                                     </button>
@@ -719,7 +719,7 @@ const StudentProfile = ({ profile }) => {
                                 {status == 'active' && canCancelTrial && (
                                     <button
                                         onClick={() => setFreezeMembership(true)}
-                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                        className="w-full bg-green-50 border border-green-400 text-green-600 text-[18px] rounded-xl py-3 hover:bg-green-100 hover:shadow-md transition-all duration-300 font-medium"
                                     >
                                         Freeze Membership
                                     </button>
@@ -727,7 +727,7 @@ const StudentProfile = ({ profile }) => {
                                 {status == 'active' && canCancelTrial && (
                                     <button
                                         onClick={() => setTransferVenue(true)}
-                                        className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                        className="w-full bg-green-50 border border-green-400 text-green-600 text-[18px] rounded-xl py-3 hover:bg-green-100 hover:shadow-md transition-all duration-300 font-medium"
                                     >
                                         Transfer Class
                                     </button>
@@ -742,14 +742,14 @@ const StudentProfile = ({ profile }) => {
 
                                         <button
                                             onClick={() => setRemoveWaiting(true)}
-                                            className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                            className="w-full bg-green-50 border border-green-400 text-green-600 text-[18px] rounded-xl py-3 hover:bg-green-100 hover:shadow-md transition-all duration-300 font-medium"
                                         >
                                             Remove Waiting List
                                         </button>
                                         {!profile?.paymentPlans?.length && profile?.classSchedule?.capacity !== 0 && (
                                             <button
                                                 onClick={handleBookMembership}
-                                                className="w-full border border-gray-300 text-[#717073] text-[18px] rounded-xl py-3 hover:shadow-md transition-shadow duration-300 font-medium"
+                                                className="w-full bg-green-50 border border-green-400 text-green-600 text-[18px] rounded-xl py-3 hover:bg-green-100 hover:shadow-md transition-all duration-300 font-medium"
                                             >
                                                 Book a Membership
                                             </button>

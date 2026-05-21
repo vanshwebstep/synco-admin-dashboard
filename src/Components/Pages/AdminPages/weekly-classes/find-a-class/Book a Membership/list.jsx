@@ -9,7 +9,7 @@ import { evaluate } from "mathjs";
 import PhoneInput from "react-phone-input-2";
 import DatePicker from "react-datepicker";
 import Select from "react-select";
-import { ChevronDown, ChevronUp, Info, CheckCircle2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Info, CheckCircle2, Clock, CreditCard } from "lucide-react";
 import { getNames } from "country-list";
 
 import PlanTabs from "../PlanTabs";
@@ -46,6 +46,20 @@ const IS_SANDBOX = import.meta.env.VITE_PAYMENT_ENV === "sandbox";
 const List = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSizeChartOpen, setIsSizeChartOpen] = useState(false);
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === "Escape") {
+                setIsSizeChartOpen(false);
+            }
+        };
+        if (isSizeChartOpen) {
+            window.addEventListener("keydown", handleKeyDown);
+        }
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isSizeChartOpen]);
+
     const { createBookMembership, createBookMembershipByfreeTrial, submitAllComments, createBookMembershipbyCancellation, createBookMembershipByWaitingList, isBooked, setIsBooked } = useBookFreeTrial()
     const [selectedVenue, setSelectedVenue] = useState(null);
     const [selectedClassId, setSelectedClassId] = useState(null);
@@ -67,6 +81,9 @@ const List = () => {
     const [step, setStep] = useState(1);
     const { keyInfoData, fetchKeyInfo } = useMembers();
     const token = localStorage.getItem("adminToken");
+    const role = localStorage.getItem("role");
+
+    console.log('role', role)
     const [isDiscountLoading, setIsDiscountLoading] = useState(false);
     const { adminInfo, setAdminInfo } = useNotification();
     const [country, setCountry] = useState("uk");
@@ -359,7 +376,6 @@ const List = () => {
     const img2Ref = useRef(null);
     const [showPopup, setShowPopup] = useState(false);
     const [directDebitData, setDirectDebitData] = useState([]);
-    console.log("location.state", location.state);
     const formatTimeAgo = (timestamp) => {
         const now = new Date();
         const past = new Date(timestamp);
@@ -481,8 +497,6 @@ const List = () => {
     const allClasses = Array.isArray(singleClassSchedulesOnly?.venueClasses)
         ? singleClassSchedulesOnly.venueClasses
         : [];
-    console.log('allClasses', allClasses)
-    console.log('classesWithCapacity', classesWithCapacity)
     const handleStudentClassChange = (index, selectedOption) => {
         setStudents((prev) => {
             const updated = [...prev];
@@ -492,23 +506,20 @@ const List = () => {
                     ...updated[index],
                     selectedClassId: null,
                     selectedClassData: null,
-                    error: null
+                    error: null,
                 };
                 return updated;
             }
 
-            const selectedClass = allClasses.find(
-                (cls) => cls.id === selectedOption.value
-            );
+            const selectedClass = allClasses.find((cls) => cls.id === selectedOption.value);
 
-            // 🚨 Capacity 0 case
-            // 🚨 Capacity 0 case
-            if (selectedClass?.capacity === 0 &&
-                selectedOption.value !== updated[index].initialClassId &&
-                selectedOption.value !== updated[index].selectedClassId) {
-
+            // No-capacity check
+            if (
+                selectedClass?.capacity === 0 &&
+                selectedOption.value !== updated[index].initialClassId  // ← removed the third condition
+            ) {
                 if (comesFrom === "cancellation") {
-                    // Show inline error — do not navigate to waiting list
+                    // Show inline error — do not navigate
                     updated[index] = {
                         ...updated[index],
                         selectedClassId: selectedOption.value,
@@ -532,21 +543,22 @@ const List = () => {
                                 emergencyData: emergency,
                                 selectedClassData: selectedClass,
                                 selectedStudentIndex: index,
-                                comesFrom: 'membership',
+                                comesFrom: "membership",
                                 mainBookingId: mainBookingId,
-                            }
+                            },
                         });
                     }
                 });
 
                 return prev; // don't update selection
             }
-            // ✅ Normal case
+
+            // Normal case
             updated[index] = {
                 ...updated[index],
                 selectedClassId: selectedOption.value,
                 selectedClassData: selectedClass,
-                error: null
+                error: null,
             };
 
             return updated;
@@ -576,6 +588,7 @@ const List = () => {
 
     const isEmpty =
         comesFrom === "" || comesFrom === null || comesFrom === undefined;
+
 
     const venueClassOptions = !isEmpty
         ? allClasses?.map((cls) => ({ value: cls.id, label: cls.className }))
@@ -787,9 +800,7 @@ const List = () => {
 
         return true;
     };
-    console.log('membershipPlan', membershipPlan, selectedDate)
-    console.log('validationCheck', validationCheck)
-    console.log('errros', errors, fieldErrors)
+
     const month = currentDate.getMonth();
     const year = currentDate.getFullYear();
     const hasInitialized = useRef(false);
@@ -823,7 +834,7 @@ const List = () => {
     const isBankInvalid =
         isFranchisee && (
             !payment.account_holder_name || !payment.firstName ||
-            !payment.account_number || !payment.branch_code
+            !payment.account_number || !payment.branch_code || !payment.line1 || !payment.city || !payment.postalCode
         );
 
     const formatDate = (dateStr) => {
@@ -839,7 +850,6 @@ const List = () => {
     };
 
 
-    console.log('errrors', errors)
     const getDaysArray = () => {
         const startDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -1032,14 +1042,12 @@ const List = () => {
     // ─────────────────────────────────────────────────────────────────────────
 
     const handleAfterBooking = async (result) => {
-        console.log("Booking successful, now submitting comments if any...", result);
         const types = {
             commentType: "paid",
             serviceType: "weekly class"
         };
         try {
-            console.log("Submitting comments tempComments:", tempComments);
-            console.log("Submitting comments parentAdminId:", result?.data);
+
             if (tempComments.length > 0 && result?.data?.parentAdminId) {
 
                 await submitAllComments(tempComments, result.data.parentAdminId, types);
@@ -1050,7 +1058,6 @@ const List = () => {
         }
     };
     const handleSubmit = async (finalpayload) => {
-        console.log('finalpayload', finalpayload)
         const filteredPayment = Object.fromEntries(
             Object.entries(payment || {}).filter(
                 ([, value]) => value !== null && value !== "" && value !== undefined
@@ -1096,6 +1103,9 @@ const List = () => {
                         authorise: filteredPayment.authorise,
                         price: breakdown.nextMonthPayment,
                         proRataAmount: proRataToSend,
+                        line1: filteredPayment.line1,
+                        city: filteredPayment.city,
+                        postcode: filteredPayment.postalCode,
                     }
                     : {
                         paymentType: "accesspaysuite",
@@ -1195,7 +1205,6 @@ const List = () => {
             }
 
             // ✅ SINGLE POINT PE COMMENTS HIT
-            console.log("Booking successful, now submitting comments if any...", res);
             await handleAfterBooking(res);
             navigate(`/weekly-classes/all-members/list`);
         }
@@ -1206,7 +1215,6 @@ const List = () => {
             setStudentRemoved(false);
         }
 
-        // console.log("Final Payload:", JSON.stringify(payload, null, 2));
         // send to API with fetch/axios
     };
 
@@ -1254,7 +1262,6 @@ const List = () => {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [activePopup]);
 
-    useEffect(() => { console.log("Emergency STATE:", emergency); }, [emergency]);
 
     useEffect(() => {
         if (singleClassSchedulesOnly?.venue?.paymentGroups?.length > 0) {
@@ -1467,7 +1474,7 @@ const List = () => {
                 starterDiscountAmount = Number(appliedDiscount.data.discountAmount || 0);
         }
 
-        const totalBeforeDiscount = effectiveLessonCharge + starterPack;
+        const totalBeforeDiscount = starterPack + 3.99;
         const finalTotal = Math.max(totalBeforeDiscount - starterDiscountAmount, 0);
         const totalToday = Number(finalTotal.toFixed(2));
         const nextMonthPayment = Number(monthlyPrice.toFixed(2));
@@ -1484,7 +1491,7 @@ const List = () => {
             nextMonthPayment,
             isFullMonthCharge: isFullMonth,
             isProRataApplicableForPreview,
-            stripeAmount: Math.max(starterPack - starterDiscountAmount, 0),
+            stripeAmount: Math.max(starterPack - starterDiscountAmount, 0) + 3.99,
             goCardlessAmount: Math.max(effectiveLessonCharge, 0),
         };
 
@@ -1556,32 +1563,38 @@ const List = () => {
 
     // ── Issue #47: Payment routing badge helper ──────────────────
     const PaymentRoutingBadge = () => (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-900 mb-4">
-            <p className="font-bold mb-1 text-[13px]">💳 Payment Routing</p>
-            <div className="grid grid-cols-2 gap-1">
-                <span className="text-gray-600">Monthly subscription:</span>
-                <span className="font-semibold block">
-                    {isFranchisee ? "GoCardless → Franchisee" : "AccessPaySuite →  Head Office"}
-                </span>
+        <div className="bg-[#F4F8FF] border border-[#D0E1FD] rounded-2xl p-4 text-xs mb-4 shadow-sm poppins">
+            <p className="font-bold text-[#042C89] mb-3 text-[14px] flex items-center gap-1.5">
+                <span className="text-base">💳</span> Payment Routing
+            </p>
+            <div className="space-y-2.5">
+                <div className="flex justify-between items-start gap-3">
+                    <span className="text-gray-500 font-medium shrink-0">Monthly subscription:</span>
+                    <span className="font-semibold text-[#042C89] text-right">
+                        {isFranchisee ? "GoCardless → Franchisee" : "AccessPaySuite → Head Office"}
+                    </span>
+                </div>
                 {singleClassSchedulesOnly?.venue?.starterPack && comesFrom !== 'cancellation' && (
-                    <>
-                        <span className="text-gray  -600">Starter pack:</span>
-                        <span className="font-semibold text-green-700">Stripe → Head Office</span>
-                    </>
+                    <div className="flex justify-between items-start gap-3">
+                        <span className="text-gray-500 font-medium shrink-0">Starter pack:</span>
+                        <span className="font-semibold text-green-700 text-right">Stripe → Head Office</span>
+                    </div>
                 )}
                 {!pricingBreakdown.isFullMonthCharge && (
-                    <>
-                        <span className="text-gray-600">Pro-rata payments:</span>
-                        <span className="font-semibold text-green-700">
+                    <div className="flex justify-between items-start gap-3">
+                        <span className="text-gray-500 font-medium shrink-0">Pro-rata payments:</span>
+                        <span className="font-semibold text-green-700 text-right">
                             {isFranchisee ? "GoCardless → Franchisee" : "AccessPaySuite → Head Office"}
                         </span>
-                    </>
+                    </div>
                 )}
                 {IS_SANDBOX && (
-                    <>
-                        <span className="text-gray-600">Mode:</span>
-                        <span className="font-semibold text-orange-600">🧪 Sandbox</span>
-                    </>
+                    <div className="flex justify-between items-center pt-2 border-t border-dashed border-blue-200">
+                        <span className="text-gray-500 font-medium shrink-0">Mode:</span>
+                        <span className="px-2 py-0.5 bg-orange-50 text-orange-700 border border-orange-100 rounded-md font-semibold text-[10px]">
+                            🧪 Sandbox
+                        </span>
+                    </div>
                 )}
             </div>
         </div>
@@ -1819,7 +1832,7 @@ const List = () => {
                                                 return (
                                                     <div key={i} className="relative group">
                                                         <div onClick={() => {
-                                                            if (isAvailable) {
+                                                            if (isAvailable && !isPastAvailable) {
                                                                 handleDateClick(date);
                                                                 clearError("selectedDate");
                                                             }
@@ -1863,17 +1876,21 @@ const List = () => {
                                     </div>
                                 )}
                                 {singleClassSchedulesOnly?.venue?.starterPack && comesFrom !== 'cancellation' && (
-                                    <div className="flex justify-between text-[#333]">
-                                        <span>Starter Pack <span className="text-xs text-green-700 font-normal">(via Stripe →  Head Office)</span></span>
-                                        <span className="text-right">
-                                            {isApplied && appliedDiscount?.data ? (
-                                                <>
-                                                    <div className="line-through text-gray-400 text-sm">£{membershipPlan?.starterPackPrice?.toFixed(2)}</div>
-                                                    <div className="text-green-600 font-semibold">£{appliedDiscount.data.finalPrice}</div>
-                                                </>
-                                            ) : `£${pricingBreakdown?.starterPack?.toFixed(2)}`}
-                                        </span>
-                                    </div>
+                                    <>
+                                        <div className="flex justify-between text-[#333]">
+                                            <span>Starter Pack <span className="text-xs text-green-700 font-normal">(via Stripe/Shopify →  Head Office)</span></span>
+                                            <span className="text-right">
+                                                {isApplied && appliedDiscount?.data ? (
+                                                    <>
+                                                        <div className="line-through text-gray-400 text-sm">£{membershipPlan?.starterPackPrice?.toFixed(2)}</div>
+                                                        <div className="text-green-600 font-semibold">£{appliedDiscount.data.finalPrice}</div>
+                                                    </>
+                                                ) : `£${pricingBreakdown?.starterPack?.toFixed(2)}`}
+                                            </span>
+                                        </div>
+                                        <span className="flex justify-between "><span>Delivery Fee</span> <span className=" text-right font-bold">£3.99</span></span>
+                                    </>
+
                                 )}
                                 <div className="border-t border-gray-200 pt-4 space-y-2">
                                     <div className="flex justify-between text-[#333]">
@@ -2051,8 +2068,10 @@ const List = () => {
                                                     }),
                                                 }}
                                             />
-                                            <ErrorMsg name={`student_${index}_selectedClassId`} />
-                                        </div>
+                                            {student.error && (
+                                                <p className="text-red-500 text-sm mt-1 ml-1">{student.error}</p>
+                                            )}
+                                            <ErrorMsg name={`student_${index}_selectedClassId`} />                                        </div>
                                         <div className="w-1/2">
                                             <label className="block text-[16px] font-semibold">Time</label>
                                             <input type="text" readOnly
@@ -2242,7 +2261,15 @@ const List = () => {
                                     {index === 0 && singleClassSchedulesOnly?.venue?.starterPack && comesFrom !== 'cancellation' && (
                                         <div className="flex gap-4">
                                             <div className="w-full">
-                                                <label className="block text-[16px] font-semibold">Starter Pack Size</label>
+                                                <label className="block text-[16px] font-semibold">
+                                                    Starter Pack Kit Size{" "}
+                                                    <span
+                                                        onClick={() => setIsSizeChartOpen(true)}
+                                                        className="text-[#237FEA] hover:underline cursor-pointer ml-2 text-sm font-medium"
+                                                    >
+                                                        Size Chart
+                                                    </span>
+                                                </label>
                                                 <Select
                                                     options={sizeOptions}
                                                     placeholder="Select Size"
@@ -2443,6 +2470,57 @@ const List = () => {
                                                 <p><span className="font-medium poppins text-[#34353B]" style={{ fontSize: "14px" }}>Start Date:</span> {formatDate(selectedDate)}</p>
                                             </div>
 
+
+
+                                            {!pricingBreakdown.isFullMonthCharge && <hr className="my-4 border-gray-300" />}
+                                            {!pricingBreakdown.isFullMonthCharge && (
+                                                <div className="mb-4 space-y-2">
+                                                    <p className="font-semibold text-[#042C89] poppins" style={{ fontSize: "16px" }}>
+                                                        Pro-rata lessons
+                                                    </p>
+                                                    <p className="poppins flex justify-between" style={{ fontSize: "14px" }}>
+                                                        <span>Number of lessons</span>
+                                                        <span>{pricingBreakdown.numberOfLessonsProRated}</span>
+                                                    </p>
+                                                    <p className="poppins flex justify-between" style={{ fontSize: "14px" }}>
+                                                        <span>Fee</span>
+                                                        <span>£{pricingBreakdown.finalProRataCost?.toFixed(2)}</span>
+                                                    </p>
+
+                                                    {/* Membership & Pro-Rata Direct Debit Notice */}
+                                                    <div className="mt-4 p-4 bg-[#F0F7FF] border border-[#D0E7FF] rounded-2xl text-left">
+                                                        <div className="flex items-center gap-2 mb-3 text-[#004B9E] font-semibold text-[15px] poppins">
+                                                            <Info className="w-5 h-5 text-[#0070E0] shrink-0" />
+                                                            <span>Membership + Pro-Rata Notice</span>
+                                                        </div>
+                                                        <ul className="space-y-3 pl-1 poppins text-[13px] text-[#2D3748] font-normal leading-relaxed">
+                                                            <li className="flex items-start gap-2">
+                                                                <span className="text-[#0070E0] font-bold text-base leading-none">•</span>
+                                                                <span>
+                                                                    <strong className="text-[#0D1B2A] font-semibold">Not Charged Immediately:</strong> These fees are not processed today.
+                                                                </span>
+                                                            </li>
+                                                            <li className="flex items-start gap-2">
+                                                                <span className="text-[#0070E0] font-bold text-base leading-none">•</span>
+                                                                <span>
+                                                                    <strong className="text-[#0D1B2A] font-semibold">Collection Method:</strong> Collected via Direct Debit (<strong className="font-semibold">{isFranchisee ? "GoCardless" : "Access PaySuite"}</strong>).
+                                                                </span>
+                                                            </li>
+                                                            <li className="flex items-start gap-2">
+                                                                <span className="text-[#0070E0] font-bold text-base leading-none">•</span>
+                                                                <span className="flex items-center gap-1.5 flex-wrap">
+                                                                    <strong className="text-[#0D1B2A] font-semibold">Process Timing:</strong>
+                                                                    <span className="inline-flex items-center gap-1 bg-[#D0E7FF] text-[#004B9E] font-medium px-2 py-0.5 rounded-md text-[11px]">
+                                                                        <Clock className="w-3.5 h-3.5 text-[#0070E0]" /> 3–5 working days
+                                                                    </span>
+                                                                </span>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            )}
+
+
                                             {singleClassSchedulesOnly?.venue?.starterPack && comesFrom !== 'cancellation' && <hr className="my-4 border-gray-300 poppins" />}
 
                                             {singleClassSchedulesOnly?.venue?.starterPack && comesFrom !== 'cancellation' && (
@@ -2461,37 +2539,31 @@ const List = () => {
                                                         </span>
                                                     </p>
                                                     {/* Issue #47: Show Stripe routing label */}
-                                                    <p className="text-[11px] text-green-700 mt-1">Paid via Stripe → Head Office</p>
+                                                    {
+                                                        role === "Super Admin" && (
+                                                            <p className="text-[11px] text-green-700 mt-1">Paid via Stripe/Shopify → Head Office</p>
+                                                        )
+                                                    }
+                                                    <p className="flex mt-3 text-[16px] font-semibold justify-between w-full"><span>Delivery Fee :</span> <span>£ 3.99</span></p>
+
                                                 </div>
                                             )}
 
-                                            {!pricingBreakdown.isFullMonthCharge && <hr className="my-4 border-gray-300" />}
-                                            {!pricingBreakdown.isFullMonthCharge && (
-                                                <div className="mb-4 space-y-2">
-                                                    <p className="font-semibold text-[#042C89] poppins" style={{ fontSize: "16px" }}>
-                                                        Pro-rata lessons
-                                                    </p>
-                                                    <p className="poppins flex justify-between" style={{ fontSize: "14px" }}>
-                                                        <span>Number of lessons</span>
-                                                        <span>{pricingBreakdown.numberOfLessonsProRated}</span>
-                                                    </p>
-                                                    <p className="poppins flex justify-between" style={{ fontSize: "14px" }}>
-                                                        <span>Fee</span>
-                                                        <span>£{pricingBreakdown.finalProRataCost?.toFixed(2)}</span>
-                                                    </p>
-                                                </div>
-                                            )}
 
+
+                                            {/* Issue #47: Payment routing summary */}
+                                            {
+                                                role === "Super Admin" && (
+                                                    <div className="mt-4">
+                                                        <PaymentRoutingBadge />
+                                                    </div>
+                                                )
+                                            }
                                             <hr className="my-4 border-gray-300" />
                                             <p className="font-bold text-[#042C89] poppins" style={{ fontSize: "16px" }}>
                                                 Total to pay now
                                                 <span className="float-right poppins font-bold" style={{ fontSize: "22px" }}>£{calculatedAmount}</span>
                                             </p>
-
-                                            {/* Issue #47: Payment routing summary */}
-                                            <div className="mt-4">
-                                                <PaymentRoutingBadge />
-                                            </div>
                                         </div>
                                     </div>
 
@@ -2553,6 +2625,30 @@ const List = () => {
                                                 </div>
                                             )}
 
+                                            <label className="block mt-2">
+                                                <span className="block poppins text-gray-700 text-[14px] mb-1">Address Line 1</span>
+                                                <input type="text" value={payment.line1}
+                                                    onChange={(e) => setPayment({ ...payment, line1: e.target.value })}
+                                                    className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
+                                                />
+                                            </label>
+                                            <div className="md:flex gap-4 mt-2">
+                                                <label className="flex-1">
+                                                    <span className="block poppins text-gray-700 text-[14px] mb-1">City</span>
+                                                    <input type="text" value={payment.city}
+                                                        onChange={(e) => setPayment({ ...payment, city: e.target.value })}
+                                                        className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
+                                                    />
+                                                </label>
+                                                <label className="flex-1">
+                                                    <span className="block poppins text-gray-700 text-[14px] mb-1">Postal Code</span>
+                                                    <input type="text" value={payment.postalCode}
+                                                        onChange={(e) => setPayment({ ...payment, postalCode: e.target.value })}
+                                                        className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
+                                                    />
+                                                </label>
+                                            </div>
+
                                             {/* AccessPaySuite (Super-admin) */}
                                             {!isFranchisee && (
                                                 <div className="space-y-4 mt-4">
@@ -2567,29 +2663,7 @@ const List = () => {
                                                             className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
                                                         />
                                                     </label>
-                                                    <label className="block">
-                                                        <span className="block poppins text-gray-700 text-[14px] mb-1">Address Line 1</span>
-                                                        <input type="text" value={payment.line1}
-                                                            onChange={(e) => setPayment({ ...payment, line1: e.target.value })}
-                                                            className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
-                                                        />
-                                                    </label>
-                                                    <div className="md:flex gap-4">
-                                                        <label className="flex-1">
-                                                            <span className="block poppins text-gray-700 text-[14px] mb-1">City</span>
-                                                            <input type="text" value={payment.city}
-                                                                onChange={(e) => setPayment({ ...payment, city: e.target.value })}
-                                                                className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
-                                                            />
-                                                        </label>
-                                                        <label className="flex-1">
-                                                            <span className="block poppins text-gray-700 text-[14px] mb-1">Postal Code</span>
-                                                            <input type="text" value={payment.postalCode}
-                                                                onChange={(e) => setPayment({ ...payment, postalCode: e.target.value })}
-                                                                className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
-                                                            />
-                                                        </label>
-                                                    </div>
+
                                                     <label className="block">
                                                         <span className="block poppins text-gray-700 text-[14px] mb-1">Account Number</span>
                                                         <input type="text" value={payment.account_number}
@@ -2645,10 +2719,12 @@ const List = () => {
                                             </p>
 
                                             {/* Issue #47: Stripe destination badge */}
-                                            <div className="mb-6 bg-green-50 border border-green-200 rounded-xl px-4 py-2 text-xs text-green-800 font-medium">
-                                                💳 Stripe → Head Office &nbsp;·&nbsp; Amount: <strong>£{pricingBreakdown?.stripeAmount?.toFixed(2)}</strong>
-                                                {IS_SANDBOX && <span className="ml-2 text-orange-600">🧪 Sandbox</span>}
-                                            </div>
+                                            {role == 'Super Admin' && (
+                                                <div className="mb-6 bg-green-50 border border-green-200 rounded-xl px-4 py-2 text-xs text-green-800 font-medium">
+                                                    💳 Stripe/Shopify → Head Office &nbsp;·&nbsp; Amount: <strong>£{pricingBreakdown?.stripeAmount?.toFixed(2)}</strong>
+                                                    {IS_SANDBOX && <span className="ml-2 text-orange-600">🧪 Sandbox</span>}
+                                                </div>
+                                            )}
 
                                             <div className="mb-4">
                                                 <label className="block text-gray-700 poppins text-[14px] font-medium mb-1">Name on card<span className="text-red-500 ml-0.5">*</span></label>
@@ -2701,9 +2777,9 @@ const List = () => {
                                                 </div>
                                             </div>
 
-                                            <p className="font-semibold text-[#34353B] poppins text-md">
+                                            {/* <p className="font-semibold text-[#34353B] poppins text-md">
                                                 Total to pay now <span className="float-right poppins text-blue-900" style={{ fontSize: "22px" }}>£{calculatedAmount?.toFixed(2)}</span>
-                                            </p>
+                                            </p> */}
 
                                             <div className="flex justify-end">
                                                 <button onClick={() => { setShowPopup(false); setStep(1); }} type="button"
@@ -2727,6 +2803,100 @@ const List = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Size Chart Modal */}
+            <AnimatePresence>
+                {isSizeChartOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 overflow-y-auto"
+                        onClick={() => setIsSizeChartOpen(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.95, y: 20 }}
+                            transition={{ type: "spring", duration: 0.4 }}
+                            className="bg-white rounded-3xl w-full max-w-5xl shadow-2xl relative flex flex-col max-h-[90vh] overflow-hidden"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Modal Header */}
+                            <div className="flex justify-between items-center px-8 py-5 border-b border-gray-100">
+                                <div>
+                                    <span className="text-[12px] uppercase tracking-wider text-[#237FEA] font-bold">Size guides</span>
+                                    <h2 className="text-[22px] font-bold text-gray-900 leading-tight">Kids Size Chart</h2>
+                                </div>
+                                <button
+                                    onClick={() => setIsSizeChartOpen(false)}
+                                    className="p-2 hover:bg-gray-100 rounded-full transition-colors focus:outline-none"
+                                >
+                                    <X className="w-6 h-6 text-gray-400 hover:text-gray-600" />
+                                </button>
+                            </div>
+
+                            {/* Modal Body */}
+                            <div className="p-8 space-y-6 overflow-y-auto">
+                                <div className="overflow-x-auto rounded-2xl border border-gray-200 shadow-sm">
+                                    <table className="w-full text-center border-collapse text-sm">
+                                        <thead>
+                                            <tr className="bg-gray-900 text-white text-[13px] font-semibold tracking-wider uppercase">
+                                                <th rowSpan="2" className="py-3 px-4 border-r border-gray-800 align-middle">Size</th>
+                                                <th rowSpan="2" className="py-3 px-4 border-r border-gray-800 align-middle">Age</th>
+                                                <th colSpan="2" className="py-2 px-4 border-r border-gray-800">Height</th>
+                                                <th colSpan="2" className="py-2 px-4 border-r border-gray-800">Chest</th>
+                                                <th colSpan="2" className="py-2 px-4">Waist</th>
+                                            </tr>
+                                            <tr className="bg-gray-800 text-gray-200 text-[11px] font-semibold uppercase">
+                                                <th className="py-2 px-4 border-r border-gray-700">cm</th>
+                                                <th className="py-2 px-4 border-r border-gray-700">in</th>
+                                                <th className="py-2 px-4 border-r border-gray-700">cm</th>
+                                                <th className="py-2 px-4 border-r border-gray-700">in</th>
+                                                <th className="py-2 px-4 border-r border-gray-700">cm</th>
+                                                <th className="py-2 px-4">in</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-200 text-gray-700">
+                                            {[
+                                                { size: "Small", age: "4-5", height: { cm: "107", in: "42" }, chest: { cm: "68", in: "26" }, waist: { cm: "46", in: "18" } },
+                                                { size: "Medium", age: "6-7", height: { cm: "119", in: "46" }, chest: { cm: "74", in: "29" }, waist: { cm: "50", in: "20" } },
+                                                { size: "Large", age: "8-9", height: { cm: "131", in: "51" }, chest: { cm: "84", in: "33" }, waist: { cm: "54", in: "21" } },
+                                                { size: "Extra Large", age: "10-12", height: { cm: "143", in: "56" }, chest: { cm: "89", in: "34" }, waist: { cm: "58", in: "23" } },
+                                                { size: "XXL", age: "13-14", height: { cm: "152", in: "60" }, chest: { cm: "98", in: "38" }, waist: { cm: "68", in: "26" } },
+                                            ].map((row, idx) => (
+                                                <tr key={idx} className="hover:bg-gray-50/70 transition-colors odd:bg-white even:bg-gray-50/30">
+                                                    <td className="py-3.5 px-4 font-semibold text-gray-900 border-r border-gray-100">{row.size}</td>
+                                                    <td className="py-3.5 px-4 border-r border-gray-100">{row.age}</td>
+                                                    <td className="py-3.5 px-4 border-r border-gray-100">{row.height.cm}</td>
+                                                    <td className="py-3.5 px-4 border-r border-gray-100">{row.height.in}</td>
+                                                    <td className="py-3.5 px-4 border-r border-gray-100">{row.chest.cm}</td>
+                                                    <td className="py-3.5 px-4 border-r border-gray-100">{row.chest.in}</td>
+                                                    <td className="py-3.5 px-4 border-r border-gray-100">{row.waist.cm}</td>
+                                                    <td className="py-3.5 px-4">{row.waist.in}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div className="border-l-4 border-[#237FEA] pl-4 py-1">
+                                    <h3 className="text-[16px] font-bold text-gray-900">How to measure?</h3>
+                                    <p className="text-sm text-gray-600 mt-1">To choose the correct size, measure your child's body as follows:</p>
+                                </div>
+
+                                <div className="flex justify-center items-center py-6 bg-[#fcfcfc] rounded-2xl border border-gray-100 shadow-inner">
+                                    <img
+                                        src="/images/Kids-Size-Guide.png"
+                                        alt="Kids Measuring Guide"
+                                        className="max-h-[380px] w-auto object-contain rounded-xl hover:scale-[1.01] transition-transform duration-300"
+                                    />
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
