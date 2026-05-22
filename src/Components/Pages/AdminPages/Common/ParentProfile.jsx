@@ -317,6 +317,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                             <option value="beginner">Beginner</option>
                                             <option value="intermediate">Intermediate</option>
                                             <option value="advanced">Advanced</option>
+                                            <option value="pro">Pro</option>
                                         </select>
 
                                     </div>
@@ -747,7 +748,7 @@ const ParentProfile = ({ ParentProfile }) => {
 
                                 {/* Class */}
                                 <div>
-                                    <label className="block text-[16px] font-semibold">Class</label>
+                                    <label className="block text-[16px] font-semibold">Class/Level</label>
                                     <input
                                         type="text"
                                         className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"

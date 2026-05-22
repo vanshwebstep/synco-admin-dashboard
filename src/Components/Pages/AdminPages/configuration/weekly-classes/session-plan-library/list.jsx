@@ -18,7 +18,6 @@ import {
 } from "@dnd-kit/sortable";
 
 import { CSS } from "@dnd-kit/utilities";
-import { useGlobalSearch } from '../../../contexts/GlobalSearchContext';
 const SortableItem = ({ week, children, disabled }) => {
   const {
     attributes,
@@ -42,7 +41,6 @@ const SortableItem = ({ week, children, disabled }) => {
 const List = () => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const token = localStorage.getItem("adminToken");
-    const { searchQuery } = useGlobalSearch();
 
   const navigate = useNavigate();
   const { fetchSessionGroup, sessionGroup, deleteSessionGroup, deleteSessionlevel, duplicateSession, updateDiscount, loading, setLoading } = useSessionPlan();
@@ -338,30 +336,10 @@ useEffect(() => {
   setTempList(updatedList);
 };
 const filteredWeeks = useMemo(() => {
-  if (!searchQuery) return tempList;
+    return tempList;
+}, [tempList]);
 
-  const query = searchQuery.toLowerCase();
 
-  return tempList.filter((week) => {
-    // week level search
-    const weekMatch =
-      week.title?.toLowerCase().includes(query);
-
-    // group level search
-    const groupMatch = week.groups?.some((g) =>
-      [
-        g.name,
-        g.age,
-        g.player
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(query)
-    );
-
-    return weekMatch || groupMatch;
-  });
-}, [tempList, searchQuery]);
   const { checkPermission } = usePermission();
 
   const canCreate = checkPermission({ module: 'session-plan-group', action: 'create' });

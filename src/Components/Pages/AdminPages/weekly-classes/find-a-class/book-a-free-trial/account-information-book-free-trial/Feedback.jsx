@@ -125,11 +125,9 @@ const Feedback = ({ profile }) => {
         studentId: student.id,
         studentName: `${student.studentFirstName} ${student.studentLastName}`,
         classScheduleId: clsId,
-        label: cls
-          ? `${cls.className} (${cls.startTime} - ${cls.endTime})`
-          : clsId
-            ? `Class ID: ${clsId}`
-            : "No class assigned",
+          label: cls
+                ? `${cls.className} ${cls.level || cls.abilityLevel || student?.abilityLevel ? `(${cls.level || cls.abilityLevel || student?.abilityLevel})` : ""}`
+                : `No class assigned`,
       };
     });
   }, [profile]);
@@ -313,7 +311,7 @@ const Feedback = ({ profile }) => {
 
         <button
           onClick={() => setOpenForm(true)}
-          className="bg-[#237FEA] md:absolute right-50 top-3 flex items-center gap-2 cursor-pointer text-white px-4 py-2 rounded-xl hover:bg-blue-700 text-sm md:text-base font-semibold"
+          className="bg-[#237FEA] md:absolute right-5 top-3 flex items-center gap-2 cursor-pointer text-white px-4 py-2 rounded-xl hover:bg-blue-700 text-sm md:text-base font-semibold"
         >
           <img src="/members/add.png" className="w-5" alt="" />
           Add Feedback
@@ -428,7 +426,7 @@ const Feedback = ({ profile }) => {
                 {/* ✅ All students' classes — each prefilled and disabled */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Classes (prefilled from enrolled students)
+                    Classes / Level (prefilled from enrolled students)
                   </label>
                   {studentClassOptions.length > 0 ? (
                     <div className="space-y-2">

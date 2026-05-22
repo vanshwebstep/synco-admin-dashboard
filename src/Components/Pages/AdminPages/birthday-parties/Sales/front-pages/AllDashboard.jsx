@@ -31,7 +31,6 @@ const AllDashboard = () => {
     const [noLoaderShow, setNoLoaderShow] = useState(false);
     const [showFilter, setShowFilter] = useState(false);
     const [textloading, setTextLoading] = useState(null);
-  const { searchQuery } = useGlobalSearch();
 
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const token = localStorage.getItem("adminToken");
@@ -362,9 +361,7 @@ const AllDashboard = () => {
 
     };
     const searchedData = useMemo(() => {
-      if (!searchQuery) return leadsData || [];
     
-      const query = searchQuery.toLowerCase();
     
       return (leadsData || []).filter((lead) => {
         const values = [
@@ -381,7 +378,7 @@ const AllDashboard = () => {
           String(val || "").toLowerCase().includes(query)
         );
       });
-    }, [leadsData, searchQuery]);
+    }, [leadsData]);
     
 
     const [selectedUserIds, setSelectedUserIds] = useState([]);

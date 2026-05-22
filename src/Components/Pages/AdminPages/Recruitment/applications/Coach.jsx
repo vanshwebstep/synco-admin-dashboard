@@ -19,7 +19,6 @@ import PhoneInput from "react-phone-input-2";
 import * as XLSX from "xlsx";
 import Select from "react-select";
 import { showError, showWarning, showSuccess, showConfirm } from "../../../../../utils/swalHelper";
-import { useGlobalSearch } from "../../contexts/GlobalSearchContext";
 import { useEmail } from '../../contexts/messages/SendEmailContext';
 import { useTextPopup } from '../../contexts/messages/SendTextContext';
 
@@ -29,7 +28,6 @@ const Coach = () => {
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [loading, setLoading] = useState(false);
     const [showFilter, setShowFilter] = useState(false);
-    const { searchQuery } = useGlobalSearch();
     const [agentsData, setAgentsData] = useState([]);
     const [agentsLoading, setAgentsLoading] = useState(false);
     const [showAgentPopup, setShowAgentPopup] = useState(false);
@@ -524,19 +522,9 @@ const Coach = () => {
         );
     };
 
-    const filterBySearchQuery = (data) => {
-        if (!searchQuery.trim()) return data;
-        const q = searchQuery.toLowerCase();
-        return data.filter((coach) => {
-            const values = [
-                coach?.firstName, coach?.lastName, coach?.age,
-                coach?.postcode, coach?.phoneNumber, coach?.email,
-                coach?.managementExperience, coach?.level, coach?.dbs, coach?.status,
-            ];
-            return values.some((val) => String(val || "").toLowerCase().includes(q));
-        });
-    };
-
+  const filterBySearchQuery = (data) => {
+    return data;
+};
     useEffect(() => {
         if (Array.isArray(recruitment)) {
             setFilteredRecruitment(recruitment);
@@ -589,7 +577,7 @@ const Coach = () => {
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery]);
+    }, []);
 
     useEffect(() => {
         if (!Array.isArray(recruitment)) return;
@@ -598,7 +586,7 @@ const Coach = () => {
         data = filterByVenue(data);
         data = filterBySearchQuery(data);
         setFilteredRecruitment(data);
-    }, [recruitment, studentName, selectedVenue, searchQuery]);
+    }, [recruitment, studentName, selectedVenue, ]);
 
     if (loading) return <Loader />;
 

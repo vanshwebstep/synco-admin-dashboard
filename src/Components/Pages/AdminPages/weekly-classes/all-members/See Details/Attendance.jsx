@@ -42,7 +42,7 @@ const Attendance = ({ stateData }) => {
           <thead className="bg-gray-100 text-gray-500 text-left">
             <tr>
               <th className="py-3 px-4 font-medium">Venue</th>
-              <th className="py-3 px-4 font-medium">Class</th>
+              <th className="py-3 px-4 font-medium">Class/Level</th>
               <th className="py-3 px-4 font-medium">Date</th>
               <th className="py-3 px-4 font-medium">Attendance</th>
             </tr>
@@ -59,7 +59,7 @@ const Attendance = ({ stateData }) => {
                 </td>
 
                 <td className="py-3 px-4">
-                  {activeStudent.classSchedule?.className || "Acton"}
+                 {`${activeStudent.classSchedule?.className || "Acton"} ${activeStudent.classSchedule?.level || activeStudent.abilityLevel ? `(${activeStudent.classSchedule?.level || activeStudent.abilityLevel})` : ""}`}
                 </td>
 
                 {/* Date */}

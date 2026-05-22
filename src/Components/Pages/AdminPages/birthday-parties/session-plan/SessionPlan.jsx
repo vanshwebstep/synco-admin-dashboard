@@ -9,9 +9,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
 import { usePermission } from "../../Common/permission";
 import { showError, showConfirm, showLoading, showSuccess } from "../../../../../utils/swalHelper";
-import { useGlobalSearch } from "../../contexts/GlobalSearchContext";
 const BirthdaySessionPlan = () => {
-  const { searchQuery } = useGlobalSearch();
 
     const [sessionGroup, setSessionGroup] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -211,22 +209,8 @@ const BirthdaySessionPlan = () => {
         setTempList(updatedList);
     };
 const filteredSessionGroup = useMemo(() => {
-    if (!searchQuery) return tempList || [];
-
-    const query = searchQuery.toLowerCase();
-
-    return tempList.filter((group) => {
-        // group name match
-        const groupMatch = group.groupName?.toLowerCase().includes(query);
-
-        // levels match (beginner, intermediate etc.)
-        const levelMatch = Object.keys(group.levels || {}).some((levelKey) => {
-            return levelKey.toLowerCase().includes(query);
-        });
-
-        return groupMatch || levelMatch;
-    });
-}, [tempList, searchQuery]);
+    return tempList || [];
+}, [tempList]);
 
     useEffect(() => {
         setTempList(weekList); // initialize tempList with server list

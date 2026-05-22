@@ -4,7 +4,6 @@ import { Check } from "lucide-react";
 import { useDiscounts } from '../../../contexts/DiscountContext';
 import Loader from '../../../contexts/Loader';
 import { usePermission } from '../../../Common/permission';
-import { useGlobalSearch } from '../../../contexts/GlobalSearchContext';
 
 
 
@@ -13,7 +12,6 @@ import { useGlobalSearch } from '../../../contexts/GlobalSearchContext';
 
 const HolidayDiscountList = () => {
   const { fetchDiscounts, discounts, loading } = useDiscounts();
-  const { searchQuery } = useGlobalSearch();
   useEffect(() => {
     const getPackages = async () => {
       try {
@@ -30,28 +28,13 @@ const HolidayDiscountList = () => {
 
   const [openForm, setOpenForm] = useState(false);
   const [checked, setChecked] = useState(false);
-  console.log('discounts', discounts)
-  const filteredDiscounts = React.useMemo(() => {
+
+ const filteredDiscounts = React.useMemo(() => {
     if (!Array.isArray(discounts)) return [];
+    return discounts;
+}, [discounts]);
 
-    if (!searchQuery) return discounts;
 
-    const query = searchQuery.toLowerCase();
-
-    return discounts.filter((item) => {
-      const combinedText = [
-        item.code,
-        item.type,
-        item.status,
-        item.value,
-        item.usageCount
-      ]
-        .join(" ")
-        .toLowerCase();
-
-      return combinedText.includes(query);
-    });
-  }, [discounts, searchQuery]);
   if (loading) {
     return (
       <>

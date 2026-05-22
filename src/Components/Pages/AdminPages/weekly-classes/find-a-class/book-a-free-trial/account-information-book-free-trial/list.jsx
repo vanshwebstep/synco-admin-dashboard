@@ -174,7 +174,7 @@ const list = () => {
               </button>
             </>
           )}
-
+{(activeTab === "Parent Profile" || activeTab === "Student Profile") && (
           <button
             onClick={handleDelete}
             className="flex items-center gap-2 px-4 py-2 bg-red-50 text-[#B42318] border border-red-200 rounded-xl hover:bg-red-100 transition-colors font-semibold"
@@ -182,6 +182,7 @@ const list = () => {
             <Trash2 size={18} />
             Delete Account
           </button>
+)}
           </div>
         </div>
         {activeTab === "Service History" && <ServiceHistory

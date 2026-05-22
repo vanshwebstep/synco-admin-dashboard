@@ -6,7 +6,6 @@ import { useMembers } from '../contexts/MemberContext';
 import Loader from '../contexts/Loader';
 import { formatDistanceToNow } from 'date-fns';
 import { usePermission } from "../Common/permission";
-import { useGlobalSearch } from '../contexts/GlobalSearchContext';
 import { useLocation } from "react-router-dom";
 
 const List = () => {
@@ -14,9 +13,6 @@ const List = () => {
   const location = useLocation();
 
   const isOpenForm = location.state?.openForm;
-  const { searchQuery } = useGlobalSearch();
-console.log('isOpenForm', isOpenForm)
-
 
 
   const { members, fetchMembers, loading } = useMembers();
@@ -43,32 +39,10 @@ console.log('isOpenForm', isOpenForm)
   const navigate = useNavigate();
   const [openForm, setOpenForm] = useState(false);
   const filteredMembers = useMemo(() => {
-    if (!searchQuery) return members || [];
-
-    const q = searchQuery.toLowerCase();
-
-    return (members || []).filter((user) => {
-      const values = [
-        user?.firstName,
-        user?.lastName,
-        user?.role?.role,
-        user?.phoneNumber,
-        user?.email,
-        user?.position,
-      ];
-
-      const fullName = `${user?.firstName || ""} ${user?.lastName || ""}`.toLowerCase();
-
-      return (
-        fullName.includes(q) ||
-        values.some((val) =>
-          String(val || "").toLowerCase().includes(q)
-        )
-      );
-    });
-  }, [members, searchQuery]);
+    return members || [];
+  }, [members]);
   useEffect(() => {
-     if (isOpenForm) {
+    if (isOpenForm) {
       setOpenForm(true);
     }
     fetchMembers();

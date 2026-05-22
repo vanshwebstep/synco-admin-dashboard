@@ -2,13 +2,11 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import Loader from '../../contexts/Loader';
-import { useGlobalSearch } from '../../contexts/GlobalSearchContext';
 
 const MainTable = () => {
   const navigate = useNavigate();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const tabs = ["membership", "birthdayParty", "oneToOne", "trials", "holidayCamps"];
-  const { searchQuery } = useGlobalSearch();
   const [members, setMembers] = useState({
     birthdayParty: [],
     membership: [],
@@ -67,63 +65,9 @@ const MainTable = () => {
   };
   const activeMembers = members?.[activeTab] ?? [];
 
-  const filteredMembers = useMemo(() => {
-    if (!searchQuery?.trim()) return activeMembers;
-
-    const queryWords = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
-
-    return activeMembers.filter((main) => {
-      const user = main?.booking || main;
-
-      // 1. Gather all searchable data for the booking
-      const venueName = (
-        user?.venue?.name ||
-        user?.venue?.address ||
-        user?.address ||
-        ""
-      ).toLowerCase();
-
-      const parents = user?.parents || [];
-      const parentNames = parents.map(p => `${p.parentFirstName} ${p.parentLastName}`).join(" ").toLowerCase();
-      const parentEmails = parents.map(p => p.parentEmail).join(" ").toLowerCase();
-      const parentPhones = parents.map(p => (p.parentPhoneNumber || "").replace(/[^\d]/g, "")).join(" ");
-
-      const students = user?.students || [];
-      const studentNames = students.map(s => `${s.studentFirstName} ${s.studentLastName}`).join(" ").toLowerCase();
-      const studentAges = students.map(s => String(s.age || "")).join(" ");
-
-      const idStr = String(main?.id || "").toLowerCase();
-
-      // Combine text for tokenization (excluding phones for numeric query check)
-      const searchString = `${studentNames} ${parentNames} ${parentEmails} ${venueName} ${idStr}`.toLowerCase();
-      const tokens = searchString.split(/[\s@.,_\-+]+/).filter(Boolean);
-
-      // 2. Check if EVERY query word matches
-      return queryWords.every((word) => {
-        const clean = word.trim().toLowerCase();
-        if (!clean) return true;
-
-        // Phone matching (6+ digits)
-        if (/^\d{6,}$/.test(clean)) {
-          return parentPhones.includes(clean);
-        }
-
-        // Exact age match
-        if (/^\d{1,3}$/.test(clean)) {
-          if (studentAges.split(" ").includes(clean)) return true;
-        }
-
-        // Token-based matching
-        return tokens.some((token) => {
-          // If both are numeric, require exact match
-          if (/^\d+$/.test(clean) && /^\d+$/.test(token)) {
-            return token === clean;
-          }
-          return token.startsWith(clean);
-        });
-      });
-    });
-  }, [activeMembers, searchQuery]);
+ const filteredMembers = useMemo(() => {
+    return activeMembers;
+}, [activeMembers]);
 
   const isAllSelected =
     filteredMembers.length > 0 &&
@@ -186,7 +130,7 @@ const MainTable = () => {
   };
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, activeTab]);
+  }, [ activeTab]);
   if (loading) return <Loader />;
   return (
     <>
@@ -408,7 +352,7 @@ const MainTable = () => {
           </>
         ) : (
           <p className="text-center p-8 rounded-2xl bg-white shadow-sm font-semibold text-gray-500">
-            {searchQuery ? "No results found for your search" : "No data available in this section"}
+           No data available in this section
           </p>
         )}
       </div>

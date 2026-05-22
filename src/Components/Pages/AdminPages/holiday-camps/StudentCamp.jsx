@@ -12,7 +12,6 @@ import { useNavigate } from "react-router-dom";
 import Loader from "../contexts/Loader";
 import React from "react";
 import * as XLSX from "xlsx";
-import { useGlobalSearch } from "../contexts/GlobalSearchContext";
 
 
 
@@ -21,7 +20,6 @@ const StudentCamp = () => {
     const [expandedRow, setExpandedRow] = useState(null);
     const [activeTab, setActiveTab] = useState("camp");
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const { searchQuery } = useGlobalSearch();
 
     const [holidayCampsData, setHolidayCampsData] = useState([]);
     const [summary, setSummary] = useState({});
@@ -96,57 +94,33 @@ const StudentCamp = () => {
     );
 
     // FILTER LOGIC
-  const filteredData = filteredStudents.filter((camp) => {
-  const term = searchTerm.trim().toLowerCase();
-  const query = searchQuery.trim().toLowerCase();
+ const filteredData = filteredStudents.filter((camp) => {
+    const term = searchTerm.trim().toLowerCase();
 
-  // ---------- SEARCH TERM (Student Focused) ----------
-  const matchesSearchTerm =
-    !term ||
-    camp?.students?.some((student) => {
-      const fullName = `${student?.studentFirstName || ""} ${student?.studentLastName || ""}`.toLowerCase();
-      const age = String(student?.age || "").toLowerCase();
-      const medical = (student?.medicalInformation || "").toLowerCase();
+    const matchesSearchTerm =
+        !term ||
+        camp?.students?.some((student) => {
+            const fullName = `${student?.studentFirstName || ""} ${student?.studentLastName || ""}`.toLowerCase();
+            const age = String(student?.age || "").toLowerCase();
+            const medical = (student?.medicalInformation || "").toLowerCase();
 
-      return (
-        fullName.includes(term) ||
-        age.includes(term) ||
-        medical.includes(term)
-      );
-    });
+            return (
+                fullName.includes(term) ||
+                age.includes(term) ||
+                medical.includes(term)
+            );
+        });
 
-  // ---------- GLOBAL SEARCH QUERY ----------
-  const matchesSearchQuery =
-    !query ||
-    // search in students also
-    camp?.students?.some((student) =>
-      Object.values(student || {}).some((val) =>
-        String(val || "").toLowerCase().includes(query)
-      )
-    ) ||
-    // search in camp level fields
-    Object.values(camp || {}).some((val) =>
-      String(val || "").toLowerCase().includes(query)
-    );
+    const matchesCategory =
+        !selectedCategory ||
+        camp?.holidayCamp?.id === selectedCategory.value;
 
-  // ---------- CATEGORY ----------
-  const matchesCategory =
-    !selectedCategory ||
-    camp?.holidayCamp?.id === selectedCategory.value;
+    const matchesDate =
+        !selectedDate ||
+        camp?.holidayCamp?.holidayCampDates?.[0]?.id === selectedDate.value;
 
-  // ---------- DATE ----------
-  const matchesDate =
-    !selectedDate ||
-    camp?.holidayCamp?.holidayCampDates?.[0]?.id === selectedDate.value;
-
-  return (
-    matchesSearchTerm &&   // ✅ both must pass
-    matchesSearchQuery &&  // ✅ both must pass
-    matchesCategory &&
-    matchesDate
-  );
+    return matchesSearchTerm && matchesCategory && matchesDate;
 });
-
 
 
 
@@ -399,7 +373,7 @@ const exportToExcel = () => {
                     : "N/A",
                 Source: camp?.bookedByAdmin
                     ? `${camp.bookedByAdmin.firstName} ${camp.bookedByAdmin.lastName}`
-                    : "N/A",
+                    : camp?.marketingChannel,
                 Status: camp.status,
                 "Primary Student": index === 0 ? "Yes" : "No",
             });
@@ -671,7 +645,7 @@ const exportToExcel = () => {
                                                         <td className="py-3 px-4 whitespace-nowrap">
                                                             {camp?.bookedByAdmin
                                                                 ? camp.bookedByAdmin.firstName + " " + camp.bookedByAdmin.lastName
-                                                                : "N/A"}
+                                                                : camp?.marketingChannel}
                                                         </td>
 
                                                         <td className="py-3 px-4 whitespace-nowrap">
@@ -735,9 +709,9 @@ const exportToExcel = () => {
                                                                                 </td>
 
                                                                                 <td className="py-3 px-4 whitespace-nowrap">
-                                                                                    {camp?.bookedByAdmin
-                                                                                        ? camp.bookedByAdmin.firstName + " " + camp.bookedByAdmin.lastName
-                                                                                        : "N/A"}
+                                                                               {camp?.bookedByAdmin
+  ? `${camp.bookedByAdmin.firstName || ""} ${camp.bookedByAdmin.lastName || ""}`.trim()
+  : camp?.marketingChannel || ""}
                                                                                 </td>
                                                                             </tr>
                                                                         ))}

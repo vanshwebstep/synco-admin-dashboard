@@ -5,14 +5,12 @@ import Loader from '../../../contexts/Loader';
 import { usePermission } from '../../../Common/permission';
 import { useHolidayPayments } from '../../../contexts/HolidayPaymentContext';
 import { showConfirm, showError, showSuccess } from '../../../../../../utils/swalHelper';
-import { useGlobalSearch } from '../../../contexts/GlobalSearchContext';
 const HolidaySubscriptionPlanManager = () => {
   const { fetchGroups, groups, deleteGroup, fetchGroupById, selectedGroup, loading } = useHolidayPayments();
   const navigate = useNavigate();
   const [openForm, setOpenForm] = useState(false);
   const [checkedIds, setCheckedIds] = useState([]);
   const [previewShowModal, setPreviewShowModal] = useState(false);
-  const { searchQuery } = useGlobalSearch();
 
   useEffect(() => {
     const getPackages = async () => {
@@ -68,26 +66,10 @@ const HolidaySubscriptionPlanManager = () => {
   };
 
   const filteredGroups = React.useMemo(() => {
-    if (!searchQuery) return groups;
+    return groups;
+}, [groups]);
 
-    const query = searchQuery.toLowerCase();
 
-    return groups.filter((group) => {
-      const plansText = group.holidayPaymentPlans
-        ?.map(p => `${p.title} ${p.price} ${p.interval}`)
-        .join(" ") || "";
-
-      const combinedText = [
-        group.name,
-        group.createdAt,
-        plansText
-      ]
-        .join(" ")
-        .toLowerCase();
-
-      return combinedText.includes(query);
-    });
-  }, [groups, searchQuery]);
   function unescapeHTML(escapedStr) {
     const doc = new DOMParser().parseFromString(escapedStr, "text/html");
     return doc.documentElement.textContent;

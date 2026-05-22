@@ -6,12 +6,10 @@ import Loader from '../../../contexts/Loader';
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { usePermission } from '../../../Common/permission';
 import { useHolidaySessionPlan } from '../../../contexts/HolidaySessionPlanContext';
-import { useGlobalSearch } from '../../../contexts/GlobalSearchContext';
 
 const HolidaySessionPlan = () => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const token = localStorage.getItem("adminToken");
-  const { searchQuery } = useGlobalSearch();
 
   const navigate = useNavigate();
   const { fetchSessionGroup, sessionGroup, deleteSessionGroup, deleteSessionlevel, duplicateSession, updateDiscount, loading, setLoading } = useHolidaySessionPlan();
@@ -236,24 +234,9 @@ const HolidaySessionPlan = () => {
 
     setTempList(newList); // just update local reorder, not server
   };
-  const filteredSessionGroup = useMemo(() => {
-      if (!searchQuery) return tempList || [];
-  
-      const query = searchQuery.toLowerCase();
-  
-      return tempList.filter((group) => {
-          // group name match
-          console.log('group',group)
-          const groupMatch = group.title?.toLowerCase().includes(query);
-  
-          // levels match (beginner, intermediate etc.)
-          const levelMatch = Object.keys(group.levels || {}).some((levelKey) => {
-              return levelKey.toLowerCase().includes(query);
-          });
-  
-          return groupMatch || levelMatch;
-      });
-  }, [tempList, searchQuery]);
+const filteredSessionGroup = useMemo(() => {
+    return tempList || [];
+}, [tempList]);
   
   const { checkPermission } = usePermission();
 

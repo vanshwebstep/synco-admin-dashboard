@@ -591,10 +591,8 @@ const List = () => {
 
 
     const venueClassOptions = !isEmpty
-        ? allClasses?.map((cls) => ({ value: cls.id, label: cls.className }))
-        : classesWithCapacity?.map((cls) => ({ value: cls.id, label: cls.className }));
-
-
+        ? allClasses?.map((cls) => ({ value: cls.id, label: `${cls.className} (${cls.level ?? cls.levelName ?? cls.classLevel ?? ''})` }))
+        : classesWithCapacity?.map((cls) => ({ value: cls.id, label: `${cls.className} (${cls.level ?? cls.levelName ?? cls.classLevel ?? ''})` }));
 
     const handlePlanChange = (plan) => {
         setMembershipPlan(plan);
@@ -1150,7 +1148,10 @@ const List = () => {
                 };
             }),
 
-            parents: parents.map(({ id, ...rest }) => rest),
+            parents: parents.map(({ id, ...rest }) => ({
+                ...rest,
+                id: comesFrom ? id : '',
+            })),
             starterPack:
                 singleClassSchedulesOnly?.venue?.starterPack &&
                     comesFrom !== "cancellation"
@@ -1159,10 +1160,10 @@ const List = () => {
             discountId: appliedDiscount?.data?.discountId || null,
             size: parents[0]?.starterPackSize || null,
             emergency: emergency
-                ? (() => {
-                    const { id, ...rest } = emergency;
-                    return rest;
-                })()
+                ? (({ comesFrom, id, ...rest }) => ({
+                    ...rest,
+                    id: comesFrom ? id : ''
+                }))(emergency)
                 : emergency,
             paymentPlanId: membershipPlan?.value ?? null,
 
@@ -2046,7 +2047,7 @@ const List = () => {
                                     </div>
                                     <div className="flex gap-4">
                                         <div className="w-1/2">
-                                            <label className="block text-[16px] font-semibold">Class</label>
+                                            <label className="block text-[16px] font-semibold">Class/Level</label>
                                             <Select
                                                 className="w-full mt-2 text-base"
                                                 classNamePrefix="react-select"

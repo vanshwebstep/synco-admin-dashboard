@@ -23,7 +23,6 @@ import { useNavigate } from "react-router-dom";
 import Loader from "../../../contexts/Loader";
 import { useAccountsInfo } from "../../../contexts/AccountsInfoContext";
 import { showError, showSuccess, showWarning } from "../../../../../../utils/swalHelper";
-import { useGlobalSearch } from "../../../contexts/GlobalSearchContext";
 const LeadsDashboard = () => {
   const navigate = useNavigate();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -37,7 +36,6 @@ const LeadsDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [summary, setSummary] = useState([]);
   const [textloading, setTextLoading] = useState(null);
-  const { searchQuery } = useGlobalSearch();
 
   const popupRef = useRef(null);
   const [myVenues, setMyVenues] = useState([]);
@@ -49,30 +47,9 @@ const LeadsDashboard = () => {
   const [tempSelectedAgent, setTempSelectedAgent] = useState(null);
   const [savedAgent, setSavedAgent] = useState([]);
 
-  const searchedData = useMemo(() => {
-  if (!searchQuery) return leadsData || [];
-
-  const query = searchQuery.toLowerCase();
-
-  return leadsData.filter((lead) => {
-    const values = [
-      lead?.parentName,
-      lead?.childName,
-      lead?.email,
-      lead?.phone,
-      lead?.postCode,
-      lead?.age,
-      lead?.status,
-      lead?.source,
-      lead?.packageInterest,
-      lead?.availability,
-    ];
-
-    return values.some((val) =>
-      String(val || "").toLowerCase().includes(query)
-    );
-  });
-}, [leadsData, searchQuery]);
+const searchedData = useMemo(() => {
+    return leadsData || [];
+}, [leadsData]);
   function formatLocalDate(dateString) {
     const d = new Date(dateString);
     if (isNaN(d.getTime())) return null;

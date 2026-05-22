@@ -75,7 +75,7 @@ export function WaitingListPopup({
               {waitingListData.selectedStudents.map((studentOption) => {
                 const studentId = studentOption.value;
                 const config = waitingListData.studentConfigs?.[studentId] || {};
-                const currentClass = studentOption.classSchedule?.className || "-";
+              const currentClass = `${studentOption.classSchedule?.className || "-"} ${studentOption.classSchedule?.level || studentOption.abilityLevel ? `(${studentOption.classSchedule?.level || studentOption.abilityLevel})` : ""}`;
 
                 return (
                   <div
@@ -89,7 +89,7 @@ export function WaitingListPopup({
                     {/* Current Info */}
                     <div className="grid gap-4 text-sm text-gray-600">
                       <div>
-                        <label className="block text-sm font-semibold mb-1">Current Class</label>
+                        <label className="block text-sm font-semibold mb-1">Current Class / Level</label>
                         <input
                           type="text"
                           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
@@ -108,9 +108,9 @@ export function WaitingListPopup({
                       </div>
                     </div>
 
-                    {/* Select New Class */}
+                    {/* Select New Class / Level */}
                     <div>
-                      <label className="block text-[16px] font-semibold">Select New Class</label>
+                      <label className="block text-[16px] font-semibold">Select New Class / Level</label>
                       <Select
                         value={
                           config.classScheduleId

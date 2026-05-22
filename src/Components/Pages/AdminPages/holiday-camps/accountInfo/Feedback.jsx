@@ -123,24 +123,24 @@ const Feedback = () => {
 
 
   // ---------------- OPTIONS ----------------
-  const studentClassOptions = useMemo(() => {
+ const studentClassOptions = useMemo(() => {
     if (!data) return [];
     const students = data?.students || [];
 
     return students.map((student) => {
-      const cls = student.holidayClassSchedules;
-      const clsId = cls?.id;
+        const cls = student.holidayClassSchedules;
+        const clsId = cls?.id;
 
-      return {
-        studentId: student.id || Math.random(),
-        studentName: `${student.studentFirstName} ${student.studentLastName}`,
-        holidayClassScheduleId: clsId,
-        label: cls
-          ? `${cls.className} (${cls.startTime} - ${cls.endTime})`
-          : `No class assigned`,
-      };
+        return {
+            studentId: student.id || Math.random(),
+            studentName: `${student.studentFirstName} ${student.studentLastName}`,
+            holidayClassScheduleId: clsId,
+              label: cls
+                ? `${cls.className} ${cls.level || cls.abilityLevel || student?.abilityLevel ? `(${cls.level || cls.abilityLevel || student?.abilityLevel})` : ""}`
+                : `No class assigned`,
+        };
     }).filter(s => s.holidayClassScheduleId);
-  }, [data]);
+}, [data]);
 
   useEffect(() => {
     if (openForm) {
@@ -419,7 +419,7 @@ const Feedback = () => {
                 {/* Select Holiday Class */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Classes (prefilled from enrolled students)
+                    Classes / Level (prefilled from enrolled students)
                   </label>
                   {studentClassOptions.length > 0 ? (
                     <div className="space-y-2">

@@ -27,11 +27,9 @@ import { useNavigate } from "react-router-dom";
 import Loader from "../../../contexts/Loader";
 import { useAccountsInfo } from "../../../contexts/AccountsInfoContext";
 import { showError, showSuccess, showWarning } from "../../../../../../utils/swalHelper";
-import { useGlobalSearch } from "../../../contexts/GlobalSearchContext";
 const SalesDashboard = () => {
     const navigate = useNavigate();
     const [textloading, setTextLoading] = useState(null);
-  const { searchQuery } = useGlobalSearch();
 
     const [noLoaderShow, setNoLoaderShow] = useState(false);
     const [showFilter, setShowFilter] = useState(false)
@@ -77,30 +75,9 @@ const SalesDashboard = () => {
     const itemsPerPage = 10; // you can change this
     const startIndex = (currentPage - 1) * rowsPerPage;
 
-    const searchedData = useMemo(() => {
-        if (!searchQuery) return leadsData || [];
-
-        const query = searchQuery.toLowerCase();
-
-        return leadsData.filter((lead) => {
-            const values = [
-                lead?.parentName,
-                lead?.childName,
-                lead?.email,
-                lead?.phone,
-                lead?.postCode,
-                lead?.age,
-                lead?.status,
-                lead?.source,
-                lead?.packageInterest,
-                lead?.availability,
-            ];
-
-            return values.some((val) =>
-                String(val || "").toLowerCase().includes(query)
-            );
-        });
-    }, [leadsData, searchQuery]);
+   const searchedData = useMemo(() => {
+    return leadsData || [];
+}, [leadsData]);
 
     const paginatedData = searchedData.slice(
         startIndex,

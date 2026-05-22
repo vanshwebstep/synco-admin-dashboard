@@ -5,7 +5,6 @@ import TermCard from './TermCard';
 import { useNavigate } from 'react-router-dom';
 import { useTermContext } from '../../../contexts/TermDatesSessionContext';
 import { usePermission } from '../../../Common/permission';
-import { useGlobalSearch } from '../../../contexts/GlobalSearchContext';
 
 const formatDate = (iso) => {
   const d = new Date(iso);
@@ -26,7 +25,6 @@ const formatShortDate = (iso) => {
 
 const List = () => {
   const navigate = useNavigate();
-    const { searchQuery } = useGlobalSearch();
 
   const { fetchTermGroup, fetchTerm, termGroup, termData, loading } = useTermContext();
   const [sessionDataList, setSessionDataList] = useState([]);
@@ -152,48 +150,13 @@ const List = () => {
   }, [termGroup, termData]);
 
 const filteredData = useMemo(() => {
-  if (!searchQuery) {
     return classList.map((item, i) => ({
-      item,
-      sessionData: sessionDataList[i],
+        item,
+        sessionData: sessionDataList[i],
     }));
-  }
+}, [classList, sessionDataList]);
 
-  const query = searchQuery.toLowerCase();
 
-  return classList
-    .map((item, i) => ({
-      item,
-      sessionData: sessionDataList[i],
-    }))
-    .filter(({ item, sessionData }) => {
-      const values = [
-        item.name,
-        item.autumn,
-        item.spring,
-        item.summer,
-        item.facility,
-      ];
-
-      const sessionMatch = sessionData?.some((session) =>
-        [
-          session.term,
-          session.date,
-          session.exclusion,
-          ...(session.sessions || []).map((s) => s.groupName),
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(query)
-      );
-
-      return (
-        values.some((val) =>
-          String(val || "").toLowerCase().includes(query)
-        ) || sessionMatch
-      );
-    });
-}, [classList, sessionDataList, searchQuery]);
   const { checkPermission } = usePermission();
   const canCreate =
     checkPermission({ module: 'term-group', action: 'create' }) &&

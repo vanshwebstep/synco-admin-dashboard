@@ -14,7 +14,7 @@ const DynamicTable = ({
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const { searchQuery, registerTableData } = useGlobalSearch();
+  const {registerTableData } = useGlobalSearch();
   /* =============================
      Selection
   ============================== */
@@ -79,117 +79,8 @@ const DynamicTable = ({
   const finalData = useGrouped ? groupedData : flattenedData;
   const searchableKeys = ["name", "email", "phone"]; // customize
 
-  const searchedData = useMemo(() => {
-    if (!searchQuery?.trim()) return finalData;
+  const searchedData = finalData;
 
-    const queryWords = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
-
-    return finalData.filter((row) => {
-      // ── venue / address ────────────────────────────────────────
-      const venueName = (
-        row?.venue?.name ||
-        row?.venue?.area ||
-        row?.parent?.venue?.name ||
-        row?.parent?.venue?.area ||
-        row?.address ||
-        row?.parent?.address ||
-        ""
-      ).toLowerCase();
-
-      // ── parents list ───────────────────────────────────────────
-      const parentsList =
-        row?.parents?.length
-          ? row.parents
-          : row?.parent?.parents?.length
-            ? row.parent.parents
-            : [];
-
-      // ── parent phone ───────────────────────────────────────────
-      const normalizedPhones = parentsList
-        .map((p) => (p?.parentPhoneNumber || "").replace(/[^\d]/g, ""))
-        .join(" ");
-
-      // ── parent info ────────────────────────────────────────────
-      const parentInfo = parentsList
-        .map((p) =>
-          [p?.parentFirstName, p?.parentLastName, p?.parentEmail]
-            .filter(Boolean)
-            .join(" ")
-        )
-        .join(" ")
-        .toLowerCase();
-
-      // ── all students ───────────────────────────────────────────
-      const studentsList = row?.students?.length
-        ? row.students
-        : row?.parent?.students?.length
-          ? row.parent.students
-          : row?.student
-            ? [row.student]
-            : [];
-
-      // ── student info ───────────────────────────────────────────
-      const studentInfo = studentsList
-        .map((s) =>
-          [s?.studentFirstName, s?.studentLastName]
-            .filter(Boolean)
-            .join(" ")
-        )
-        .join(" ")
-        .toLowerCase();
-
-      // ── all student ages ───────────────────────────────────────
-      const allStudentAges = studentsList
-        .map((s) => s?.age)
-        .filter((age) => age !== null && age !== undefined && age !== "")
-        .map((age) => String(age));
-
-      // ── booking/id ─────────────────────────────────────────────
-      const idStr = String(row?.bookingId || row?.id || "").toLowerCase();
-
-      // ── combined searchable text ───────────────────────────────
-      const searchString = [studentInfo, parentInfo, venueName, idStr]
-        .join(" ")
-        .toLowerCase();
-
-      // ── tokens ─────────────────────────────────────────────────
-      const tokens = searchString
-        .split(/[\s@.,_\-+]+/)
-        .filter(Boolean);
-
-      // ── match every query word ─────────────────────────────────
-      return queryWords.every((word) => {
-        const clean = word.trim().toLowerCase();
-
-        if (!clean) return true;
-
-        // 1. Phone matching
-        if (/^[\d+\s\-()]{2,}$/.test(clean)) {
-          const cleanDigits = clean.replace(/[^\d]/g, "");
-
-          if (cleanDigits.length >= 2) {
-            return normalizedPhones.includes(cleanDigits);
-          }
-        }
-
-        // 2. Exact age match for any student
-        if (allStudentAges.includes(clean)) {
-          return true;
-        }
-
-        // 3. Token-based matching
-        return tokens.some((token) => {
-          // Exact numeric match
-          if (/^\d+$/.test(clean) && /^\d+$/.test(token)) {
-            return token === clean;
-          }
-
-          // Prefix text match
-          return token.startsWith(clean);
-        });
-      });
-    });
-  }, [finalData, searchQuery]);
   /* =============================
      Pagination
   ============================== */

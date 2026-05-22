@@ -16,32 +16,66 @@ const renderImage = (type) => {
     "holiday camp": "/images/icons/crown.png",
     "Merchandise": "/images/icons/crown.png",
   };
-  return images[type] || "/images/icons/crown.png";
+  return type ? (images[type] || "/images/icons/crown.png") : "/images/icons/crown.png";
 };
 
-// Render field helper
 const renderField = (label, value) => {
+  const displayValue = (value === null || value === undefined || value === "") 
+    ? "N/A" 
+    : value;
   return (
     <div>
       <p className="text-gray-500 text-sm">{label}</p>
-      <p className="mt-1 font-semibold truncate ">{value}</p>
+      <p className="mt-1 font-semibold truncate">{displayValue}</p>
     </div>
   );
 };
 
+// Safe date formatter
+const formatDate = (dateVal) => {
+  if (!dateVal) return "N/A";
+  const d = new Date(dateVal);
+  if (isNaN(d.valueOf())) return "N/A";
+  return d.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+};
+
+// Safe name joiner
+const fullName = (obj) => {
+  if (!obj) return "N/A";
+  const first = obj.firstName || "";
+  const last = obj.lastName || "";
+  return (first + " " + last).trim() || "N/A";
+};
+
+// Safe currency
+const formatAmount = (amount, symbol = "£") => {
+  if (amount === null || amount === undefined || amount === "") return "N/A";
+  return `${symbol}${amount}`;
+};
+
 const BookingCard = ({ bookingInfo, booking }) => {
   const { data } = useAccountsInfo();
-  console.log('data', data, bookingInfo, booking)
-
   const navigate = useNavigate();
+
   const statusColors = {
     active: "bg-[#12B76A] text-white",
     expired: "bg-[#F04438] text-white",
     cancelled: "bg-[#F04438] text-white",
     cancel: "bg-[#F04438] text-white",
     pending: "bg-orange-500 text-white",
-     "waiting list": "bg-gray-200 text-black",
+    "waiting list": "bg-gray-200 text-black",
   };
+
+  const status = data?.status?.toLowerCase?.() || "";
+  const statusClass = statusColors[status] || "bg-gray-200 text-black";
+  const serviceType = bookingInfo?.serviceType || "";
 
   return (
     <div className="bg-white rounded-2xl shadow p-3 mb-6">
@@ -49,173 +83,55 @@ const BookingCard = ({ bookingInfo, booking }) => {
       <div className="flex justify-between items-center bg-[#3D444F] rounded-2xl p-4">
         <div className="flex items-center gap-3">
           <img
-            src={renderImage(bookingInfo?.serviceType)}
-            alt={bookingInfo?.serviceType}
+            src={renderImage(serviceType)}
+            alt={serviceType || "booking"}
             className="w-8 h-8 rounded-full"
           />
-          <h3 className="text-white font-semibold capitalize">{bookingInfo?.serviceType} Booking</h3>
+          <h3 className="text-white font-semibold capitalize">
+            {serviceType ? `${serviceType} Booking` : "Booking"}
+          </h3>
         </div>
         <div className="flex items-center gap-2">
           <button className="px-3 py-2 flex items-center gap-2 rounded-lg text-sm bg-white">
-            <img
-              src="/images/points.png"
-              alt=""
-              className="w-5 h-5 rounded-full"
-            />{" "}
+            <img src="/images/points.png" alt="" className="w-5 h-5 rounded-full" />
             396
           </button>
-          <span
-            className={`px-3 py-2 rounded-lg capitalize text-sm ${statusColors[data.status]}`}
-          >
-            {data.status}
-          </span>
+          {status && (
+            <span className={`px-3 py-2 rounded-lg capitalize text-sm ${statusClass}`}>
+              {data.status}
+            </span>
+          )}
         </div>
       </div>
 
       {/* Details */}
       <div className="bg-[#FCF9F6] rounded-2xl p-4 mt-4">
-        <div className={`grid grid-cols-1 relative sm:grid-cols-2 lg:grid-cols-8 gap-8 mb-4`}>
-          {/* {booking?.serviceType === "membership plan" && (
-            <>
-              {renderField("Membership Plan", booking?.paymentPlan?.title)}
-              {renderField("Students", booking?.paymentPlan?.students)}
-              {renderField("Venue", booking?.address)}
-              {renderField("KGo/Cardless ID", booking?.id)}
-              {renderField("Monthly Price", booking?.paymentPlan?.price)}
-              {renderField("Date Of Booking",
-                new Date(booking?.createdAt).toLocaleString("en-IN", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: false,   // 24-hour format; set true for AM/PM format
-                })
-              )}
-              {renderField("Date Of Party",
-                new Date(booking?.createdAt).toLocaleString("en-IN", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: false,   // 24-hour format; set true for AM/PM format
-                })
-              )}
-              {renderField("Progress", booking?.progress)}
-              {renderField("Booking Source", booking?.source)}
-            </>
-          )}
-
-          {booking?.serviceType === "birthday party" && (
-            <>
-              {renderField("Package", booking?.paymentPlan?.title)}
-              {renderField("Price Paid", `${'£' + booking?.paymentPlan?.price + '.00'}`)}
-              {renderField("Stripe Transaction ID", booking?.payment?.stripeChargeDetails?.id)}
-              {renderField(
-                "Date of Booking",
-                new Date(booking?.createdAt).toLocaleString("en-IN", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: false,
-                  timeZone: "Asia/Kolkata",
-                })
-              )}
-
-              {renderField(
-                "Date of Party",
-                new Date(bookingInfo?.partyDate).toLocaleString("en-IN", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: false,
-                  timeZone: "Asia/Kolkata",
-                })
-              )}
-
-              {renderField("Coach", `${booking.coach.firstName} ${booking.coach.lastName}`
-              )}
-              {renderField("Booking Source", bookingInfo?.source)}
-            </>
-          )}
-
-          {booking?.serviceType === "One to One Booking" && (
-            <>
-              {renderField("Package", data.packageInterest)}
-              {renderField("Students", data.booking?.students.length)}
-              {renderField("Price Paid", `${'£' + data.booking?.paymentPlan?.price + '.00'}`)}
-              {renderField("Stripe Transaction ID", data.booking?.payment.stripePaymentIntentId)}
-              {renderField("Date of Booking",
-                new Date(data.booking?.createdAt).toLocaleString("en-IN", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: false,   // 24-hour format; set true for AM/PM format
-                })
-              )}
-              {renderField("Date Of Party",
-                new Date(data.partyDate).toLocaleString("en-IN", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: false,   // 24-hour format; set true for AM/PM format
-                })
-              )}
-              {renderField("Venue", data.booking?.address)}
-              {renderField("Coach", `${data.booking?.coach.firstName} ${data.booking?.coach.lastName}`)}
-              {renderField("Booking Source", data.source)}
-            </>
-          )} */}
+        <div className="grid grid-cols-1 relative sm:grid-cols-2 lg:grid-cols-8 gap-8 mb-4">
 
           {data?.serviceType === "holiday camp" && (
             <>
               {renderField("Camp", data?.holidayCamp?.name)}
               {renderField("Students", data?.totalStudents)}
-              {renderField("Price Paid", `${'£' + data?.payment?.amount + ''}`)}
-              {renderField("Stripe Transaction ID", data?.payment?.gatewayResponse.fullResponse.balance_transaction.id)}
-              {renderField("Date of Booking", new Date(data?.createdAt).toLocaleString("en-IN", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: false,   // 24-hour format; set true for AM/PM format
-              }))}
-
+              {renderField("Price Paid", formatAmount(data?.payment?.amount))}
+              {renderField(
+                "Stripe Transaction ID",
+                data?.payment?.gatewayResponse?.fullResponse?.balance_transaction?.id
+              )}
+              {renderField("Date of Booking", formatDate(data?.createdAt))}
               {renderField("Venue", data?.holidayVenue?.name)}
-              {renderField("Discount", data?.payment?.discount_amount)}
-              {renderField("Booking Source", data?.bookedByAdmin?.firstName + " " + data?.bookedByAdmin?.lastName)}
+              {renderField("Discount", data?.payment?.discount_amount ?? "N/A")}
+              {renderField(
+                "Booking Source",
+                fullName(data?.bookedByAdmin)
+              )}
             </>
           )}
 
-          {/* {booking?.serviceType === "Merchandise" && (
-            <>
-              {renderField("Item", booking?.item)}
-              {renderField("Quantity", booking?.quantity)}
-              {renderField("Price Paid", `${'£' + booking?.pricePaid + '.00'}`)}
-              {renderField("Transaction ID", booking?.transactionID)}
-              {renderField("Date of Booking", new Date(booking?.bookingDate).toLocaleString("en-IN", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: false,   // 24-hour format; set true for AM/PM format
-              }))}
-              {renderField("Discount", booking?.discount)}
-              {renderField("Fulfillment Status", booking?.fulfillment)}
-              {renderField("Booking Source", booking?.source)}
-            </>
-          )} */}
+          {/* Show fallback if no serviceType matches */}
+          {!data?.serviceType && (
+            <p className="text-gray-400 text-sm col-span-full">No booking details available.</p>
+          )}
+
           <button className="ml-auto absolute right-0 top-3 text-gray-500 hover:text-gray-800">
             <FaEllipsisV />
           </button>
@@ -223,18 +139,22 @@ const BookingCard = ({ bookingInfo, booking }) => {
 
         {/* Buttons */}
         <div className="flex gap-3">
-          <button onClick={() => navigate(`/holiday-camp/members/account-information/see-details?id=${data?.id}`)} className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50">
+          <button
+            onClick={() => {
+              if (data?.id) {
+                navigate(`/holiday-camp/members/account-information/see-details?id=${data.id}`);
+              }
+            }}
+            disabled={!data?.id}
+            className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             See details
           </button>
           {booking?.serviceType !== "Merchandise" && (
-            <>
-              <button className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50">
-                See payments
-              </button>
-
-            </>
+            <button className="px-4 py-2 border border-gray-800 rounded-xl text-sm hover:bg-gray-50">
+              See payments
+            </button>
           )}
-
         </div>
       </div>
     </div>

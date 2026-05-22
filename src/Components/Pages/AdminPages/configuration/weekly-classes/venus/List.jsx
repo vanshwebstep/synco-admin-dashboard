@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState,useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import Create from './Create';
 import { useNavigate } from 'react-router-dom';
 import { Check } from "lucide-react";
@@ -11,11 +11,9 @@ import { format, parseISO } from "date-fns";
 import { usePermission } from '../../../Common/permission';
 import { useTermContext } from '../../../contexts/TermDatesSessionContext';
 import { showError, showConfirm } from '../../../../../../utils/swalHelper';
-import { useGlobalSearch } from '../../../contexts/GlobalSearchContext';
 const List = () => {
   const navigate = useNavigate();
   const formRef = useRef(null);
-    const { searchQuery } = useGlobalSearch();
 
   const [showModal, setShowModal] = useState(false);
   const [selectedPlans, setSelectedPlans] = useState([]);
@@ -267,26 +265,14 @@ const List = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showModal, clickedIcon, setShowModal]);
-const filteredVenues = useMemo(() => {
-  if (!searchQuery) return venues || [];
 
-  const q = searchQuery.toLowerCase();
 
-  return (venues || []).filter((user) => {
-    const values = [
-      user?.area,
-      user?.name,
-      user?.address,
-      user?.facility,
-      user?.parkingNote,
-      user?.howToEnterFacility,
-    ];
 
-    return values.some((val) =>
-      String(val || "").toLowerCase().includes(q)
-    );
-  });
-}, [venues, searchQuery]);
+  const filteredVenues = useMemo(() => {
+    return venues || [];
+  }, [venues]);
+
+
   if (loading) {
     return (
       <>

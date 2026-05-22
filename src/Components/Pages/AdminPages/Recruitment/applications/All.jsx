@@ -20,14 +20,12 @@ import "react-datepicker/dist/react-datepicker.css";
 import Select from "react-select";
 import { showError, showWarning, showSuccess } from "../../../../../utils/swalHelper";
 import PhoneInput from "react-phone-input-2";
-import { useGlobalSearch } from "../../contexts/GlobalSearchContext";
 import { useEmail } from '../../contexts/messages/SendEmailContext';
 import { useTextPopup } from '../../contexts/messages/SendTextContext';
 
 const All = () => {
     const [selectedVenue, setSelectedVenue] = useState(null);
     const [showFilter, setShowFilter] = useState(false);
-    const { searchQuery } = useGlobalSearch();
 
     const { openEmailPopup } = useEmail();
     const { openTextPopup } = useTextPopup();
@@ -597,31 +595,9 @@ const All = () => {
         " px-4 py-3 border border-[#E2E1E5] rounded-xl focus:outline-none ";
 
 
-    const filterBySearchQuery = (data) => {
-        if (!searchQuery.trim()) return data;
-
-        const q = searchQuery.toLowerCase();
-
-        return data.filter((coach) => {
-            const values = [
-                coach?.firstName,
-                coach?.lastName,
-                coach?.age,
-                coach?.postcode,
-                coach?.phoneNumber,
-                coach?.email,
-                coach?.managementExperience,
-                coach?.level,
-                coach?.dbs,
-                coach?.status,
-            ];
-
-            return values.some((val) =>
-                String(val || "").toLowerCase().includes(q)
-            );
-        });
-    };
-
+   const filterBySearchQuery = (data) => {
+    return data;
+};
 
     const totalItems = filteredRecruitment.length;
     const totalPages = Math.ceil(totalItems / rowsPerPage);
@@ -635,7 +611,7 @@ const All = () => {
     );
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery]);
+    }, []);
     useEffect(() => {
         if (!Array.isArray(recruitment)) return;
 
@@ -646,7 +622,7 @@ const All = () => {
         data = filterBySearchQuery(data); // ✅ ADD THIS
 
         setFilteredRecruitment(data);
-    }, [recruitment, studentName, selectedVenue, searchQuery]);
+    }, [recruitment, studentName, selectedVenue]);
 
 
 

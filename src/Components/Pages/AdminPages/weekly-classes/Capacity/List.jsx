@@ -8,7 +8,6 @@ import { useBookFreeTrial } from '../../contexts/BookAFreeTrialContext';
 import { useNavigate } from "react-router-dom";
 import Loader from '../../contexts/Loader';
 import { showError } from '../../../../../utils/swalHelper';
-import { useGlobalSearch } from '../../contexts/GlobalSearchContext';
 const CheckboxOption = (props) => {
     return (
         <components.Option {...props}>
@@ -27,7 +26,6 @@ const CheckboxOption = (props) => {
 const Capacity = () => {
     const navigate = useNavigate();
     const popupRef = useRef(null);
-    const { searchQuery } = useGlobalSearch();
     const booked = 1654
     const total = 2040
     const percentage = Math.round((booked / total) * 100);
@@ -47,30 +45,9 @@ const Capacity = () => {
     const { totalCapacity, totalBooked, occupancyRate } = overview;
 
     console.log('capacityData', capacityData)
-    const filteredVenues = useMemo(() => {
-        if (!searchQuery) return capacityData?.venues || [];
-
-        const query = searchQuery.toLowerCase();
-
-        return (capacityData?.venues || []).filter((venue) => {
-            // 🔹 Venue level match
-            const venueMatch =
-                venue?.name?.toLowerCase().includes(query) ||
-                venue?.address?.toLowerCase().includes(query);
-
-            // 🔹 Class level match
-            const classMatch = venue?.classes?.some((cls) => {
-                return (
-                    cls?.day?.toLowerCase().includes(query) ||
-                    cls?.startTime?.toLowerCase().includes(query) ||
-                    cls?.endTime?.toLowerCase().includes(query)
-                );
-            });
-
-            return venueMatch || classMatch;
-        });
-    }, [capacityData, searchQuery]);
-
+const filteredVenues = useMemo(() => {
+    return capacityData?.venues || [];
+}, [capacityData]);
 
     const data = [
         { name: "Booked", value: occupancyRate || 0 },

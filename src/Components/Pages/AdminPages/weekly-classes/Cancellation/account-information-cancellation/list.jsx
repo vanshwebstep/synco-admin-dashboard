@@ -62,7 +62,7 @@ const AccountInfoCancellation = (from) => {
   return (
     <>
       <div className="relative ">
-        <div className=" flex items-end mb-5 gap-2 md:gap-3">
+        <div className=" flex items-end mb-5 gap-2 justify-between md:gap-3">
           <div className=" flex items-center gap-2 md:gap-3">
             <h2
               onClick={() => {

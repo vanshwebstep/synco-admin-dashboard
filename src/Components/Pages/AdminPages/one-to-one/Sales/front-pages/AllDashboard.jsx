@@ -26,11 +26,9 @@ import { useNavigate } from "react-router-dom";
 import Loader from "../../../contexts/Loader";
 import { useAccountsInfo } from "../../../contexts/AccountsInfoContext";
 import { showError, showSuccess, showWarning } from "../../../../../../utils/swalHelper";
-import { useGlobalSearch } from "../../../contexts/GlobalSearchContext";
 const AllDashboard = () => {
     const navigate = useNavigate();
     const [noLoaderShow, setNoLoaderShow] = useState(false);
-    const { searchQuery } = useGlobalSearch();
     const [showFilter, setShowFilter] = useState(false)
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const token = localStorage.getItem("adminToken");
@@ -71,30 +69,9 @@ const AllDashboard = () => {
         const dd = String(d.getDate()).padStart(2, "0");
         return `${yyyy}-${mm}-${dd}`; // returns "2025-08-24"
     }
-    const searchedData = useMemo(() => {
-        if (!searchQuery) return leadsData || [];
-
-        const query = searchQuery.toLowerCase();
-
-        return leadsData.filter((lead) => {
-            const values = [
-                lead?.parentName,
-                lead?.childName,
-                lead?.email,
-                lead?.phone,
-                lead?.postCode,
-                lead?.age,
-                lead?.status,
-                lead?.source,
-                lead?.packageInterest,
-                lead?.availability,
-            ];
-
-            return values.some((val) =>
-                String(val || "").toLowerCase().includes(query)
-            );
-        });
-    }, [leadsData, searchQuery]);
+   const searchedData = useMemo(() => {
+    return leadsData || [];
+}, [leadsData]);
 
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);

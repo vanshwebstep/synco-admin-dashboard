@@ -18,7 +18,6 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { usePermission } from '../Common/permission';
 import { useHolidayFindClass } from '../contexts/HolidayFindClassContext';
-import { useGlobalSearch } from '../contexts/GlobalSearchContext';
 const customIcon = new L.Icon({
   iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
   iconSize: [25, 41],
@@ -29,7 +28,6 @@ const CampList = () => {
   const { fetchFindClasses, findClasses, loading } = useHolidayFindClass();
   const [openMapId, setOpenMapId] = useState(null);
   const navigate = useNavigate();
-  const { searchQuery } = useGlobalSearch();
 
   const [isOpen, setIsOpen] = useState(true);
   useEffect(() => {
@@ -248,67 +246,45 @@ const CampList = () => {
     }
   };
 
-  const filteredClasses = Array.isArray(findClasses)
+const filteredClasses = Array.isArray(findClasses)
     ? findClasses.filter((venue) => {
-      const query = searchQuery?.toLowerCase() || "";
+        const nameMatch =
+            !searchVenue ||
+            venue.venueName?.toLowerCase().includes(searchVenue.toLowerCase());
 
-      // 🔍 GLOBAL SEARCH (NEW)
-      const globalMatch =
-        !query ||
-        [
-          venue?.venueName,
-          venue?.address,
-          venue?.postal_code,
-        ].some((val) =>
-          String(val || "").toLowerCase().includes(query)
-        ) ||
-        Object.values(venue?.classes || {})
-          .flat()
-          .some((cls) =>
-            Object.values(cls).some((val) =>
-              String(val || "").toLowerCase().includes(query)
-            )
-          );
+        const postcodeMatch =
+            !searchPostcode ||
+            (venue?.postal_code || "")
+                .toLowerCase()
+                .includes(searchPostcode.toLowerCase());
 
-      // Existing filters 👇
-      const nameMatch =
-        !searchVenue ||
-        venue.venueName?.toLowerCase().includes(searchVenue.toLowerCase());
+        const venueMatch =
+            selectedVenues.length === 0 ||
+            selectedVenues.includes("All venues") ||
+            selectedVenues.includes(venue.venueName);
 
-      const postcodeMatch =
-        !searchPostcode ||
-        (venue?.postal_code || "")
-          .toLowerCase()
-          .includes(searchPostcode.toLowerCase());
+        const classList =
+            venue.classes && typeof venue.classes === "object"
+                ? Object.values(venue.classes).flat()
+                : [];
 
-      const venueMatch =
-        selectedVenues.length === 0 ||
-        selectedVenues.includes("All venues") ||
-        selectedVenues.includes(venue.venueName);
+        const dayMatch =
+            selectedDays.length === 0 ||
+            venue.holidayCamps?.some((camp) =>
+                selectedDays.includes(camp.id)
+            );
 
-      const classList =
-        venue.classes && typeof venue.classes === "object"
-          ? Object.values(venue.classes).flat()
-          : [];
+        const availableMatch =
+            !showAvailableOnly ||
+            classList.some((cls) => cls.capacity > 0);
 
-      const dayMatch =
-        selectedDays.length === 0 ||
-        venue.holidayCamps?.some((camp) =>
-          selectedDays.includes(camp.id)
+        return (
+            nameMatch &&
+            postcodeMatch &&
+            venueMatch &&
+            dayMatch &&
+            availableMatch
         );
-
-      const availableMatch =
-        !showAvailableOnly ||
-        classList.some((cls) => cls.capacity > 0);
-
-      return (
-        globalMatch && // ✅ ADD THIS
-        nameMatch &&
-        postcodeMatch &&
-        venueMatch &&
-        dayMatch &&
-        availableMatch
-      );
     })
     : [];
 

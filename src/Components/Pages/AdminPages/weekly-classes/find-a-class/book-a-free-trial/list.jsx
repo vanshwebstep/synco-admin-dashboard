@@ -700,7 +700,7 @@ const List = () => {
 
     const venueClassOptions = !isEmpty
         ? allClasses?.map((cls) => ({ value: cls.id, label: cls.className }))
-        : classesWithCapacity?.map((cls) => ({ value: cls.id, label: cls.className }));
+        : classesWithCapacity?.map((cls) => ({ value: cls.id, label: `${cls.className} (${cls.level ?? cls.levelName ?? cls.classLevel ?? ''})`}));
 
 
     console.log('singleClassSchedulesOnlyasasasa', singleClassSchedulesOnly)
@@ -1771,7 +1771,7 @@ const List = () => {
                                     <div className="flex gap-4">
                                         {/* CLASS */}
                                         <div className="w-1/2" id={`student-${index}-selectedClassId`}>
-                                            <label className="block text-[16px] font-semibold">Class</label>
+                                            <label className="block text-[16px] font-semibold">Class/Level</label>
 
                                             <Select
                                                 className="w-full mt-2 text-base"

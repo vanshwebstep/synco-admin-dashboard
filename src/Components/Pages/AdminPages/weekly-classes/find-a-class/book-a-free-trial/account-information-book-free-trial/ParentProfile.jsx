@@ -1000,7 +1000,7 @@ const ParentProfile = ({ ParentProfile }) => {
 
                                 {/* Class */}
                                 <div>
-                                    <label className="block text-[16px] font-semibold">Class</label>
+                                    <label className="block text-[16px] font-semibold">Class/Level</label>
                                     <input
                                         type="text"
                                         className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
@@ -1154,7 +1154,7 @@ const ParentProfile = ({ ParentProfile }) => {
                             </div>
 
                             <div className="space-y-4 px-6 pb-6 pt-4">
-                                {/* Current Class */}
+                                {/* Current Class / Level */}
 
                                 <div>
 
@@ -1195,7 +1195,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                         {transferData.selectedStudents.map((studentOption) => {
                                             const studentId = studentOption.value;
                                             const studentConfig = transferData.studentTransfers?.[studentId] || {};
-                                            const currentClass = studentOption.classSchedule?.className || "-";
+                                          const currentClass = `${studentOption.classSchedule?.className || "-"} ${studentOption.classSchedule?.level || studentOption.abilityLevel ? `(${studentOption.classSchedule?.level || studentOption.abilityLevel})` : ""}`;
                                             const currentVenue = studentOption.classSchedule?.venue?.name || "-";
                                             console.log('transferData', transferData)
                                             console.log('studentConfig', studentConfig)
@@ -1220,7 +1220,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className="block text-sm font-semibold mb-1">Current Class</label>
+                                                            <label className="block text-sm font-semibold mb-1">Current Class / Level</label>
                                                             <input
                                                                 type="text"
                                                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
@@ -1232,7 +1232,7 @@ const ParentProfile = ({ ParentProfile }) => {
 
                                                     {/* New Class Select */}
                                                     <div>
-                                                        <label className="block text-sm font-semibold mb-1">New Class</label>
+                                                        <label className="block text-sm font-semibold mb-1">New Class / Level</label>
                                                         <Select
                                                             value={
                                                                 studentConfig.classScheduleId
@@ -1243,7 +1243,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                                                 handleTransferConfigChange(studentId, "classScheduleId", selected?.value)
                                                             }
                                                             options={newClasses}
-                                                            placeholder="Select New Class"
+                                                            placeholder="Select New Class / Level"
                                                             className="rounded-lg"
                                                             styles={{
                                                                 control: (base) => ({
@@ -1457,7 +1457,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                 <div className="flex justify-end gap-4 pt-4">
                                     <button
                                         onClick={handleCancel}
-                                        className="w-1/2 bg-[#fef2f2] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
+                                        className="w-1/2 text-white bg-red-500 rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
                                     >
                                         Cancel Trial
                                     </button>

@@ -1,818 +1,553 @@
 import React, { useEffect, useState, useCallback } from "react";
 import PhoneInput from "react-phone-input-2";
 import { useLocation } from 'react-router-dom';
-
 import "react-phone-input-2/lib/style.css";
 import { useNotification } from "../../../contexts/NotificationContext";
 import { useNavigate } from "react-router-dom";
-import { Mail, MessageSquare, Loader2 } from "lucide-react";
+import { Mail, Loader2 } from "lucide-react";
 import { showSuccess, showError, showWarning } from "../../../../../../utils/swalHelper";
 import Comments from "../../../Common/Comments";
 import { useEmail } from "../../../contexts/messages/SendEmailContext";
 import { useTextPopup } from "../../../contexts/messages/SendTextContext";
 import { useBookFreeTrial } from "../../../contexts/BookAFreeTrialContext";
+
 const ParentProfile = (fetchedData) => {
-  const { adminInfo } = useNotification();
-  const location = useLocation();
-  const [showFreeTrialPopup, setShowFreeTrialPopup] = useState(false);
-  const {
-    setComment, comment, fetchComments, commentsList, handleSubmitComment, loadingComment
-  } = useBookFreeTrial() || {};
-  const [showMembershipPopup, setShowMembershipPopup] = useState(false);
-  const [showAddtoWaitingPoppup, setShowAddtoWaitingPoppup] = useState(false);
-  const [students, setStudents] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const token = localStorage.getItem("adminToken");
-  const [showEmailPopup, setShowEmailPopup] = useState(false);
-  const [studentsData, setStudentsData] = useState([]);
-  const [textloading, setTextLoading] = useState(null);
-  const { openEmailPopup } = useEmail();
-  const { openTextPopup } = useTextPopup();
+    const { adminInfo } = useNotification();
+    const location = useLocation();
+    const navigate = useNavigate();
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const queryParams = new URLSearchParams(location.search);
-  const leadId = queryParams.get("id");
-  console.log('leadId', leadId)
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    mobile: "",
-    postalCode: "",
-    childAge: "",
-  });
+    const {
+        setComment, comment, fetchComments, commentsList, handleSubmitComment, loadingComment
+    } = useBookFreeTrial() || {};
 
-  console.log('formData', formData);
+    const { openEmailPopup } = useEmail();
+    const { openTextPopup } = useTextPopup();
 
-  useEffect(() => {
-    if (fetchedData?.fetchedformData) {
-      setFormData(fetchedData.fetchedformData);
-    }
+    const [showFreeTrialPopup, setShowFreeTrialPopup] = useState(false);
+    const [showMembershipPopup, setShowMembershipPopup] = useState(false);
+    const [showAddtoWaitingPoppup, setShowAddtoWaitingPoppup] = useState(false);
+    const [students, setStudents] = useState([]);
+    const [textloading, setTextLoading] = useState(false);
+    const [formData, setFormData] = useState({});
 
-    const bookings = fetchedData?.leadData?.bookings;
-    console.log("bookings", bookings);
+    const token = localStorage.getItem("adminToken");
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-    if (Array.isArray(bookings)) {
-      const allStudents = bookings.flatMap(b =>
-        (b?.students || []).map(student => {
-          const parents = (student?.parents || []).map(parent => ({
-            parentFirstName: parent.parentFirstName,
-            parentLastName: parent.parentLastName,
-            parentEmail: parent.parentEmail,
-            parentPhoneNumber: parent.phone,
-            postalCode: parent.postcode,
-            relationToChild: parent.relationToChild
-          }));
+    const queryParams = new URLSearchParams(location.search);
+    const leadId = queryParams.get("id");
 
-          return {
-            ...student,
-            parents, // 👈 attach parents array
-            bookingType: b?.bookingType || "unknown",
-            bookingVenue: b?.venue?.name || "Venue",
-            bookingId: b?.bookingId,
-            bookingScheduleId: b?.classScheduleId
-          };
-        })
-      );
+    const [country, setCountry] = useState("gb");
+    const [dialCode, setDialCode] = useState("+44");
+    const [currentPage, setCurrentPage] = useState(1);
+    const commentsPerPage = 5;
 
-      setStudents(allStudents);
-    }
-  }, [fetchedData]);
-  const navigate = useNavigate();
-  const [country, setCountry] = useState("uk");
+    const indexOfLastComment = currentPage * commentsPerPage;
+    const indexOfFirstComment = indexOfLastComment - commentsPerPage;
+    const currentComments = commentsList.slice(indexOfFirstComment, indexOfLastComment);
+    const totalPages = Math.ceil(commentsList.length / commentsPerPage);
 
-  const [dialCode, setDialCode] = useState("+44");
-  const [currentPage, setCurrentPage] = useState(1);
-  const commentsPerPage = 5;
-  // Pagination calculations
-  const indexOfLastComment = currentPage * commentsPerPage;
-  const indexOfFirstComment = indexOfLastComment - commentsPerPage;
-  const currentComments = commentsList.slice(indexOfFirstComment, indexOfLastComment);
-  const totalPages = Math.ceil(commentsList.length / commentsPerPage);
-
-  const goToPage = (page) => {
-    if (page < 1) page = 1;
-    if (page > totalPages) page = totalPages;
-    setCurrentPage(page);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-  const handleBookFreeTrial = (classId, leadId) => {
-    console.log("leadId", leadId);
-    navigate("/weekly-classes/find-a-class/book-a-free-trial", {
-      state: {
-        classId,
-        from_lead: "leadDatabase",
-        leadId: leadId, // pass dynamically (fallback for safety)
-      },
-    });
-  };
-  const sendText = async (id) => {
-    setTextLoading(true);
-
-    const headers = {
-      "Content-Type": "application/json",
-    };
-    // console.log('bookingIds', bookingIds)
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/book/free-trials/send-text`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          bookingId: id, // make sure bookingIds is an array like [96, 97]
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to send text");
-      }
-
-      await showSuccess("Success!", result.message || "Text has been sent successfully.");
-
-      return result;
-
-    } catch (error) {
-      console.error("Error sending Text:", error);
-      await showError("Error", error.message || "Something went wrong while sending text.");
-      throw error;
-    } finally {
-      // navigate(`/weekly-classes/all-members/list`);
-      // await serviceHistoryWaitingList(id);
-      setTextLoading(false);
-    }
-  };
-
-  const handleBookMembership = (classId, leadId) => {
-    // Adjust this route if needed
-    navigate("/weekly-classes/find-a-class/book-a-membership", {
-      state: { classId, from_lead: "leadDatabase", leadId },
-    });
-  };
-  const handleAddToWaitingList = (classId, leadId) => {
-    if (!classId || !leadId) {
-      console.warn("Missing classId or leadId for adding to waiting list");
-      return;
-    }
-
-    navigate("/weekly-classes/find-a-class/add-to-waiting-list", {
-      state: { classId, from_lead: "leadDatabase", leadId },
-    });
-  };
-
-  const hasWaitingListClasses = fetchedData?.leadData?.nearestVenues?.some(venue =>
-    venue.classSchedules?.some(cls => cls.capacity === 0)
-  );
-  const handlePhoneChange = (value, data) => {
-    setDialCode("+" + data.dialCode);
-    setCountry(data.countryCode);
-    setFormData((prev) => ({ ...prev, phone: value.replace(data.dialCode, "").trim() }));
-  };
-
-  const formatTimeAgo = (timestamp) => {
-    const now = new Date();
-    const past = new Date(timestamp);
-    const diff = Math.floor((now - past) / 1000); // in seconds
-
-    if (diff < 60) return `${diff}s ago`;
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-    if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
-
-    return past.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  };
-
-
-
-
-  const commentData = {
-    commentByLead: leadId,
-    commentType: "lead",
-    serviceType: "weekly class",
-  }
-  const payload = {
-    comment: comment,
-    commentType: "lead",
-    serviceType: "weekly class",
-    commentByLead: leadId, // ensure correct ID
-  };
-
-  useEffect(() => {
-    fetchComments(commentData, "commentByLead");
-  }, [])
-
-
-  const handleSendEmail = useCallback(async (bookingIds, type) => {
-    setLoading(true);
-    const mybookingIds = [bookingIds];
-    const endpoints = {
-      paid: "/api/admin/book-membership/send/email",
-      free: "/api/admin/book/free-trials/send-email",
-      waiting_list: "/api/admin/waiting-list/send-email",
+    const goToPage = (page) => {
+        if (page < 1) page = 1;
+        if (page > totalPages) page = totalPages;
+        setCurrentPage(page);
     };
 
-    try {
-      const res = await fetch(API_BASE_URL + endpoints[type], {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` })
-        },
-        body: JSON.stringify({ bookingIds: mybookingIds }),
-      });
+    // ── Populate formData and students ────────────────────────────────────────
+    useEffect(() => {
+        const data = fetchedData?.fetchedformData || fetchedData?.leadData || {};
+        if (data && Object.keys(data).length > 0) {
+            setFormData(data);
+        }
 
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message);
-      setLoading(false);
+        const bookings = data?.bookings || [];
+        if (Array.isArray(bookings)) {
+            const allStudents = bookings.flatMap(b =>
+                (b?.students || []).map(student => {
+                    const parents = (student?.parents || []).map(parent => ({
+                        parentFirstName: parent.parentFirstName,
+                        parentLastName: parent.parentLastName,
+                        parentEmail: parent.parentEmail,
+                        parentPhoneNumber: parent.parentPhoneNumber,
+                        postalCode: parent.postcode,
+                        relationToChild: parent.relationToChild,
+                    }));
+                    return {
+                        ...student,
+                        parents,
+                        bookingType: b?.bookingType || "unknown",
+                        bookingVenue: b?.venue?.name || "Venue",
+                        bookingId: b?.bookingId,
+                        bookingScheduleId: b?.classScheduleId,
+                    };
+                })
+            );
+            setStudents(allStudents);
+        }
+    }, [fetchedData]);
 
+    // ── Derived data from API response ────────────────────────────────────────
+    const nearestVenues = formData?.nearestVenues || [];
+    const currentStatus = formData?.bookings?.[0]?.status;
+    const marketingSource = formData?.status; // "facebook" etc.
+    const leadStatus = formData?.leadStatus;  // "waiting_list_booked" etc.
 
-      showSuccess("Success!", json.message);
-      return json;
+    const statusBg =
+        currentStatus === "cancelled" ? "url('/frames/Cancelled.png')"
+        : currentStatus === "frozen" ? "url('/frames/Frozen.png')"
+        : currentStatus === "active" ? "url('/frames/Active.png')"
+        : currentStatus === "request_to_cancel" ? "url('/frames/reqCancel.png')"
+        : currentStatus === "waiting list" ? "url('/frames/Waiting.png')"
+        : "url('/frames/Pending.png')";
 
-    } catch (e) {
-      showError("Error", e.message);
-      throw e;
+    const hasWaitingListClasses = nearestVenues?.some(venue =>
+        venue.classSchedules?.some(cls => cls.capacity === 0)
+    );
 
-    } finally {
-      setLoading(false);
-      setShowEmailPopup(false);
-    }
-  }, [token, API_BASE_URL]);
+    // ── Comments ──────────────────────────────────────────────────────────────
+    const commentData = {
+        commentByLead: leadId,
+        commentType: "lead",
+        serviceType: "weekly class",
+    };
+    const commentPayload = {
+        comment,
+        commentType: "lead",
+        serviceType: "weekly class",
+        commentByLead: leadId,
+    };
 
-  // useEffect(() => {
-  //   fetchComments();
-  // }, [fetchComments]);
+    useEffect(() => {
+        fetchComments(commentData, "commentByLead");
+    }, []);
 
+    // ── Handlers ──────────────────────────────────────────────────────────────
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({ ...prev, [name]: value }));
+    };
 
-  const renderPopup = useCallback(
-    (title, onClose, onBookClick) => (
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 animate-fadeIn"
-        onClick={onClose}
-      >
+    const handlePhoneChange = (value, data) => {
+        setDialCode("+" + data.dialCode);
+        setCountry(data.countryCode);
+        const number = value.startsWith(data.dialCode)
+            ? value.slice(data.dialCode.length).trim()
+            : value;
+        setFormData((prev) => ({ ...prev, mobile: number }));
+    };
+
+    const handleBookFreeTrial = (classId, leadId) => {
+        navigate("/weekly-classes/find-a-class/book-a-free-trial", {
+            state: { classId, from_lead: "leadDatabase", leadId },
+        });
+    };
+
+    const handleBookMembership = (classId, leadId) => {
+        navigate("/weekly-classes/find-a-class/book-a-membership", {
+            state: { classId, from_lead: "leadDatabase", leadId },
+        });
+    };
+
+    const handleAddToWaitingList = (classId, leadId) => {
+        if (!classId || !leadId) return;
+        navigate("/weekly-classes/find-a-class/add-to-waiting-list", {
+            state: { classId, from_lead: "leadDatabase", leadId },
+        });
+    };
+
+    const formatTimeAgo = (timestamp) => {
+        const now = new Date();
+        const past = new Date(timestamp);
+        const diff = Math.floor((now - past) / 1000);
+        if (diff < 60) return `${diff}s ago`;
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+        return past.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    };
+
+    // ── Venue/class popup ─────────────────────────────────────────────────────
+    const renderPopup = useCallback((title, onClose, onBookClick) => (
         <div
-          className="bg-white rounded-2xl w-[90%] max-w-md max-h-[80vh] p-6 overflow-y-auto shadow-2xl border border-gray-100 animate-scaleIn"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Title */}
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-2xl font-semibold text-gray-800">{title}</h2>
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-gray-500 hover:text-[#F04438] transition text-xl"
-            >
-              ✕
-            </button>
-          </div>
-
-          {/* Venue List */}
-          {fetchedData?.leadData?.nearestVenues?.length ? (
-            fetchedData.leadData.nearestVenues.map((venue) => {
-              const availableClasses = venue.classSchedules?.filter(
-                (cls) => cls.id !== 0 && cls.capacity !== 0
-              );
-
-              if (!availableClasses?.length) return null;
-
-              return (
-                <div
-                  key={venue.id}
-                  className="mb-6 border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition"
-                >
-                  {/* Venue Name */}
-                  <h3 className="text-lg font-bold text-[#237FEA] mb-3">
-                    {venue.name}
-                  </h3>
-
-                  {/* Class List */}
-                  <ul className="space-y-3">
-                    {availableClasses.map((cls) => (
-                      <li
-                        key={cls.id}
-                        className="flex justify-between items-center border border-gray-200 rounded-xl px-4 py-3 shadow-sm hover:bg-gray-50 hover:shadow-md transition group"
-                      >
-                        <span className="font-medium text-gray-700 group-hover:text-[#237FEA] transition">
-                          {cls.className}
-                        </span>
-
-                        <button
-                          type="button"
-                          onClick={() => onBookClick(cls.id, leadId)}
-                          className="bg-[#237FEA] hover:bg-blue-700 text-white px-4 py-1.5 text-sm rounded-lg transition font-medium"
-                        >
-                          {title}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })
-          ) : (
-            <p className="text-gray-500 text-center py-4">
-              No nearest venues found.
-            </p>
-          )}
-
-          {/* Close Button */}
-          <button
-            type="button"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50"
             onClick={onClose}
-            className="w-full mt-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-xl font-semibold text-gray-700 transition"
-          >
-            Close
-          </button>
+        >
+            <div
+                className="bg-white rounded-2xl w-[90%] max-w-md max-h-[80vh] p-6 overflow-y-auto shadow-2xl border border-gray-100"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex items-center justify-between mb-5">
+                    <h2 className="text-2xl font-semibold text-gray-800">{title}</h2>
+                    <button type="button" onClick={onClose} className="text-gray-500 hover:text-[#F04438] transition text-xl">✕</button>
+                </div>
+
+                {nearestVenues?.length ? (
+                    nearestVenues.map((venue) => {
+                        const availableClasses = venue.classSchedules?.filter(
+                            cls => cls.id !== 0 && cls.capacity !== 0
+                        );
+                        if (!availableClasses?.length) return null;
+                        return (
+                            <div key={venue.id} className="mb-6 border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition">
+                                <h3 className="text-lg font-bold text-[#237FEA] mb-3">{venue.name}</h3>
+                                <ul className="space-y-3">
+                                    {availableClasses.map((cls) => (
+                                        <li key={cls.id} className="flex justify-between items-center border border-gray-200 rounded-xl px-4 py-3 shadow-sm hover:bg-gray-50 transition group">
+                                            <div>
+                                                <span className="font-medium text-gray-700 group-hover:text-[#237FEA] transition">{cls.className}</span>
+                                                {cls.level && <span className="ml-2 text-xs text-gray-400">({cls.level})</span>}
+                                                <div className="text-xs text-gray-400 capitalize">{cls.day} • {cls.startTime} - {cls.endTime}</div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => onBookClick(cls.id, leadId)}
+                                                className="bg-[#237FEA] hover:bg-blue-700 text-white px-4 py-1.5 text-sm rounded-lg transition font-medium"
+                                            >
+                                                Book
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        );
+                    })
+                ) : (
+                    <p className="text-gray-500 text-center py-4">No nearest venues found.</p>
+                )}
+
+                <button type="button" onClick={onClose} className="w-full mt-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-xl font-semibold text-gray-700 transition">
+                    Close
+                </button>
+            </div>
         </div>
-      </div>
-    ),
-    []
-  );
+    ), [nearestVenues, leadId]);
 
-  const grouped = studentsData.reduce((acc, student) => {
-    const venue = student.bookingVenue;
-    if (!acc[venue]) acc[venue] = [];
-    acc[venue].push(student);
-    return acc;
-  }, {});
+    // ── Waiting list popup ────────────────────────────────────────────────────
+    const renderAddtoWaiting = useCallback((title, onClose, onAddToWaitingList) => (
+        <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50"
+            onClick={onClose}
+        >
+            <div
+                className="bg-white rounded-2xl w-[90%] max-w-md max-h-[80vh] p-6 overflow-y-auto shadow-2xl border border-gray-100"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex items-center justify-between mb-5">
+                    <h2 className="text-2xl font-semibold text-gray-800">{title}</h2>
+                    <button type="button" onClick={onClose} className="text-gray-500 hover:text-[#F04438] transition text-xl">✕</button>
+                </div>
 
+                {nearestVenues?.length ? (
+                    nearestVenues.map((venue) => {
+                        const waitingListClasses = venue.classSchedules?.filter(
+                            cls => cls.id && cls.capacity === 0
+                        );
+                        if (!waitingListClasses?.length) return null;
+                        return (
+                            <div key={venue.id} className="mb-6 border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition">
+                                <h3 className="text-lg font-bold text-[#237FEA] mb-3">{venue.name}</h3>
+                                <ul className="space-y-3">
+                                    {waitingListClasses.map((cls) => (
+                                        <li key={cls.id} className="flex justify-between items-center border border-gray-200 rounded-xl px-4 py-3 shadow-sm hover:bg-gray-50 transition group">
+                                            <div>
+                                                <span className="font-medium text-gray-700 group-hover:text-[#237FEA] transition">{cls.className}</span>
+                                                {cls.level && <span className="ml-2 text-xs text-gray-400">({cls.level})</span>}
+                                                <div className="text-xs text-gray-400 capitalize">{cls.day} • {cls.startTime} - {cls.endTime}</div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => onAddToWaitingList(cls.id, leadId)}
+                                                className="bg-[#237FEA] hover:bg-blue-700 text-white px-4 py-1.5 text-sm rounded-lg transition font-medium"
+                                            >
+                                                Add
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        );
+                    })
+                ) : (
+                    <p className="text-gray-500 text-center py-4">No nearest venues found.</p>
+                )}
 
-  function EmailPopup({ loading, grouped, handleSendEmail, close }) {
+                <button type="button" onClick={onClose} className="w-full mt-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-xl font-semibold text-gray-700 transition">
+                    Close
+                </button>
+            </div>
+        </div>
+    ), [nearestVenues, leadId]);
+
     return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn">
-        <div className={`
-        bg-white rounded-2xl w-[90%] md:w-[600px] shadow-2xl border border-gray-100 
-        max-h-[80vh] overflow-y-auto p-6 animate-scaleIn
-        ${loading ? "opacity-50 pointer-events-none select-none" : ""}
-      `}>
+        <>
+            <div className="flex gap-4">
+                {/* ── Left panel ──────────────────────────────────────────────── */}
+                <div className="md:w-[66%]">
+                    <div className="bg-white p-6 rounded-xl mt-5">
+                        <h3 className="font-bold text-[20px] pb-4">Lead Information</h3>
 
-          {/* Header */}
-          <div className="flex justify-between items-center mb-5">
-            <h2 className="text-2xl font-semibold text-gray-800">Send Email</h2>
-            <button
-              onClick={close}
-              className="text-gray-500 hover:text-[#F04438] transition text-xl"
-            >✕</button>
-          </div>
-
-          {/* Venue groups */}
-          <div className="space-y-6">
-            {Object.entries(grouped).map(([venue, students]) => (
-              <div
-                key={venue}
-                className="border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition"
-              >
-                <h3 className="text-lg font-bold text-[#237FEA] mb-3">{venue}</h3>
-
-                <div className="space-y-3">
-                  {students.map((stu, idx) => {
-                    const type =
-                      stu.bookingType === "waiting list"
-                        ? "waiting_list"
-                        : stu.bookingType;
-
-                    return (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => handleSendEmail(stu.bookingTrialId, type)}
-                        className="w-full p-4 rounded-xl border border-gray-200 hover:bg-gray-50 
-                        transition flex flex-col text-left group"
-                      >
-                        <div className="flex justify-between items-center">
-                          <p className="font-semibold text-gray-800 group-hover:text-[#237FEA] transition capitalize">
-                            {stu.studentFirstName} {stu.studentLastName}
-                          </p>
-
-                          <span className="bg-[#237FEA] hover:bg-blue-700 text-white px-4 py-1.5 text-sm rounded-lg transition font-medium">
-                            {type === "paid"
-                              ? "Send Membership Email"
-                              : type === "free"
-                                ? "Send Free Trial Email"
-                                : "Send Waiting List Email"}
-                          </span>
+                        <div className="md:flex gap-6 mb-4">
+                            <div className="md:w-1/2">
+                                <label className="block text-[16px] font-semibold">First Name</label>
+                                <input
+                                    name="firstName"
+                                    className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-3"
+                                    value={formData.firstName || ""}
+                                    onChange={handleInputChange}
+                                />
+                            </div>
+                            <div className="md:w-1/2">
+                                <label className="block text-[16px] font-semibold">Last Name</label>
+                                <input
+                                    name="lastName"
+                                    className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-3"
+                                    value={formData.lastName || ""}
+                                    onChange={handleInputChange}
+                                />
+                            </div>
                         </div>
 
-                        <p className="text-xs text-gray-500 mt-1">
-                          Age {stu.age} • {stu.gender}
-                        </p>
-                      </button>
-                    );
-                  })}
+                        <div className="md:flex gap-6 mb-4">
+                            <div className="md:w-1/2">
+                                <label className="block text-[16px] font-semibold">Email</label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-3"
+                                    value={formData.email || ""}
+                                    onChange={handleInputChange}
+                                />
+                            </div>
+                            <div className="md:w-1/2">
+                                <label className="block text-[16px] font-semibold">Phone</label>
+                                <div className="flex items-center border border-gray-300 rounded-xl px-3 py-3 mt-1">
+                                    <PhoneInput
+                                        country={country}
+                                        value={dialCode}
+                                        onChange={handlePhoneChange}
+                                        disableDropdown={true}
+                                        disableCountryCode={true}
+                                        countryCodeEditable={false}
+                                        inputStyle={{
+                                            width: "0px", maxWidth: "20px", height: "0px",
+                                            opacity: 0, pointerEvents: "none", position: "absolute"
+                                        }}
+                                        buttonClass="!bg-white !border-none !p-0"
+                                    />
+                                    <input
+                                        type="text"
+                                        name="phone"
+                                        value={formData.mobile || formData.phone || ""}
+                                        onChange={handleInputChange}
+                                        placeholder="Enter number"
+                                        className="border-none w-full focus:outline-none flex-1"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="md:flex gap-6 mb-3">
+                            <div className="md:w-1/2">
+                                <label className="block text-[16px] font-semibold">Postal Code</label>
+                                <input
+                                    type="text"
+                                    name="postcode"
+                                    value={formData.postcode || ""}
+                                    onChange={handleInputChange}
+                                    placeholder="Enter postal code"
+                                    className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-3"
+                                />
+                            </div>
+                            <div className="md:w-1/2">
+                                <label className="block text-[16px] font-semibold">Age of Child</label>
+                                <input
+                                    type="number"
+                                    name="childAge"
+                                    value={formData.childAge || ""}
+                                    onChange={handleInputChange}
+                                    placeholder="Enter age"
+                                    className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-3"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <Comments
+                        adminInfo={adminInfo}
+                        comment={comment}
+                        setComment={setComment}
+                        handleSubmitComment={() => handleSubmitComment(commentPayload, commentData, "commentByLead")}
+                        loadingComment={loadingComment}
+                        commentsList={commentsList}
+                        currentComments={currentComments}
+                        formatTimeAgo={formatTimeAgo}
+                    />
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+
+                {/* ── Right panel ──────────────────────────────────────────────── */}
+                <div className="md:w-[34%]">
+                    <div className="md:max-w-[510px]">
+                        <div className="bg-[#363E49] text-white rounded-3xl p-6 space-y-3">
+
+                            {/* Status badge */}
+                            <div
+                                className="text-white rounded-2xl p-4 relative overflow-hidden"
+                                style={{ backgroundImage: statusBg, backgroundSize: "cover" }}
+                            >
+                                <p className="text-[20px] text-black font-bold relative z-10">Account Status</p>
+                                <p className="text-sm text-black relative capitalize z-10">
+                                    {currentStatus?.replaceAll("_", " ") || leadStatus?.replaceAll("_", " ") || "N/A"}
+                                </p>
+                            </div>
+
+                            {/* Assigned Agent */}
+                            <div className="border-b border-[#495362] pb-3 flex items-center gap-5">
+                                <img src="/members/user2.png" alt="" />
+                                <div>
+                                    <h3 className="text-lg font-semibold">Assigned Agent</h3>
+                                    <p className="text-gray-300 text-sm">
+                                        {formData?.assignedAgent?.firstName} {formData?.assignedAgent?.lastName}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Nearest Venues */}
+                            <div className="border-b border-[#495362] pb-3">
+                                <p className="text-white text-[18px] font-semibold">Nearest Venue</p>
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                    {nearestVenues.length > 0 ? nearestVenues.map((v, index) => (
+                                        <span key={index} className="inline-block bg-blue-500 text-white text-xs px-2 py-1 rounded-md">
+                                            {v.name}
+                                        </span>
+                                    )) : <span className="text-gray-400 text-sm">N/A</span>}
+                                </div>
+                            </div>
+
+                            {/* Date Added */}
+                            <div className="border-b border-[#495362] pb-3">
+                                <p className="text-white text-[18px] font-semibold">Date lead was added</p>
+                                <p className="text-[16px] mt-1 text-[#BDC0C3]">
+                                    {formData.createdAt
+                                        ? new Date(formData.createdAt).toLocaleString("en-US", {
+                                            month: "short", day: "numeric", year: "numeric",
+                                            hour: "2-digit", minute: "2-digit", hour12: false,
+                                        })
+                                        : "N/A"}
+                                </p>
+                            </div>
+
+                            {/* Source — formData.status holds the marketing channel */}
+                            <div className="border-b border-[#495362] pb-3">
+                                <p className="text-white text-[18px] font-semibold">Source</p>
+                                <p className="text-[16px] mt-1 text-[#BDC0C3] capitalize">
+                                    {marketingSource || "N/A"}
+                                </p>
+                            </div>
+
+                            {/* Last Contact */}
+                            <div className="border-b border-[#495362] pb-3">
+                                <p className="text-white text-[18px] font-semibold">Last Contact Date</p>
+                                <p className="text-[16px] mt-1 text-[#BDC0C3]">
+                                    {formData.updatedAt
+                                        ? new Date(formData.updatedAt).toLocaleString("en-US", {
+                                            month: "short", day: "numeric", year: "numeric",
+                                            hour: "2-digit", minute: "2-digit", hour12: false,
+                                        })
+                                        : "N/A"}
+                                </p>
+                            </div>
+
+                            {/* Lead Status */}
+                            <div>
+                                <p className="text-white text-[18px] font-semibold">Current Status</p>
+                                <p className="text-[16px] capitalize mt-1 text-[#BDC0C3] font-semibold">
+                                    {currentStatus?.replaceAll("_", " ") || leadStatus?.replaceAll("_", " ") || "N/A"}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="p-6 flex flex-col bg-white rounded-3xl mt-5 items-center space-y-3">
+                            <div className="flex w-full justify-between gap-2">
+                                <button
+                                    type="button"
+                                    className="flex-1 flex items-center gap-2 justify-center border border-[#717073] text-[#717073] rounded-xl font-semibold py-3 text-[18px] hover:bg-gray-50 transition"
+                                    onClick={() => {
+                                        const parentEmails = students
+                                            .flatMap(s => s.parents.map(p => p.parentEmail))
+                                            .filter(Boolean);
+                                        if (parentEmails.length > 0) {
+                                            openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
+                                        } else {
+                                            showWarning("No Emails", "No parent email addresses found.");
+                                        }
+                                    }}
+                                >
+                                    <Mail className="w-4 h-4" /> Send Email
+                                </button>
+
+                                <button
+                                    disabled={textloading}
+                                    onClick={() => {
+                                        const formattedParents = students
+                                            .flatMap(s => s.parents)
+                                            .filter(p => p.parentPhoneNumber)
+                                            .map(p => ({
+                                                name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
+                                                phone: p.parentPhoneNumber,
+                                            }));
+
+                                        if (formattedParents.length > 0) {
+                                            openTextPopup(formattedParents, "/api/admin/send-manual-text", { token, showError, showSuccess });
+                                        } else {
+                                            showWarning("No Phone Numbers", "Selected parents do not have valid phone numbers.");
+                                        }
+                                    }}
+                                    className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium disabled:opacity-50"
+                                >
+                                    <img src="/images/icons/sendText.png" alt="" />
+                                    {textloading ? <Loader2 className="animate-spin w-5 h-5 text-blue-500" /> : "Send Text"}
+                                </button>
+                            </div>
+
+                            <button
+                                type="button"
+                                className="w-full bg-blue-50 border border-[#237FEA] text-[#237FEA] rounded-xl py-3 text-[18px] font-semibold hover:shadow-md transition-all duration-300"
+                                onClick={() => setShowFreeTrialPopup(true)}
+                            >
+                                Book A Free Trial
+                            </button>
+
+                            <button
+                                type="button"
+                                className="w-full bg-green-50 border border-green-400 text-green-600 text-[18px] rounded-xl py-3 hover:bg-green-100 hover:shadow-md transition-all duration-300 font-medium"
+                                onClick={() => setShowMembershipPopup(true)}
+                            >
+                                Book A Membership
+                            </button>
+
+                            <button
+                                type="button"
+                                className={`w-full py-3 text-[18px] rounded-xl font-medium flex items-center justify-center transition ${
+                                    hasWaitingListClasses
+                                        ? "bg-[#237FEA] text-white hover:bg-blue-600 cursor-pointer"
+                                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                }`}
+                                onClick={() => { if (hasWaitingListClasses) setShowAddtoWaitingPoppup(true); }}
+                                disabled={!hasWaitingListClasses}
+                            >
+                                Add To Waiting List
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* ── Popups ───────────────────────────────────────────────────────── */}
+            {showFreeTrialPopup && renderPopup("Book a Free Trial", () => setShowFreeTrialPopup(false), handleBookFreeTrial)}
+            {showMembershipPopup && renderPopup("Book a Membership", () => setShowMembershipPopup(false), handleBookMembership)}
+            {showAddtoWaitingPoppup && renderAddtoWaiting("Add to Waiting List", () => setShowAddtoWaitingPoppup(false), handleAddToWaitingList)}
+        </>
     );
-  }
-  const renderAddtoWaiting = (title, onClose, onAddToWaitingList) => (
-    <div
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 animate-fadeIn"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-2xl w-[90%] max-w-md max-h-[80vh] p-6 overflow-y-auto shadow-2xl border border-gray-100 animate-scaleIn"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-2xl font-semibold text-gray-800">{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-gray-500 hover:text-[#F04438] transition text-xl"
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* Venue + Waiting Classes */}
-        {fetchedData?.leadData?.nearestVenues?.length ? (
-          fetchedData.leadData.nearestVenues.map((venue) => {
-            // Only classes fully booked
-            const waitingListClasses = venue.classSchedules?.filter(
-              (cls) => cls.id && cls.capacity === 0
-            );
-
-            if (!waitingListClasses?.length) return null;
-
-            return (
-              <div
-                key={venue.id}
-                className="mb-6 border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition"
-              >
-                {/* Venue Name */}
-                <h3 className="text-lg font-bold text-[#237FEA] mb-3">
-                  {venue.name}
-                </h3>
-
-                {/* Waiting List Classes */}
-                <ul className="space-y-3">
-                  {waitingListClasses.map((cls) => (
-                    <li
-                      key={cls.id}
-                      className="flex justify-between items-center border border-gray-200 rounded-xl px-4 py-3 shadow-sm hover:bg-gray-50 hover:shadow-md transition group"
-                    >
-                      <span className="font-medium text-gray-700 group-hover:text-[#237FEA] transition">
-                        {cls.className}
-                      </span>
-
-                      <button
-                        type="button"
-                        onClick={() => onAddToWaitingList(cls.id, leadId)}
-                        className="bg-[#237FEA] hover:bg-blue-700 text-white px-4 py-1.5 text-sm rounded-lg transition font-medium"
-                      >
-                        {title}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })
-        ) : (
-          <p className="text-gray-500 text-center py-4">
-            No nearest venues found.
-          </p>
-        )}
-
-        {/* Close Button */}
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-full mt-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-xl font-semibold text-gray-700 transition"
-        >
-          Close
-        </button>
-      </div>
-    </div>
-  );
-
-
-
-  return (
-    <>
-
-
-      <div className="flex">
-        <div className="md:w-[66%] ">
-
-          <div className="bg-white p-6 rounded-xl mt-5">
-            <h3 className="font-bold text-[20px] pb-4">Lead Information</h3>
-
-            {/* Name Fields */}
-            <div className="md:flex gap-6 mb-4">
-              <div className="md:w-1/2">
-                <label className="block text-[16px] font-semibold">First Name</label>
-                <input
-                  name="firstName"
-                  className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-3"
-                  value={formData.firstName || ''}
-                  onChange={handleInputChange}
-                />
-              </div>
-              <div className="md:w-1/2">
-                <label className="block text-[16px] font-semibold">Last Name</label>
-                <input
-                  name="lastName"
-                  className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-3"
-                  value={formData.lastName || ''}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </div>
-
-            {/* Email + Phone */}
-            <div className="md:flex gap-6 mb-4">
-              <div className="md:w-1/2">
-                <label className="block text-[16px] font-semibold">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-3"
-                  value={formData.email || ''}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="md:w-1/2">
-                <label className="block text-[16px] font-semibold">Phone</label>
-                <div className="flex items-center border border-gray-300 rounded-xl px-3 py-3 mt-1">
-                  <PhoneInput
-                    country={country}
-                    value={dialCode}
-                    onChange={handlePhoneChange}
-                    disableDropdown={true}
-                    disableCountryCode={true}
-                    countryCodeEditable={false}
-                    inputStyle={{
-                      width: "0px",
-                      maxWidth: '20px',
-                      height: "0px",
-                      opacity: 0,
-                      pointerEvents: "none",
-                      position: "absolute",
-                    }}
-                    buttonClass="!bg-white !border-none !p-0"
-                  />
-                  <input
-                    type="text"
-                    name="mobile"
-                    value={formData.mobile || formData.phone || ''}
-                    onChange={handleInputChange}
-                    placeholder="Enter number"
-                    className="border-none w-full focus:outline-none flex-1"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Postal Code + Age */}
-            <div className="md:flex gap-6 mb-3">
-              <div className="md:w-1/2">
-                <label className="block text-[16px] font-semibold">Postal Code</label>
-                <input
-                  type="text"
-                  name="postalCode"
-                  value={formData.postcode || ''}
-                  onChange={handleInputChange}
-                  placeholder="Enter postal code"
-                  className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-3"
-                />
-              </div>
-              <div className="md:w-1/2">
-                <label className="block text-[16px] font-semibold">Age of Child</label>
-                <input
-                  type="number"
-                  name="childAge"
-                  value={formData.childAge || ''}
-                  onChange={handleInputChange}
-                  placeholder="Enter age"
-                  className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-3"
-                />
-              </div>
-            </div>
-          </div>
-
-          <Comments
-            adminInfo={adminInfo}
-            comment={comment}
-            setComment={setComment}
-            handleSubmitComment={() => handleSubmitComment(payload, commentData, 'commentByLead')}
-
-            loadingComment={loadingComment}
-            commentsList={commentsList}
-            currentComments={currentComments}
-            formatTimeAgo={formatTimeAgo}
-          />
-
-        </div>
-        <div className="md:w-[34%]">
-          <div className="md:max-w-[510px]">
-            {/* Status Header */}
-
-
-            {/* Details Section */}
-            <div className="bg-[#363E49] text-white rounded-4xl p-6 space-y-3">
-
-              <div className="text-white rounded-2xl p-4 relative overflow-hidden" style={{
-                backgroundImage: fetchedData?.leadData?.bookings?.[0]?.status === "cancelled"
-                  ? "url('/frames/Cancelled.png')"
-                  : fetchedData?.leadData?.bookings?.[0]?.status === "frozen"
-                    ? "url('/frames/Frozen.png')"
-                    : fetchedData?.leadData?.bookings?.[0]?.status === "active"
-                      ? "url('/frames/Active.png')"
-                      : fetchedData?.leadData?.bookings?.[0]?.status === "request_to_cancel"
-                        ? "url('/frames/reqCancel.png')"
-                        : fetchedData?.leadData?.bookings?.[0]?.status === "waiting list"
-                          ? "url('/frames/Waiting.png')"
-                          : "url('/frames/Pending.png')",
-
-
-                backgroundSize: "cover",
-              }}>
-
-                <p className="text-[20px] text-black font-bold relative z-10">Account Status</p>
-                <p className="text-sm text-black relative capitalize z-10"> {formData?.bookings?.[0]?.status || formData?.status || "N/A"}</p>
-              </div>
-              <div className="border-b border-[#495362] pb-3 flex items-center gap-5">
-                <div><img src="/members/user2.png" alt="" /></div>
-                <div>  <h3 className="text-lg font-semibold">Assigned Agent</h3>
-                  <p className="text-gray-300 text-sm">{formData?.assignedAgent?.firstName} {formData?.assignedAgent?.lastName}</p></div>
-              </div>
-
-              <div className="border-b border-[#495362] pb-3">
-                <p className="text-white text-[18px] font-semibold">Nearest Venue</p>
-                {formData.nearestVenues?.map((v, index) => (
-                  <span
-                    key={index}
-                    className="inline-block bg-blue-500 text-white text-xs px-2 py-1 rounded-md mt-1 mr-1"
-                  >
-                    {v.name}
-                  </span>
-                ))}
-
-              </div>
-
-              <div className="border-b border-[#495362] pb-3">
-                <p className="text-white text-[18px] font-semibold">Date lead was added</p>
-
-                <p className="text-[16px] mt-1 text-[#BDC0C3]">{formData.createdAt
-                  ? new Date(formData.createdAt).toLocaleString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: false,
-                  })
-                  : ""}</p>
-              </div>
-
-              <div className="border-b border-[#495362] pb-3">
-                <p className="text-white text-[18px] font-semibold">Source</p>
-                <p className="text-[16px] mt-1 text-[#BDC0C3]">{formData.status || 'N/A'}</p>
-              </div>
-
-              <div className="border-b border-[#495362] pb-3">
-                <p className="text-white text-[18px] font-semibold">Last Contact Date</p>
-                <p className="text-[16px] mt-1 text-[#BDC0C3]">{formData.updatedAt
-                  ? new Date(formData.updatedAt).toLocaleString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: false,
-                  })
-                  : ""}</p>
-              </div>
-
-              <div>
-                <p className="text-white text-[18px] font-semibold">Current status</p>
-                <p className="text-[16px] capitalize mt-1 text-[#BDC0C3] font-semibold">{formData?.bookings?.[0]?.status || formData?.status || 'N/A'}</p>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="p-6 flex flex-col bg-white rounded-3xl mt-5 items-center space-y-3">
-              <div className="flex w-full justify-between gap-2">
-                <button
-                  type="button"
-                  className="flex-1 flex items-center gap-2 justify-center border border-[#717073] text-[#717073] rounded-xl font-semibold py-3 text-[18px] hover:bg-gray-50 transition"
-                  onClick={() => {
-                    const parentEmails = students.flatMap(s => s.parents.map(p => p.parentEmail)).filter(Boolean);
-                    openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
-                  }}>
-                  <Mail className="w-4 h-4 mr-1" /> Send Email
-                </button>
-                <button disabled={textloading} onClick={() => {
-                  const formattedParents = students.flatMap(s => s.parents)
-                    .filter(p => p.phone)
-                    .map(p => ({
-                      name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
-                      phone: p.phone
-                    }));
-
-                  if (formattedParents.length > 0) {
-                    openTextPopup(
-                      formattedParents,
-                      "/api/admin/send-manual-text",
-                      { token, showError, showSuccess }
-                    );
-                  } else {
-                    showWarning(
-                      "No Phone Numbers",
-                      "Selected parents do not have valid phone numbers."
-                    );
-                  }
-                }} className="flex-1 border border-[#717073] rounded-xl py-3 flex  text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium">
-                  <img src="/images/icons/sendText.png" alt="" />
-                  {textloading ? (
-                    <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
-                  ) : (
-                    <>
-                      Send Text
-                    </>
-                  )}
-                </button>
-              </div>
-
-              <button
-                type="button"
-                className="w-full bg-blue-50 border border-[#237FEA] text-[#237FEA] rounded-xl py-3 text-[18px] font-semibold hover:shadow-md transition-all duration-300"
-                onClick={() => setShowFreeTrialPopup(true)}
-              >
-                Book A Free Trial
-              </button>
-              {showFreeTrialPopup &&
-                renderPopup(
-                  "Book a Free Trial",
-                  () => setShowFreeTrialPopup(false),
-                  handleBookFreeTrial
-                )}
-              {showMembershipPopup &&
-                renderPopup(
-                  "Book a Membership",
-                  () => setShowMembershipPopup(false),
-                  handleBookMembership
-                )}
-              {showAddtoWaitingPoppup &&
-                renderAddtoWaiting(
-                  "Add to Waiting List",
-                  () => setShowAddtoWaitingPoppup(false),
-                  handleAddToWaitingList
-                )}
-              {showEmailPopup && (
-                EmailPopup({
-                  loading: loading,
-                  grouped: grouped,
-                  handleSendEmail: handleSendEmail,
-                  close: () => setShowEmailPopup(false)
-                })
-              )}
-
-              <button
-                type="button"
-                className="w-full bg-green-50 border border-green-400 text-green-600 text-[18px] rounded-xl py-3 hover:bg-green-100 hover:shadow-md transition-all duration-300 font-medium"
-                onClick={() => setShowMembershipPopup(true)}
-              >
-                Book A Membership
-              </button>
-              <button
-                type="button"
-                className={`w-full my-3 text-[18px] py-3 rounded-xl font-medium flex items-center justify-center transition
-    ${hasWaitingListClasses
-                    ? "bg-[#237FEA] text-white hover:bg-blue-600 cursor-pointer"
-                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  }
-  `}
-                onClick={() => {
-                  if (hasWaitingListClasses) setShowAddtoWaitingPoppup(true);
-                }}
-                disabled={!hasWaitingListClasses}
-              >
-                Add To Waiting List
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  );
 };
 
 export default ParentProfile;

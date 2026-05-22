@@ -88,7 +88,7 @@ const SeeDetails = () => {
             const accessPay = payments.find(p => p.paymentType === "accesspaysuite" && p.paymentCategory === "recurring");
             const goCardless = payments.find(p => p.paymentType === "bank" && p.paymentCategory === "recurring");
             if (accessPay) setPaymentSource("accesspaysuite");
-            else if (goCardless) setPaymentSource("goacardless");
+            else if (goCardless) setPaymentSource("gocardless");
             else setPaymentSource("stripe");
         }
     }, [serviceHistory]);
@@ -292,7 +292,12 @@ const SeeDetails = () => {
         const raw = JSON.stringify({
             description: paymentData.description,
             amount: Number(paymentData.amount),
-            paymentMethod: paymentSource === "stripe" ? "card" : paymentSource,
+            paymentMethod:
+  paymentSource === "stripe"
+    ? "card"
+    : paymentSource === "gocardless"
+    ? "bank"
+    : paymentSource,
             paymentTiming,
             paymentDate: paymentTiming === "specific" ? paymentData.paymentDate : null,
             ...(paymentSource === "stripe" && {
@@ -517,13 +522,13 @@ const SeeDetails = () => {
                                     <div className="flex flex-wrap gap-6">
                                         {[
                                             { id: 'accesspaysuite', label: 'Accesspaysuite' },
-                                            { id: 'goacardless', label: 'Goacardless' },
+                                            { id: 'gocardless', label: 'gocardless' },
                                             { id: 'stripe', label: 'Card via Stripe' }
                                         ].filter(source => {
                                             const hasAccessPay = serviceHistory?.payments?.some(p => p.paymentType === "accesspaysuite" && p.paymentCategory === "recurring");
                                             const hasGoCardless = serviceHistory?.payments?.some(p => p.paymentType === "bank" && p.paymentCategory === "recurring");
                                             if (source.id === 'accesspaysuite' && hasGoCardless && !hasAccessPay) return false;
-                                            if (source.id === 'goacardless' && hasAccessPay) return false;
+                                            if (source.id === 'gocardless' && hasAccessPay) return false;
                                             return true;
                                         }).map((source) => (
                                             <label key={source.id} className="flex items-center gap-3 cursor-pointer group">

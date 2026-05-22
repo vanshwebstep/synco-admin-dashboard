@@ -745,7 +745,7 @@ const AddtoWaitingList = () => {
   };
   const venueClassOptions = singleClassSchedulesOnly?.venueClasses?.filter((cls) => cls.capacity == 0)?.map((cls) => ({
     value: cls.id,
-    label: cls.className
+     label: `${cls.className} (${cls.level ?? cls.levelName ?? cls.classLevel ?? ''})` 
   }));
   const handleAfterBooking = async (result) => {
     console.log("Booking successful, now submitting comments if any...", result);
@@ -1406,13 +1406,16 @@ const AddtoWaitingList = () => {
 
                     {/* CLASS */}
                     <div className="w-1/2">
-                      <label className="block text-[16px] font-semibold">Class</label>
+                      <label className="block text-[16px] font-semibold">Class/Level</label>
 
                       {index === 0 ? (
                         <input
                           type="text"
-                          value={selectedClassData?.className || singleClassSchedulesOnly?.className || ""}
-                          readOnly
+value={(() => {
+    const name = selectedClassData?.className || singleClassSchedulesOnly?.className || "";
+    const level = selectedClassData?.level || singleClassSchedulesOnly?.level || "";
+    return level ? `${name} (${level})` : name;
+})()}                          readOnly
                           className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3"
                         />
                       ) : (

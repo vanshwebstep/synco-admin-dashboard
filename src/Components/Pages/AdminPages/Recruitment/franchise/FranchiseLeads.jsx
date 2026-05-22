@@ -20,7 +20,6 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Select from "react-select";
 import { showConfirm, showWarning, showError, showSuccess } from "../../../../../utils/swalHelper";
-import { useGlobalSearch } from "../../contexts/GlobalSearchContext";
 import { useEmail } from '../../contexts/messages/SendEmailContext';
 import { useTextPopup } from '../../contexts/messages/SendTextContext';
 
@@ -48,7 +47,6 @@ const inputCls = (hasError) =>
 
 const FranchiseLeads = () => {
     const [showFilter, setShowFilter] = useState(false);
-    const { searchQuery } = useGlobalSearch();
 
     const [loading, setLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
@@ -475,15 +473,9 @@ const FranchiseLeads = () => {
         };
     });
 
-    const filterBySearchQuery = (data) => {
-        if (!searchQuery.trim()) return data;
-        const q = searchQuery.toLowerCase();
-        return data.filter((coach) =>
-            [coach?.firstName, coach?.lastName, coach?.phoneNumber,
-            coach?.email, coach?.managementExperience, coach?.status]
-                .some((val) => String(val || "").toLowerCase().includes(q))
-        );
-    };
+   const filterBySearchQuery = (data) => {
+    return data;
+};
 
     const totalItems = filteredRecruitment.length;
     const totalPages = Math.ceil(totalItems / rowsPerPage);
@@ -495,7 +487,7 @@ const FranchiseLeads = () => {
         [filteredRecruitment, startIndex, endIndex]
     );
 
-    useEffect(() => { setCurrentPage(1); }, [searchQuery]);
+    useEffect(() => { setCurrentPage(1); }, []);
 
     const filterByName = (data) => {
         if (!studentName.trim()) return data;
@@ -512,7 +504,7 @@ const FranchiseLeads = () => {
         data = filterByName(data);
         data = filterBySearchQuery(data);
         setFilteredRecruitment(data);
-    }, [recruitment, studentName, searchQuery]);
+    }, [recruitment, studentName, ]);
 
     const exportToExcel = () => {
         if (!currentData || currentData.length === 0) return;

@@ -73,7 +73,7 @@ const Feedback = ({ profile }) => {
   };
   const serviceParam = searchParams.get("serviceType");
   const serviceKey = SERVICE_TYPE_MAP[serviceParam];
-
+console.log('profile',profile)
   const fetchFeedback = useCallback(async () => {
     const token = localStorage.getItem("adminToken");
     if (!token) return;
@@ -232,9 +232,9 @@ const Feedback = ({ profile }) => {
         studentId: student.id,
         studentName: `${student.studentFirstName} ${student.studentLastName}`,
         classScheduleId: clsId,
-        label: cls
-          ? `${cls.className} (${cls.startTime} - ${cls.endTime})`
-          : `Class ID: ${clsId}`,
+          label: cls
+                ? `${cls.className} ${cls.level || cls.abilityLevel || student?.abilityLevel ? `(${cls.level || cls.abilityLevel || student?.abilityLevel})` : ""}`
+                : `No class assigned`,
       };
     }).filter(s => s.classScheduleId);
   }, [profile]);
@@ -577,7 +577,7 @@ const Feedback = ({ profile }) => {
                 {serviceParam !== "oneToOne" && serviceParam !== "birthdayParty" && (
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Classes (prefilled from enrolled students)
+                      Classes / Level (prefilled from enrolled students)
                     </label>
                     {studentClassOptions.length > 0 ? (
                       <div className="space-y-2">

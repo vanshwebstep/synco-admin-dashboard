@@ -22,9 +22,7 @@ const customIcon = new L.Icon({
   iconAnchor: [12, 41],
 });
 import { showWarning } from '../../../../../utils/swalHelper';
-import { useGlobalSearch } from '../../contexts/GlobalSearchContext';
 const List = () => {
-    const { searchQuery } = useGlobalSearch();
 
   const { fetchFindClasses, findClasses, loading } = useFindClass();
   const [openMapId, setOpenMapId] = useState(null);
@@ -206,19 +204,8 @@ const List = () => {
   };
 
 
-
- const filteredClasses = Array.isArray(findClasses)
+const filteredClasses = Array.isArray(findClasses)
   ? findClasses.filter((venue) => {
-      const query = searchQuery?.toLowerCase() || "";
-
-      // 🔥 GLOBAL SEARCH (new)
-      const globalMatch =
-        !query ||
-        venue?.venueName?.toLowerCase().includes(query) ||
-        venue?.address?.toLowerCase().includes(query) ||
-        (venue?.postal_code || "").toLowerCase().includes(query);
-
-      // EXISTING FILTERS
       const nameMatch =
         !searchVenue ||
         venue.venueName?.toLowerCase().includes(searchVenue.toLowerCase());
@@ -254,7 +241,6 @@ const List = () => {
         classList.some((cls) => cls.capacity > 0);
 
       return (
-        globalMatch &&   // ✅ ADD THIS
         nameMatch &&
         postcodeMatch &&
         venueMatch &&
@@ -263,7 +249,6 @@ const List = () => {
       );
     })
   : [];
-
 
 
 

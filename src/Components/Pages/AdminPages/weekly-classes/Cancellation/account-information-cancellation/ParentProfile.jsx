@@ -366,7 +366,7 @@ const ParentProfile = ({ ParentProfile }) => {
 
     const newClasses = ParentProfile?.newClasses?.map((cls) => ({
         value: cls.id,
-        label: `${cls.className} - ${cls.day} (${cls.startTime} - ${cls.endTime})`,
+        label: `${cls.className} ${cls.level || cls.abilityLevel ? `(${cls.level || cls.abilityLevel})` : ""}`,
     }));
 
     const selectedClass = newClasses?.find(
@@ -484,7 +484,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                 {/* Row 3 */}
                                 <div className="flex gap-4">
 
-                                    <div className="w-1/2">
+                                    <div className="w-2/2">
                                         <label className="block text-[16px] font-semibold">How did you hear about us?</label>
                                         <select
                                             className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
@@ -886,7 +886,7 @@ const ParentProfile = ({ ParentProfile }) => {
                             </div>
 
                             <div className="space-y-4 px-6 pb-6 pt-4">
-                                {/* Current Class */}
+                                {/* Current Class / Level */}
 
                                 {/* Venue */}
                                 <div>
@@ -899,7 +899,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[16px] font-semibold">Current Class</label>
+                                    <label className="block text-[16px] font-semibold">Current Class / Level</label>
                                     <input
                                         type="text"
                                         className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
@@ -908,12 +908,12 @@ const ParentProfile = ({ ParentProfile }) => {
                                     />
                                 </div>
 
-                                {/* Select New Class */}
+                                {/* Select New Class / Level */}
                                 <div>
 
 
                                     <label className="block text-[16px] font-semibold">
-                                        Select New Class
+                                        Select New Class / Level
                                     </label>
 
                                     <Select
@@ -1002,7 +1002,7 @@ const ParentProfile = ({ ParentProfile }) => {
 
                                 {/* Class */}
                                 <div>
-                                    <label className="block text-[16px] font-semibold">Class</label>
+                                    <label className="block text-[16px] font-semibold">Class/Level</label>
                                     <input
                                         type="text"
                                         className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
@@ -1249,7 +1249,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                             // If all validations pass → call submit function
                                             cancelMembershipSubmit(cancelData, "allMembers", selectedStudents);
                                         }}
-                                        className="w-1/2 bg-[#fef2f2] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
+                                        className="w-1/2 text-white bg-red-500 rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
                                     >
                                         {cancelData.cancellationType !== "immediate"
                                             ? "Request to Cancel"
@@ -1276,9 +1276,9 @@ const ParentProfile = ({ ParentProfile }) => {
                             </div>
 
                             <div className="space-y-4 px-6 pb-6 pt-4">
-                                {/* Current Class */}
+                                {/* Current Class / Level */}
                                 <div>
-                                    <label className="block text-[16px] font-semibold">Current Class</label>
+                                    <label className="block text-[16px] font-semibold">Current Class / Level</label>
                                     <input
                                         type="text"
                                         className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
@@ -1300,7 +1300,7 @@ const ParentProfile = ({ ParentProfile }) => {
 
                                 {/* New Class */}
                                 <div>
-                                    <label className="block text-[16px] font-semibold">Select New Class</label>
+                                    <label className="block text-[16px] font-semibold">Select New Class / Level</label>
                                     <Select
                                         value={
                                             waitingListData.classScheduleId

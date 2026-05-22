@@ -10,7 +10,6 @@ import { useHolidayVenue } from '../../../contexts/HolidayVenueContext';
 import { useHolidayPayments } from '../../../contexts/HolidayPaymentContext';
 import { useHolidayTerm } from '../../../contexts/HolidayTermsContext';
 import { showConfirm, showError } from '../../../../../../utils/swalHelper';
-import { useGlobalSearch } from '../../../contexts/GlobalSearchContext';
 const HolidayVenueList = () => {
   const navigate = useNavigate();
   const formRef = useRef(null);
@@ -18,7 +17,6 @@ const HolidayVenueList = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedPlans, setSelectedPlans] = useState([]);
   const [congestionNote, setCongestionNote] = useState(null);
-  const { searchQuery } = useGlobalSearch();
   const [clickedIcon, setClickedIcon] = useState(null);
 
   const handleIconClick = (icon, plan = null) => {
@@ -277,27 +275,22 @@ const HolidayVenueList = () => {
   };
 
 
-  const filteredVenues = React.useMemo(() => {
+const filteredVenues = React.useMemo(() => {
     const keyword = (search || "").toLowerCase();
-    const globalKeyword = (searchQuery || "").toLowerCase();
 
     return venues.filter((user) => {
-      const combinedText = [
-        user.area,
-        user.name,
-        user.address,
-        user.facility
-      ]
-        .join(" ")
-        .toLowerCase();
+        const combinedText = [
+            user.area,
+            user.name,
+            user.address,
+            user.facility
+        ]
+            .join(" ")
+            .toLowerCase();
 
-      return (
-        (!keyword || combinedText.includes(keyword)) &&
-        (!globalKeyword || combinedText.includes(globalKeyword))
-      );
+        return !keyword || combinedText.includes(keyword);
     });
-  }, [venues, search, searchQuery]);
-
+}, [venues, search]);
 
   const { checkPermission } = usePermission();
 

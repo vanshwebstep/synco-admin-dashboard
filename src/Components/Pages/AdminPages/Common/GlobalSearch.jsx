@@ -54,7 +54,7 @@ const GlobalSearch = ({ onResultClick }) => {
     }, 400);
 
     return () => clearTimeout(debounceRef.current);
-  }, [searchQuery]);
+  }, []);
 
   // ─────────────────────────────────────────────────────────────
   // API Call

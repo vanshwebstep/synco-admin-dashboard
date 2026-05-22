@@ -25,7 +25,7 @@ const Facebook = () => {
   const PRef = useRef(null);
   const [calendarData, setCalendarData] = useState([]);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
-  const { searchQuery, registerTableData } = useGlobalSearch();
+  const { registerTableData } = useGlobalSearch();
   const { loading, fetchData, data, selectedUserIds, setSelectedUserIds, setSelectedBookingIds, selectedBookingIds, setCurrentPage, currentPage, sheetUrl } = useLeads();
   const [expandedRow, setExpandedRow] = useState(null);
   const navigate = useNavigate()
@@ -382,35 +382,8 @@ const Facebook = () => {
     }, 50);
   };
   const searchedData = useMemo(() => {
-    if (!searchQuery) return data || [];
-
-    const query = searchQuery.toLowerCase();
-
-    return data.filter((lead) => {
-      const values = [
-        lead?.firstName,
-        lead?.lastName,
-        lead?.email,
-        lead?.phone,
-        lead?.postcode,
-        lead?.childAge,
-        lead?.status,
-        lead?.assignedAgent?.firstName,
-        lead?.assignedAgent?.lastName,
-      ];
-
-      const fullName = `${lead?.firstName || ""} ${lead?.lastName || ""}`.toLowerCase();
-
-      return (
-        fullName.includes(query) ||
-        values.some((val) =>
-          String(val || "")
-            .toLowerCase()
-            .includes(query)
-        )
-      );
-    });
-  }, [data, searchQuery]);
+    return data || [];
+  }, [data]);
   const totalItems = searchedData.length;
   const totalPages = Math.ceil(totalItems / rowsPerPage);
 
@@ -422,7 +395,7 @@ const Facebook = () => {
   const paginatedData = searchedData.slice(startIndex, endIndex);
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [rowsPerPage, searchQuery]);
+  }, [rowsPerPage]);
 
   console.log('selectedUserIds', selectedUserIds)
   if (loading) return <Loader />;
@@ -590,64 +563,79 @@ const Facebook = () => {
                                       const available = cls.capacity;
                                       const isFull = cls.capacity == 0;
                                       return (
-
                                         <div
                                           key={idx}
-                                          className="flex justify-between gap-4 items-center mt-2"
+                                          className="flex items-center gap-4 py-3 border-b border-[#F0EFF3] last:border-0"
                                         >
-                                          <p className=" text-[#000] md:w-[22%] flex gap-7 "><b>{`Class ${idx + 1}`} </b>{cls.className}</p>
-                                          <p className="text-sm md:w-[12%]  text-[#384455]  font-semibold capitalize">
-                                            {cls.day}
-                                          </p>
-                                          <p className="flex md:w-[20%]  items-center gap-1 text-xs text-[#384455] font-semibold justify-end">
-                                            <Clock size={14} /> {cls.startTime} – {cls.endTime}
-                                          </p>
-                                          <p
-                                            className={`text-xs text-center md:w-[11%] font-semibold mt-1 ${isFull
-                                              ? "bg-[#FEE2E2] text-[#F87171]"
-                                              : "bg-[#DCFCE7] text-[#16A34A]"
-                                              } px-3 py-1 rounded-md inline-block`}
-                                          >
-                                            {isFull ? "Fully booked" : `+${available} spaces`}
-                                          </p>
+                                          {/* Class name + level */}
+                                          <div className="min-w-[130px]">
+                                            <p className="font-bold text-[#1A1A2E] text-sm leading-tight">
+                                              Class {idx + 1}
+                                            </p>
+                                            <p className="font-bold text-[#1A1A2E] text-sm">{cls.level}</p>
+                                            <p className="text-xs text-[#717073] mt-0.5">{cls.className}</p>
+                                          </div>
 
-                                          <div key={idx} className="flex  md:w-[25%]  flex-wrap justify-end gap-3 ">
-                                            {
-                                              available == 0 && (
-                                                <button onClick={() => handleAddToWaitingList(cls.id, lead?.id)} className="bg-[#237FEA]  text-white px-4 py-2 rounded-lg text-[14px] font-semibold hover:bg-[#006AE6] transition">
-                                                  Add to Waiting List
+                                          {/* Age range */}
+                                          <div className="min-w-[80px]">
+                                            <p className="text-sm text-[#384455] font-semibold">{cls.ageRange || '—'}</p>
+                                          </div>
+
+                                          {/* Day */}
+                                          <div className="min-w-[70px]">
+                                            <p className="text-sm text-[#384455] font-semibold capitalize">{cls.day}</p>
+                                          </div>
+
+                                          {/* Time */}
+                                          <div className="min-w-[160px] flex items-center gap-1 text-xs text-[#384455] font-semibold">
+                                            <Clock size={13} className="shrink-0" />
+                                            {cls.startTime} – {cls.endTime}
+                                          </div>
+
+                                          {/* Capacity badge */}
+                                          <div className="min-w-[100px]">
+                                            <span
+                                              className={`text-xs font-semibold px-3 py-1.5 rounded-md inline-block ${isFull
+                                                  ? "bg-[#FEE2E2] text-[#F87171]"
+                                                  : "bg-[#DCFCE7] text-[#16A34A]"
+                                                }`}
+                                            >
+                                              {isFull ? "Fully booked" : `+${available} spaces`}
+                                            </span>
+                                          </div>
+
+                                          {/* Action buttons */}
+                                          <div className="flex items-center gap-2 ml-auto flex-wrap justify-end">
+                                            {isFull ? (
+                                              <button
+                                                onClick={() => handleAddToWaitingList(cls.id, lead?.id)}
+                                                className="bg-[#237FEA] text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-[#006AE6] transition whitespace-nowrap"
+                                              >
+                                                Add to Waiting List
+                                              </button>
+                                            ) : cls.allowFreeTrial ? (
+                                              <>
+                                                <button
+                                                  onClick={() => handleBookFreeTrial(cls.id, lead?.id)}
+                                                  className="border border-[#E2E1E5] px-4 py-2 rounded-lg text-xs font-semibold hover:bg-gray-50 transition whitespace-nowrap"
+                                                >
+                                                  Book a Free Trial
                                                 </button>
-
-                                              )
-                                            }
-                                            {cls.allowFreeTrial ? (
-                                              !isFull && (
-                                                <>
-                                                  <button
-                                                    onClick={() => handleBookFreeTrial(cls.id, lead?.id)}
-                                                    className="border px-4 py-2 rounded-lg text-[14px] hover:bg-gray-50 transition"
-                                                  >
-                                                    Book a Free Trial
-                                                  </button>
-
-                                                  <button
-                                                    onClick={() => handleBookMembership(cls.id, lead?.id)}
-                                                    className="border px-4 py-2 rounded-lg text-[14px] hover:bg-gray-50 transition"
-                                                  >
-                                                    Book a Membership
-                                                  </button>
-                                                </>
-                                              )
+                                                <button
+                                                  onClick={() => handleBookMembership(cls.id, lead?.id)}
+                                                  className="border border-[#E2E1E5] px-4 py-2 rounded-lg text-xs font-semibold hover:bg-gray-50 transition whitespace-nowrap"
+                                                >
+                                                  Book a Membership
+                                                </button>
+                                              </>
                                             ) : (
                                               <button
                                                 onClick={() => handleBookMembership(cls.id, lead?.id)}
-                                                className="border px-4 py-2 rounded-lg text-[14px] hover:bg-gray-50 transition"
+                                                className="border border-[#E2E1E5] px-4 py-2 rounded-lg text-xs font-semibold hover:bg-gray-50 transition whitespace-nowrap"
                                               >
                                                 Book a Membership
                                               </button>
                                             )}
-
-
                                           </div>
                                         </div>
                                       );

@@ -1,15 +1,13 @@
 // List.js
-import React, { useEffect, useState , useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Loader from '../../../contexts/Loader';
 import { useNavigate } from 'react-router-dom';
 import { usePermission } from '../../../Common/permission';
 import { useHolidayTerm } from '../../../contexts/HolidayTermsContext';
 import { showError, showSuccess, showConfirm } from "../../../../../../utils/swalHelper";
-import { useGlobalSearch } from '../../../contexts/GlobalSearchContext';
 const HolidayTermList = () => {
   const navigate = useNavigate();
   const { fetchHolidayCampDate, termData, loading, deleteCampDate } = useHolidayTerm();
-  const { searchQuery } = useGlobalSearch();
   useEffect(() => {
     fetchHolidayCampDate();
   }, [fetchHolidayCampDate]);
@@ -67,28 +65,9 @@ const HolidayTermList = () => {
     checkPermission({ module: 'term-group', action: 'create' }) &&
     checkPermission({ module: 'term', action: 'create' }) &&
     checkPermission({ module: 'session-plan-group', action: 'view-listing' });
-const filteredTermData = React.useMemo(() => {
-  if (!searchQuery) return termData;
-
-  const query = searchQuery.toLowerCase();
-
-  return termData.filter((item) => {
-    const combinedText = [
-      item?.holidayCamp?.name,
-      item.startDate,
-      item.endDate,
-      item.totalDays,
-      ...(item.sessionsMap || []).map(
-        (s) => `${s?.sessionPlan?.groupName} ${s?.sessionDate}`
-      ),
-    ]
-      .join(" ")
-      .toLowerCase();
-
-    return combinedText.includes(query);
-  });
-}, [termData, searchQuery]);
-
+  const filteredTermData = React.useMemo(() => {
+    return termData;
+  }, [termData]);
   if (loading) return <Loader />;
 
   if (!filteredTermData.length && !filteredTermData.length) {

@@ -23,7 +23,6 @@ import { useNavigate } from "react-router-dom";
 import Loader from "../../../contexts/Loader";
 import { useAccountsInfo } from "../../../contexts/AccountsInfoContext";
 import { showError, showSuccess, showWarning } from "../../../../../../utils/swalHelper";
-import { useGlobalSearch } from "../../../contexts/GlobalSearchContext";
 const BirthdayLeadsDashboard = () => {
   const navigate = useNavigate();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -33,7 +32,6 @@ const BirthdayLeadsDashboard = () => {
   console.log('noLoaderShow', noLoaderShow);
   const [showFilter, setShowFilter] = useState(false);
   const [textloading, setTextLoading] = useState(null);
-  const { searchQuery } = useGlobalSearch();
 
   const modalRef = useRef(null);
   const [loading, setLoading] = useState(false);
@@ -395,26 +393,8 @@ const handleSearch = (e) => {
   }, 400);
 };
 const searchedData = useMemo(() => {
-  if (!searchQuery) return leadsData || [];
-
-  const query = searchQuery.toLowerCase();
-
-  return (leadsData || []).filter((lead) => {
-    const values = [
-      lead?.parentName,
-      lead?.childName,
-      lead?.age,
-      lead?.packageInterest,
-      lead?.source,
-      lead?.status,
-      lead?.partyDate,
-    ];
-
-    return values.some((val) =>
-      String(val || "").toLowerCase().includes(query)
-    );
-  });
-}, [leadsData, searchQuery]);
+    return leadsData || [];
+}, [leadsData]);
 
   const [selectedUserIds, setSelectedUserIds] = useState([]);
   const [currentDate, setCurrentDate] = useState(new Date());

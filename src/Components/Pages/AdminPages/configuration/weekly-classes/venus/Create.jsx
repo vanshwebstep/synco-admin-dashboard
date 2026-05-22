@@ -111,25 +111,46 @@ const Create = ({ groups, termGroup }) => {
     setOpenForm(null);
   };
 
-  const handleUpdate = (id) => {
+const handleUpdate = async (id) => {
     if (!validateForm()) return;
 
     let termGroupId = formData.termGroupId;
     if (!Array.isArray(termGroupId)) {
-      try { termGroupId = JSON.parse(termGroupId); }
-      catch { termGroupId = termGroupId ? [Number(termGroupId)] : []; }
+        try { termGroupId = JSON.parse(termGroupId); }
+        catch { termGroupId = termGroupId ? [Number(termGroupId)] : []; }
     }
     termGroupId = termGroupId.map(x => Number(x));
 
-    const updatedVenueData = { ...formData, termGroupId };
-    updateVenues(id, updatedVenueData);
-    setFormData({
-      area: "", name: "", address: "", facility: "",
-      hasParking: false, isCongested: false, starterPack: false, parkingNote: "",
-      howToEnterFacility: "", termGroupId: [], paymentGroupId: ""
-    });
-  };
+    const {
+        paymentGroups,
+        termGroups,
+        classSchedules,
+        ...restFormData
+    } = formData;
 
+    const updatedVenueData = {
+        ...restFormData,
+        termGroupId,
+    };
+
+    const response = await updateVenues(id, updatedVenueData);
+
+    if (response?.status) {
+        setFormData({
+            area: "",
+            name: "",
+            address: "",
+            facility: "",
+            hasParking: false,
+            isCongested: false,
+            starterPack: false,
+            parkingNote: "",
+            howToEnterFacility: "",
+            termGroupId: [],
+            paymentGroupId: ""
+        });
+    }
+};
   const toggleTermId = (id) => {
     setSelectedTermIds((prev) => {
       const current = Array.isArray(prev) ? prev : [];

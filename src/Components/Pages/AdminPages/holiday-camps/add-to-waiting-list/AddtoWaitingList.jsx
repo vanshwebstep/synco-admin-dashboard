@@ -1073,7 +1073,7 @@ const HolidayAddtoWaitingList = () => {
                   {/* Row 4 */}
                   <div className="flex gap-4">
                     <div className="w-1/2">
-                      <label className="block text-[16px] font-semibold">Class</label>
+                      <label className="block text-[16px] font-semibold">Class/Level</label>
                       {index === 0 ? (
                         <input
                           type="text"

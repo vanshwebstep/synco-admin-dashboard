@@ -10,27 +10,34 @@ import { usePermission } from '../../Common/permission';
 import * as XLSX from "xlsx";
 import { showError, showSuccess, showWarning } from '../../../../../utils/swalHelper';
 import { useLocation } from "react-router-dom";
-
 import { saveAs } from "file-saver";
 import StatsGrid from '../../Common/StatsGrid';
 import DynamicTable from '../../Common/DynamicTable';
 import { useEmail } from '../../contexts/messages/SendEmailContext';
 import { useTextPopup } from '../../contexts/messages/SendTextContext';
+
 const CancellationList = () => {
+    const location = useLocation();
+
+    // ✅ Fix 1: Initialize active correctly from location.state at mount — no race condition
+    const getInitialActive = () => {
+        if (location.state === "fullCancellation") return "full";
+        if (location.state === "allCancellation") return "all";
+        return "request";
+    };
+
+    const [active, setActive] = useState(getInitialActive);
     const [currentDate, setCurrentDate] = useState(new Date());
     const [fromDate, setFromDate] = useState(null);
     const [toDate, setToDate] = useState(null);
     const [tempSelectedAgents, setTempSelectedAgents] = useState([]);
     const [selectedStudents, setSelectedStudents] = useState([]);
-    const location = useLocation();
     const [isFilterApplied, setIsFilterApplied] = useState(false);
     const [textloading, setTextLoading] = useState(null);
     const token = localStorage.getItem("adminToken");
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const { openEmailPopup } = useEmail();
     const { openTextPopup } = useTextPopup();
-
-    const [active, setActive] = useState("request"); // default selected
     const [showFilter, setShowFilter] = useState(false);
     const [showAgentPopup, setShowAgentPopup] = useState(null);
     const [agentsLoading, setAgentsLoading] = useState(null);
@@ -45,39 +52,42 @@ const CancellationList = () => {
         { key: "full", label: "Full Cancellation" },
         { key: "all", label: "All" },
     ];
-    useEffect(() => {
-        if (location.state === "fullCancellation") {
-            setActive("full");
-        } else if (location.state === "allCancellation") {
-            setActive("all");
-        }
-    }, [location.state]);
 
-    const { fetchFullCancellations, fetchRequestToCancellations, fetchAllCancellations, statsFreeTrial, bookFreeTrials, setSearchTerm, bookedByAdmin, searchTerm, loading, selectedVenue, setSelectedVenue, myVenues } = useBookFreeTrial() || {};
+    const {
+        fetchFullCancellations,
+        fetchRequestToCancellations,
+        fetchAllCancellations,
+        statsFreeTrial,
+        bookFreeTrials,
+        setSearchTerm,
+        bookedByAdmin,
+        searchTerm,
+        loading,
+        selectedVenue,
+        setSelectedVenue,
+        myVenues
+    } = useBookFreeTrial() || {};
+
     const isWebsiteSourceSelected = useMemo(() => {
         if (!selectedStudents || selectedStudents.length === 0) return true;
         return (bookFreeTrials || [])
             .filter(trial => selectedStudents?.includes(trial?.id))
             .every(s => s?.source?.trim()?.toLowerCase() === "website");
     }, [bookFreeTrials, selectedStudents]);
+
     const fetchAllAgents = useCallback(async () => {
         const token = localStorage.getItem("adminToken");
         if (!token) return;
-
         setAgentsLoading(true);
         try {
             const response = await fetch(`${API_BASE_URL}/api/admin/get-agents`, {
                 method: "GET",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                headers: { Authorization: `Bearer ${token}` },
             });
-
             const resultRaw = await response.json();
             const result = resultRaw.data || {};
-            // Assuming the agents array is directly in data
             setAgentsData(result || []);
-            setShowAgentPopup(true); // Show popup after fetching
+            setShowAgentPopup(true);
         } catch (error) {
             console.error("Failed to fetch agents:", error);
             alert("Failed to fetch agents.");
@@ -85,17 +95,14 @@ const CancellationList = () => {
             setAgentsLoading(false);
         }
     }, []);
+
     const handleAgentSubmit = async (id) => {
         const token = localStorage.getItem("adminToken");
-        if (!token) {
-            return showError("Not authorized.");
-        }
-        if (!selectedStudents || selectedStudents.length === 0) {
+        if (!token) return showError("Not authorized.");
+        if (!selectedStudents || selectedStudents.length === 0)
             return showWarning("Please select at least one student.");
-        }
 
         setAgentsLoading(true);
-
         try {
             const response = await fetch(
                 `${API_BASE_URL}/api/admin/book/free-trials/assign-booking`,
@@ -111,18 +118,11 @@ const CancellationList = () => {
                     }),
                 }
             );
-
             const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result?.message || "Failed to assign booking");
-            }
-
+            if (!response.ok) throw new Error(result?.message || "Failed to assign booking");
             showSuccess("Booking assigned successfully!");
-
             fetchRequestToCancellations();
             setSelectedStudents([]);
-
         } catch (error) {
             console.error("Error assigning booking:", error);
             showError(error.message || "Something went wrong.");
@@ -130,21 +130,16 @@ const CancellationList = () => {
             setAgentsLoading(false);
         }
     };
+
     const handleClick = () => {
         if (selectedStudents.length === 0) {
             showWarning("Warning", 'Please select at least 1 student');
             return;
         }
         const matchedStudents = (bookFreeTrials || []).filter(
-            trial =>
-                selectedStudents?.includes(trial?.id) &&
-                trial?.assignedAgentId != null
+            trial => selectedStudents?.includes(trial?.id) && trial?.assignedAgentId != null
         );
-
-        const hasAssignedStudents = matchedStudents.some(
-            s => s?.status === "assigned"
-        );
-
+        const hasAssignedStudents = matchedStudents.some(s => s?.status === "assigned");
         if (hasAssignedStudents) {
             showWarning(
                 "Warning",
@@ -154,51 +149,36 @@ const CancellationList = () => {
         }
         fetchAllAgents();
     };
+
     const sendText = async (id) => {
         setTextLoading(true);
-
-        const headers = {
-            "Content-Type": "application/json",
-        };
-        // console.log('bookingIds', bookingIds)
-        if (token) {
-            headers["Authorization"] = `Bearer ${token}`;
-        }
+        const headers = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
         try {
             const response = await fetch(`${API_BASE_URL}/api/admin/book/free-trials/send-text`, {
                 method: "POST",
                 headers,
-                body: JSON.stringify({
-                    bookingId: id, // make sure bookingIds is an array like [96, 97]
-                }),
+                body: JSON.stringify({ bookingId: id }),
             });
-
             const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.message || "Failed to send text");
-            }
-
+            if (!response.ok) throw new Error(result.message || "Failed to send text");
             await showSuccess("Success!", result.message || "Text has been sent successfully.");
-
             return result;
-
         } catch (error) {
             console.error("Error sending Text:", error);
             await showError("Error", error.message || "Something went wrong while sending text.");
             throw error;
         } finally {
-            // navigate(`/weekly-classes/all-members/list`);
             await fetchRequestToCancellations();
             setTextLoading(false);
         }
     };
+
     const exportFreeTrials = () => {
         const dataToExport = [];
         bookFreeTrials?.forEach((item) => {
             const bookingId = item.id || item.bookingId;
             if (selectedStudents.length > 0 && !selectedStudents.includes(bookingId)) return;
-
             (item.students || []).forEach((student) => {
                 dataToExport.push({
                     Name: `${student.studentFirstName} ${student?.studentLastName || ""}`,
@@ -218,7 +198,6 @@ const CancellationList = () => {
         const worksheet = XLSX.utils.json_to_sheet(dataToExport);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, 'FreeTrials');
-
         const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
         const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
         saveAs(data, 'Cancellations.xlsx');
@@ -231,49 +210,29 @@ const CancellationList = () => {
         dateOfTrial: false,
     });
 
-    const [selectedDates, setSelectedDates] = useState([]);
     const handleCheckboxChange = (label) => {
         setCheckedStatuses((prev) => {
             switch (label) {
-                case "Request to cancel":
-                    return { ...prev, request_to_cancel: !prev.request_to_cancel };
-                case "Cancelled":
-                    return { ...prev, cancelled: !prev.cancelled };
-                case "Date Booked":
-                    return { ...prev, dateBooked: !prev.dateBooked };
-                case "Date of Trial":
-                    return { ...prev, dateOfTrial: !prev.dateOfTrial };
-                default:
-                    return prev;
+                case "Request to cancel": return { ...prev, request_to_cancel: !prev.request_to_cancel };
+                case "Cancelled": return { ...prev, cancelled: !prev.cancelled };
+                case "Date Booked": return { ...prev, dateBooked: !prev.dateBooked };
+                case "Date of Trial": return { ...prev, dateOfTrial: !prev.dateOfTrial };
+                default: return prev;
             }
         });
     };
-    // const [selectedDate, setSelectedDate] = useState(null);
-
-
 
     const navigate = useNavigate();
 
-    // console.log('bookedByAdmin', bookedByAdmin)
-
+    // ✅ Fix 2: Single fetch useEffect — active is already correct at mount
     useEffect(() => {
         const venueName = selectedVenue?.label || "";
-        // console.log('venueName', venueName)
         if (active === "request") {
             fetchRequestToCancellations("", venueName);
-            // console.log('1')
         } else if (active === "full") {
             fetchFullCancellations("", venueName);
-            // console.log('2')
-
         } else if (active === "all") {
-
-            // console.log('3')
             fetchAllCancellations("", venueName);
-        } else {
-            // console.log('4')
-            // fallback
-            fetchFullCancellations();
         }
     }, [selectedVenue, active]);
 
@@ -281,32 +240,19 @@ const CancellationList = () => {
     const year = currentDate.getFullYear();
 
     const getDaysArray = () => {
-        const startDay = new Date(year, month, 1).getDay(); // Sunday = 0
+        const startDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         const days = [];
-
         const offset = startDay === 0 ? 6 : startDay - 1;
-
-        for (let i = 0; i < offset; i++) {
-            days.push(null);
-        }
-
-        for (let i = 1; i <= daysInMonth; i++) {
-            days.push(new Date(year, month, i));
-        }
-
+        for (let i = 0; i < offset; i++) days.push(null);
+        for (let i = 1; i <= daysInMonth; i++) days.push(new Date(year, month, i));
         return days;
     };
 
     const calendarDays = getDaysArray();
 
-    const goToPreviousMonth = () => {
-        setCurrentDate(new Date(year, month - 1, 1));
-    };
-
-    const goToNextMonth = () => {
-        setCurrentDate(new Date(year, month + 1, 1));
-    };
+    const goToPreviousMonth = () => setCurrentDate(new Date(year, month - 1, 1));
+    const goToNextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
 
     const isInRange = (date) => {
         if (!fromDate || !toDate || !date) return false;
@@ -324,15 +270,12 @@ const CancellationList = () => {
         );
     };
 
-
     const handleDateClick = (date) => {
         if (!date) return;
-
         if (!fromDate) {
             setFromDate(date);
-            setToDate(null); // reset second date
+            setToDate(null);
         } else if (!toDate) {
-            // Ensure order (from <= to)
             if (date < fromDate) {
                 setToDate(fromDate);
                 setFromDate(date);
@@ -340,7 +283,6 @@ const CancellationList = () => {
                 setToDate(date);
             }
         } else {
-            // If both already selected, reset
             setFromDate(date);
             setToDate(null);
         }
@@ -351,9 +293,7 @@ const CancellationList = () => {
             title: "Total Request",
             value: statsFreeTrial?.totalRequests?.value || "0",
             icon: "/DashboardIcons/🔢.png",
-            change: statsFreeTrial?.totalRequests?.change != null
-                ? `${statsFreeTrial.totalRequests.change}`
-                : "0%",
+            change: statsFreeTrial?.totalRequests?.change != null ? `${statsFreeTrial.totalRequests.change}` : "0%",
             color: "text-[#12B76A]",
             bg: "bg-[#F3FAF5]"
         },
@@ -369,9 +309,7 @@ const CancellationList = () => {
             title: "Most Request venue",
             value: statsFreeTrial?.mostRequestedVenue?.value || "0",
             icon: "/DashboardIcons/📍.png",
-            change: statsFreeTrial?.mostRequestedVenue?.change != null
-                ? `${statsFreeTrial.mostRequestedVenue.change}`
-                : "0%",
+            change: statsFreeTrial?.mostRequestedVenue?.change != null ? `${statsFreeTrial.mostRequestedVenue.change}` : "0%",
             color: "text-[#12B76A]",
             bg: "bg-[#F0F9F9]"
         },
@@ -379,163 +317,114 @@ const CancellationList = () => {
             title: "Common Reason",
             value: statsFreeTrial?.commonReason?.value || "0",
             icon: "/DashboardIcons/💬.png",
-            subValue: statsFreeTrial?.commonReason?.change != null
-                ? `${statsFreeTrial.commonReason.change}`
-                : "0%",
+            subValue: statsFreeTrial?.commonReason?.change != null ? `${statsFreeTrial.commonReason.change}` : "0%",
             color: "text-[#12B76A]",
             bg: "bg-[#FEF6FB]"
         },
         {
             title: "High Risk Age Group",
             value: statsFreeTrial?.highestRiskAgeGroup?.value ? `${statsFreeTrial.highestRiskAgeGroup.value}`.trim() : "0",
-            subValue: statsFreeTrial?.highestRiskAgeGroup?.change != null
-                ? `${statsFreeTrial.highestRiskAgeGroup.change}`
-                : "0%",
+            subValue: statsFreeTrial?.highestRiskAgeGroup?.change != null ? `${statsFreeTrial.highestRiskAgeGroup.change}` : "0%",
             icon: "/DashboardIcons/🎯.png",
             color: "text-[#12B76A]",
             bg: "bg-[#F3FAFD]"
         },
     ], [statsFreeTrial]);
+
     const applyFilter = () => {
         const forAttend = checkedStatuses.request_to_cancel || "";
         const forNotAttend = checkedStatuses.cancelled || "";
-
         let forDateOkBookingTrial = "";
         let forDateOfTrial = "";
         let forOtherDate = "";
-
         const bookedDatesChecked = checkedStatuses.dateBooked;
         const trialDatesChecked = checkedStatuses.dateOfTrial;
+
         if ((fromDate && !toDate) || (!fromDate && toDate)) {
             showError("Missing Date", "Please select both Start Date and End Date.");
-            return; // Stop further execution
+            return;
         }
         if (fromDate && toDate) {
-            if (bookedDatesChecked) {
-                forDateOkBookingTrial = [fromDate, toDate];
-            } else if (trialDatesChecked) {
-                forDateOfTrial = [fromDate, toDate];
-            } else {
-                forOtherDate = [fromDate, toDate];
-            }
+            if (bookedDatesChecked) forDateOkBookingTrial = [fromDate, toDate];
+            else if (trialDatesChecked) forDateOfTrial = [fromDate, toDate];
+            else forOtherDate = [fromDate, toDate];
         }
+
         setIsFilterApplied(true);
         const bookedByParams = savedAgent || [];
+
         if (active === "request") {
-            fetchRequestToCancellations(
-                "",
-                "",
-                forAttend,
-                forNotAttend,
-                forDateOkBookingTrial,
-                forDateOfTrial,
-                forOtherDate,
-                bookedByParams
-            );
+            fetchRequestToCancellations("", "", forAttend, forNotAttend, forDateOkBookingTrial, forDateOfTrial, forOtherDate, bookedByParams);
         } else if (active === "full") {
-            fetchFullCancellations(
-                "",
-                "",
-                forAttend,
-                forNotAttend,
-                forDateOkBookingTrial,
-                forDateOfTrial,
-                forOtherDate,
-                bookedByParams
-            );
+            fetchFullCancellations("", "", forAttend, forNotAttend, forDateOkBookingTrial, forDateOfTrial, forOtherDate, bookedByParams);
         } else if (active === "all") {
-            fetchAllCancellations(
-                "",
-                "",
-                forAttend,
-                forNotAttend,
-                forDateOkBookingTrial,
-                forDateOfTrial,
-                forOtherDate,
-                bookedByParams
-            );
+            fetchAllCancellations("", "", forAttend, forNotAttend, forDateOkBookingTrial, forDateOfTrial, forOtherDate, bookedByParams);
         }
     };
 
-    // Close popup if clicked outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (popupRef.current && !popupRef.current.contains(event.target)) {
                 setShowPopup(false);
             }
         };
-
-        if (showPopup) {
-            document.addEventListener("mousedown", handleClickOutside);
-        }
-
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
+        if (showPopup) document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [showPopup, savedAgent]);
 
     const handleNext = () => {
         if (tempSelectedAgents.length > 0) {
-            const selectedNames = tempSelectedAgents.map(
-                (agent) => `${agent.id}`
-            );
-            setSavedAgent(selectedNames); // ✅ saves full names as strings
-            // console.log("selectedNames", tempSelectedAgents);
+            const selectedNames = tempSelectedAgents.map((agent) => `${agent.id}`);
+            setSavedAgent(selectedNames);
         } else {
-            setSavedAgent([]); // nothing selected → clear
+            setSavedAgent([]);
         }
         setShowPopup(false);
     };
+
     const handleSearch = (e) => {
         const value = e.target.value;
         setSearchTerm(value);
-
-        // Fetch data with search value (debounce optional)
-        if (active === "request") {
-            fetchRequestToCancellations(value);
-        } else if (active === "full") {
-            fetchFullCancellations(value);
-        } else if (active === "all") {
-            fetchAllCancellations(value);
-        }
+        if (active === "request") fetchRequestToCancellations(value);
+        else if (active === "full") fetchFullCancellations(value);
+        else if (active === "all") fetchAllCancellations(value);
     };
-    // console.log('statsFreeTrial', statsFreeTrial)
+
     const { checkPermission } = usePermission();
 
     useEffect(() => {
-        if (isFilterApplied) {
-            setIsFilterApplied(false)
-        }
+        if (isFilterApplied) setIsFilterApplied(false);
     }, [isFilterApplied]);
-    const canServicehistory =
-        checkPermission({ module: 'service-history', action: 'view-listing' })
 
-    const commonColumns = [
-        {
-            header: "Parent Name",
-            key: "name",
-            selectable: true,
-            render: (item) =>
-                `${item.parents?.[0]?.parentFirstName || ""} ${item.parents?.[0]?.parentLastName || ""}`,
-        },
-        {
-            header: "No. Of Students",
-            render: (item) => item.totalStudents || item.students?.length || 0,
-        },
-        {
-            header: "Venue",
-            render: (item) => item.venue?.name || "-",
-        },
-        {
-            header: "Membership Start Date",
-            render: (item) =>
-                item.startDate
-                    ? new Date(item.startDate).toLocaleDateString()
-                    : item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "-",
-        },
-    ];
+    const canServicehistory = checkPermission({ module: 'service-history', action: 'view-listing' });
 
+    // ✅ Fix 3: commonColumns moved inside useMemo to avoid stale references
     const currentColumns = useMemo(() => {
+        const commonColumns = [
+            {
+                header: "Parent Name",
+                key: "name",
+                selectable: true,
+                render: (item) =>
+                    `${item.parents?.[0]?.parentFirstName || ""} ${item.parents?.[0]?.parentLastName || ""}`,
+            },
+            {
+                header: "No. Of Students",
+                render: (item) => item.totalStudents || item.students?.length || 0,
+            },
+            {
+                header: "Venue",
+                render: (item) => item.venue?.name || "-",
+            },
+            {
+                header: "Membership Start Date",
+                render: (item) =>
+                    item.startDate
+                        ? new Date(item.startDate).toLocaleDateString()
+                        : item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "-",
+            },
+        ];
+
         if (active === "full") {
             return [
                 ...commonColumns,
@@ -567,7 +456,7 @@ const CancellationList = () => {
             ];
         }
 
-        const additionalCols = active === "request" || active === "all" ? [
+        const additionalCols = (active === "request" || active === "all") ? [
             {
                 header: "Request Date",
                 render: (item) => item.cancelDate ? new Date(item.cancelDate).toLocaleDateString() : "-",
@@ -598,16 +487,15 @@ const CancellationList = () => {
         return [...commonColumns, ...additionalCols];
     }, [active]);
 
-    let cancelType = "";
-
-    if (active === "request") cancelType = "request to cancel";
-    else if (active === "all") cancelType = "all cancel";
-    else if (active === "full") cancelType = "full cancel";
-    // console.log('myVenues',myVenues)
+    // ✅ Fix 4: Consistent cancelType values
+    const cancelType = active === "request"
+        ? "request_to_cancel"
+        : active === "full"
+            ? "cancelled"
+            : "all";
 
     return (
         <div className="pt-1 bg-gray-50 min-h-screen">
-
             <div className="md:flex w-full gap-4">
                 <div className={`transition-all duration-300 ${showFilter ? "md:w-8/12" : "w-full"}`}>
                     <div className="flex flex-col md:flex-row py-6 pb-10 gap-4">
@@ -619,31 +507,39 @@ const CancellationList = () => {
                                     setSelectedStudents([]);
                                 }}
                                 className={`w-full md:w-auto flex gap-2 items-center px-3 py-2 rounded-xl text-sm text-[16px] transition ${active === btn.key
-                                    ? "bg-[#237FEA] text-white" // active
-                                    : "text-gray-700 font-semibold border border-gray-300" // inactive
+                                    ? "bg-[#237FEA] text-white"
+                                    : "text-gray-700 font-semibold border border-gray-300"
                                     }`}
                             >
                                 {btn.label}
                             </button>
                         ))}
                     </div>
+
                     {loading ? (
                         <Loader />
                     ) : (
                         <>
                             <StatsGrid stats={stats} variant="A" />
-                            <div className="flex justify-between items-center ">
-                                <h2 className='text-2xl font-semibold'>{active == "request" ? "Request to cancel" : "Full to cancel"}</h2>
+                            <div className="flex justify-between items-center">
+                                {/* ✅ Fix 5: Correct title for all tabs */}
+                                <h2 className='text-2xl font-semibold'>
+                                    {active === "request"
+                                        ? "Request to Cancel"
+                                        : active === "full"
+                                            ? "Full Cancellation"
+                                            : "All Cancellations"}
+                                </h2>
                                 <div className="flex justify-end items-center gap-2">
-                                    <div className="bg-white min-w-[38px] min-h-[38px]   border border-gray-300 p-2 rounded-full flex items-center justify-center"> <Filter size={16} className='cursor-pointer' onClick={() => setShowFilter(!showFilter)} />
+                                    <div className="bg-white min-w-[38px] min-h-[38px] border border-gray-300 p-2 rounded-full flex items-center justify-center">
+                                        <Filter size={16} className='cursor-pointer' onClick={() => setShowFilter(!showFilter)} />
                                     </div>
-                                    <div className="bg-white min-w-[38px] min-h-[38px]   border border-gray-300 p-2 rounded-full flex items-center justify-center">
+                                    <div className="bg-white min-w-[38px] min-h-[38px] border border-gray-300 p-2 rounded-full flex items-center justify-center">
                                         <img
                                             onClick={isWebsiteSourceSelected ? handleClick : undefined}
                                             src="/DashboardIcons/user-add-02.png"
                                             alt=""
-                                            className={`${isWebsiteSourceSelected ? "cursor-pointer" : "opacity-40 cursor-not-allowed"
-                                                }`}
+                                            className={`${isWebsiteSourceSelected ? "cursor-pointer" : "opacity-40 cursor-not-allowed"}`}
                                         />
                                     </div>
                                 </div>
@@ -670,14 +566,14 @@ const CancellationList = () => {
                             />
                         </>
                     )}
-
                 </div>
+
                 {showFilter && (
                     <div className="md:w-4/12 md:mt-0 mt-4 text-base space-y-5">
-                        <div className="space-y-3 bg-white p-6 rounded-3xl shadow-sm ">
-                            <h2 className="text-[24px] font-semibold">Search Now </h2>
-                            <div className="">
-                                <label htmlFor="" className="text-base font-semibold">Search Student</label>
+                        <div className="space-y-3 bg-white p-6 rounded-3xl shadow-sm">
+                            <h2 className="text-[24px] font-semibold">Search Now</h2>
+                            <div>
+                                <label className="text-base font-semibold">Search Student</label>
                                 <div className="relative mt-2">
                                     <input
                                         type="text"
@@ -690,11 +586,11 @@ const CancellationList = () => {
                                 </div>
                             </div>
                             <div className="mb-5">
-                                <label htmlFor="" className="text-base font-semibold">Venue</label>
-                                <div className="relative mt-2 ">
+                                <label className="text-base font-semibold">Venue</label>
+                                <div className="relative mt-2">
                                     <Select
                                         options={myVenues?.map((venue) => ({
-                                            label: venue?.name, // or `${venue.name} (${venue.area})`
+                                            label: venue?.name,
                                             value: venue?.id,
                                         }))}
                                         value={selectedVenue}
@@ -702,7 +598,7 @@ const CancellationList = () => {
                                         placeholder="Choose venue"
                                         className="mt-2"
                                         classNamePrefix="react-select"
-                                        isClearable={true} // 👈 adds cross button
+                                        isClearable={true}
                                         styles={{
                                             control: (base, state) => ({
                                                 ...base,
@@ -717,19 +613,18 @@ const CancellationList = () => {
                                             indicatorSeparator: () => ({ display: "none" }),
                                         }}
                                     />
-
-
-
-
                                 </div>
                             </div>
                         </div>
 
-                        <div className="space-y-3 bg-white p-6 rounded-3xl shadow-sm ">
-                            <div className="">
-                                <div className="flex justify-between items-center mb-5 ">
-                                    <h2 className="text-[24px] font-semibold">Filter by date </h2>
-                                    <button onClick={applyFilter} className="flex gap-2 items-center bg-[#237FEA] text-white px-3 py-2 rounded-lg text-sm text-[16px]">
+                        <div className="space-y-3 bg-white p-6 rounded-3xl shadow-sm">
+                            <div>
+                                <div className="flex justify-between items-center mb-5">
+                                    <h2 className="text-[24px] font-semibold">Filter by date</h2>
+                                    <button
+                                        onClick={applyFilter}
+                                        className="flex gap-2 items-center bg-[#237FEA] text-white px-3 py-2 rounded-lg text-sm text-[16px]"
+                                    >
                                         <img src='/DashboardIcons/filtericon.png' className='w-4 h-4 sm:w-5 sm:h-5' alt="" />
                                         Apply Filter
                                     </button>
@@ -738,7 +633,6 @@ const CancellationList = () => {
                                 <div className="bg-gray-50 p-4 rounded-lg w-full">
                                     <div className="font-semibold mb-2 text-[18px]">Choose type</div>
                                     <div className="grid grid-cols-2 gap-x-6 gap-y-2 font-semibold text-[16px]">
-
                                         {["Request to cancel", "Cancelled"].map((label, i) => (
                                             <label key={i} className="flex items-center gap-2">
                                                 <input
@@ -747,11 +641,7 @@ const CancellationList = () => {
                                                     checked={
                                                         label === "Request to cancel"
                                                             ? checkedStatuses.request_to_cancel
-                                                            : label === "Cancelled"
-                                                                ? checkedStatuses.cancelled
-                                                                : label === "Date Booked"
-                                                                    ? checkedStatuses.dateBooked
-                                                                    : checkedStatuses.dateOfTrial
+                                                            : checkedStatuses.cancelled
                                                     }
                                                     onChange={() => handleCheckboxChange(label)}
                                                 />
@@ -766,9 +656,8 @@ const CancellationList = () => {
                                                 type="checkbox"
                                                 checked={savedAgent?.length > 0}
                                                 onChange={(e) => {
-                                                    if (e.target.checked) {
-                                                        setShowPopup(true);
-                                                    } else {
+                                                    if (e.target.checked) setShowPopup(true);
+                                                    else {
                                                         setSavedAgent([]);
                                                         setTempSelectedAgents([]);
                                                     }
@@ -782,6 +671,7 @@ const CancellationList = () => {
                                         </label>
                                     </div>
                                 </div>
+
                                 {showPopup && (
                                     <div
                                         className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100]"
@@ -797,13 +687,9 @@ const CancellationList = () => {
                                             onClick={(e) => e.stopPropagation()}
                                         >
                                             <h2 className="text-[22px] font-bold mb-6 text-[#1A1A1A]">Select agent</h2>
-
                                             <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                                                 {bookedByAdmin.map((admin, index) => {
-                                                    const isSelected = tempSelectedAgents.some(
-                                                        (a) => a.id === admin.id
-                                                    );
-
+                                                    const isSelected = tempSelectedAgents.some((a) => a.id === admin.id);
                                                     return (
                                                         <label key={index} className="flex items-center gap-4 cursor-pointer group">
                                                             <div className="relative flex items-center justify-center">
@@ -812,9 +698,7 @@ const CancellationList = () => {
                                                                     checked={isSelected}
                                                                     onChange={() => {
                                                                         if (isSelected) {
-                                                                            setTempSelectedAgents((prev) =>
-                                                                                prev.filter((a) => a.id !== admin.id)
-                                                                            );
+                                                                            setTempSelectedAgents((prev) => prev.filter((a) => a.id !== admin.id));
                                                                         } else {
                                                                             setTempSelectedAgents((prev) => [
                                                                                 ...prev,
@@ -828,7 +712,6 @@ const CancellationList = () => {
                                                                     <Check className={`w-4 h-4 text-white transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0'}`} strokeWidth={4} />
                                                                 </div>
                                                             </div>
-
                                                             <div className="flex items-center gap-3">
                                                                 <div className="w-10 h-10 rounded-full border-2 border-[#E8F3FF] overflow-hidden">
                                                                     <img
@@ -847,7 +730,6 @@ const CancellationList = () => {
                                                     );
                                                 })}
                                             </div>
-
                                             <button
                                                 className="w-full bg-[#237FEA] text-white rounded-2xl py-4 mt-8 font-bold text-lg hover:bg-blue-600 transition shadow-lg shadow-blue-200 disabled:opacity-50"
                                                 onClick={handleNext}
@@ -858,8 +740,9 @@ const CancellationList = () => {
                                         </div>
                                     </div>
                                 )}
+
+                                {/* Calendar */}
                                 <div className="rounded p-4 mt-6 text-center text-base w-full max-w-md mx-auto">
-                                    {/* Header */}
                                     <div className="flex justify-center gap-5 items-center mb-3">
                                         <button
                                             onClick={goToPreviousMonth}
@@ -867,7 +750,6 @@ const CancellationList = () => {
                                         >
                                             <ChevronLeft className="w-5 h-5" />
                                         </button>
-
                                         <p className="font-semibold text-[20px]">
                                             {currentDate.toLocaleString("default", { month: "long" })} {year}
                                         </p>
@@ -879,58 +761,36 @@ const CancellationList = () => {
                                         </button>
                                     </div>
 
-                                    {/* Day Labels */}
                                     <div className="grid grid-cols-7 text-xs gap-1 text-[18px] text-gray-500 mb-1">
-                                        {["M", "T", "W", "T", "F", "S", "S"].map((day) => (
-                                            <div key={day} className="font-medium text-center">
-                                                {day}
-                                            </div>
+                                        {["M", "T", "W", "T", "F", "S", "S"].map((day, i) => (
+                                            <div key={i} className="font-medium text-center">{day}</div>
                                         ))}
                                     </div>
 
-                                    {/* Calendar Weeks */}
-                                    <div className="flex flex-col  gap-1">
+                                    <div className="flex flex-col gap-1">
                                         {Array.from({ length: Math.ceil(calendarDays.length / 7) }).map((_, weekIndex) => {
                                             const week = calendarDays.slice(weekIndex * 7, weekIndex * 7 + 7);
-
-
                                             return (
-                                                <div
-                                                    key={weekIndex}
-                                                    className="grid grid-cols-7 text-[18px] h-12 py-1  rounded"
-                                                >
+                                                <div key={weekIndex} className="grid grid-cols-7 text-[18px] h-12 py-1 rounded">
                                                     {week.map((date, i) => {
                                                         const isStart = isSameDate(date, fromDate);
                                                         const isEnd = isSameDate(date, toDate);
                                                         const isStartOrEnd = isStart || isEnd;
                                                         const isInBetween = date && isInRange(date);
-                                                        const isExcluded = !date; // replace with your own excluded logic
 
-                                                        let className =
-                                                            " w-full h-12 aspect-square flex items-center justify-center transition-all duration-200 ";
+                                                        let className = "w-full h-12 aspect-square flex items-center justify-center transition-all duration-200 ";
                                                         let innerDiv = null;
 
                                                         if (!date) {
                                                             className += "";
-                                                        } else if (isExcluded) {
-                                                            className +=
-                                                                "bg-gray-300 text-white opacity-60 cursor-not-allowed";
                                                         } else if (isStartOrEnd) {
-                                                            // Outer pill connector background
-                                                            className += ` bg-sky-100 ${isStart ? "rounded-l-full" : ""} ${isEnd ? "rounded-r-full" : ""
-                                                                }`;
-                                                            // Inner circle but with left/right rounding
+                                                            className += `bg-sky-100 ${isStart ? "rounded-l-full" : ""} ${isEnd ? "rounded-r-full" : ""}`;
                                                             innerDiv = (
-                                                                <div
-                                                                    className={`bg-blue-700 rounded-full text-white w-12 h-12 flex items-center justify-center font-bold
-                                 
-                                 `}
-                                                                >
+                                                                <div className="bg-blue-700 rounded-full text-white w-12 h-12 flex items-center justify-center font-bold">
                                                                     {date.getDate()}
                                                                 </div>
                                                             );
                                                         } else if (isInBetween) {
-                                                            // Middle range connector
                                                             className += "bg-sky-100 text-gray-800";
                                                         } else {
                                                             className += "hover:bg-gray-100 text-gray-800";
@@ -939,7 +799,7 @@ const CancellationList = () => {
                                                         return (
                                                             <div
                                                                 key={i}
-                                                                onClick={() => date && !isExcluded && handleDateClick(date)}
+                                                                onClick={() => date && handleDateClick(date)}
                                                                 className={className}
                                                             >
                                                                 {innerDiv || (date ? date.getDate() : "")}
@@ -947,122 +807,89 @@ const CancellationList = () => {
                                                         );
                                                     })}
                                                 </div>
-
                                             );
                                         })}
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                        {/* Action Buttons */}
                         <div className="grid grid-cols-3 gap-2 mt-5 justify-between">
                             <button
                                 onClick={() => {
                                     if (bookFreeTrials && bookFreeTrials.length > 0) {
-
-                                        // Step 1: Filter only selected bookings
                                         const filteredBookings = bookFreeTrials.filter(b =>
                                             selectedStudents.includes(b.id || b.bookingId)
                                         );
-                                        console.log('selectedStudents', selectedStudents)
-                                        console.log('bookFreeTrials', bookFreeTrials)
-                                        console.log('filteredBookings', filteredBookings)
-                                        // Step 2: Extract emails from filtered bookings
                                         const parentEmails = filteredBookings.flatMap(b =>
-                                            (b.parents || [])
-                                                .map(p => p.parentEmail)
-                                                .filter(email => email)
+                                            (b.parents || []).map(p => p.parentEmail).filter(email => email)
                                         );
-
                                         if (parentEmails.length > 0) {
-                                            openEmailPopup(
-                                                parentEmails,
-                                                "/api/admin/send-manual-email",
-                                                { token, showError, showSuccess }
-                                            );
+                                            openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
                                         } else {
-                                            showWarning(
-                                                "No Emails Found",
-                                                "Selected parents do not have valid email addresses."
-                                            );
+                                            showWarning("No Emails Found", "Selected parents do not have valid email addresses.");
                                         }
-
                                     } else {
-                                        showWarning(
-                                            "No Parents Found",
-                                            "No parent data available to send email."
-                                        );
+                                        showWarning("No Parents Found", "No parent data available to send email.");
                                     }
                                 }}
                                 className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl text-[16px]"
                             >
-                                <img
-                                    src="/images/icons/mail.png"
-                                    className="w-4 h-4 sm:w-5 sm:h-5"
-                                    alt=""
-                                />
+                                <img src="/images/icons/mail.png" className="w-4 h-4 sm:w-5 sm:h-5" alt="" />
                                 Send Email
                             </button>
 
-                            <button onClick={() => {
-                                if (bookFreeTrials && bookFreeTrials.length > 0) {
-
-                                    const filteredBookings = bookFreeTrials.filter(b =>
-                                        selectedStudents.includes(b.id || b.bookingId)
-                                    );
-
-                                    const parents = filteredBookings.flatMap(b =>
-                                        (b.parents || [])
-                                            .filter(p => p.parentPhoneNumber)
-                                            .map(p => ({
-                                                name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
-                                                phone: p.parentPhoneNumber
-                                            }))
-                                    );
-
-                                    if (parents.length > 0) {
-                                        openTextPopup(
-                                            parents,
-                                            "/api/admin/send-manual-text",
-                                            { token, showError, showSuccess }
+                            <button
+                                onClick={() => {
+                                    if (bookFreeTrials && bookFreeTrials.length > 0) {
+                                        const filteredBookings = bookFreeTrials.filter(b =>
+                                            selectedStudents.includes(b.id || b.bookingId)
                                         );
+                                        const parents = filteredBookings.flatMap(b =>
+                                            (b.parents || [])
+                                                .filter(p => p.parentPhoneNumber)
+                                                .map(p => ({
+                                                    name: `${p.parentFirstName || ""} ${p.parentLastName || ""}`.trim(),
+                                                    phone: p.parentPhoneNumber
+                                                }))
+                                        );
+                                        if (parents.length > 0) {
+                                            openTextPopup(parents, "/api/admin/send-manual-text", { token, showError, showSuccess });
+                                        } else {
+                                            showWarning("No Phone Numbers", "Selected parents do not have valid phone numbers.");
+                                        }
                                     } else {
-                                        showWarning(
-                                            "No Phone Numbers",
-                                            "Selected parents do not have valid phone numbers."
-                                        );
+                                        showWarning("No Parents Found", "No parent data available to send text.");
                                     }
-
-                                } else {
-                                    showWarning(
-                                        "No Parents Found",
-                                        "No parent data available to send text."
-                                    );
-                                }
-                            }} className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl  text-[16px]">
+                                }}
+                                className="flex gap-1 items-center justify-center bg-none border border-[#717073] text-[#717073] px-2 py-2 rounded-xl text-[16px]"
+                            >
                                 <img src='/images/icons/sendText.png' className='w-4 h-4 sm:w-5 sm:h-5' alt="" />
-                                {textloading ? (
-                                    <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
-                                ) : (
-                                    <>
-                                        Send Text
-                                    </>
-                                )}
+                                {textloading ? <Loader2 className="animate-spin w-5 h-5 text-blue-500" /> : "Send Text"}
                             </button>
-                            <button onClick={exportFreeTrials} className="flex gap-1 items-center justify-center bg-[#237FEA] text-white px-2 py-2 rounded-xl  text-[16px]">
+
+                            <button
+                                onClick={exportFreeTrials}
+                                className="flex gap-1 items-center justify-center bg-[#237FEA] text-white px-2 py-2 rounded-xl text-[16px]"
+                            >
                                 <img src='/images/icons/download.png' className='w-4 h-4 sm:w-5 sm:h-5' alt="" />
                                 Export Data
                             </button>
                         </div>
-
-
                     </div>
-
                 )}
-
             </div>
+
             {showAgentPopup && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[99] p-4" onClick={() => setShowAgentPopup(false)}>
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-8 animate-in fade-in zoom-in duration-200" onClick={(e) => e.stopPropagation()}>
+                <div
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[99] p-4"
+                    onClick={() => setShowAgentPopup(false)}
+                >
+                    <div
+                        className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-8 animate-in fade-in zoom-in duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-[28px] font-bold text-[#282829]">Select agent</h3>
                             <button
@@ -1087,19 +914,11 @@ const CancellationList = () => {
                                         <div
                                             key={agent.id}
                                             className="flex items-center gap-4 py-2 cursor-pointer group"
-                                            onClick={() => {
-                                                if (isSelected) {
-                                                    setSelectedAdminId(null);
-                                                } else {
-                                                    setSelectedAdminId(agent.id);
-                                                }
-                                            }}
+                                            onClick={() => setSelectedAdminId(isSelected ? null : agent.id)}
                                         >
-                                            <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-[#237FEA] border-[#237FEA]' : 'border-gray-200 group-hover:border-[#237FEA]'
-                                                }`}>
+                                            <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-[#237FEA] border-[#237FEA]' : 'border-gray-200 group-hover:border-[#237FEA]'}`}>
                                                 {isSelected && <Check size={16} className="text-white" strokeWidth={4} />}
                                             </div>
-
                                             <div className="relative">
                                                 <img
                                                     src={agent.profilePicture || agent.image || (agent.profile ? `${API_BASE_URL}${agent.profile}` : "/images/avatar-placeholder.png")}
@@ -1109,7 +928,6 @@ const CancellationList = () => {
                                                 />
                                                 <div className="absolute inset-0 rounded-full border-2 border-yellow-400/30 pointer-events-none"></div>
                                             </div>
-
                                             <span className="text-[20px] font-medium text-[#282829]">
                                                 {agent.firstName} {agent.lastName}
                                             </span>
@@ -1130,18 +948,14 @@ const CancellationList = () => {
                                         <Loader2 size={24} className="animate-spin" />
                                         Assigning...
                                     </>
-                                ) : (
-                                    'Assign'
-                                )}
+                                ) : 'Assign'}
                             </button>
                         </div>
                     </div>
                 </div>
             )}
-        </div >
+        </div>
+    );
+};
 
-
-    )
-}
-
-export default CancellationList
+export default CancellationList;

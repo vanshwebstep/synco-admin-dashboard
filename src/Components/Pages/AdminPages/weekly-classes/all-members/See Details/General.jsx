@@ -290,6 +290,9 @@ const ParentProfile = (stateData) => {
         }));
     };
 
+
+
+
     const handleWaitingListVenueChange = (selected) => {
         setWaitingListData(prev => {
             const newConfigs = { ...prev.studentConfigs };
@@ -342,8 +345,9 @@ const ParentProfile = (stateData) => {
     });
     const [transferData, setTransferData] = useState({
         bookingId: bookingId || null,
+        venue: profile?.venue?.name || "",
         venueId: classSchedule?.venue?.id || null,
-        transferReasonClass: "", // optional notes
+        transferReasonClass: "",
         classScheduleId: null,
         selectedStudents: [],
         studentTransfers: {},
@@ -602,12 +606,19 @@ const ParentProfile = (stateData) => {
 
     const newClasses = profile?.newClasses?.map((cls) => ({
         value: cls.id,
-        label: `${cls.className} - ${cls.day} (${cls.startTime} - ${cls.endTime})`,
+        label: `${cls.className} ${cls.level || cls.abilityLevel ? `(${cls.level || cls.abilityLevel})` : ""}`,
     }));
     const noCapacityClasses = profile?.noCapacityClass || profile?.noCapacityClasses || [];
+    const venueClasses = profile?.venueClasses || [];
+
+    const venueOptions = venueClasses.map(v => ({
+        value: v.venueId,
+        label: v.venueName,
+        classes: v.classes
+    }));
     const newClassesForWaitingList = noCapacityClasses?.map((cls) => ({
         value: cls.id,
-        label: `${cls.className} - ${cls.day} (${cls.startTime} - ${cls.endTime})`,
+        label: `${cls.className} ${cls.level || cls.abilityLevel ? `(${cls.level || cls.abilityLevel})` : ""}`,
     }));
 
     const selectedClass = newClasses?.find(
@@ -682,6 +693,14 @@ const ParentProfile = (stateData) => {
             }
         });
     };
+    useEffect(() => {
+        if (profile?.venue?.name) {
+            setTransferData((prev) => ({
+                ...prev,
+                venue: prev.venue || profile.venue.name
+            }));
+        }
+    }, [profile?.venue?.name]);
     const sendText = async (bookingIds) => {
         setTextLoading(true);
 
@@ -939,7 +958,7 @@ const ParentProfile = (stateData) => {
                                                 name="abilityLevel"
                                                 id="abilityLevel"
                                                 className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                value={student.abilityLevel || ""}
+                                                value={student?.abilityLevel?.toLowerCase() || student?.classSchedule?.abilityLevel?.toLowerCase() || ""}
                                                 disabled={editingIndex !== index}
                                                 onChange={(e) =>
                                                     handleStudentDataChange(index, "abilityLevel", e.target.value)
@@ -951,6 +970,7 @@ const ParentProfile = (stateData) => {
                                                 <option value="beginner">Beginner</option>
                                                 <option value="intermediate">Intermediate</option>
                                                 <option value="advanced">Advanced</option>
+                                                <option value="pro">Pro</option>
                                             </select>
                                         </div>
                                     </div>
@@ -1916,7 +1936,7 @@ const ParentProfile = (stateData) => {
                                         <div className="bg-white rounded-3xl p-6 space-y-4 mt-4">
                                             <div className="flex gap-7">
                                                 <button
-                                                    className="flex-1 bg-blue-50 border border-[#237FEA] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 text-[#237FEA] font-semibold shadow-sm hover:bg-blue-100 transition-all duration-300"
+                                                    className="flex-1 border border-[#717073] rounded-xl py-3 flex text-[18px] items-center justify-center gap-2 hover:shadow-md transition-shadow duration-300 text-[#717073] font-medium"
                                                     onClick={() => {
                                                         const parentEmails = parents.map(p => p.parentEmail).filter(Boolean);
                                                         openEmailPopup(parentEmails, "/api/admin/send-manual-email", { token, showError, showSuccess });
@@ -1985,7 +2005,7 @@ const ParentProfile = (stateData) => {
                                                         Rebook FREE Trial
                                                     </button>
                                                 )}
-                                            {location.state?.memberInfo == "cancellation" || location.state?.memberInfo == "cancelled" ? (
+                                            {location.state?.memberInfo == "cancellation" || status=="cancelled" ||  location.state?.memberInfo == "cancelled" ? (
                                                 <button
                                                     onClick={handleReinstateMembership}
                                                     className="w-full bg-green-50 border border-[#12B76A] text-[#12B76A] text-[18px] rounded-xl py-3 font-semibold shadow-sm hover:bg-green-100 transition-all duration-300"
@@ -2022,6 +2042,7 @@ const ParentProfile = (stateData) => {
                             </div>
 
                             <div className="space-y-4 px-6 pb-6 pt-4">
+
                                 {/* Select Student */}
                                 <div>
                                     <label className="block text-[16px] font-semibold">Select Student</label>
@@ -2031,7 +2052,8 @@ const ParentProfile = (stateData) => {
                                         options={studentsList?.map((student) => ({
                                             value: student.id,
                                             label: student.studentFirstName + " " + student.studentLastName,
-                                            classSchedule: student.classSchedule
+                                            classSchedule: student.classSchedule,
+                                            abilityLevel: student.abilityLevel
                                         })) || []}
                                         placeholder="Select Student"
                                         isMulti
@@ -2051,18 +2073,48 @@ const ParentProfile = (stateData) => {
                                     />
                                 </div>
 
+                                {/* ✅ Common Venue Selection — outside student loop */}
+                                {waitingListData.selectedStudents.length > 0 && (
+                                    <div>
+                                        <label className="block text-[16px] font-semibold">Select New Venue</label>
+                                        <Select
+                                            value={
+                                                waitingListData.venueId
+                                                    ? noCapacityClasses.map(v => ({ value: v.venueId, label: v.venueName })).find(v => v.value === waitingListData.venueId)
+                                                    : null
+                                            }
+                                            onChange={handleWaitingListVenueChange}
+                                            options={noCapacityClasses.map(v => ({ value: v.venueId, label: v.venueName }))}
+                                            placeholder="Select Venue"
+                                            className="rounded-lg mt-2"
+                                            styles={{
+                                                control: (base) => ({
+                                                    ...base,
+                                                    borderRadius: "0.7rem",
+                                                    boxShadow: "none",
+                                                    padding: "4px 8px",
+                                                    minHeight: "48px",
+                                                }),
+                                                placeholder: (base) => ({ ...base, fontWeight: 600 }),
+                                                dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
+                                                indicatorSeparator: () => ({ display: "none" }),
+                                            }}
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Per-Student Configuration */}
                                 {waitingListData.selectedStudents.length > 0 && (
                                     <div className="space-y-6 border-t pt-4">
                                         {waitingListData.selectedStudents.map((studentOption) => {
                                             const studentId = studentOption.value;
                                             const config = waitingListData.studentConfigs?.[studentId] || {};
-                                            const currentClass = studentOption.classSchedule?.className || "-";
-                                            const currentVenue = studentOption.classSchedule?.venue?.name || "-";
+                                            const currentClass = `${studentOption.classSchedule?.className || "-"} ${studentOption.classSchedule?.level || studentOption.abilityLevel ? `(${studentOption.classSchedule?.level || studentOption.abilityLevel})` : ""}`;
                                             const selectedVenue = noCapacityClasses.find(v => v.venueId === waitingListData.venueId);
                                             const classOptions = selectedVenue
                                                 ? selectedVenue.classes.map(cls => ({
                                                     value: cls.id,
-                                                    label: `${cls.className} (${cls.startTime} - ${cls.endTime})`
+                                                    label: `${cls.className} ${cls.level || cls.abilityLevel ? `(${cls.level || cls.abilityLevel})` : ""}`,
                                                 }))
                                                 : [];
 
@@ -2075,7 +2127,16 @@ const ParentProfile = (stateData) => {
                                                     {/* Current Info */}
                                                     <div className="grid gap-4 text-sm text-gray-600">
                                                         <div>
-                                                            <label className="block text-sm font-semibold mb-1">Current Class</label>
+                                                            <label className="block text-sm font-semibold mb-1">Current Venue</label>
+                                                            <input
+                                                                type="text"
+                                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
+                                                                value={profile?.venue?.name || "-"}
+                                                                readOnly
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-semibold mb-1">Current Class / Level</label>
                                                             <input
                                                                 type="text"
                                                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
@@ -2083,29 +2144,17 @@ const ParentProfile = (stateData) => {
                                                                 readOnly
                                                             />
                                                         </div>
-                                                        <div>
-                                                            <label className="block text-sm font-semibold mb-1">Venue</label>
-                                                            <input
-                                                                type="text"
-                                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
-                                                                value={profile?.venue?.name}
-                                                                readOnly
-                                                            />
-                                                        </div>
                                                     </div>
 
-                                                    {/* Select New Class */}
+                                                    {/* Select New Class / Level */}
                                                     <div>
-                                                        <label className="block text-[16px] font-semibold">Select New Class</label>
+                                                        <label className="block text-[16px] font-semibold">Select New Class / Level</label>
                                                         <Select
-                                                            value={
-                                                                config.classScheduleId
-                                                                    ? classOptions.find((cls) => cls.value === config.classScheduleId) || null
-                                                                    : null
-                                                            }
+                                                            value={config.classScheduleId ? classOptions.find((cls) => cls.value === config.classScheduleId) || null : null}
                                                             onChange={(selected) => handleWaitingListConfigChange(studentId, "classScheduleId", selected?.value)}
                                                             options={classOptions}
-                                                            placeholder="Select Class"
+                                                            placeholder={waitingListData.venueId ? "Select Class" : "Select venue first"}
+                                                            isDisabled={!waitingListData.venueId}
                                                             className="rounded-lg mt-2"
                                                             styles={{
                                                                 control: (base) => ({
@@ -2127,30 +2176,17 @@ const ParentProfile = (stateData) => {
                                     </div>
                                 )}
 
-                                <label className="block text-[16px] font-semibold">Select New Venue</label>
-                                <Select
-                                    value={
-                                        waitingListData.venueId
-                                            ? noCapacityClasses.map(v => ({ value: v.venueId, label: v.venueName })).find(v => v.value === waitingListData.venueId)
-                                            : null
-                                    }
-                                    onChange={handleWaitingListVenueChange}
-                                    options={noCapacityClasses.map(v => ({ value: v.venueId, label: v.venueName }))}
-                                    placeholder="Select Venue"
-                                />
-
                                 {/* Preferred Date */}
                                 <div>
                                     <label className="block text-[16px] font-semibold">Preferred Start Date (Optional)</label>
                                     <DatePicker
-                                        minDate={addDays(new Date(), 1)} // disables today and all past dates
+                                        minDate={addDays(new Date(), 1)}
                                         selected={waitingListData.startDate ? new Date(waitingListData.startDate) : null}
                                         onChange={(date) => handleDateChange(date, "startDate", setWaitingListData)}
                                         dateFormat="EEEE, dd MMMM yyyy"
                                         className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                         withPortal
                                     />
-
                                 </div>
 
                                 {/* Notes */}
@@ -2160,26 +2196,26 @@ const ParentProfile = (stateData) => {
                                         className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                         rows={6}
                                         name="notes"
-
                                         value={waitingListData.notes}
                                         onChange={(e) => handleInputChange(e, setWaitingListData)}
                                     />
-
                                 </div>
 
-                                {/* Button */}
+                                {/* Submit Button */}
                                 <div className="justify-end flex gap-4 pt-4">
                                     <button
-                                        className="w-1/2 bg-[#12B76A] text-white rounded-xl py-3 text-[18px] font-bold shadow-md hover:bg-green-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="w-1/2 bg-[#12B76A] text-white rounded-xl py-3 text-[18px] font-semibold hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
                                         disabled={waitingListData.selectedStudents.length === 0}
                                         onClick={() => {
-                                            // Validation: at least one student
                                             if (waitingListData.selectedStudents.length === 0) {
                                                 showWarning("Missing Information", "Please select at least one student.");
                                                 return;
                                             }
+                                            if (!waitingListData.venueId) {
+                                                showWarning("Missing Information", "Please select a new venue.");
+                                                return;
+                                            }
 
-                                            // Construct Payload
                                             const studentsPayload = waitingListData.selectedStudents.map(studentOption => {
                                                 const config = waitingListData.studentConfigs?.[studentOption.value] || {};
                                                 return {
@@ -2188,12 +2224,7 @@ const ParentProfile = (stateData) => {
                                                 };
                                             });
 
-                                            // Validation: all students must have a class
                                             const incomplete = studentsPayload.some(s => !s.classScheduleId);
-                                            if (!waitingListData.venueId) {
-                                                showWarning("Missing Information", "Please select a new venue.");
-                                                return;
-                                            }
                                             if (incomplete) {
                                                 showWarning("Missing Information", "Please select a new class for all selected students.");
                                                 return;
@@ -2218,7 +2249,6 @@ const ParentProfile = (stateData) => {
                             </div>
                         </div>
                     </div>
-
                 )}
                 {reactivateMembership && (
                     <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
@@ -2625,7 +2655,7 @@ const ParentProfile = (stateData) => {
                     </div>
 
                 )}
-                {transferVenue && (
+              {transferVenue && (
                     <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
                         <div className="bg-white rounded-2xl w-[541px] max-h-[90%] overflow-y-auto relative scrollbar-hide">
                             <button
@@ -2640,15 +2670,10 @@ const ParentProfile = (stateData) => {
                             </div>
 
                             <div className="space-y-4 px-6 pb-6 pt-4">
-                                {/* Current Class */}
-
+                                {/* Current Class / Level */}
+                                {/* Select Student */}
                                 <div>
-
-
-                                    <label className="block text-[16px] font-semibold">
-                                        Select Student
-                                    </label>
-
+                                    <label className="block text-[16px] font-semibold">Select Student</label>
                                     <Select
                                         value={transferData.selectedStudents}
                                         onChange={handleStudentSelectChange}
@@ -2661,50 +2686,82 @@ const ParentProfile = (stateData) => {
                                         isMulti
                                         className="rounded-lg mt-2"
                                         styles={{
-                                            control: (base) => ({
-                                                ...base,
-                                                borderRadius: "0.7rem",
-                                                boxShadow: "none",
-                                                padding: "4px 8px",
-                                                minHeight: "48px",
-                                            }),
+                                            control: (base) => ({ ...base, borderRadius: "0.7rem", boxShadow: "none", padding: "4px 8px", minHeight: "48px" }),
                                             placeholder: (base) => ({ ...base, fontWeight: 600 }),
                                             dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
                                             indicatorSeparator: () => ({ display: "none" }),
                                         }}
                                     />
-
                                 </div>
+
+                                {/* ✅ COMMON Venue Selection — outside student loop */}
+                                {/* ✅ COMMON Venue Selection */}
+                                {transferData.selectedStudents.length > 0 && (
+                                    <div>
+                                        <label className="block text-[16px] font-semibold">Select Venue</label>
+                                        <Select
+                                            value={transferData.selectedVenue}
+                                            onChange={(selected) =>
+                                                setTransferData(prev => ({
+                                                    ...prev,
+                                                    selectedVenue: selected,
+                                                    studentTransfers: Object.fromEntries(
+                                                        Object.entries(prev.studentTransfers).map(([k, v]) => [k, { ...v, classScheduleId: null }])
+                                                    )
+                                                }))
+                                            }
+                                            options={venueOptions}
+                                            placeholder="Select Venue"
+                                            isSearchable
+                                            className="rounded-lg mt-2"
+                                            styles={{
+                                                control: (base) => ({
+                                                    ...base,
+                                                    borderRadius: "0.7rem",
+                                                    boxShadow: "none",
+                                                    padding: "4px 8px",
+                                                    minHeight: "48px",
+                                                }),
+                                                placeholder: (base) => ({ ...base, fontWeight: 600 }),
+                                                dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
+                                                indicatorSeparator: () => ({ display: "none" }),
+                                            }}
+                                        />
+                                    </div>
+                                )}
+
                                 {/* Per-Student Configuration */}
                                 {transferData.selectedStudents.length > 0 && (
-                                    <div className="space-y-6 border-t pt-4">
+                                    <div className="space-y-6  pt-4">
                                         {transferData.selectedStudents.map((studentOption) => {
                                             const studentId = studentOption.value;
                                             const studentConfig = transferData.studentTransfers?.[studentId] || {};
-                                            const currentClass = studentOption.classSchedule?.className || "-";
-                                            const currentVenue = studentOption.classSchedule?.venue?.name || "-";
+                                            const currentClass = `${studentOption.classSchedule?.className || "-"} ${studentOption.classSchedule?.level || studentOption.abilityLevel ? `(${studentOption.classSchedule?.level || studentOption.abilityLevel})` : ""}`;
+
+                                            const filteredClasses = transferData.selectedVenue?.classes?.map(cls => ({
+                                                value: cls.id,
+                                                label: `${cls.className} ${cls.level || cls.abilityLevel ? `(${cls.level || cls.abilityLevel})` : ""}`,
+                                            })) || [];
 
                                             return (
                                                 <div key={studentId} className="bg-gray-50 p-4 rounded-xl space-y-3 border border-gray-200">
-                                                    <h3 className="font-semibold capitalize text-lg text-gray-800  pb-2">
+                                                    <h3 className="font-semibold capitalize text-lg text-gray-800 pb-2">
                                                         {studentOption.label}
                                                     </h3>
 
                                                     {/* Current Info */}
-                                                    {/* Current Info */}
                                                     <div className="grid gap-4 text-sm text-gray-600">
-
                                                         <div>
-                                                            <label className="block text-sm font-semibold mb-1">Venue</label>
+                                                            <label className="block text-sm font-semibold mb-1">Current Venue</label>
                                                             <input
                                                                 type="text"
                                                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
-                                                                value={profile?.venue?.name}
+                                                                value={profile?.venue?.name || "-"}
                                                                 readOnly
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className="block text-sm font-semibold mb-1">Current Class</label>
+                                                            <label className="block text-sm font-semibold mb-1">Current Class / Level</label>
                                                             <input
                                                                 type="text"
                                                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
@@ -2714,34 +2771,29 @@ const ParentProfile = (stateData) => {
                                                         </div>
                                                     </div>
 
+                                                    {/* ✅ NO venue dropdown here anymore */}
+
                                                     {/* New Class Select */}
                                                     <div>
-                                                        <label className="block text-sm font-semibold mb-1">New Class</label>
+                                                        <label className="block text-sm font-semibold mb-1">New Class / Level</label>
                                                         <Select
-                                                            value={
-                                                                studentConfig.classScheduleId
-                                                                    ? newClasses.find((cls) => cls.value === studentConfig.classScheduleId) || null
-                                                                    : null
-                                                            }
-                                                            onChange={(selected) =>
-                                                                handleTransferConfigChange(studentId, "classScheduleId", selected?.value)
-                                                            }
-                                                            options={newClasses}
-                                                            placeholder="Select New Class"
-                                                            className="rounded-lg"
+                                                            value={studentConfig.classScheduleId ? filteredClasses.find(c => c.value === studentConfig.classScheduleId) : null}
+                                                            onChange={(selected) => handleTransferConfigChange(studentId, "classScheduleId", selected?.value)}
+                                                            options={filteredClasses}
+                                                            placeholder={transferData.selectedVenue ? "Select New Class / Level" : "Select venue first"}
+                                                            isDisabled={!transferData.selectedVenue}
                                                             styles={{
-                                                                control: (base) => ({
-                                                                    ...base,
-                                                                    borderRadius: "0.5rem",
-                                                                    minHeight: "40px",
-                                                                }),
-                                                            }}
+                                            control: (base) => ({ ...base, borderRadius: "0.7rem", boxShadow: "none", padding: "4px 8px", minHeight: "48px" }),
+                                            placeholder: (base) => ({ ...base, fontWeight: 600 }),
+                                            dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
+                                            indicatorSeparator: () => ({ display: "none" }),
+                                        }}
                                                         />
                                                     </div>
 
                                                     {/* Reason */}
                                                     <div>
-                                                        <label className="block text-sm font-semibold mb-1">Reason for transfer</label>
+                                                        <label className="block text-sm font-semibold mb-1">Reason for Transfer</label>
                                                         <textarea
                                                             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                                                             rows={2}
@@ -2763,11 +2815,15 @@ const ParentProfile = (stateData) => {
 
 
                                     <button
-                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-bold shadow-md hover:bg-blue-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-semibold hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
                                         disabled={transferData.selectedStudents.length === 0}
                                         onClick={() => {
                                             if (!transferData.selectedStudents.length) {
                                                 showWarning("Missing Information", "Please select at least one student.");
+                                                return;
+                                            }
+                                            if (!transferData.selectedVenue) {
+                                                showWarning("Missing Information", "Please select a venue.");
                                                 return;
                                             }
 
@@ -2795,7 +2851,8 @@ const ParentProfile = (stateData) => {
                                             };
 
                                             transferMembershipSubmit(payload, 'allMembers');
-                                        }}
+                                        }
+                                        }
                                     >
                                         Submit Transfer
                                     </button>
@@ -2804,7 +2861,6 @@ const ParentProfile = (stateData) => {
                         </div>
                     </div>
                 )}
-
                 {freezeMembership && (
                     <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
                         <div className="bg-white rounded-2xl w-[541px] max-h-[90%] overflow-y-auto relative scrollbar-hide">
@@ -2936,7 +2992,7 @@ const ParentProfile = (stateData) => {
 
                                 {/* Class */}
                                 <div>
-                                    <label className="block text-[16px] font-semibold">Class</label>
+                                    <label className="block text-[16px] font-semibold">Class/Level</label>
                                     <input
                                         type="text"
                                         className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"

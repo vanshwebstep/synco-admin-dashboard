@@ -398,7 +398,7 @@ const StudentProfile = ({ profile }) => {
 
     const newClasses = profile?.newClasses?.map((cls) => ({
         value: cls.id,
-        label: `${cls.className} - ${cls.day} (${cls.startTime} - ${cls.endTime})`,
+        label: `${cls.className} ${cls.level || cls.abilityLevel ? `(${cls.level || cls.abilityLevel})` : ""}`,
     }));
 
     const selectedClass = newClasses?.find(
@@ -521,7 +521,7 @@ const StudentProfile = ({ profile }) => {
                                 {/* Row 4 */}
                                 <div className="flex gap-4">
                                     <div className="w-1/2">
-                                        <label className="block text-[16px] font-semibold">Class</label>
+                                        <label className="block text-[16px] font-semibold">Class/Level</label>
                                         <input
                                             type="text"
                                             className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
@@ -808,9 +808,9 @@ const StudentProfile = ({ profile }) => {
                             </div>
 
                             <div className="space-y-4 px-6 pb-6 pt-4">
-                                {/* Current Class */}
+                                {/* Current Class / Level */}
                                 <div>
-                                    <label className="block text-[16px] font-semibold">Current Class</label>
+                                    <label className="block text-[16px] font-semibold">Current Class / Level</label>
                                     <input
                                         type="text"
                                         className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
@@ -832,7 +832,7 @@ const StudentProfile = ({ profile }) => {
 
                                 {/* New Class */}
                                 <div>
-                                    <label className="block text-[16px] font-semibold">Select New Class</label>
+                                    <label className="block text-[16px] font-semibold">Select New Class / Level</label>
                                     <Select
                                         value={
                                             waitingListData.classScheduleId
@@ -1153,7 +1153,7 @@ const StudentProfile = ({ profile }) => {
                                             // If all validations pass → call submit function
                                             cancelMembershipSubmit(cancelData, "allMembers");
                                         }}
-                                        className="w-1/2 bg-[#fef2f2] text-white rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
+                                        className="w-1/2 text-white bg-red-500 rounded-xl py-3 text-[18px] font-medium hover:shadow-md transition-shadow"
                                     >
                                         {cancelData.cancellationType !== "immediate"
                                             ? "Request to Cancel"
@@ -1250,7 +1250,7 @@ const StudentProfile = ({ profile }) => {
                             </div>
 
                             <div className="space-y-4 px-6 pb-6 pt-4">
-                                {/* Current Class */}
+                                {/* Current Class / Level */}
 
 
                                 {/* Venue */}
@@ -1264,7 +1264,7 @@ const StudentProfile = ({ profile }) => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[16px] font-semibold">Current Class</label>
+                                    <label className="block text-[16px] font-semibold">Current Class / Level</label>
                                     <input
                                         type="text"
                                         className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
@@ -1272,12 +1272,12 @@ const StudentProfile = ({ profile }) => {
                                         readOnly
                                     />
                                 </div>
-                                {/* Select New Class */}
+                                {/* Select New Class / Level */}
                                 <div>
 
 
                                     <label className="block text-[16px] font-semibold">
-                                        Select New Class
+                                        Select New Class / Level
                                     </label>
 
                                     <Select
