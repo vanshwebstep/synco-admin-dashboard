@@ -47,13 +47,24 @@ const WaitingList = () => {
     }));
 
     const ageGroupOptions = [
-        { label: "Under 5 Years", value: "under_5" },
-        { label: "5-7 Years", value: "5_7" },
-        { label: "8-10 Years", value: "8_10" },
-        { label: "11-13 Years", value: "11_13" },
-        { label: "14-16 Years", value: "14_16" },
-        { label: "17+ Years", value: "17_plus" }
-    ];
+    { label: "1 Year", value: 1 },
+    { label: "2 Years", value: 2 },
+    { label: "3 Years", value: 3 },
+    { label: "4 Years", value: 4 },
+    { label: "5 Years", value: 5 },
+    { label: "6 Years", value: 6 },
+    { label: "7 Years", value: 7 },
+    { label: "8 Years", value: 8 },
+    { label: "9 Years", value: 9 },
+    { label: "10 Years", value: 10 },
+    { label: "11 Years", value: 11 },
+    { label: "12 Years", value: 12 },
+    { label: "13 Years", value: 13 },
+    { label: "14 Years", value: 14 },
+    { label: "15 Years", value: 15 },
+    { label: "16 Years", value: 16 },
+    { label: "17+ Years", value: 17 }
+];
 
     const handleFranchiseChange = (franchise) => {
         setSelectedFranchise(franchise);
@@ -682,34 +693,32 @@ const WaitingList = () => {
         },
     ];
 
-    const filteredWaitingList = (bookFreeTrials || []).filter(item => {
-        // 1. Organization / Franchise Filter (Removed, handled by API)
+   const filteredWaitingList = (bookFreeTrials || []).filter(item => {
 
-        // 2. Venue Filter
-        if (selectedVenue) {
-            if (item?.venue?.id !== selectedVenue.value) return false;
-        }
+    // Venue Filter
+    if (selectedVenue) {
+        if (item?.venue?.id !== selectedVenue.value) return false;
+    }
 
-        // 3. Age Group Filter
-        if (selectedAgeGroup) {
-            const hasStudentInAgeGroup = item.students?.some(student => {
-                const age = Number(student.age);
-                if (isNaN(age)) return false;
-                switch (selectedAgeGroup.value) {
-                    case "under_5": return age < 5;
-                    case "5_7": return age >= 5 && age <= 7;
-                    case "8_10": return age >= 8 && age <= 10;
-                    case "11_13": return age >= 11 && age <= 13;
-                    case "14_16": return age >= 14 && age <= 16;
-                    case "17_plus": return age >= 17;
-                    default: return true;
-                }
-            });
-            if (!hasStudentInAgeGroup) return false;
-        }
+    // Age Filter
+    if (selectedAgeGroup) {
+        const hasStudentInAgeGroup = item.students?.some(student => {
+            const age = Number(student.age);
 
-        return true;
-    });
+            if (isNaN(age)) return false;
+
+            if (selectedAgeGroup.value === 17) {
+                return age >= 17;
+            }
+
+            return age === selectedAgeGroup.value;
+        });
+
+        if (!hasStudentInAgeGroup) return false;
+    }
+
+    return true;
+});
 
     if (loading) return <Loader />;
     return (

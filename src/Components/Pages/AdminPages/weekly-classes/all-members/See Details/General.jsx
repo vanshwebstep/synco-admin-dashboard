@@ -54,6 +54,7 @@ const ParentProfile = (stateData) => {
     const [currentPage, setCurrentPage] = useState(1);
     const commentsPerPage = 5; // Number of comments per page
     const location = useLocation();
+    const status = profile?.status;
 
     // Pagination calculations
     const indexOfLastComment = currentPage * commentsPerPage;
@@ -64,6 +65,7 @@ const ParentProfile = (stateData) => {
     const token = localStorage.getItem("adminToken");
     const serviceType = profile?.serviceType || "weekly class membership";
     const isMembership = serviceType === "weekly class membership";
+    const isWaitingList = status === "waiting list";
     const isHolidayCamp = serviceType === "holiday camp";
     const isTrials = serviceType === "weekly class trial";
     const isBirthdayParty = profile?.booking?.serviceType === "birthday party";
@@ -459,7 +461,6 @@ const ParentProfile = (stateData) => {
 
 
     const dateBooked = profile?.startDate;
-    const status = profile?.status;
 
     function formatISODate(isoDateString, toTimezone = null) {
         if (!isoDateString) return "N/A"; // ✅ Handles null, undefined, or empty string
@@ -1706,12 +1707,12 @@ const ParentProfile = (stateData) => {
                                                                 )}
 
                                                             </div>
-
-                                                            <div className="border-t border-[#495362] py-5">
-                                                                <div className=" text-[20px] text-white">Date of Trial</div>
-                                                                <div className="text-[16px]  mt-1 text-gray-400">{formatDate(profile?.trialDate)}</div>
-                                                            </div>
-
+                                                            {!isWaitingList && (
+                                                                <div className="border-t border-[#495362] py-5">
+                                                                    <div className=" text-[20px] text-white">Date of Trial</div>
+                                                                    <div className="text-[16px]  mt-1 text-gray-400">{formatDate(profile?.trialDate)}</div>
+                                                                </div>
+                                                            )}
                                                             <>
                                                                 <div className="border-t border-[#495362] py-5">
                                                                     <div className=" text-[20px] text-white">Booking Source</div>
@@ -2006,7 +2007,7 @@ const ParentProfile = (stateData) => {
                                                         Rebook FREE Trial
                                                     </button>
                                                 )}
-                                            {location.state?.memberInfo == "cancellation" || status=="cancelled" ||  location.state?.memberInfo == "cancelled" ? (
+                                            {location.state?.memberInfo == "cancellation" || status == "cancelled" || location.state?.memberInfo == "cancelled" ? (
                                                 <button
                                                     onClick={handleReinstateMembership}
                                                     className="w-full bg-green-50 border border-[#12B76A] text-[#12B76A] text-[18px] rounded-xl py-3 font-semibold shadow-sm hover:bg-green-100 transition-all duration-300"
@@ -2656,7 +2657,7 @@ const ParentProfile = (stateData) => {
                     </div>
 
                 )}
-              {transferVenue && (
+                {transferVenue && (
                     <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
                         <div className="bg-white rounded-2xl w-[541px] max-h-[90%] overflow-y-auto relative scrollbar-hide">
                             <button
@@ -2784,11 +2785,11 @@ const ParentProfile = (stateData) => {
                                                             placeholder={transferData.selectedVenue ? "Select New Class / Level" : "Select venue first"}
                                                             isDisabled={!transferData.selectedVenue}
                                                             styles={{
-                                            control: (base) => ({ ...base, borderRadius: "0.7rem", boxShadow: "none", padding: "4px 8px", minHeight: "48px" }),
-                                            placeholder: (base) => ({ ...base, fontWeight: 600 }),
-                                            dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
-                                            indicatorSeparator: () => ({ display: "none" }),
-                                        }}
+                                                                control: (base) => ({ ...base, borderRadius: "0.7rem", boxShadow: "none", padding: "4px 8px", minHeight: "48px" }),
+                                                                placeholder: (base) => ({ ...base, fontWeight: 600 }),
+                                                                dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
+                                                                indicatorSeparator: () => ({ display: "none" }),
+                                                            }}
                                                         />
                                                     </div>
 

@@ -34,6 +34,7 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
     paymentPlan,
     payments,
     bookedBy,
+    source,
     bookedByAdmin,
   } = serviceHistory;
   console.log('status', status)
@@ -141,9 +142,13 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
                     Booking Source
                   </div>
                   <div className="font-semibold text-[16px]  text-[#282829]">
-                    {(bookedBy?.firstName || bookedBy?.lastName)
-                      ? `${bookedBy?.firstName ?? ''} ${bookedBy?.lastName ?? ''}`
-                      : '-'}
+                 {
+  source
+    ? source
+    : bookedBy?.firstName || bookedBy?.lastName
+    ? `${bookedBy?.firstName ?? ''} ${bookedBy?.lastName ?? ''}`.trim()
+    : '-'
+}
                   </div>
 
                 </div>

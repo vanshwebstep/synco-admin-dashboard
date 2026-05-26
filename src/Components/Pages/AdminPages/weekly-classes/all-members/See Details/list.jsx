@@ -15,7 +15,7 @@ import { showError, showSuccess, showWarning } from "../../../../../../utils/swa
 const FIELD_ORDER = ["amount", "description", "paymentDate", "cardholderName", "cardNumber", "expiryDate", "cvc"];
 
 const SeeDetails = () => {
-    const { serviceHistoryMembership, serviceHistory, serviceHistoryFetchById } = useBookFreeTrial();
+    const { serviceHistoryMembership, serviceHistory, serviceHistoryFetchById ,serviceHistoryWaitingList} = useBookFreeTrial();
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
     const navigate = useNavigate();
@@ -75,7 +75,9 @@ const SeeDetails = () => {
         const fetchData = async () => {
             if (memberInfo === 'freeTrial') {
                 await serviceHistoryFetchById(itemId);
-            } else {
+            } else if (memberInfo === 'waitingList') {
+                await serviceHistoryWaitingList(itemId);
+            }  else {
                 await serviceHistoryMembership(itemId);
             }
         };
@@ -93,10 +95,16 @@ const SeeDetails = () => {
         }
     }, [serviceHistory]);
 
-    const tabs = ["General", "History of Payments", "Credits", "Attendance"].filter(tab => {
-        if (memberInfo === 'freeTrial' && tab === "History of Payments") return false;
-        return true;
-    });
+  const tabs = ["General", "History of Payments", "Credits", "Attendance"].filter(tab => {
+    if (
+        (memberInfo === 'freeTrial' || memberInfo === 'waitingList') &&
+        (tab === "History of Payments" || tab === "Credits")
+    ) {
+        return false;
+    }
+
+    return true;
+});
 
     const navigateTo =
         memberInfo === "allMembers" || memberInfo === "freeTrial"
