@@ -652,7 +652,13 @@ const ParentProfile = ({ profile: rawProfile }) => {
             gender: student.gender,
             medicalInformation: student.medicalInformation,
             parents: parents.map((p, pIndex) => ({ id: p.id ?? pIndex + 1, ...p })),
-            emergencyContacts: emergencyContacts.map((e, eIndex) => ({ id: e.id ?? eIndex + 1, ...e })),
+           emergencyContacts: (Array.isArray(emergencyContacts)
+  ? emergencyContacts
+  : []
+).map((e, eIndex) => ({
+  id: e.id ?? eIndex + 1,
+  ...e,
+})),
         }));
 
     const toggleEditParent = (index) => {
@@ -990,9 +996,9 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                 <div key={index} className="bg-white p-6 mb-10 rounded-3xl shadow-sm space-y-6 relative">
                                     <div className="flex justify-between items-start">
                                         <h2 className="text-[20px] font-semibold">Parent information</h2>
-                                        {/* <button onClick={() => toggleEditParent(index)} className="text-gray-600 hover:text-blue-600">
+                                        <button onClick={() => toggleEditParent(index)} className="text-gray-600 hover:text-blue-600">
                                             {editingIndex === index ? <FaSave /> : <FaEdit />}
-                                        </button> */}
+                                        </button>
                                     </div>
 
                                     {/* First / Last Name */}

@@ -743,7 +743,7 @@ const HolidayAddtoWaitingList = () => {
   const genderOptions = [
     { value: "male", label: "Male" },
     { value: "female", label: "Female" },
-    { value: "other", label: "Other" },
+    
   ];
   const sessionDates = singleClassSchedulesOnly?.venue?.holidayCampDates?.flatMap(camp =>
     camp.sessionsMap.map(s => s.sessionDate)

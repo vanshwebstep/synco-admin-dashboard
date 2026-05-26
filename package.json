@@ -20,6 +20,7 @@
     "axios": "^1.13.2",
     "country-list": "^2.4.1",
     "date-fns": "^4.1.0",
+    "dayjs": "^1.11.21",
     "file-saver": "^2.0.5",
     "framer-motion": "^12.23.0",
     "grapesjs-preset-newsletter": "^1.0.2",

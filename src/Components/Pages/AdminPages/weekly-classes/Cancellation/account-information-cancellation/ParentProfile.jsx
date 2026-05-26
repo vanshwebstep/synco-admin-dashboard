@@ -24,6 +24,7 @@ import RevertMembershipPopup from '../../../Common/RevertMembershipPoppup';
 import PhoneNumberInput from '../../../Common/PhoneNumberInput';
 import { useCancelMembership } from '../../../contexts/messages/CancelMembershipContext';
 import { useTextPopup } from '../../../contexts/messages/SendTextContext';
+import { FaEdit, FaSave } from "react-icons/fa";
 
 const ParentProfile = ({ ParentProfile }) => {
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -42,7 +43,7 @@ const ParentProfile = ({ ParentProfile }) => {
     const [revertPopup, setRevertPopup] = useState(false);
     const [selectedStudents, setSelectedStudents] = useState([]);
     const [currentBookingId, setCurrentBookingId] = useState(null);
-    const { loading, cancelFreeTrial, sendCancelFreeTrialmail, rebookFreeTrialsubmit, cancelMembershipSubmit, reactivateDataSubmit, addtoWaitingListSubmit, freezerMembershipSubmit, sendAllmail, sendFullTomail, sendRequestTomail, transferMembershipSubmit, setComment, comment, fetchComments, commentsList, handleSubmitComment, loadingComment } = useBookFreeTrial() || {};
+    const { loading, cancelFreeTrial, sendCancelFreeTrialmail, rebookFreeTrialsubmit, cancelMembershipSubmit, reactivateDataSubmit, addtoWaitingListSubmit, freezerMembershipSubmit, sendAllmail, sendFullTomail, sendRequestTomail, transferMembershipSubmit, setComment, comment, fetchComments, commentsList, handleSubmitComment, loadingComment, updateBookMembershipFamily } = useBookFreeTrial() || {};
     const [addToWaitingList, setaddToWaitingList] = useState(false);
     const [freezeMembership, setFreezeMembership] = useState(false);
     const [reactivateMembership, setReactivateMembership] = useState(false);
@@ -209,7 +210,52 @@ const ParentProfile = ({ ParentProfile }) => {
         (s) => s.studentStatus === "request_to_cancel"
     );
     console.log('cancelRequestStudents', cancelRequestStudents)
-    const parents = ParentProfile.parents || [];
+    const [parents, setParents] = useState(ParentProfile.parents || ParentProfile?.booking?.parents || []);
+    const [emergencyContacts, setEmergencyContacts] = useState(ParentProfile.emergency || ParentProfile?.booking?.emergency || []);
+    const [editingIndex, setEditingIndex] = useState(null);
+
+    const handleDataChange = (index, field, value) => {
+        const updatedParents = [...parents];
+        updatedParents[index] = {
+            ...updatedParents[index],
+            [field]: value,
+        };
+        setParents(updatedParents);
+    };
+
+    const buildFamilyPayload = () =>
+        studentsList.map((student, sIndex) => ({
+            id: student.id ?? sIndex + 1,
+            studentFirstName: student.studentFirstName,
+            studentLastName: student.studentLastName,
+            dateOfBirth: student.dateOfBirth,
+            age: student.age,
+            gender: student.gender,
+            medicalInformation: student.medicalInformation,
+            parents: parents.map((p, pIndex) => ({ id: p.id ?? pIndex + 1, ...p })),
+            emergencyContacts: (Array.isArray(emergencyContacts)
+                ? emergencyContacts
+                : []
+            ).map((e, eIndex) => ({
+                id: e.id ?? eIndex + 1,
+                ...e,
+            })),
+        }));
+
+    const toggleEditParent = (index) => {
+        if (editingIndex === index) {
+            const p = parents[index];
+            if (!p.parentFirstName?.trim() || !p.parentLastName?.trim() || !p.parentEmail?.trim() || !p.parentPhoneNumber?.trim()) {
+                showWarning("Missing fields", "Please fill all required fields before saving.");
+                return;
+            }
+            setEditingIndex(null);
+            updateBookMembershipFamily(id || bookingId, buildFamilyPayload());
+        } else {
+            setEditingIndex(index);
+        }
+    };
+
     const [formData, setFormData] = useState({
         bookingId: id,
         cancelReason: "",
@@ -408,13 +454,15 @@ const ParentProfile = ({ ParentProfile }) => {
                     <div className="space-y-6">
                         {parents.map((parent, index) => (
                             <div
-                                key={parent.parentFirstName}
+                                key={index}
                                 className="bg-white p-6 mb-10 rounded-3xl shadow-sm space-y-6 relative"
                             >
                                 {/* Top Header Row */}
                                 <div className="flex justify-between items-start">
                                     <h2 className="text-[20px] font-semibold">Parent information</h2>
-
+                                    <button onClick={() => toggleEditParent(index)} className="text-gray-600 hover:text-blue-600">
+                                        {editingIndex === index ? <FaSave /> : <FaEdit />}
+                                    </button>
                                 </div>
 
                                 {/* Row 1 */}
@@ -425,7 +473,8 @@ const ParentProfile = ({ ParentProfile }) => {
                                             className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                             placeholder="Enter first name"
                                             value={parent.parentFirstName}
-                                            readOnly
+                                            readOnly={editingIndex !== index}
+                                            onChange={(e) => handleDataChange(index, "parentFirstName", e.target.value)}
                                         />
                                     </div>
                                     <div className="w-1/2">
@@ -434,7 +483,8 @@ const ParentProfile = ({ ParentProfile }) => {
                                             className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                             placeholder="Enter last name"
                                             value={parent.parentLastName}
-                                            readOnly
+                                            readOnly={editingIndex !== index}
+                                            onChange={(e) => handleDataChange(index, "parentLastName", e.target.value)}
                                         />
                                     </div>
                                 </div>
@@ -448,14 +498,17 @@ const ParentProfile = ({ ParentProfile }) => {
                                             className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                             placeholder="Enter email address"
                                             value={parent.parentEmail}
-                                            readOnly
+                                            readOnly={editingIndex !== index}
+                                            onChange={(e) => handleDataChange(index, "parentEmail", e.target.value)}
                                         />
                                     </div>
                                     <div className="w-1/2">
                                         <label className="block text-[16px] font-semibold">Phone number</label>
                                         <PhoneNumberInput
                                             value={parent.parentPhoneNumber}
+                                            readOnly={editingIndex !== index}
                                             placeholder="Enter phone number"
+                                            onChange={(fullNumber) => handleDataChange(index, "parentPhoneNumber", fullNumber)}
                                         />
                                     </div>
                                 </div>
@@ -467,8 +520,8 @@ const ParentProfile = ({ ParentProfile }) => {
                                         <input
                                             className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                             value={parent.interestReason || ""}
-                                            readOnly
-                                        // onChange={(e) => handleDataChange(index, "interestReason", e.target.value)}
+                                            readOnly={editingIndex !== index}
+                                            onChange={(e) => handleDataChange(index, "interestReason", e.target.value)}
                                         />
                                     </div>
                                     <div className="w-1/2">
@@ -476,8 +529,8 @@ const ParentProfile = ({ ParentProfile }) => {
                                         <input
                                             className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                             value={parent.interestReasonOther || ""}
-                                            readOnly
-                                        // onChange={(e) => handleDataChange(index, "interestReasonOther", e.target.value)}
+                                            readOnly={editingIndex !== index}
+                                            onChange={(e) => handleDataChange(index, "interestReasonOther", e.target.value)}
                                         />
                                     </div>
                                 </div>
@@ -489,8 +542,8 @@ const ParentProfile = ({ ParentProfile }) => {
                                         <select
                                             className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                             value={parent.howDidYouHear}
-                                            readOnly
-                                            disabled
+                                            disabled={editingIndex !== index}
+                                            onChange={(e) => handleDataChange(index, "howDidYouHear", e.target.value)}
                                         >
                                             {hearOptions.map((option) => (
                                                 <option key={option.value} value={option.value}>

@@ -750,7 +750,7 @@ const BookACamp = () => {
             options: [
                 { value: "Male", label: "Male" },
                 { value: "Female", label: "Female" },
-                { value: "Other", label: "Other" }
+                
             ]
         },
 

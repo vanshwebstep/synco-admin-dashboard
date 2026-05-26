@@ -126,7 +126,7 @@ const AdminLayout = ({ children }) => {
 
   const { title, icon: Icon } = routeInfo;
   return (
-    <div className="mainLayout flex overflow-hidden max-h-[100vh] overflow-y-auto">
+    <div className="mainLayout flex overflow-hidden max-h-[100vh]">
       <Sidebar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
       <div className="flex-1 w-full flex flex-col px-6 bg-gray-50 md:w-10/12 fixerhe">
         <Header

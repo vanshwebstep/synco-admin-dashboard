@@ -34,6 +34,15 @@ const MembersDashboard = () => {
     const [mainData, setMainData] = useState([]);
     const [membersData, setMembersData] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [selectedFranchise, setSelectedFranchise] = useState(null);
+    const storedFranchises = localStorage.getItem('franchisesInfo');
+    const franchises = storedFranchises && storedFranchises !== 'undefined' ? JSON.parse(storedFranchises) : [];
+    const franchiseOptions = franchises.map(f => ({
+        label: (f.firstName + ' ' + (f.lastName || '')).trim() || f.email,
+        value: f.id
+    }));
+
+
 
     const venueOptions = [
         { value: "all", label: "All venues" },
@@ -114,7 +123,7 @@ const MembersDashboard = () => {
             iconStyle: "text-[#3DAFDB] bg-[#F3FAFD]",
             title: "Total Members",
             value: summary?.totalMembers?.current,
-            diff: `+${summary?.totalMembers?.average}%`,
+            diff: `${summary?.totalMembers?.average}%`,
             sub: "vs. prev period",
             subvalue: summary?.totalMembers?.previous,
         },
@@ -123,7 +132,7 @@ const MembersDashboard = () => {
             iconStyle: "text-[#E769BD] bg-[#FEF6FB]",
             title: "Monthly Revenue",
             value: `£${summary?.monthlyRevenue?.current}`,
-            diff: `+${summary?.monthlyRevenue?.average}`,
+            diff: `${summary?.monthlyRevenue?.average}`,
             sub: "vs. prev period",
             subvalue: `£${summary?.monthlyRevenue?.previous}`,
         },
@@ -132,7 +141,7 @@ const MembersDashboard = () => {
             iconStyle: "text-[#F38B4D] bg-[#FEF8F4]",
             title: "Average Monthly Fee",
             value: `£${summary?.averageMonthlyFee?.current}`,
-            diff: `+${summary?.averageMonthlyFee?.average}%`,
+            diff: `${summary?.averageMonthlyFee?.average}%`,
             sub: "vs. prev period",
             subvalue: `£${summary?.averageMonthlyFee?.previous}`,
         },
@@ -141,7 +150,7 @@ const MembersDashboard = () => {
             iconStyle: "text-[#6F65F1] bg-[#F6F6FE]",
             title: "Average Life Cycle",
             value: `${summary?.averageLifeCycle?.current}`,
-            diff: `+${summary?.averageLifeCycle?.average}%`,
+            diff: `${summary?.averageLifeCycle?.average}%`,
             sub: "vs. prev period",
             subvalue: `${summary?.averageLifeCycle?.previous}`,
         },
@@ -150,7 +159,7 @@ const MembersDashboard = () => {
             iconStyle: "text-[#FF5353] bg-[#FFF5F5]",
             title: "New Students",
             value: summary?.newStudents?.current,
-            diff: `+${summary?.newStudents?.average}%`,
+            diff: `${summary?.newStudents?.average}%`,
             sub: "vs. prev period",
             subvalue: summary?.newStudents?.previous,
         },
@@ -159,7 +168,7 @@ const MembersDashboard = () => {
             iconStyle: "text-[#FF5353] bg-[#FFF5F5]",
             title: "Retention",
             value: `${summary?.retention?.current}%`,
-            diff: `+${summary?.retention?.average}%`,
+            diff: `${summary?.retention?.average}%`,
             sub: "vs. prev period",
             subvalue: `${summary?.retention?.previous}%`,
         },
@@ -256,6 +265,7 @@ const MembersDashboard = () => {
     useEffect(() => {
         fetchData();
     }, []);
+
 
     const handleFilterChange = async (key, value) => {
         const token = localStorage.getItem("adminToken");
@@ -444,6 +454,13 @@ const MembersDashboard = () => {
             (((totalMembers - lastBookingCount) / lastBookingCount) * 100).toFixed(1) + "%";
     }
 
+    useEffect(() => {
+        const handleAccountSwitched = () => {
+            if (typeof fetchData === 'function') fetchData();
+        };
+        window.addEventListener('accountSwitched', handleAccountSwitched);
+        return () => window.removeEventListener('accountSwitched', handleAccountSwitched);
+    }, [fetchData]);
     if (loading) return <Loader />;
     return (
         <div className="lg:p-6 bg-gray-50 min-h-screen">
@@ -451,13 +468,28 @@ const MembersDashboard = () => {
             <div className="flex flex-wrap justify-between items-center mb-6">
                 <h1 className="text-3xl font-semibold text-gray-800">Members</h1>
                 <div className="flex flex-wrap gap-3 items-center">
+                    {JSON.parse(localStorage.getItem("adminInfo"))?.role?.role === "Super Admin" && (
+                        <Select
+                            options={franchiseOptions}
+                            value={selectedFranchise}
+                            onChange={(selected) => {
+                                setSelectedFranchise(selected);
+                                if (typeof handleFilterChange === 'function') handleFilterChange('franchiseId', selected?.value || '');
+                            }}
+                            placeholder='Organization / Franchise'
+                            styles={typeof customSelectStyles !== 'undefined' ? customSelectStyles : undefined}
+                            isClearable
+                            components={{ IndicatorSeparator: () => null }}
+                            className='md:w-50'
+                        />
+                    )}
                     {/* Venue */}
                     <Select
                         options={
                             membersData?.allVenues
                                 ? [
                                     { value: "", label: "All venues" },
-                                    ...membersData.allVenues.map((v) => ({
+                                    ...membersData.allVenues.filter(v => !selectedFranchise || v.adminId === selectedFranchise.value || v.admins?.id === selectedFranchise.value).map((v) => ({
                                         value: v.id,
                                         label: v.name,
                                     })),

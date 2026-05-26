@@ -33,6 +33,14 @@ const SaleDashboard = () => {
     const [activeTab, setActiveTab] = useState("age");
     const [membersData, setMembersData] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [selectedFranchise, setSelectedFranchise] = useState(null);
+    const storedFranchises = localStorage.getItem('franchisesInfo');
+    const franchises = storedFranchises && storedFranchises !== 'undefined' ? JSON.parse(storedFranchises) : [];
+    const franchiseOptions = franchises.map(f => ({
+        label: (f.firstName + ' ' + (f.lastName || '')).trim() || f.email,
+        value: f.id
+    }));
+
 
     const [mainData, setMainData] = useState([]);
     const currentYear = new Date().getFullYear().toString();
@@ -353,7 +361,15 @@ const SaleDashboard = () => {
     };
 
 
+    useEffect(() => {
+        const handleAccountSwitched = () => {
+            if (typeof fetchData === 'function') fetchData();
+        };
+        window.addEventListener('accountSwitched', handleAccountSwitched);
+        return () => window.removeEventListener('accountSwitched', handleAccountSwitched);
+    }, [fetchData]);
     if (loading) return (<><Loader /></>)
+
 
     return (
         <div className="lg:p-6 bg-gray-50 min-h-screen">
@@ -361,12 +377,27 @@ const SaleDashboard = () => {
             <div className="flex flex-wrap justify-between items-center mb-6">
                 <h1 className="text-3xl font-semibold text-gray-800">Sales</h1>
                 <div className="flex flex-wrap gap-3 items-center">
+                    {JSON.parse(localStorage.getItem("adminInfo"))?.role?.role === "Super Admin" && (
+                        <Select
+                            options={franchiseOptions}
+                            value={selectedFranchise}
+                            onChange={(selected) => {
+                                setSelectedFranchise(selected);
+                                if (typeof handleFilterChange === 'function') handleFilterChange('franchiseId', selected?.value || '');
+                            }}
+                            placeholder='Organization / Franchise'
+                            styles={typeof customSelectStyles !== 'undefined' ? customSelectStyles : undefined}
+                            isClearable
+                            components={{ IndicatorSeparator: () => null }}
+                            className='md:w-50'
+                        />
+                    )}
                     <Select
                         options={
                             membersData?.allVenues
                                 ? [
                                     { value: "", label: "All venues" },
-                                    ...membersData.allVenues.map((v) => ({
+                                    ...membersData.allVenues.filter(v => !selectedFranchise || v.adminId === selectedFranchise.value || v.admins?.id === selectedFranchise.value).map((v) => ({
                                         value: v.id,
                                         label: v.name,
                                     })),

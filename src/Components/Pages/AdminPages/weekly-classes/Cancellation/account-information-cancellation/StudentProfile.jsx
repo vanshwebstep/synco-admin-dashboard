@@ -21,6 +21,7 @@ import RevertMembershipPopup from '../../../Common/RevertMembershipPoppup';
 import { useCancelMembership } from '../../../contexts/messages/CancelMembershipContext';
 import { useNavigate } from 'react-router-dom';
 import { useTextPopup } from '../../../contexts/messages/SendTextContext';
+import { FaEdit, FaSave } from "react-icons/fa";
 
 const StudentProfile = ({ StudentProfile }) => {
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -34,7 +35,7 @@ const StudentProfile = ({ StudentProfile }) => {
     const [textloading, setTextLoading] = useState(null)
     const { openEmailPopup } = useEmail();
     const { openRevertPopup } = useRevertMembership();
-    const { loading, cancelFreeTrial, sendCancelFreeTrialmail, rebookFreeTrialsubmit, cancelMembershipSubmit, transferMembershipSubmit, reactivateDataSubmit, addtoWaitingListSubmit, freezerMembershipSubmit, sendAllmail, sendFullTomail, sendRequestTomail, setComment, comment, fetchComments, commentsList, handleSubmitComment, loadingComment } = useBookFreeTrial() || {};
+    const { loading, cancelFreeTrial, sendCancelFreeTrialmail, rebookFreeTrialsubmit, cancelMembershipSubmit, transferMembershipSubmit, reactivateDataSubmit, addtoWaitingListSubmit, freezerMembershipSubmit, sendAllmail, sendFullTomail, sendRequestTomail, setComment, comment, fetchComments, commentsList, handleSubmitComment, loadingComment, updateBookMembershipFamily } = useBookFreeTrial() || {};
     const [addToWaitingList, setaddToWaitingList] = useState(false);
     const [freezeMembership, setFreezeMembership] = useState(false);
     const [reactivateMembership, setReactivateMembership] = useState(false);
@@ -86,7 +87,7 @@ const StudentProfile = ({ StudentProfile }) => {
         status,
         createdAt,
         startDate,
-        students,
+        students: rawStudents,
         venueId,
         classSchedule,
         venue,
@@ -177,8 +178,55 @@ const StudentProfile = ({ StudentProfile }) => {
         additionalNote: "",
     });
     console.log('parents', StudentProfile)
-    const studentsList = StudentProfile?.students || [];
-    const parents = StudentProfile?.parents || [];
+    const [students, setStudents] = useState(StudentProfile?.students || StudentProfile?.booking?.students || []);
+    const [parents, setParents] = useState(StudentProfile?.parents || StudentProfile?.booking?.parents || []);
+    const [emergency, setEmergency] = useState(StudentProfile?.emergency || []);
+    const [editingIndex, setEditingIndex] = useState(null);
+
+    const studentsList = students;
+
+    const handleStudentDataChange = (index, field, value) => {
+        const updatedStudents = [...students];
+        if (field === "age") {
+            value = value ? parseInt(value) : "";
+        }
+        updatedStudents[index] = {
+            ...updatedStudents[index],
+            [field]: value,
+        };
+        setStudents(updatedStudents);
+    };
+
+    const saveStudentData = () => {
+        const payload = students.map((student, sIndex) => ({
+            id: student.id ?? sIndex + 1,
+            studentFirstName: student.studentFirstName,
+            studentLastName: student.studentLastName,
+            dateOfBirth: student.dateOfBirth,
+            age: student.age,
+            gender: student.gender,
+            medicalInformation: student.medicalInformation,
+            abilityLevel: student.abilityLevel,
+            parents: parents.map((p, pIndex) => ({ id: p.id ?? pIndex + 1, ...p })),
+            emergencyContacts: emergency.map((e, eIndex) => ({ id: e.id ?? eIndex + 1, ...e })),
+        }));
+        updateBookMembershipFamily(id || bookingId, payload);
+    };
+
+    const toggleEditStudent = (index) => {
+        if (editingIndex === index) {
+            const s = students[index];
+            if (!s.studentFirstName?.trim() || !s.studentLastName?.trim() || !s.age?.toString().trim() || !s.dateOfBirth?.trim()) {
+                showWarning("Missing fields", "Please fill all required student fields before saving.");
+                return;
+            }
+            saveStudentData();
+            setEditingIndex(null);
+        } else {
+            setEditingIndex(index);
+        }
+    };
+
     const [formData, setFormData] = useState({
         bookingId: id,
         cancelReason: "",
@@ -186,7 +234,7 @@ const StudentProfile = ({ StudentProfile }) => {
     });
     const studentCount = students?.length || 0;
     const matchedPlan = paymentPlans?.find(plan => plan.students === studentCount);
-    const emergency = StudentProfile?.emergency || [];
+    const emergencyContactsList = StudentProfile?.emergency || [];
     console.log('matchedPlan', matchedPlan)
 
     const { checkPermission } = usePermission();
@@ -348,9 +396,9 @@ const StudentProfile = ({ StudentProfile }) => {
             <div className="md:flex w-full gap-4">
                 <div className="transition-all duration-300 flex-1 md:w-8/12 ">
                     <div className="space-y-6">
-                        {studentsList?.map((student, index) => (
+                        {students?.map((student, index) => (
                             <div
-                                key={student.studentFirstName || index}
+                                key={student.id || index}
                                 className="bg-white p-6 mb-10 rounded-3xl shadow-sm space-y-6 relative"
                             >
                                 {/* Top Header Row */}
@@ -363,7 +411,9 @@ const StudentProfile = ({ StudentProfile }) => {
                                             </span>
                                         )}
                                     </h2>
-
+                                    <button onClick={() => toggleEditStudent(index)} className="text-gray-600 hover:text-blue-600">
+                                        {editingIndex === index ? <FaSave /> : <FaEdit />}
+                                    </button>
                                 </div>
 
                                 {/* Row 1 */}
@@ -373,8 +423,9 @@ const StudentProfile = ({ StudentProfile }) => {
                                         <input
                                             className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                             placeholder="Enter first name"
-                                            value={student.studentFirstName}
-                                            readOnly
+                                            value={student.studentFirstName || ""}
+                                            readOnly={editingIndex !== index}
+                                            onChange={(e) => handleStudentDataChange(index, "studentFirstName", e.target.value)}
                                         />
                                     </div>
                                     <div className="w-1/2">
@@ -382,47 +433,49 @@ const StudentProfile = ({ StudentProfile }) => {
                                         <input
                                             className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                             placeholder="Enter last name"
-                                            value={student.studentLastName}
-                                            readOnly
+                                            value={student.studentLastName || ""}
+                                            readOnly={editingIndex !== index}
+                                            onChange={(e) => handleStudentDataChange(index, "studentLastName", e.target.value)}
                                         />
                                     </div>
                                 </div>
 
                                 {/* Row 2 */}
                                 <div className="flex gap-4">
-
-
                                     <div className="w-1/2">
                                         <label className="block text-[16px] font-semibold">Age</label>
                                         <input
-                                            type="email"
+                                            type="number"
                                             className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                            placeholder="Enter email address"
-                                            value={student.age}
-                                            readOnly
+                                            placeholder="Enter age"
+                                            value={student.age || ""}
+                                            readOnly={editingIndex !== index}
+                                            onChange={(e) => handleStudentDataChange(index, "age", e.target.value)}
                                         />
                                     </div>
                                     <div className="w-1/2">
                                         <label className="block text-[16px] font-semibold">Date of Birth</label>
                                         <input
+                                            type="date"
                                             className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                            value={student.dateOfBirth}
-                                            readOnly
+                                            value={student.dateOfBirth || ""}
+                                            readOnly={editingIndex !== index}
+                                            onChange={(e) => handleStudentDataChange(index, "dateOfBirth", e.target.value)}
                                         />
                                     </div>
                                 </div>
 
+                                {/* Row 3 */}
                                 <div className="flex gap-4">
-
-
                                     <div className="w-1/2">
                                         <label className="block text-[16px] font-semibold">Medical information</label>
                                         <input
-                                            type="email"
+                                            type="text"
                                             className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                            placeholder="Enter email address"
-                                            value={student.medicalInformation}
-                                            readOnly
+                                            placeholder="Enter medical information"
+                                            value={student.medicalInformation || ""}
+                                            readOnly={editingIndex !== index}
+                                            onChange={(e) => handleStudentDataChange(index, "medicalInformation", e.target.value)}
                                         />
                                     </div>
                                     <div className="w-1/2">
@@ -430,14 +483,16 @@ const StudentProfile = ({ StudentProfile }) => {
                                         <select
                                             name="abilityLevel"
                                             id="abilityLevel"
-                                            disabled
-                                            className="w-full mt-2 text-gray-500 border  border-gray-300 rounded-xl px-4 py-3 text-base"
+                                            className="w-full mt-2 text-gray-500 border border-gray-300 rounded-xl px-4 py-3 text-base"
                                             value={
-                                                student?.abilityLevel ??
-                                                student?.classSchedule?.level ??
+                                                student?.abilityLevel?.toLowerCase() ??
+                                                student?.classSchedule?.level?.toLowerCase() ??
                                                 ""
-                                            }                                        >
-                                            <option className="" value="" disabled>
+                                            }
+                                            disabled={editingIndex !== index}
+                                            onChange={(e) => handleStudentDataChange(index, "abilityLevel", e.target.value)}
+                                        >
+                                            <option value="" disabled>
                                                 Select Ability level
                                             </option>
                                             <option value="beginner">Beginner</option>
@@ -445,10 +500,8 @@ const StudentProfile = ({ StudentProfile }) => {
                                             <option value="advanced">Advanced</option>
                                             <option value="pro">Pro</option>
                                         </select>
-
                                     </div>
                                 </div>
-
                             </div>
                         ))}
                     </div>

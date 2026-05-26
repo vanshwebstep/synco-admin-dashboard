@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ChevronDown, ChevronUp, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import { usePermission } from "../Pages/AdminPages/Common/permission";
 import { useAccountsInfo } from '../Pages/AdminPages/contexts/AccountsInfoContext';
 import { useGlobalSearch } from '../Pages/AdminPages/contexts/GlobalSearchContext';
+import { MdKeyboardDoubleArrowLeft } from "react-icons/md";
 
 function normalizePath(path) {
   if (!path) return "";
@@ -45,40 +46,19 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
   const sidebarRef = useRef();
   const { checkPermission } = usePermission();
   const MyRole = localStorage.getItem("role");
-  const { historyActiveTab, setHistoryActiveTab } = useAccountsInfo();
+  const { setHistoryActiveTab } = useAccountsInfo();
   const [activeTab, setActiveTab] = useState(null);
 
-  useEffect(() => {
-    const result = findActiveItemAndParents(menuItems, location.pathname);
-    if (result) {
-      const { item, parents } = result;
-      setActiveTab(item.link);
-      const expanded = {};
-      parents.forEach((p) => (expanded[p.title] = true));
-      setOpenDropdowns((prev) => ({ ...prev, ...expanded }));
-    }
-  }, [location.pathname]);
-
-  useEffect(() => {
-    setActiveTab(location.pathname);
-  }, [location.pathname]);
-
-  const isItemActive = (item) => {
-    if (item.link && activeTab === item.link) return true;
-    if (item.subItems) {
-      return item.subItems.some(sub => sub.link === activeTab);
-    }
-    return false;
-  };
-
-  const menuItemsRaw = [
+  // ── Menu structure ────────────────────────────────────────────────────────
+  // useMemo so the array is stable across renders — prevents unnecessary
+  // re-computation and keeps toggleDropdown working correctly.
+  const menuItemsRaw = useMemo(() => [
     {
       title: 'Dashboard',
       icon: '/SidebarLogos/Dashboard.png',
       path: '/',
       iconHover: '/SidebarLogos/DashboardH.png',
       link: '/',
-      lucideIcon: 'dashboard',
     },
     {
       title: 'Weekly Classes',
@@ -91,7 +71,7 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
         { module: 'find-class', action: 'view-listing' },
         { module: 'cancellation', action: 'view-listing' },
         { module: 'waiting-list', action: 'view-listing' },
-        { module: 'account-information', action: 'view-listing' }
+        { module: 'account-information', action: 'view-listing' },
       ],
       subItems: [
         { title: 'Find a class', link: '/weekly-classes/find-a-class', needPermissions: [{ module: 'find-class', action: 'view-listing' }] },
@@ -103,18 +83,18 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
         { title: 'Capacity', link: '/weekly-classes/capacity', needPermissions: [{ module: 'capacity', action: 'view-listing' }] },
         { title: 'Account Information', link: '/weekly-classes/members-info', needPermissions: [{ module: 'account-information', action: 'view-listing' }] },
         { title: 'Leads database', link: '/weekly-classes/central-leads', needPermissions: [{ module: 'venue', action: 'view-listing' }] },
-      ]
+      ],
     },
     {
-      title: "One To One",
-      icon: "/reportsIcons/user.png",
+      title: 'One To One',
+      icon: '/reportsIcons/user.png',
       path: '/one-to-one',
-      iconHover: "/reportsIcons/userH.png",
+      iconHover: '/reportsIcons/userH.png',
       needPermissions: [{ module: 'one-to-one-lead', action: 'view-listing' }],
       subItems: [
-        { title: "Sales", link: '/one-to-one', needPermissions: [{ module: 'venue', action: 'view-listing' }] },
-        { title: "Session plan Structure", link: '/one-to-one/session-plan', needPermissions: [{ module: 'session-exercise-one-to-one', action: 'view-listing' }] },
-        { title: "Reports", link: '/one-to-one/reports', needPermissions: [{ module: 'one-to-one-lead', action: 'view-listing' }] },
+        { title: 'Sales', link: '/one-to-one', needPermissions: [{ module: 'venue', action: 'view-listing' }] },
+        { title: 'Session plan Structure', link: '/one-to-one/session-plan', needPermissions: [{ module: 'session-exercise-one-to-one', action: 'view-listing' }] },
+        { title: 'Reports', link: '/one-to-one/reports', needPermissions: [{ module: 'one-to-one-lead', action: 'view-listing' }] },
       ],
     },
     {
@@ -124,70 +104,54 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
       iconHover: '/SidebarLogos/WeeklyClassesH.png',
       needPermissions: [
         { module: 'holiday-find-class', action: 'view-listing' },
-        { module: 'holiday-booking', action: 'view-listing' }
+        { module: 'holiday-booking', action: 'view-listing' },
       ],
       subItems: [
         { title: 'Find a Camp', link: '/holiday-camp/find-a-camp', needPermissions: [{ module: 'holiday-find-class', action: 'view-listing' }] },
         { title: 'Members', link: '/holiday-camp/members/list', needPermissions: [{ module: 'holiday-booking', action: 'view-listing' }] },
         { title: 'Reports', link: '/holiday-camp/reports', needPermissions: [{ module: 'holiday-find-class', action: 'view-listing' }] },
-      ]
+      ],
     },
     {
-      title: "Birthday parties",
-      icon: "/SidebarLogos/Birthday.png",
+      title: 'Birthday parties',
+      icon: '/SidebarLogos/Birthday.png',
       path: '/birthday-party',
-      iconHover: "/SidebarLogos/BirthdayH.png",
+      iconHover: '/SidebarLogos/BirthdayH.png',
       needPermissions: [{ module: 'birthday-party-lead', action: 'view-listing' }],
       subItems: [
-        { title: "Sales", link: '/birthday-party/leads', needPermissions: [{ module: 'birthday-party-lead', action: 'view-listing' }] },
-        { title: "Session plan Structure", link: '/birthday-party/session-plan' },
-        { title: "Reports", link: '/birthday-party/reports', needPermissions: [{ module: 'birthday-party-lead', action: 'view-listing' }] },
+        { title: 'Sales', link: '/birthday-party/leads', needPermissions: [{ module: 'birthday-party-lead', action: 'view-listing' }] },
+        { title: 'Session plan Structure', link: '/birthday-party/session-plan' },
+        { title: 'Reports', link: '/birthday-party/reports', needPermissions: [{ module: 'birthday-party-lead', action: 'view-listing' }] },
       ],
     },
     {
-      title: "Recruitment",
-      icon: "/SidebarLogos/Birthday.png",
+      title: 'Recruitment',
+      icon: '/SidebarLogos/Birthday.png',
       path: '/recruitment',
-      iconHover: "/SidebarLogos/BirthdayH.png",
+      iconHover: '/SidebarLogos/BirthdayH.png',
       needPermissions: [{ module: 'recruitment-lead', action: 'view-listing' }],
       subItems: [
-        { title: "Leads Database", link: '/recruitment/lead', needPermissions: [{ module: 'recruitment-lead', action: 'view-listing' }] },
-        { title: "Franchise Leads", link: '/recruitment/franchise-lead', needPermissions: [{ module: 'recruitment-lead-franchise', action: 'view-listing' }] },
-        { title: "Reports", link: '/recruitment/reports', needPermissions: [{ module: 'recruitment-lead', action: 'view-listing' }] },
+        { title: 'Leads Database', link: '/recruitment/lead', needPermissions: [{ module: 'recruitment-lead', action: 'view-listing' }] },
+        { title: 'Franchise Leads', link: '/recruitment/franchise-lead', needPermissions: [{ module: 'recruitment-lead-franchise', action: 'view-listing' }] },
+        { title: 'Reports', link: '/recruitment/reports', needPermissions: [{ module: 'recruitment-lead', action: 'view-listing' }] },
       ],
     },
     {
-      title: "Reports",
-      icon: "/reportsIcons/reports.png",
+      title: 'Reports',
+      icon: '/reportsIcons/reports.png',
       path: '/reports',
-      iconHover: "/reportsIcons/camper.png",
+      iconHover: '/reportsIcons/camper.png',
       needPermissions: [{ module: 'reports', action: 'member-report' }],
       subItems: [
-        { title: "Members", link: "/reports/members", needPermissions: [{ module: 'reports', action: 'member-report' }] },
-        { title: "Trials and conversions", link: "/reports/trials", needPermissions: [{ module: 'reports', action: 'trial-conversion-report' }] },
-        { title: "Sales", link: "/reports/sales", needPermissions: [{ module: 'reports', action: 'sales-report' }] },
-        { title: "Class Capacity", link: "/reports/class-capacity", needPermissions: [{ module: 'reports', action: 'capacity-report' }] },
-        { title: "Attendance", link: "/reports/attendance", needPermissions: [{ module: 'reports', action: 'member-report' }] },
-        { title: "Cancellations", link: "/reports/cancellations", needPermissions: [{ module: 'reports', action: 'cancellation-report' }] },
-        { title: "Weekly Classes", link: "/reports/weekly-classes", needPermissions: [{ module: 'reports', action: 'attendance-report' }] },
+        { title: 'Members', link: '/reports/members', needPermissions: [{ module: 'reports', action: 'member-report' }] },
+        { title: 'Trials and conversions', link: '/reports/trials', needPermissions: [{ module: 'reports', action: 'trial-conversion-report' }] },
+        { title: 'Sales', link: '/reports/sales', needPermissions: [{ module: 'reports', action: 'sales-report' }] },
+        { title: 'Class Capacity', link: '/reports/class-capacity', needPermissions: [{ module: 'reports', action: 'capacity-report' }] },
+        { title: 'Attendance', link: '/reports/attendance', needPermissions: [{ module: 'reports', action: 'member-report' }] },
+        { title: 'Cancellations', link: '/reports/cancellations', needPermissions: [{ module: 'reports', action: 'cancellation-report' }] },
+        { title: 'Weekly Classes', link: '/reports/weekly-classes', needPermissions: [{ module: 'reports', action: 'attendance-report' }] },
       ],
     },
-    {
-      title: 'Key Information',
-      icon: '/SidebarLogos/Management.png',
-      iconHover: '/SidebarLogos/ManagementH.png',
-      link: '/KeyInfomation',
-      path: '/KeyInfomation',
-      needPermissions: [{ module: 'key-information', action: 'view-listing' }]
-    },
-    ...(MyRole === 'Super Admin' ? [{
-      title: 'Permission',
-      path: '/permission',
-      icon: '/SidebarLogos/Dashboard.png',
-      iconHover: '/SidebarLogos/DashboardH.png',
-      link: '/permission',
-      needPermissions: [{ module: 'admin-role', action: 'view-listing' }]
-    }] : []),
     {
       title: 'Administration',
       path: '/members/s',
@@ -197,8 +161,9 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
       subItems: [
         { title: 'Admin Panel', link: '/members/List', needPermissions: [{ module: 'member', action: 'view-listing' }] },
         { title: 'To Do List', link: '/administration/to-do-list', needPermissions: [{ module: 'member', action: 'view-listing' }] },
-        { title: 'Folders', link: '/administration/file-manager', needPermissions: [{ module: 'member', action: 'view-listing' }] }
-      ]
+        { title: 'Folders', link: '/administration/file-manager', needPermissions: [{ module: 'member', action: 'view-listing' }] },
+        { title: 'Key Information', link: '/KeyInfomation', needPermissions: [{ module: 'key-information', action: 'view-listing' }] },
+      ],
     },
     {
       title: 'Templates',
@@ -209,119 +174,183 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
       subItems: [
         { title: 'Create a Template', link: '/templates/create', needPermissions: [{ module: 'holiday-custom-template', action: 'create' }] },
         { title: 'List of Templates', link: '/templates/list', needPermissions: [{ module: 'holiday-custom-template', action: 'view-listing' }] },
-        { title: 'OutBound cons', link: '/templates/settingList', needPermissions: [{ module: 'holiday-custom-template', action: 'view-listing' }] }
-      ]
+        { title: 'OutBound cons', link: '/templates/settingList', needPermissions: [{ module: 'holiday-custom-template', action: 'view-listing' }] },
+      ],
     },
     {
-      title: "Configuration",
-      icon: "/SidebarLogos/config.png",
+      title: 'Configuration',
+      icon: '/SidebarLogos/config.png',
       path: '/configuration',
-      iconHover: "/SidebarLogos/configH.png",
-      needPermissions: [{ module: 'configuration', action: 'view' }],
+      iconHover: '/SidebarLogos/configH.png',
+      needPermissions: [
+        { module: 'configuration', action: 'view' },
+        // Permission sub-item needs this too so the parent is shown
+        ...(MyRole === 'Super Admin' ? [{ module: 'admin-role', action: 'view-listing' }] : []),
+      ],
       subItems: [
         {
-          title: "Weekly classes",
-          link: "#",
+          title: 'Weekly classes',
+          link: '#',
           needPermissions: [{ module: 'venue', action: 'view-listing' }],
           subItems: [
-            { noPaddingx: true, title: "Venues", link: "/configuration/weekly-classes/venues", needPermissions: [{ module: 'venue', action: 'view-listing' }] },
-            { noPaddingx: true, title: "Term Dates & Mapping", link: "/configuration/weekly-classes/term-dates/list", needPermissions: [{ module: 'term-group', action: 'view-listing' }] },
-            { noPaddingx: true, title: "Session Plan Library", link: "/configuration/weekly-classes/session-plan-list", needPermissions: [{ module: 'session-plan-group', action: 'view-listing' }] },
-            { noPaddingx: true, title: "Subscription Plan Manager", link: "/configuration/weekly-classes/subscription-planManager", needPermissions: [{ module: 'payment-group', action: 'view-listing' }] },
-            { noPaddingx: true, title: "Starter Pack", link: "/configuration/weekly-classes/starter-pack", needPermissions: [{ module: 'payment-group', action: 'view-listing' }] },
+            { noPaddingx: true, title: 'Venues', link: '/configuration/weekly-classes/venues', needPermissions: [{ module: 'venue', action: 'view-listing' }] },
+            { noPaddingx: true, title: 'Term Dates & Mapping', link: '/configuration/weekly-classes/term-dates/list', needPermissions: [{ module: 'term-group', action: 'view-listing' }] },
+            { noPaddingx: true, title: 'Session Plan Library', link: '/configuration/weekly-classes/session-plan-list', needPermissions: [{ module: 'session-plan-group', action: 'view-listing' }] },
+            { noPaddingx: true, title: 'Subscription Plan Manager', link: '/configuration/weekly-classes/subscription-planManager', needPermissions: [{ module: 'payment-group', action: 'view-listing' }] },
+            { noPaddingx: true, title: 'Starter Pack', link: '/configuration/weekly-classes/starter-pack', needPermissions: [{ module: 'payment-group', action: 'view-listing' }] },
           ],
         },
         {
-          title: "Holiday camps",
-          link: "#",
+          title: 'Holiday camps',
+          link: '#',
           needPermissions: [{ module: 'holiday-venue', action: 'view-listing' }],
           subItems: [
-            { noPaddingx: true, title: "Add a venue", link: '/configuration/holiday-camp/venues', needPermissions: [{ module: 'holiday-venue', action: 'view-listing' }] },
-            { noPaddingx: true, title: "Dates", link: '/configuration/holiday-camp/terms/list', needPermissions: [{ module: 'holiday-termGroup-create', action: 'create' }] },
-            { noPaddingx: true, title: "Session Plans", link: '/configuration/holiday-camp/session-plan/list', needPermissions: [{ module: 'holiday-session-plan-group', action: 'view-listing' }] },
-            { noPaddingx: true, title: "Payment Plan Manager", link: "/configuration/holiday-camp/subscription-plan-group", needPermissions: [{ module: 'holiday-payment-plan', action: 'view-listing' }] },
-            { noPaddingx: true, title: "Discounts", link: "/configuration/holiday-camp/discount/list", needPermissions: [{ module: 'discount', action: 'view-listing' }] },
+            { noPaddingx: true, title: 'Add a venue', link: '/configuration/holiday-camp/venues', needPermissions: [{ module: 'holiday-venue', action: 'view-listing' }] },
+            { noPaddingx: true, title: 'Dates', link: '/configuration/holiday-camp/terms/list', needPermissions: [{ module: 'holiday-termGroup-create', action: 'create' }] },
+            { noPaddingx: true, title: 'Session Plans', link: '/configuration/holiday-camp/session-plan/list', needPermissions: [{ module: 'holiday-session-plan-group', action: 'view-listing' }] },
+            { noPaddingx: true, title: 'Payment Plan Manager', link: '/configuration/holiday-camp/subscription-plan-group', needPermissions: [{ module: 'holiday-payment-plan', action: 'view-listing' }] },
+            { noPaddingx: true, title: 'Discounts', link: '/configuration/holiday-camp/discount/list', needPermissions: [{ module: 'discount', action: 'view-listing' }] },
           ],
         },
         {
-          title: "Coach pro",
-          link: "#",
+          title: 'Coach pro',
+          link: '#',
           needPermissions: [{ module: 'coach', action: 'view-listing' }],
           subItems: [
-            { noPaddingx: true, title: "Coach profile", link: '/configuration/coach-pro/profile', needPermissions: [{ module: 'coach', action: 'view-listing' }] },
-            { noPaddingx: true, title: "Contract", link: '/configuration/coach-pro/contracts', needPermissions: [{ module: 'contract', action: 'view-listing' }] },
-            { noPaddingx: true, title: "Music", link: "/configuration/coach-pro/music", needPermissions: [{ module: 'music-player', action: 'view-listing' }] },
-            { noPaddingx: true, title: "Courses", link: '/configuration/coach-pro/courses', needPermissions: [{ module: 'course', action: 'view-listing' }] },
-            { noPaddingx: true, title: "Issues list", link: "/configuration/coach-pro/issue-list" },
-            { noPaddingx: true, title: "Referrals", link: "/configuration/coach-pro/referrals" },
-            { noPaddingx: true, title: "Student Courses", link: "/configuration/coach-pro/student", needPermissions: [{ module: 'student-course', action: 'view-listing' }] },
+            { noPaddingx: true, title: 'Coach profile', link: '/configuration/coach-pro/profile', needPermissions: [{ module: 'coach', action: 'view-listing' }] },
+            { noPaddingx: true, title: 'Contract', link: '/configuration/coach-pro/contracts', needPermissions: [{ module: 'contract', action: 'view-listing' }] },
+            { noPaddingx: true, title: 'Music', link: '/configuration/coach-pro/music', needPermissions: [{ module: 'music-player', action: 'view-listing' }] },
+            { noPaddingx: true, title: 'Courses', link: '/configuration/coach-pro/courses', needPermissions: [{ module: 'course', action: 'view-listing' }] },
+            { noPaddingx: true, title: 'Issues list', link: '/configuration/coach-pro/issue-list' },
+            { noPaddingx: true, title: 'Referrals', link: '/configuration/coach-pro/referrals' },
+            { noPaddingx: true, title: 'Student Courses', link: '/configuration/coach-pro/student', needPermissions: [{ module: 'student-course', action: 'view-listing' }] },
           ],
+        },
+        // ── Permission moved here, directly below Coach pro ────────────────
+        // Only rendered for Super Admin via the permission filter below
+        {
+          title: 'Permission',
+          link: '/permission',
+          needPermissions: [{ module: 'admin-role', action: 'view-listing' }],
         },
       ],
     },
-  ];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [MyRole]);
 
-  let menuItems = [];
-  menuItemsRaw.forEach(menuItem => {
-    let isMenuGranted = !menuItem.needPermissions;
-    if (!isMenuGranted) {
-      menuItem.needPermissions.forEach(permission => {
-        if (checkPermission(permission)) isMenuGranted = true;
-      });
-    }
-    if (isMenuGranted && menuItem.subItems?.length) {
-      let validSubs = [];
-      menuItem.subItems.forEach(sub => {
-        let isSubGranted = !sub.needPermissions;
-        let isChildPermissionGranted = false;
-        if (!isSubGranted) {
-          sub.needPermissions.forEach(permission => {
-            if (checkPermission(permission)) isSubGranted = true;
+  // ── Permission-filtered menu ──────────────────────────────────────────────
+  // Also memoized so it's stable — toggling a dropdown won't rebuild this.
+  const menuItems = useMemo(() => {
+    const filterItems = (rawItems) => {
+      const result = [];
+      rawItems.forEach(menuItem => {
+        // Deep-clone so we don't mutate the raw structure
+        const item = { ...menuItem };
+
+        let granted = !item.needPermissions;
+        if (!granted) {
+          item.needPermissions.forEach(p => {
+            if (checkPermission(p)) granted = true;
           });
         }
-        if (sub.subItems?.length) {
-          let validChildren = [];
-          sub.subItems.forEach(child => {
-            let isChildGranted = !child.needPermissions;
-            if (!isChildGranted) {
-              child.needPermissions.forEach(permission => {
-                if (checkPermission(permission)) isChildGranted = true;
+        if (!granted) return;
+
+        if (item.subItems?.length) {
+          const validSubs = [];
+          item.subItems.forEach(sub => {
+            const s = { ...sub };
+            let subGranted = !s.needPermissions;
+            let childGranted = false;
+
+            if (!subGranted) {
+              s.needPermissions.forEach(p => {
+                if (checkPermission(p)) subGranted = true;
               });
             }
-            if (isChildGranted) { validChildren.push(child); isChildPermissionGranted = true; }
+
+            if (s.subItems?.length) {
+              const validChildren = [];
+              s.subItems.forEach(child => {
+                const c = { ...child };
+                let cGranted = !c.needPermissions;
+                if (!cGranted) {
+                  c.needPermissions.forEach(p => {
+                    if (checkPermission(p)) cGranted = true;
+                  });
+                }
+                if (cGranted) { validChildren.push(c); childGranted = true; }
+              });
+              s.subItems = validChildren;
+            }
+
+            if (subGranted || childGranted) validSubs.push(s);
           });
-          sub.subItems = validChildren;
+          item.subItems = validSubs;
         }
-        if (isSubGranted || isChildPermissionGranted) validSubs.push(sub);
+
+        result.push(item);
       });
-      menuItem.subItems = validSubs;
+      return result;
+    };
+
+    return filterItems(menuItemsRaw);
+  }, [menuItemsRaw, checkPermission]);
+
+  // ── Active tab + auto-expand parents on navigation ───────────────────────
+  useEffect(() => {
+    // FIX: run findActiveItemAndParents AFTER menuItems is computed (it's
+    // now always ready because useMemo runs before effects).
+    const result = findActiveItemAndParents(menuItems, location.pathname);
+    if (result) {
+      const { item, parents } = result;
+      setActiveTab(item.link);
+      // Only expand parents — don't collapse siblings that the user opened manually
+      setOpenDropdowns(prev => {
+        const expanded = { ...prev };
+        parents.forEach(p => { expanded[p.title] = true; });
+        return expanded;
+      });
+    } else {
+      // Fallback: just mark the raw path as active so top-level items highlight
+      setActiveTab(location.pathname);
     }
-    if (isMenuGranted) menuItems.push(menuItem);
-  });
+  }, [location.pathname, menuItems]);
+
+  const isItemActive = (item) => {
+    if (item.link && activeTab === item.link) return true;
+    if (item.subItems) {
+      return item.subItems.some(sub => {
+        if (sub.link === activeTab) return true;
+        if (sub.subItems) return sub.subItems.some(child => child.link === activeTab);
+        return false;
+      });
+    }
+    return false;
+  };
 
   const toggleDropdown = (title) => {
-    localStorage.removeItem("openClassIndex");
-    localStorage.removeItem("openTerms");
-    localStorage.removeItem("activeTab");
+    localStorage.removeItem('openClassIndex');
+    localStorage.removeItem('openTerms');
+    localStorage.removeItem('activeTab');
     setHistoryActiveTab('General');
     clearRegisteredData();
-    setOpenDropdowns((prev) => ({ ...prev, [title]: !prev[title] }));
+    setOpenDropdowns(prev => ({ ...prev, [title]: !prev[title] }));
   };
 
   const removeLocalstorage = () => {
-    localStorage.removeItem("openClassIndex");
-    localStorage.removeItem("openTerms");
-    localStorage.removeItem("activeTab");
+    localStorage.removeItem('openClassIndex');
+    localStorage.removeItem('openTerms');
+    localStorage.removeItem('activeTab');
     setHistoryActiveTab('General');
     clearRegisteredData();
   };
 
   const toggleSidebarCollapse = () => setIsSidebarCollapsed(prev => !prev);
 
-  // Icon mapping for sidebar items using emoji/SVG fallbacks
+  // ── Icons ─────────────────────────────────────────────────────────────────
   const getMenuIcon = (title) => {
     const icons = {
-      'Dashboard': (
+      Dashboard: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
           <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
@@ -349,76 +378,29 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
           <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" /><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
         </svg>
       ),
-      'Club': (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
-        </svg>
-      ),
-      'Merchandise': (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
-          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-        </svg>
-      ),
-      'Email management': (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-          <polyline points="22,6 12,13 2,6" />
-        </svg>
-      ),
-      'Surveys': (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" />
-          <line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" />
-        </svg>
-      ),
-      'Email marketing': (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-        </svg>
-      ),
-      'Recruitment': (
+      Recruitment: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
       ),
-      'Reports': (
+      Reports: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" />
           <line x1="6" y1="20" x2="6" y2="14" />
         </svg>
       ),
-      'Marketing reports': (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-        </svg>
-      ),
-      'Key Information': (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" />
-          <line x1="12" y1="16" x2="12.01" y2="16" />
-        </svg>
-      ),
-      'Permission': (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-        </svg>
-      ),
-      'Administration': (
+      Administration: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="8" r="4" /><path d="M20 21a8 8 0 1 0-16 0" />
         </svg>
       ),
-      'Templates': (
+      Templates: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
           <polyline points="14 2 14 8 20 8" />
         </svg>
       ),
-      'Configuration': (
+      Configuration: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="3" />
           <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
@@ -432,9 +414,10 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
     );
   };
 
+  // ── Render ────────────────────────────────────────────────────────────────
   const renderMenuItems = (items, level = 0) => {
     return (
-      <ul className={`${level === 0 ? 'py-2' : ''} space-y-0.5`}>
+      <ul className={`${level === 0 ? 'py-2' : ''} space-y-1`}>
         {items.map((item) => {
           const hasSubItems = Array.isArray(item.subItems) && item.subItems.length > 0;
           const hasInnerSubItems = Array.isArray(item.innerSubItems) && item.innerSubItems.length > 0;
@@ -448,14 +431,14 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
 
           const isSubActive = item.link && activeTab === item.link;
 
-          // Top-level item
+          // ── Level 0 ──────────────────────────────────────────────────────
           if (level === 0) {
             const content = (
               <div
                 onMouseEnter={() => setHoveredItem(itemTitle)}
                 onMouseLeave={() => setHoveredItem(null)}
                 onClick={() => {
-                  if (searchQuery) { setSearchQuery(""); clearRegisteredData(); }
+                  if (searchQuery) { setSearchQuery(''); clearRegisteredData(); }
                   if (hasSubItems || hasInnerSubItems) {
                     toggleDropdown(itemTitle);
                   } else {
@@ -473,40 +456,40 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
                 `}
               >
                 <span className="flex items-center gap-3">
-                  <span className={`flex-shrink-0 ${isItemActive(item) || isActive ? 'text-white' : 'text-[#6B7280]'}`}>
+                  <span className="flex-shrink-0 text-white">
                     {getMenuIcon(itemTitle)}
                   </span>
                   {!isSidebarCollapsed && (
-                    <span className={`text-[18px] ${isItemActive(item) || isActive ? 'text-white':' text-[#BFBCC8]'} font-semibold leading-tight`}>{itemTitle}</span>
+                    <span className="text-[18px] text-white font-semibold leading-tight">{itemTitle}</span>
                   )}
                 </span>
                 {!isSidebarCollapsed && (hasSubItems || hasInnerSubItems) && (
                   openDropdowns[itemTitle]
-                    ? <ChevronUp size={16} className="flex-shrink-0 opacity-70" />
-                    : <ChevronDown size={16} className="flex-shrink-0 opacity-70" />
+                    ? <ChevronUp size={16} className="flex-shrink-0 text-white opacity-70" />
+                    : <ChevronDown size={16} className="flex-shrink-0 text-white opacity-70" />
                 )}
               </div>
             );
 
             return (
               <li key={itemTitle} onClick={removeLocalstorage}>
-                {item.link ? (
-                  <Link to={item.link} onClick={() => { if (searchQuery) setSearchQuery(""); clearRegisteredData(); }}>
+                {item.link && !hasSubItems && !hasInnerSubItems ? (
+                  <Link to={item.link} onClick={() => { if (searchQuery) setSearchQuery(''); clearRegisteredData(); }}>
                     {content}
                   </Link>
                 ) : content}
 
                 <AnimatePresence initial={false}>
                   {(hasSubItems || hasInnerSubItems) && openDropdowns[itemTitle] && (
-                    // Level 1 - change the motion div wrapper
                     <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
+                      key={`${itemTitle}-submenu`}
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.15 }}
                     >
-<div className="relative ml-[30px] before:absolute before:left-[-1px] before:top-0 before:h-[93%] before:border-l before:border-dotted before:border-[#2D3748]">                        {hasSubItems && renderMenuItems(item.subItems, level + 1)}
+                      <div className="relative ml-[30px] before:absolute before:left-[-1px] before:top-0 before:h-[93%] before:border-l before:border-dotted before:border-[#2D3748]">
+                        {hasSubItems && renderMenuItems(item.subItems, level + 1)}
                       </div>
                     </motion.div>
                   )}
@@ -515,14 +498,13 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
             );
           }
 
-          // Sub-item (level 1)
+          // ── Level 1 ──────────────────────────────────────────────────────
           if (level === 1) {
             const hasChildren = Array.isArray(item.subItems) && item.subItems.length > 0;
             const subContent = (
-              // Level 1 sub-item div - replace completely
               <div
                 onClick={() => {
-                  if (searchQuery) { setSearchQuery(""); clearRegisteredData(); }
+                  if (searchQuery) { setSearchQuery(''); clearRegisteredData(); }
                   if (hasChildren) {
                     toggleDropdown(itemTitle);
                   } else {
@@ -531,35 +513,20 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
                   }
                 }}
                 className={`
-    flex items-center gap-2 cursor-pointer pr-4 py-2
-    transition-all duration-150
-    ${isSubActive
-                    ? 'text-[#3B82F6] font-semibold'
-                    : 'text-[#9CA3AF] hover:text-white'
-                  }
-  `}
+                  flex items-center gap-2 cursor-pointer pr-4 py-2
+                  transition-all duration-150
+                  ${isSubActive ? 'text-[#3B82F6] font-semibold' : 'text-[#9CA3AF] hover:text-white'}
+                `}
               >
-                {/* Dot sitting ON the vertical line */}
                 <span className={`
-    w-2 h-2 rounded-full flex-shrink-0 -ml-[5px]
-    border-2
-    ${isSubActive
-                    ? 'bg-[#3B82F6] border-[#3B82F6]'
-                    : 'bg-[#273054] border-[#273054]'
-                  }
-  `} />
+                  w-2 h-2 rounded-full z-[99999] flex-shrink-0 -ml-[5px] border-2
+                  ${isSubActive ? 'bg-[#3B82F6] border-[#3B82F6]' : 'bg-[#273054] border-[#273054]'}
+                `} />
                 <span className={`
-    w-3  rounded-full flex-shrink-0 -ml-[5px]
-    border-b-1 border-dotted
-    ${isSubActive
-                    ? 'bg-[#3B82F6] border-[#3B82F6]'
-                    : 'bg-[#0C153B] border-[#4B5563]'
-                  }
-  `} />
-
-                {/* Text right next to dot */}
+                  w-3 rounded-full  flex-shrink-0 -ml-[5px] border-b border-dotted
+                  ${isSubActive ? 'bg-[#3B82F6] border-[#3B82F6]' : 'bg-[#0C153B] border-[#4B5563]'}
+                `} />
                 <span className="text-[16px] pl-[5px] text-[#BFBCC8] font-medium">{itemTitle}</span>
-
                 {hasChildren && (
                   <span className="ml-auto">
                     {openDropdowns[itemTitle]
@@ -573,8 +540,8 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
 
             return (
               <li key={itemTitle} onClick={removeLocalstorage}>
-                {item.link && item.link !== '#' ? (
-                  <Link to={item.link} onClick={() => { if (searchQuery) setSearchQuery(""); clearRegisteredData(); }}>
+                {item.link && item.link !== '#' && !hasChildren ? (
+                  <Link to={item.link} onClick={() => { if (searchQuery) setSearchQuery(''); clearRegisteredData(); }}>
                     {subContent}
                   </Link>
                 ) : subContent}
@@ -582,11 +549,11 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
                 <AnimatePresence initial={false}>
                   {hasChildren && openDropdowns[itemTitle] && (
                     <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
+                      key={`${itemTitle}-child-submenu`}
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.15 }}
                     >
                       {renderMenuItems(item.subItems, level + 1)}
                     </motion.div>
@@ -596,7 +563,7 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
             );
           }
 
-          // Level 2 (deep nested)
+          // ── Level 2 ──────────────────────────────────────────────────────
           return (
             <li key={itemTitle} onClick={removeLocalstorage}>
               {item.link ? (
@@ -604,7 +571,7 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
                   to={item.link}
                   onClick={() => {
                     setActiveTab(item.link);
-                    if (searchQuery) setSearchQuery("");
+                    if (searchQuery) setSearchQuery('');
                     clearRegisteredData();
                     if (window.innerWidth < 1024) setIsMobileMenuOpen(false);
                   }}
@@ -636,35 +603,9 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isMobileMenuOpen]);
 
-  const SidebarContent = () => (
-    <>
-      {/* Logo */}
-      <div className={`flex items-center justify-between px-4 py-5 ${isSidebarCollapsed ? 'justify-center' : ''}`}>
-        {!isSidebarCollapsed && (
-          <img
-            src="/images/synco-text-logo.png"
-            alt="Synco"
-            className="h-9 w-auto object-contain brightness-0 invert"
-          />
-        )}
-        <button
-          onClick={toggleSidebarCollapse}
-          className="p-1.5 rounded-md text-[#6B7280] hover:text-white hover:bg-[#1E293B] transition-all"
-        >
-          {isSidebarCollapsed ? <Menu size={18} /> : <ChevronDown size={18} className="rotate-90" />}
-        </button>
-      </div>
-
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-[#374151] scrollbar-track-transparent pb-6">
-        {renderMenuItems(menuItems)}
-      </nav>
-    </>
-  );
-
   return (
     <>
-      {/* Mobile Drawer */}
+      {/* ── Mobile Drawer ──────────────────────────────────────────────────── */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
@@ -678,20 +619,13 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
               className="fixed top-0 left-0 w-64 h-full z-50 lg:hidden flex flex-col"
               style={{ backgroundColor: '#111827' }}
             >
-              <div className="flex items-center justify-between px-4 py-5">
-                <img
-                  src="/images/synco-text-logo.png"
-                  alt="Synco"
-                  className="h-9 w-auto object-contain brightness-0 invert"
-                />
-                <button
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-1.5 rounded-md text-[#6B7280] hover:text-white hover:bg-[#1E293B] transition-all"
-                >
+              <div className="flex-shrink-0 flex items-center justify-between px-4 py-5">
+                <img src="/images/synco-text-logo.png" alt="Synco" className="h-9 w-auto object-contain brightness-0 invert" />
+                <button onClick={() => setIsMobileMenuOpen(false)} className="p-1.5 rounded-md text-[#6B7280] hover:text-white hover:bg-[#1E293B] transition-all">
                   <X size={18} />
                 </button>
               </div>
-              <nav className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-[#374151] scrollbar-track-transparent pb-6">
+              <nav className="flex-1 min-h-0 overflow-y-auto sidebar-scrollbar pb-6" style={{ overflowAnchor: 'none' }}>
                 {renderMenuItems(menuItems)}
               </nav>
             </motion.aside>
@@ -699,12 +633,25 @@ const Sidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
         )}
       </AnimatePresence>
 
-      {/* Desktop Sidebar */}
+      {/* ── Desktop Sidebar ─────────────────────────────────────────────────── */}
       <aside
         className={`hidden lg:flex flex-col h-screen sticky top-0 transition-all duration-300 flex-shrink-0 ${isSidebarCollapsed ? 'w-16' : 'w-72'}`}
-        style={{ backgroundColor: '#0C153B' }}
+        style={{ backgroundColor: '#0C153B', overflow: 'hidden' }}
       >
-        <SidebarContent />
+        <div className={`flex-shrink-0 flex items-center justify-between px-4 py-5 ${isSidebarCollapsed ? 'justify-center' : ''}`}>
+          {!isSidebarCollapsed && (
+            <img src="/images/synco-text-logo.png" alt="Synco" className="w-[170px] object-contain brightness-0 invert" />
+          )}
+          <button onClick={toggleSidebarCollapse} className="p-1.5 rounded-xl text-white bg-[#b4b2bf52] transition-all">
+            {isSidebarCollapsed
+              ? <Menu size={18} />
+              : <MdKeyboardDoubleArrowLeft size={25} className="text-white" />
+            }
+          </button>
+        </div>
+        <nav className="flex-1 min-h-0 overflow-y-auto mt-5 sidebar-scrollbar pb-6" style={{ overflowAnchor: 'none' }}>
+          {renderMenuItems(menuItems)}
+        </nav>
       </aside>
     </>
   );

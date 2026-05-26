@@ -66,9 +66,9 @@ const mergedNotifications = [
   const tabsToDisplay = allTabs; // or use sortedTabs for sorting
 
   return (
-    <div className="md:w-3/12 bg-white rounded-2xl">
+    <div className="md:w-3/12 bg-white rounded-2xl md:sticky md:top-4 flex flex-col max-h-[calc(100vh-120px)] overflow-hidden">
       <h2 className="text-[24px] font-semibold mb-4 px-7 pt-5">Categories</h2>
-      <ul className="space-y-2">
+      <ul className="space-y-2 overflow-y-auto pb-5 scrollbar-thin">
         {tabsToDisplay.map((tabLabel) => {
           const count =
             tabLabel === "All"

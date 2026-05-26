@@ -87,6 +87,10 @@ export const BookFreeTrialProvider = ({ children }) => {
 
       try {
         const queryParams = new URLSearchParams();
+        const franchiseIdContext = new URLSearchParams(window.location.search).get("franchiseId");
+        if (franchiseIdContext) {
+            queryParams.append("franchiseId", franchiseIdContext);
+        }
 
         // Student & Venue filters
         if (studentName) queryParams.append("studentName", studentName);
@@ -184,6 +188,10 @@ export const BookFreeTrialProvider = ({ children }) => {
 
       try {
         const queryParams = new URLSearchParams();
+        const franchiseIdContext = new URLSearchParams(window.location.search).get("franchiseId");
+        if (franchiseIdContext) {
+            queryParams.append("franchiseId", franchiseIdContext);
+        }
 
         // Student & Venue filters
         if (studentName) queryParams.append("studentName", studentName);
@@ -495,7 +503,7 @@ export const BookFreeTrialProvider = ({ children }) => {
     };
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/service-history/update-booking/information/${bookFreeTrialId}`, requestOptions);
+      const response = await fetch(`${API_BASE_URL}/api/admin/booking-update/${bookFreeTrialId}`, requestOptions);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -789,6 +797,10 @@ export const BookFreeTrialProvider = ({ children }) => {
 
       try {
         const queryParams = new URLSearchParams();
+        const franchiseIdContext = new URLSearchParams(window.location.search).get("franchiseId");
+        if (franchiseIdContext) {
+            queryParams.append("franchiseId", franchiseIdContext);
+        }
 
         if (studentName) queryParams.append("studentName", studentName);
         if (venueName) queryParams.append("venueName", venueName);
@@ -876,6 +888,10 @@ export const BookFreeTrialProvider = ({ children }) => {
 
       try {
         const queryParams = new URLSearchParams();
+        const franchiseIdContext = new URLSearchParams(window.location.search).get("franchiseId");
+        if (franchiseIdContext) {
+            queryParams.append("franchiseId", franchiseIdContext);
+        }
 
         if (studentName) queryParams.append("studentName", studentName);
         if (venueName) queryParams.append("venueName", venueName);
@@ -952,7 +968,7 @@ export const BookFreeTrialProvider = ({ children }) => {
     };
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/book-membership/${bookFreeTrialId}`, requestOptions);
+      const response = await fetch(`${API_BASE_URL}/api/admin/booking-update/${bookFreeTrialId}`, requestOptions);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -1784,6 +1800,10 @@ export const BookFreeTrialProvider = ({ children }) => {
 
       try {
         const queryParams = new URLSearchParams();
+        const franchiseIdContext = new URLSearchParams(window.location.search).get("franchiseId");
+        if (franchiseIdContext) {
+            queryParams.append("franchiseId", franchiseIdContext);
+        }
 
         if (studentName) queryParams.append("studentName", studentName);
         if (venueName) queryParams.append("venueName", venueName);
@@ -1871,6 +1891,10 @@ export const BookFreeTrialProvider = ({ children }) => {
 
       try {
         const queryParams = new URLSearchParams();
+        const franchiseIdContext = new URLSearchParams(window.location.search).get("franchiseId");
+        if (franchiseIdContext) {
+            queryParams.append("franchiseId", franchiseIdContext);
+        }
 
         if (studentName) queryParams.append("studentName", studentName);
         if (venueName) queryParams.append("venueName", venueName);
@@ -2052,6 +2076,10 @@ export const BookFreeTrialProvider = ({ children }) => {
 
       try {
         const queryParams = new URLSearchParams();
+        const franchiseIdContext = new URLSearchParams(window.location.search).get("franchiseId");
+        if (franchiseIdContext) {
+            queryParams.append("franchiseId", franchiseIdContext);
+        }
 
         // Student & Venue filters
         if (studentName) queryParams.append("studentName", studentName);
@@ -2227,6 +2255,10 @@ export const BookFreeTrialProvider = ({ children }) => {
     if (!token) return;
 
     const queryParams = new URLSearchParams();
+    const franchiseIdContext = new URLSearchParams(window.location.search).get("franchiseId");
+    if (franchiseIdContext) {
+        queryParams.append("franchiseId", franchiseIdContext);
+    }
     if (venueName) queryParams.append("venueName", venueName);
 
     setLoading(true);
@@ -2254,6 +2286,10 @@ export const BookFreeTrialProvider = ({ children }) => {
     setSearchLoading(true);
 
     const queryParams = new URLSearchParams();
+    const franchiseIdContext = new URLSearchParams(window.location.search).get("franchiseId");
+    if (franchiseIdContext) {
+        queryParams.append("franchiseId", franchiseIdContext);
+    }
 
     if (Array.isArray(venueNames) && venueNames.length > 0) {
       venueNames.forEach((name) => queryParams.append("venueName", name));
@@ -2450,6 +2486,10 @@ export const BookFreeTrialProvider = ({ children }) => {
 
       try {
         const queryParams = new URLSearchParams();
+        const franchiseIdContext = new URLSearchParams(window.location.search).get("franchiseId");
+        if (franchiseIdContext) {
+            queryParams.append("franchiseId", franchiseIdContext);
+        }
 
         // Student & Venue filters
         if (studentName) queryParams.append("studentName", studentName);
@@ -2552,6 +2592,10 @@ export const BookFreeTrialProvider = ({ children }) => {
 
       try {
         const queryParams = new URLSearchParams();
+        const franchiseIdContext = new URLSearchParams(window.location.search).get("franchiseId");
+        if (franchiseIdContext) {
+            queryParams.append("franchiseId", franchiseIdContext);
+        }
 
         // Student & Venue filters
         if (studentName) queryParams.append("studentName", studentName);
@@ -2653,6 +2697,10 @@ export const BookFreeTrialProvider = ({ children }) => {
 
       try {
         const queryParams = new URLSearchParams();
+        const franchiseIdContext = new URLSearchParams(window.location.search).get("franchiseId");
+        if (franchiseIdContext) {
+            queryParams.append("franchiseId", franchiseIdContext);
+        }
 
         // Student & Venue filters
         if (studentName) queryParams.append("studentName", studentName);
@@ -2856,7 +2904,7 @@ export const BookFreeTrialProvider = ({ children }) => {
     };
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/waiting-list/service-history/update/${bookFreeTrialId}`, requestOptions);
+      const response = await fetch(`${API_BASE_URL}/api/admin/booking-update/${bookFreeTrialId}`, requestOptions);
 
       if (!response.ok) {
         const errorData = await response.json();

@@ -70,7 +70,7 @@ const List = () => {
   const dateOptions = [
     { value: "1oct", label: "1 OCT " },
     { value: "female", label: "Female" },
-    { value: "other", label: "Other" },
+    
   ];
   const handleCountryChange = (countryData) => {
     setCountry(countryData.countryCode);
@@ -953,7 +953,7 @@ const List = () => {
   const genderOptions = [
     { value: "male", label: "Male" },
     { value: "female", label: "Female" },
-    { value: "other", label: "Other" },
+    
   ];
   const sessionDates = singleClassSchedulesOnly?.venue?.termGroups?.flatMap(group =>
     group.terms.flatMap(term =>

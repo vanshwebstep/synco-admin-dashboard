@@ -32,6 +32,14 @@ const AttendanceDashboard = () => {
     const [analytics, setAnalytics] = useState(null);
     const [allClasses, setAllClasses] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [selectedFranchise, setSelectedFranchise] = useState(null);
+    const storedFranchises = localStorage.getItem('franchisesInfo');
+    const franchises = storedFranchises && storedFranchises !== 'undefined' ? JSON.parse(storedFranchises) : [];
+    const franchiseOptions = franchises.map(f => ({
+        label: (f.firstName + ' ' + (f.lastName || '')).trim() || f.email,
+        value: f.id
+    }));
+
     console.log('allClasses', allClasses)
     // Select options (use dynamic venues/classes from API when loaded)
     const staticVenueOptions = [
@@ -233,46 +241,46 @@ const AttendanceDashboard = () => {
         const data = new Blob([excelBuffer], { type: "application/octet-stream" });
         saveAs(data, "attendance-top-cards.xlsx");
     };
-const getMonthlyAttendanceComparisonByAttended = (charts) => {
-  if (!charts) return [];
+    const getMonthlyAttendanceComparisonByAttended = (charts) => {
+        if (!charts) return [];
 
-  const curr = charts.monthlyAttendanceCurr ?? [];
-  const prev = charts.monthlyAttendancePrev ?? [];
+        const curr = charts.monthlyAttendanceCurr ?? [];
+        const prev = charts.monthlyAttendancePrev ?? [];
 
-  const MONTHS = [
-    "Jan","Feb","Mar","Apr","May","Jun",
-    "Jul","Aug","Sep","Oct","Nov","Dec"
-  ];
+        const MONTHS = [
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+        ];
 
-  // Find last non-zero ATTENDED index in current year
-  const lastNonZeroIndex = curr
-    .map((m, i) => (m?.attended > 0 ? i : -1))
-    .filter(i => i !== -1)
-    .pop();
+        // Find last non-zero ATTENDED index in current year
+        const lastNonZeroIndex = curr
+            .map((m, i) => (m?.attended > 0 ? i : -1))
+            .filter(i => i !== -1)
+            .pop();
 
-  return MONTHS.map((month, index) => {
-    const currMonth = curr.find(m => m.month === month);
-    const prevMonth = prev.find(m => m.month === month);
+        return MONTHS.map((month, index) => {
+            const currMonth = curr.find(m => m.month === month);
+            const prevMonth = prev.find(m => m.month === month);
 
-    return {
-      month,
-      CurrentYear:
-        lastNonZeroIndex !== undefined && index > lastNonZeroIndex
-          ? null
-          : Number(currMonth?.attended ?? 0),
-      PreviousYear: Number(prevMonth?.attended ?? 0),
+            return {
+                month,
+                CurrentYear:
+                    lastNonZeroIndex !== undefined && index > lastNonZeroIndex
+                        ? null
+                        : Number(currMonth?.attended ?? 0),
+                PreviousYear: Number(prevMonth?.attended ?? 0),
+            };
+        });
     };
-  });
-};
 
 
 
-const lineChartData = getMonthlyAttendanceComparisonByAttended(
-  analytics?.charts
-);
+    const lineChartData = getMonthlyAttendanceComparisonByAttended(
+        analytics?.charts
+    );
 
-const currentYearKey = "CurrentYear";
-const previousYearKey = "PreviousYear";
+    const currentYearKey = "CurrentYear";
+    const previousYearKey = "PreviousYear";
 
     // Pie data: age and gender
     const agePieData =
@@ -297,6 +305,13 @@ const previousYearKey = "PreviousYear";
     // colors for pies
     const pieColors = ["#8B5CF6", "#FACC15", "#22C55E", "#3B82F6", "#EF4444", "#06B6D4"];
 
+    useEffect(() => {
+        const handleAccountSwitched = () => {
+            if (typeof fetchData === 'function') fetchData();
+        };
+        window.addEventListener('accountSwitched', handleAccountSwitched);
+        return () => window.removeEventListener('accountSwitched', handleAccountSwitched);
+    }, [fetchData]);
     if (loading) return <Loader />;
 
     return (
@@ -305,6 +320,21 @@ const previousYearKey = "PreviousYear";
             <div className="flex flex-wrap justify-between items-center mb-6">
                 <h1 className="text-3xl font-semibold text-gray-800">Attendance</h1>
                 <div className="flex flex-wrap gap-3 items-center">
+                    {JSON.parse(localStorage.getItem("adminInfo"))?.role?.role === "Super Admin" && (
+                        <Select
+                            options={franchiseOptions}
+                            value={selectedFranchise}
+                            onChange={(selected) => {
+                                setSelectedFranchise(selected);
+                                if (typeof handleFilterChange === 'function') handleFilterChange('franchiseId', selected?.value || '');
+                            }}
+                            placeholder='Organization / Franchise'
+                            styles={typeof customSelectStyles !== 'undefined' ? customSelectStyles : undefined}
+                            isClearable
+                            components={{ IndicatorSeparator: () => null }}
+                            className='md:w-50'
+                        />
+                    )}
                     {/* VENUE SELECT */}
                     <Select
                         options={
@@ -386,89 +416,89 @@ const previousYearKey = "PreviousYear";
                     <div className="bg-white rounded-2xl p-4">
                         <h2 className="text-gray-800 font-semibold text-[20px] mb-4">Attendance</h2>
                         <div className="w-full h-[320px]">
-  <ResponsiveContainer width="100%" height={300}>
-    <LineChart
-      data={lineChartData}
-      margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
-    >
-      {/* Grid */}
-      <CartesianGrid
-        strokeDasharray="3 3"
-        stroke="#EEF2F7"
-        vertical={false}
-      />
+                            <ResponsiveContainer width="100%" height={300}>
+                                <LineChart
+                                    data={lineChartData}
+                                    margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
+                                >
+                                    {/* Grid */}
+                                    <CartesianGrid
+                                        strokeDasharray="3 3"
+                                        stroke="#EEF2F7"
+                                        vertical={false}
+                                    />
 
-      {/* X Axis */}
-      <XAxis
-        dataKey="month"
-        tick={{ fill: "#6B7280", fontSize: 12 }}
-        axisLine={false}
-        tickLine={false}
-      />
+                                    {/* X Axis */}
+                                    <XAxis
+                                        dataKey="month"
+                                        tick={{ fill: "#6B7280", fontSize: 12 }}
+                                        axisLine={false}
+                                        tickLine={false}
+                                    />
 
-      {/* Y Axis */}
-      <YAxis
-        tick={{ fill: "#9CA3AF", fontSize: 12 }}
-        axisLine={false}
-        tickLine={false}
-      />
+                                    {/* Y Axis */}
+                                    <YAxis
+                                        tick={{ fill: "#9CA3AF", fontSize: 12 }}
+                                        axisLine={false}
+                                        tickLine={false}
+                                    />
 
-      {/* Tooltip */}
-      <Tooltip
-        formatter={(v) => `${v}`}
-        cursor={false}
-        contentStyle={{
-          background: "#FFFFFF",
-          borderRadius: 12,
-          border: "none",
-          boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
-        }}
-        labelStyle={{ fontWeight: 600 }}
-      />
+                                    {/* Tooltip */}
+                                    <Tooltip
+                                        formatter={(v) => `${v}`}
+                                        cursor={false}
+                                        contentStyle={{
+                                            background: "#FFFFFF",
+                                            borderRadius: 12,
+                                            border: "none",
+                                            boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+                                        }}
+                                        labelStyle={{ fontWeight: 600 }}
+                                    />
 
-      {/* Gradient */}
-      <defs>
-        <linearGradient id="colorAttendance" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#60A5FA" stopOpacity={0.35} />
-          <stop offset="70%" stopColor="#60A5FA" stopOpacity={0.15} />
-          <stop offset="100%" stopColor="#60A5FA" stopOpacity={0} />
-        </linearGradient>
-      </defs>
+                                    {/* Gradient */}
+                                    <defs>
+                                        <linearGradient id="colorAttendance" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stopColor="#60A5FA" stopOpacity={0.35} />
+                                            <stop offset="70%" stopColor="#60A5FA" stopOpacity={0.15} />
+                                            <stop offset="100%" stopColor="#60A5FA" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
 
-      {/* Previous year (Pink, under) */}
-      <Line
-        type="monotone"
-        dataKey={previousYearKey}
-        stroke="#F472B6"
-        strokeWidth={2}
-        dot={false}
-        connectNulls
-        isAnimationActive={false}
-      />
+                                    {/* Previous year (Pink, under) */}
+                                    <Line
+                                        type="monotone"
+                                        dataKey={previousYearKey}
+                                        stroke="#F472B6"
+                                        strokeWidth={2}
+                                        dot={false}
+                                        connectNulls
+                                        isAnimationActive={false}
+                                    />
 
-      {/* Area fill (Current year) */}
-      <Area
-        type="monotone"
-        dataKey={currentYearKey}
-        stroke="none"
-        fill="url(#colorAttendance)"
-        connectNulls
-        tooltipType="none"
-      />
+                                    {/* Area fill (Current year) */}
+                                    <Area
+                                        type="monotone"
+                                        dataKey={currentYearKey}
+                                        stroke="none"
+                                        fill="url(#colorAttendance)"
+                                        connectNulls
+                                        tooltipType="none"
+                                    />
 
-      {/* Current year (Blue, top) */}
-      <Line
-        type="monotone"
-        dataKey={currentYearKey}
-        stroke="#3B5BFF"
-        strokeWidth={2.5}
-        dot={false}
-        activeDot={{ r: 5 }}
-        connectNulls
-      />
-    </LineChart>
-  </ResponsiveContainer>
-</div>
+                                    {/* Current year (Blue, top) */}
+                                    <Line
+                                        type="monotone"
+                                        dataKey={currentYearKey}
+                                        stroke="#3B5BFF"
+                                        strokeWidth={2.5}
+                                        dot={false}
+                                        activeDot={{ r: 5 }}
+                                        connectNulls
+                                    />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
 
 
                     </div>

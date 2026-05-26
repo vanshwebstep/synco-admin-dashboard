@@ -3,7 +3,7 @@ import { FiSearch } from "react-icons/fi";
 import { ChevronLeft, ChevronRight, Loader2, Trash, Trash2 } from "lucide-react";
 import Select from "react-select";
 import { Check, Filter, X } from "lucide-react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 // import { useBookFreeTrial } from '../../../contexts/BookAFreeTrialContext';
 import Loader from '../../contexts/Loader';
 import { showConfirm, showError, showSuccess, showWarning } from '../../../../../utils/swalHelper';
@@ -27,6 +27,7 @@ const TrialLists = () => {
     const [selectedDate, setSelectedDate] = useState(null);
     const [isFilterApplied, setIsFilterApplied] = useState(false);
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const [agentsData, setAgentsData] = useState([]);
     const [showAgentPopup, setShowAgentPopup] = useState(false);
@@ -37,6 +38,38 @@ const TrialLists = () => {
     const [isAssigningAgent, setIsAssigningAgent] = useState(false);
     const [selectedAgentsForAssignment, setSelectedAgentsForAssignment] = useState([]);
     const [showFilter, setShowFilter] = useState(false);
+
+    const [selectedFranchise, setSelectedFranchise] = useState(null);
+    const [selectedAgeGroup, setSelectedAgeGroup] = useState(null);
+
+    const storedFranchises = localStorage.getItem("franchisesInfo");
+    const franchises = storedFranchises && storedFranchises !== "undefined" ? JSON.parse(storedFranchises) : [];
+    const franchiseOptions = franchises.map(f => ({
+        label: `${f.firstName} ${f.lastName || ""}`.trim() || f.email,
+        value: f.id
+    }));
+
+    const ageGroupOptions = [
+        { label: "Under 5 Years", value: "under_5" },
+        { label: "5-7 Years", value: "5_7" },
+        { label: "8-10 Years", value: "8_10" },
+        { label: "11-13 Years", value: "11_13" },
+        { label: "14-16 Years", value: "14_16" },
+        { label: "17+ Years", value: "17_plus" }
+    ];
+
+    const handleFranchiseChange = (franchise) => {
+        setSelectedFranchise(franchise);
+        setSelectedVenue(null);
+        if (franchise) {
+            searchParams.set("franchiseId", franchise.value);
+            setSearchParams(searchParams);
+        } else {
+            searchParams.delete("franchiseId");
+            setSearchParams(searchParams);
+        }
+    };
+    console.log('localstorage', localStorage);
 
     const [selectedStudents, setSelectedStudents] = useState([]);
     const toggleSelect = (studentId) => {
@@ -163,13 +196,14 @@ const TrialLists = () => {
     const [selectedDates, setSelectedDates] = useState([]);
     const { fetchBookMemberships, fetchBookMembershipsLoading, bookMembership, setBookMembership, sendBookMembershipMail, bookedByAdmin, setSearchTerm, searchTerm, status, loading, selectedVenue, setSelectedVenue, statsMembership, myVenues, setMyVenues } = useBookFreeTrial() || {};
 
+    const franchiseId = searchParams.get("franchiseId");
     useEffect(() => {
         if (selectedVenue) {
             fetchBookMemberships("", selectedVenue.label); // Using label as venueName
         } else {
             fetchBookMembershipsLoading(); // No filter
         }
-    }, [selectedVenue, fetchBookMemberships, fetchBookMembershipsLoading]);
+    }, [selectedVenue, franchiseId, fetchBookMemberships, fetchBookMembershipsLoading]);
 
 
     const month = currentDate.getMonth();
@@ -575,6 +609,36 @@ const TrialLists = () => {
         },
         { header: "Status", render: (item, student) => getStatusBadge(student.studentStatus) },
     ];
+
+    const filteredMembers = (bookMembership || []).filter(item => {
+        // 1. Organization / Franchise Filter (Removed, handled by API)
+
+        // 2. Venue Filter
+        if (selectedVenue) {
+            if (item?.venue?.id !== selectedVenue.value) return false;
+        }
+
+        // 3. Age Group Filter
+        if (selectedAgeGroup) {
+            const hasStudentInAgeGroup = item.students?.some(student => {
+                const age = Number(student.age);
+                if (isNaN(age)) return false;
+                switch (selectedAgeGroup.value) {
+                    case "under_5": return age < 5;
+                    case "5_7": return age >= 5 && age <= 7;
+                    case "8_10": return age >= 8 && age <= 10;
+                    case "11_13": return age >= 11 && age <= 13;
+                    case "14_16": return age >= 14 && age <= 16;
+                    case "17_plus": return age >= 17;
+                    default: return true;
+                }
+            });
+            if (!hasStudentInAgeGroup) return false;
+        }
+
+        return true;
+    });
+
     console.log('bookMembership', bookMembership);
     if (loading) return <Loader />;
     return (
@@ -603,7 +667,7 @@ const TrialLists = () => {
                     </div>
                     <DynamicTable
                         columns={membershipColumns}
-                        data={bookMembership}   // 👈 use flattened data
+                        data={filteredMembers}   // 👈 use flattened data
                         selectedIds={selectedStudents}
                         setSelectedStudents={setSelectedStudents}
                         from={'membership'}
@@ -619,7 +683,49 @@ const TrialLists = () => {
                     <div className="md:w-4/12 md:mt-0 mt-4 text-base space-y-5">
                         <div className="space-y-3 bg-white p-6 rounded-3xl shadow-sm ">
                             <h2 className="text-[24px] font-semibold">Search Now </h2>
-                            <div className="">
+
+                            {JSON.parse(localStorage.getItem("adminInfo"))?.role?.role === "Super Admin" && (
+                                <div className="mb-5">
+                                    <label htmlFor="" className="text-base font-semibold">
+                                        Organization / Franchise
+                                    </label>
+
+                                    <div className="relative mt-2">
+                                        <Select
+                                            options={franchiseOptions}
+                                            value={selectedFranchise}
+                                            onChange={handleFranchiseChange}
+                                            placeholder="Choose organization/franchise"
+                                            className="mt-2"
+                                            classNamePrefix="react-select"
+                                            isClearable={true}
+                                            styles={{
+                                                control: (base, state) => ({
+                                                    ...base,
+                                                    borderRadius: "1.5rem",
+                                                    borderColor: state.isFocused ? "#ccc" : "#E5E7EB",
+                                                    boxShadow: "none",
+                                                    padding: "4px 8px",
+                                                    minHeight: "48px",
+                                                }),
+                                                placeholder: (base) => ({
+                                                    ...base,
+                                                    fontWeight: 600,
+                                                }),
+                                                dropdownIndicator: (base) => ({
+                                                    ...base,
+                                                    color: "#9CA3AF",
+                                                }),
+                                                indicatorSeparator: () => ({
+                                                    display: "none",
+                                                }),
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="mb-5">
                                 <label htmlFor="" className="text-base font-semibold">Search Student</label>
                                 <div className="relative mt-2 ">
                                     <input
@@ -632,14 +738,17 @@ const TrialLists = () => {
                                     <FiSearch className="absolute left-3 top-4 text-[20px]" />
                                 </div>
                             </div>
+
                             <div className="mb-5">
                                 <label htmlFor="" className="text-base font-semibold">Venue</label>
                                 <div className="relative mt-2 ">
                                     <Select
-                                        options={myVenues.map((venue) => ({
-                                            label: venue?.name, // or `${venue.name} (${venue.area})`
-                                            value: venue?.id,
-                                        }))}
+                                        options={myVenues
+                                            .filter(venue => !selectedFranchise || venue?.adminId === selectedFranchise.value || venue?.admins?.id === selectedFranchise.value)
+                                            .map((venue) => ({
+                                                label: venue?.name,
+                                                value: venue?.id,
+                                            }))}
                                         value={selectedVenue}
                                         onChange={(venue) => setSelectedVenue(venue)}
                                         placeholder="Choose venue"
@@ -660,9 +769,34 @@ const TrialLists = () => {
                                             indicatorSeparator: () => ({ display: "none" }),
                                         }}
                                     />
+                                </div>
+                            </div>
 
-
-
+                            <div className="mb-5">
+                                <label htmlFor="" className="text-base font-semibold">Age Group</label>
+                                <div className="relative mt-2 ">
+                                    <Select
+                                        options={ageGroupOptions}
+                                        value={selectedAgeGroup}
+                                        onChange={(val) => setSelectedAgeGroup(val)}
+                                        placeholder="Choose age group"
+                                        className="mt-2"
+                                        classNamePrefix="react-select"
+                                        isClearable={true}
+                                        styles={{
+                                            control: (base, state) => ({
+                                                ...base,
+                                                borderRadius: "1.5rem",
+                                                borderColor: state.isFocused ? "#ccc" : "#E5E7EB",
+                                                boxShadow: "none",
+                                                padding: "4px 8px",
+                                                minHeight: "48px",
+                                            }),
+                                            placeholder: (base) => ({ ...base, fontWeight: 600 }),
+                                            dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
+                                            indicatorSeparator: () => ({ display: "none" }),
+                                        }}
+                                    />
                                 </div>
                             </div>
                         </div>

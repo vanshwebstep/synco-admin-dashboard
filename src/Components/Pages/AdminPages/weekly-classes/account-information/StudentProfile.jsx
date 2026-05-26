@@ -1330,12 +1330,12 @@ const StudentProfile = ({ profile }) => {
                 {/* Top Header */}
                 <div className="flex justify-between items-start">
                   <h2 className="text-[20px] font-semibold">Student Information</h2>
-                  {/* <button
+                  <button
                     onClick={() => toggleEditStudent(index)}
                     className="text-gray-600 hover:text-blue-600"
                   >
                     {editingIndex === index ? <FaSave /> : <FaEdit />}
-                  </button> */}
+                  </button>
                 </div>
 
                 {/* Row 1 */}

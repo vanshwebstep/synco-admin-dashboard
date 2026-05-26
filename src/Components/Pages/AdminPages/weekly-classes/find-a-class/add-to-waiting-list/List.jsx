@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import Select from "react-select";
 import { Check, Filter, Loader2, X } from "lucide-react";
 import { useBookFreeTrial } from '../../../contexts/BookAFreeTrialContext';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Loader from '../../../contexts/Loader';
 import { usePermission } from '../../../Common/permission';
 import * as XLSX from "xlsx";
@@ -34,7 +34,40 @@ const WaitingList = () => {
 
 
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
 
+    const [selectedFranchise, setSelectedFranchise] = useState(null);
+    const [selectedAgeGroup, setSelectedAgeGroup] = useState(null);
+
+    const storedFranchises = localStorage.getItem("franchisesInfo");
+    const franchises = storedFranchises && storedFranchises !== "undefined" ? JSON.parse(storedFranchises) : [];
+    const franchiseOptions = franchises.map(f => ({
+        label: `${f.firstName} ${f.lastName || ""}`.trim() || f.email,
+        value: f.id
+    }));
+
+    const ageGroupOptions = [
+        { label: "Under 5 Years", value: "under_5" },
+        { label: "5-7 Years", value: "5_7" },
+        { label: "8-10 Years", value: "8_10" },
+        { label: "11-13 Years", value: "11_13" },
+        { label: "14-16 Years", value: "14_16" },
+        { label: "17+ Years", value: "17_plus" }
+    ];
+
+    const handleFranchiseChange = (franchise) => {
+        setSelectedFranchise(franchise);
+        setSelectedVenue(null);
+        if (franchise) {
+            searchParams.set("franchiseId", franchise.value);
+            setSearchParams(searchParams);
+        } else {
+            searchParams.delete("franchiseId");
+            setSearchParams(searchParams);
+        }
+    };
+
+    const franchiseId = searchParams.get("franchiseId");
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -56,7 +89,7 @@ const WaitingList = () => {
         };
 
         fetchData();
-    }, [selectedVenue, status, fetchAddtoWaitingList]);
+    }, [selectedVenue, status, franchiseId, fetchAddtoWaitingList]);
 
     const [showAgentPopup, setShowAgentPopup] = useState(null);
     const [agentsLoading, setAgentsLoading] = useState(null);
@@ -648,6 +681,36 @@ const WaitingList = () => {
             ),
         },
     ];
+
+    const filteredWaitingList = (bookFreeTrials || []).filter(item => {
+        // 1. Organization / Franchise Filter (Removed, handled by API)
+
+        // 2. Venue Filter
+        if (selectedVenue) {
+            if (item?.venue?.id !== selectedVenue.value) return false;
+        }
+
+        // 3. Age Group Filter
+        if (selectedAgeGroup) {
+            const hasStudentInAgeGroup = item.students?.some(student => {
+                const age = Number(student.age);
+                if (isNaN(age)) return false;
+                switch (selectedAgeGroup.value) {
+                    case "under_5": return age < 5;
+                    case "5_7": return age >= 5 && age <= 7;
+                    case "8_10": return age >= 8 && age <= 10;
+                    case "11_13": return age >= 11 && age <= 13;
+                    case "14_16": return age >= 14 && age <= 16;
+                    case "17_plus": return age >= 17;
+                    default: return true;
+                }
+            });
+            if (!hasStudentInAgeGroup) return false;
+        }
+
+        return true;
+    });
+
     if (loading) return <Loader />;
     return (
         <div className="pt-1 bg-gray-50 min-h-screen">
@@ -671,7 +734,7 @@ const WaitingList = () => {
 
                     <DynamicTable
                         columns={waitingListColumns}
-                        data={bookFreeTrials} // 👈 still the same data source
+                        data={filteredWaitingList} // 👈 still the same data source
                         selectedIds={selectedStudents}
                         setSelectedStudents={setSelectedStudents}
                         from={'waitingList'}
@@ -696,7 +759,36 @@ const WaitingList = () => {
                         <div className="md:w-4/12 md:mt-0 mt-4 text-base space-y-5">
                             <div className="space-y-3 bg-white p-6 rounded-3xl shadow-sm ">
                                 <h2 className="text-[24px] font-semibold">Search Now </h2>
-                                <div className="">
+                                {JSON.parse(localStorage.getItem("adminInfo"))?.role?.role === "Super Admin" && (
+                                    <div className="mb-5">
+                                        <label htmlFor="" className="text-base font-semibold">Organization / Franchise</label>
+                                        <div className="relative mt-2 ">
+                                            <Select
+                                                options={franchiseOptions}
+                                                value={selectedFranchise}
+                                                onChange={handleFranchiseChange}
+                                                placeholder="Choose organization/franchise"
+                                                className="mt-2"
+                                                classNamePrefix="react-select"
+                                                isClearable={true}
+                                                styles={{
+                                                    control: (base, state) => ({
+                                                        ...base,
+                                                        borderRadius: "1.5rem",
+                                                        borderColor: state.isFocused ? "#ccc" : "#E5E7EB",
+                                                        boxShadow: "none",
+                                                        padding: "4px 8px",
+                                                        minHeight: "48px",
+                                                    }),
+                                                    placeholder: (base) => ({ ...base, fontWeight: 600 }),
+                                                    dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
+                                                    indicatorSeparator: () => ({ display: "none" }),
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                                <div className="mb-5">
                                     <label htmlFor="" className="text-base font-semibold">Search Student</label>
                                     <div className="relative mt-2">
                                         <input
@@ -713,10 +805,12 @@ const WaitingList = () => {
                                     <label htmlFor="" className="text-base font-semibold">Venue</label>
                                     <div className="relative mt-2 ">
                                         <Select
-                                            options={myVenues.map((venue) => ({
-                                                label: venue?.name, // or `${venue.name} (${venue.area})`
-                                                value: venue?.id,
-                                            }))}
+                                            options={myVenues
+                                                .filter(venue => !selectedFranchise || venue?.adminId === selectedFranchise.value || venue?.admins?.id === selectedFranchise.value)
+                                                .map((venue) => ({
+                                                    label: venue?.name,
+                                                    value: venue?.id,
+                                                }))}
                                             value={selectedVenue}
                                             onChange={(venue) => setSelectedVenue(venue)}
                                             placeholder="Choose venue"
@@ -737,10 +831,34 @@ const WaitingList = () => {
                                                 indicatorSeparator: () => ({ display: "none" }),
                                             }}
                                         />
+                                    </div>
+                                </div>
 
-
-
-
+                                <div className="mb-5">
+                                    <label htmlFor="" className="text-base font-semibold">Age Group</label>
+                                    <div className="relative mt-2 ">
+                                        <Select
+                                            options={ageGroupOptions}
+                                            value={selectedAgeGroup}
+                                            onChange={(val) => setSelectedAgeGroup(val)}
+                                            placeholder="Choose age group"
+                                            className="mt-2"
+                                            classNamePrefix="react-select"
+                                            isClearable={true}
+                                            styles={{
+                                                control: (base, state) => ({
+                                                    ...base,
+                                                    borderRadius: "1.5rem",
+                                                    borderColor: state.isFocused ? "#ccc" : "#E5E7EB",
+                                                    boxShadow: "none",
+                                                    padding: "4px 8px",
+                                                    minHeight: "48px",
+                                                }),
+                                                placeholder: (base) => ({ ...base, fontWeight: 600 }),
+                                                dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
+                                                indicatorSeparator: () => ({ display: "none" }),
+                                            }}
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -1097,83 +1215,83 @@ const WaitingList = () => {
             </div>
 
             {showAgentPopup && (
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[99] p-4" onClick={() => setShowAgentPopup(false)}>
-                        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-8 animate-in fade-in zoom-in duration-200" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-[28px] font-bold text-[#282829]">Select agent</h3>
-                                <button
-                                    onClick={() => setShowAgentPopup(false)}
-                                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                                >
-                                    <X size={24} />
-                                </button>
-                            </div>
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[99] p-4" onClick={() => setShowAgentPopup(false)}>
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-8 animate-in fade-in zoom-in duration-200" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-[28px] font-bold text-[#282829]">Select agent</h3>
+                            <button
+                                onClick={() => setShowAgentPopup(false)}
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
 
-                            <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
-                                {agentsLoading ? (
-                                    <div className="flex justify-center py-10">
-                                        <Loader2 className="text-[#237FEA] animate-spin" size={32} />
-                                    </div>
-                                ) : agentsData.length === 0 ? (
-                                    <p className="text-center text-gray-500 py-4 font-medium">No agents available.</p>
-                                ) : (
-                                    agentsData.map((agent) => {
-                                        const isSelected = selectedAdminId === agent.id;
-                                        return (
-                                            <div
-                                                key={agent.id}
-                                                className="flex items-center gap-4 py-2 cursor-pointer group"
-                                                onClick={() => {
-                                                    if (isSelected) {
-                                                        setSelectedAdminId(null);
-                                                    } else {
-                                                        setSelectedAdminId(agent.id);
-                                                    }
-                                                }}
-                                            >
-                                                <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-[#237FEA] border-[#237FEA]' : 'border-gray-200 group-hover:border-[#237FEA]'
-                                                    }`}>
-                                                    {isSelected && <Check size={16} className="text-white" strokeWidth={4} />}
-                                                </div>
-
-                                                <div className="relative">
-                                                    <img
-                                                        src={agent.profilePicture || agent.image || (agent.profile ? `${API_BASE_URL}${agent.profile}` : "/images/avatar-placeholder.png")}
-                                                        alt=""
-                                                        className="w-14 h-14 rounded-full object-cover border-2 border-[#E6F7FB]"
-                                                        onError={(e) => e.target.src = "https://ui-avatars.com/api/?name=" + agent.firstName + "+" + agent.lastName + "&background=E6F7FB&color=237FEA"}
-                                                    />
-                                                    <div className="absolute inset-0 rounded-full border-2 border-yellow-400/30 pointer-events-none"></div>
-                                                </div>
-
-                                                <span className="text-[20px] font-medium text-[#282829]">
-                                                    {agent.firstName} {agent.lastName}
-                                                </span>
+                        <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
+                            {agentsLoading ? (
+                                <div className="flex justify-center py-10">
+                                    <Loader2 className="text-[#237FEA] animate-spin" size={32} />
+                                </div>
+                            ) : agentsData.length === 0 ? (
+                                <p className="text-center text-gray-500 py-4 font-medium">No agents available.</p>
+                            ) : (
+                                agentsData.map((agent) => {
+                                    const isSelected = selectedAdminId === agent.id;
+                                    return (
+                                        <div
+                                            key={agent.id}
+                                            className="flex items-center gap-4 py-2 cursor-pointer group"
+                                            onClick={() => {
+                                                if (isSelected) {
+                                                    setSelectedAdminId(null);
+                                                } else {
+                                                    setSelectedAdminId(agent.id);
+                                                }
+                                            }}
+                                        >
+                                            <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-[#237FEA] border-[#237FEA]' : 'border-gray-200 group-hover:border-[#237FEA]'
+                                                }`}>
+                                                {isSelected && <Check size={16} className="text-white" strokeWidth={4} />}
                                             </div>
-                                        );
-                                    })
-                                )}
-                            </div>
 
-                            <div className="mt-8">
-                                <button
-                                    onClick={() => handleAgentSubmit(selectedAdminId)}
-                                    disabled={agentsLoading || !selectedAdminId}
-                                    className="w-full py-4 bg-[#237FEA] text-white font-bold rounded-2xl hover:bg-[#1a6ed8] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-blue-100 text-lg"
-                                >
-                                    {agentsLoading ? (
-                                        <>
-                                            <Loader2 size={24} className="animate-spin" />
-                                            Assigning...
-                                        </>
-                                    ) : (
-                                        'Assign'
-                                    )}
-                                </button>
-                            </div>
+                                            <div className="relative">
+                                                <img
+                                                    src={agent.profilePicture || agent.image || (agent.profile ? `${API_BASE_URL}${agent.profile}` : "/images/avatar-placeholder.png")}
+                                                    alt=""
+                                                    className="w-14 h-14 rounded-full object-cover border-2 border-[#E6F7FB]"
+                                                    onError={(e) => e.target.src = "https://ui-avatars.com/api/?name=" + agent.firstName + "+" + agent.lastName + "&background=E6F7FB&color=237FEA"}
+                                                />
+                                                <div className="absolute inset-0 rounded-full border-2 border-yellow-400/30 pointer-events-none"></div>
+                                            </div>
+
+                                            <span className="text-[20px] font-medium text-[#282829]">
+                                                {agent.firstName} {agent.lastName}
+                                            </span>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+
+                        <div className="mt-8">
+                            <button
+                                onClick={() => handleAgentSubmit(selectedAdminId)}
+                                disabled={agentsLoading || !selectedAdminId}
+                                className="w-full py-4 bg-[#237FEA] text-white font-bold rounded-2xl hover:bg-[#1a6ed8] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-blue-100 text-lg"
+                            >
+                                {agentsLoading ? (
+                                    <>
+                                        <Loader2 size={24} className="animate-spin" />
+                                        Assigning...
+                                    </>
+                                ) : (
+                                    'Assign'
+                                )}
+                            </button>
                         </div>
                     </div>
-                )}
+                </div>
+            )}
 
         </div>
     )

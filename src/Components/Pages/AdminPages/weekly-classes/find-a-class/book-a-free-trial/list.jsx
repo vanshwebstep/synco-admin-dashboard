@@ -154,7 +154,7 @@ const List = () => {
         { value: "To help my child make friends and build social skills", label: "To help my child make friends and build social skills" },
         { value: "To keep my child active and healthy", label: "To keep my child active and healthy" },
         { value: "High-quality coaching in a fun, positive environment", label: "High-quality coaching in a fun, positive environment" },
-        { value: "Other", label: "Other" },
+        
 
     ];
     const handleRemoveStudent = (indexToRemove) => {
@@ -1227,7 +1227,7 @@ const List = () => {
     const genderOptions = [
         { value: "male", label: "Male" },
         { value: "female", label: "Female" },
-        { value: "other", label: "Other" },
+        
     ];
     const sessionDates = singleClassSchedulesOnly?.venue?.termGroups?.flatMap(group =>
         group.terms.flatMap(term =>

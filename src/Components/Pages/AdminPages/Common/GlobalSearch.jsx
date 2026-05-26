@@ -15,6 +15,7 @@ const GlobalSearch = ({ onResultClick }) => {
   const wrapRef = useRef(null);
   const inputRef = useRef(null);
   const debounceRef = useRef(null);
+  const isSelectingRef = useRef(false);
 
   const navigate = useNavigate();
 
@@ -41,6 +42,11 @@ const GlobalSearch = ({ onResultClick }) => {
   useEffect(() => {
     const q = searchQuery?.trim();
 
+    if (isSelectingRef.current) {
+      isSelectingRef.current = false;
+      return;
+    }
+
     if (!q || q.length < 2) {
       setResults([]);
       setOpen(false);
@@ -54,7 +60,7 @@ const GlobalSearch = ({ onResultClick }) => {
     }, 400);
 
     return () => clearTimeout(debounceRef.current);
-  }, []);
+  }, [searchQuery]);
 
   // ─────────────────────────────────────────────────────────────
   // API Call
@@ -236,6 +242,7 @@ const GlobalSearch = ({ onResultClick }) => {
     const studentName = getStudentName(row);
     const parentName = getParentName(row);
 
+    isSelectingRef.current = true;
     setSearchQuery(studentName || parentName);
 
     setOpen(false);

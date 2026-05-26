@@ -1297,7 +1297,7 @@ const List = () => {
         { value: "To help my child make friends and build social skills", label: "To help my child make friends and build social skills" },
         { value: "To keep my child active and healthy", label: "To keep my child active and healthy" },
         { value: "High-quality coaching in a fun, positive environment", label: "High-quality coaching in a fun, positive environment" },
-        { value: "Other", label: "Other" },
+
     ];
 
     const hearOptions = [
@@ -1396,7 +1396,7 @@ const List = () => {
     const genderOptions = [
         { value: "male", label: "Male" },
         { value: "female", label: "Female" },
-        { value: "other", label: "Other" },
+
     ];
 
     const sessionDates = singleClassSchedulesOnly?.venue?.termGroups?.flatMap(group =>
@@ -2469,6 +2469,37 @@ const List = () => {
                                                     </span>
                                                 </p>
                                                 <p><span className="font-medium poppins text-[#34353B]" style={{ fontSize: "14px" }}>Start Date:</span> {formatDate(selectedDate)}</p>
+                                                {/* First Payment Date — backend logic: today + 10 working days, then next 1st */}
+                                                {(() => {
+                                                    const addWorkingDays = (date, days) => {
+                                                        const result = new Date(date);
+                                                        let added = 0;
+                                                        while (added < days) {
+                                                            result.setDate(result.getDate() + 1);
+                                                            const day = result.getDay();
+                                                            if (day !== 0 && day !== 6) added++; // skip Saturday (6) and Sunday (0)
+                                                        }
+                                                        return result;
+                                                    };
+
+                                                    const after10WorkingDays = addWorkingDays(new Date(), 10);
+
+                                                    // Next 1st after that date
+                                                    let firstPaymentDate = new Date(
+                                                        after10WorkingDays.getFullYear(),
+                                                        after10WorkingDays.getMonth() + 1, // next month
+                                                        1
+                                                    );
+
+                                                    return (
+                                                        <p>
+                                                            <span className="font-medium poppins text-[#34353B]" style={{ fontSize: "14px" }}>
+                                                                First Payment Date:
+                                                            </span>{" "}
+                                                            {formatDate(firstPaymentDate)}
+                                                        </p>
+                                                    );
+                                                })()}
                                             </div>
 
 
@@ -2579,12 +2610,12 @@ const List = () => {
                                                 Your regular Direct Debit payments will be collected from this account starting from the 1st of next month.
                                             </p>
 
-                                            {/* Issue #47: Visible payment method indicator */}
-
-
                                             <label className="block mb-4">
                                                 <span className="block text-gray-700 text-[14px] mb-1 poppins">Email address</span>
-                                                <input type="email" value={payment.email || parents[0].parentEmail} onChange={(e) => setPayment({ ...payment, email: e.target.value })}
+                                                <input
+                                                    type="email"
+                                                    value={payment.email || parents[0].parentEmail}
+                                                    onChange={(e) => setPayment({ ...payment, email: e.target.value })}
                                                     className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
                                                 />
                                             </label>
@@ -2593,42 +2624,52 @@ const List = () => {
                                                 Payment Method: <span className="font-semibold poppins">{isFranchisee ? "GoCardless" : "Access Pay Suite"}</span>
                                             </p>
 
-                                            {/* GoCardless (Franchisee) */}
-                                            {isFranchisee && (
-                                                <div className="space-y-4">
-                                                    <label className="block">
-                                                        <span className="block poppins text-gray-700 text-[14px] mb-1">Account Holder Name</span>
-                                                        <input type="text" value={payment.account_holder_name}
-                                                            onChange={(e) => {
-                                                                const fullName = e.target.value;
-                                                                const parts = fullName.trim().split(" ");
-                                                                setPayment({ ...payment, account_holder_name: fullName, firstName: parts[0] || "", lastName: parts.slice(1).join(" ") });
-                                                            }}
+                                            {/* Bank Details — consistent order for both flows */}
+                                            <div className="space-y-4">
+                                                {/* 1. Account Holder Name */}
+                                                <label className="block">
+                                                    <span className="block poppins text-gray-700 text-[14px] mb-1">Account Holder Name</span>
+                                                    <input
+                                                        type="text"
+                                                        value={payment.account_holder_name}
+                                                        onChange={(e) => {
+                                                            const fullName = e.target.value;
+                                                            const parts = fullName.trim().split(" ");
+                                                            setPayment({ ...payment, account_holder_name: fullName, firstName: parts[0] || "", lastName: parts.slice(1).join(" ") });
+                                                        }}
+                                                        className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
+                                                    />
+                                                </label>
+
+                                                {/* 2. Sort Code + Account Number — same order for both */}
+                                                <div className="md:flex gap-4">
+                                                    <label className="flex-1">
+                                                        <span className="block poppins text-gray-700 text-[14px] mb-1">Sort Code</span>
+                                                        <input
+                                                            type="text"
+                                                            value={payment.branch_code}
+                                                            onChange={(e) => setPayment({ ...payment, branch_code: e.target.value.replace(/\D/g, "") })}
                                                             className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
                                                         />
                                                     </label>
-                                                    <div className="md:flex gap-4">
-                                                        <label className="flex-1">
-                                                            <span className="block poppins text-gray-700 text-[14px] mb-1">Sort Code</span>
-                                                            <input type="text" value={payment.branch_code}
-                                                                onChange={(e) => setPayment({ ...payment, branch_code: e.target.value.replace(/\D/g, "") })}
-                                                                className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
-                                                            />
-                                                        </label>
-                                                        <label className="flex-1">
-                                                            <span className="block poppins text-gray-700 text-[14px] mb-1">Account Number</span>
-                                                            <input type="text" value={payment.account_number}
-                                                                onChange={(e) => setPayment({ ...payment, account_number: e.target.value.replace(/\D/g, "") })}
-                                                                className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
-                                                            />
-                                                        </label>
-                                                    </div>
+                                                    <label className="flex-1">
+                                                        <span className="block poppins text-gray-700 text-[14px] mb-1">Account Number</span>
+                                                        <input
+                                                            type="text"
+                                                            value={payment.account_number}
+                                                            onChange={(e) => setPayment({ ...payment, account_number: e.target.value.replace(/\D/g, "") })}
+                                                            className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
+                                                        />
+                                                    </label>
                                                 </div>
-                                            )}
+                                            </div>
 
-                                            <label className="block mt-2">
+                                            {/* 3. Address Fields — always after bank details */}
+                                            <label className="block mt-4">
                                                 <span className="block poppins text-gray-700 text-[14px] mb-1">Address Line 1</span>
-                                                <input type="text" value={payment.line1}
+                                                <input
+                                                    type="text"
+                                                    value={payment.line1}
                                                     onChange={(e) => setPayment({ ...payment, line1: e.target.value })}
                                                     className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
                                                 />
@@ -2636,61 +2677,39 @@ const List = () => {
                                             <div className="md:flex gap-4 mt-2">
                                                 <label className="flex-1">
                                                     <span className="block poppins text-gray-700 text-[14px] mb-1">City</span>
-                                                    <input type="text" value={payment.city}
+                                                    <input
+                                                        type="text"
+                                                        value={payment.city}
                                                         onChange={(e) => setPayment({ ...payment, city: e.target.value })}
                                                         className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
                                                     />
                                                 </label>
                                                 <label className="flex-1">
                                                     <span className="block poppins text-gray-700 text-[14px] mb-1">Postal Code</span>
-                                                    <input type="text" value={payment.postalCode}
+                                                    <input
+                                                        type="text"
+                                                        value={payment.postalCode}
                                                         onChange={(e) => setPayment({ ...payment, postalCode: e.target.value })}
                                                         className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
                                                     />
                                                 </label>
                                             </div>
 
-                                            {/* AccessPaySuite (Super-admin) */}
-                                            {!isFranchisee && (
-                                                <div className="space-y-4 mt-4">
-                                                    <label className="block">
-                                                        <span className="block poppins text-gray-700 text-[14px] mb-1">Account Holder Name</span>
-                                                        <input type="text" value={payment.account_holder_name}
-                                                            onChange={(e) => {
-                                                                const fullName = e.target.value;
-                                                                const parts = fullName.trim().split(" ");
-                                                                setPayment({ ...payment, account_holder_name: fullName, firstName: parts[0] || "", lastName: parts.slice(1).join(" ") });
-                                                            }}
-                                                            className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
-                                                        />
-                                                    </label>
-
-                                                    <label className="block">
-                                                        <span className="block poppins text-gray-700 text-[14px] mb-1">Account Number</span>
-                                                        <input type="text" value={payment.account_number}
-                                                            onChange={(e) => setPayment({ ...payment, account_number: e.target.value.replace(/\D/g, "") })}
-                                                            className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
-                                                        />
-                                                    </label>
-                                                    <label className="block">
-                                                        <span className="block poppins text-gray-700 text-[14px] mb-1">Sort Code</span>
-                                                        <input type="text" value={payment.branch_code}
-                                                            onChange={(e) => setPayment({ ...payment, branch_code: e.target.value.replace(/\D/g, "") })}
-                                                            className="w-full mainShadow bg-white rounded-[6px] px-4 py-2"
-                                                        />
-                                                    </label>
-                                                </div>
-                                            )}
-
+                                            {/* 4. Authorise Checkbox */}
                                             <label className="flex items-center gap-2 mt-4 mb-6 text-sm text-gray-700">
-                                                <input type="checkbox" checked={payment.authorise}
+                                                <input
+                                                    type="checkbox"
+                                                    checked={payment.authorise}
                                                     onChange={(e) => setPayment({ ...payment, authorise: e.target.checked })}
                                                 />
                                                 <span className="underline poppins">I can authorise Direct Debits on this account myself</span>
                                             </label>
 
+                                            {/* 5. Action Buttons */}
                                             <div className="flex justify-end">
-                                                <button onClick={() => setShowPopup(false)} type="button"
+                                                <button
+                                                    onClick={() => setShowPopup(false)}
+                                                    type="button"
                                                     className="flex items-center justify-center cursor-pointer gap-1 border-2 border-[#717073] mr-6 text-[#717073] px-12 text-[18px] py-2 rounded-lg font-semibold bg-none"
                                                 >Cancel</button>
                                                 <button
@@ -2719,79 +2738,135 @@ const List = () => {
                                                 Fill out your card details below to pay for the Starter Pack via Stripe. This payment goes directly to Head Office.
                                             </p>
 
-                                            {/* Issue #47: Stripe destination badge */}
-                                            {role == 'Super Admin' && (
+                                            {role === 'Super Admin' && (
                                                 <div className="mb-6 bg-green-50 border border-green-200 rounded-xl px-4 py-2 text-xs text-green-800 font-medium">
                                                     💳 Stripe/Shopify → Head Office &nbsp;·&nbsp; Amount: <strong>£{pricingBreakdown?.stripeAmount?.toFixed(2)}</strong>
                                                     {IS_SANDBOX && <span className="ml-2 text-orange-600">🧪 Sandbox</span>}
                                                 </div>
                                             )}
 
+                                            {/* 1. Name on Card */}
                                             <div className="mb-4">
-                                                <label className="block text-gray-700 poppins text-[14px] font-medium mb-1">Name on card<span className="text-red-500 ml-0.5">*</span></label>
-                                                <input type="text" value={nameOnCard} onChange={(e) => handleCheckoutChange("nameOnCard", e.target.value)}
-                                                    placeholder="Enter name on card" className={inputClass("nameOnCard")}
+                                                <label className="block text-gray-700 poppins text-[14px] font-medium mb-1">
+                                                    Name on card<span className="text-red-500 ml-0.5">*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={nameOnCard}
+                                                    onChange={(e) => handleCheckoutChange("nameOnCard", e.target.value)}
+                                                    placeholder="Enter name on card"
+                                                    className={inputClass("nameOnCard")}
                                                 />
                                                 {errors.nameOnCard && <span className="text-red-500 text-[12px] mt-1 block">{errors.nameOnCard}</span>}
                                             </div>
 
+                                            {/* 2. Card Number */}
                                             <div className="mb-4">
-                                                <label className="block text-gray-700 poppins text-[14px] font-medium mb-1">Card number<span className="text-red-500 ml-0.5">*</span></label>
-                                                <input type="text" value={cardNumber} onChange={(e) => handleCheckoutChange("cardNumber", e.target.value)}
-                                                    placeholder="1234 1234 1234 1234" maxLength={19} inputMode="numeric" className={inputClass("cardNumber")}
+                                                <label className="block text-gray-700 poppins text-[14px] font-medium mb-1">
+                                                    Card number<span className="text-red-500 ml-0.5">*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={cardNumber}
+                                                    onChange={(e) => handleCheckoutChange("cardNumber", e.target.value)}
+                                                    placeholder="1234 1234 1234 1234"
+                                                    maxLength={19}
+                                                    inputMode="numeric"
+                                                    className={inputClass("cardNumber")}
                                                 />
                                                 {errors.cardNumber && <span className="text-red-500 text-[12px] mt-1 block">{errors.cardNumber}</span>}
                                             </div>
 
+                                            {/* 3. Expiry + CVC side by side */}
                                             <div className="flex gap-4 mb-4">
                                                 <div className="flex-1">
-                                                    <label className="block text-gray-700 poppins text-[14px] font-medium mb-1">Expiration date<span className="text-red-500 ml-0.5">*</span></label>
-                                                    <input type="text" value={expiryDate} onChange={(e) => handleCheckoutChange("expiryDate", e.target.value)}
-                                                        placeholder="MM/YY" maxLength={5} inputMode="numeric" className={inputClass("expiryDate")}
+                                                    <label className="block text-gray-700 poppins text-[14px] font-medium mb-1">
+                                                        Expiration date<span className="text-red-500 ml-0.5">*</span>
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={expiryDate}
+                                                        onChange={(e) => handleCheckoutChange("expiryDate", e.target.value)}
+                                                        placeholder="MM/YY"
+                                                        maxLength={5}
+                                                        inputMode="numeric"
+                                                        className={inputClass("expiryDate")}
                                                     />
                                                     {errors.expiryDate && <span className="text-red-500 text-[12px] mt-1 block">{errors.expiryDate}</span>}
                                                 </div>
                                                 <div className="flex-1">
-                                                    <label className="block text-gray-700 poppins text-[14px] font-medium mb-1">CVC<span className="text-red-500 ml-0.5">*</span></label>
-                                                    <input type="text" value={cvc} onChange={(e) => handleCheckoutChange("cvc", e.target.value)}
-                                                        placeholder="CVC" maxLength={4} inputMode="numeric" className={inputClass("cvc")}
+                                                    <label className="block text-gray-700 poppins text-[14px] font-medium mb-1">
+                                                        CVC<span className="text-red-500 ml-0.5">*</span>
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={cvc}
+                                                        onChange={(e) => handleCheckoutChange("cvc", e.target.value)}
+                                                        placeholder="CVC"
+                                                        maxLength={4}
+                                                        inputMode="numeric"
+                                                        className={inputClass("cvc")}
                                                     />
                                                     {errors.cvc && <span className="text-red-500 text-[12px] mt-1 block">{errors.cvc}</span>}
                                                 </div>
                                             </div>
 
-                                            <div className="flex gap-4 mb-6">
-                                                <div className="flex-1">
-                                                    <label className="block text-gray-700 poppins text-[14px] font-medium mb-1">Country or region<span className="text-red-500 ml-0.5">*</span></label>
-                                                    <Select options={countryOptions} value={countryOptions.find(opt => opt.value === checkoutCountry)}
-                                                        onChange={(selectedOption) => handleCheckoutChange("checkoutCountry", selectedOption?.value)}
-                                                        styles={customSelectStyles} className="mt-2 mainShadow rounded-xl" classNamePrefix="react-select"
-                                                    />
-                                                    {errors.country && <span className="text-red-500 text-[12px] mt-1 block">{errors.country}</span>}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <label className="block text-gray-700 poppins text-[14px] font-medium mb-1">Postal Code<span className="text-red-500 ml-0.5">*</span></label>
-                                                    <input type="text" value={zipCode} onChange={(e) => handleCheckoutChange("zipCode", e.target.value)}
-                                                        placeholder="Enter Postal Code" className={inputClass("zipCode")}
-                                                    />
-                                                    {errors.zipCode && <span className="text-red-500 text-[12px] mt-1 block">{errors.zipCode}</span>}
-                                                </div>
+                                            {/* 4. Country — full width, consistent with step 1 address layout */}
+                                            <div className="mb-4">
+                                                <label className="block text-gray-700 poppins text-[14px] font-medium mb-1">
+                                                    Country or region<span className="text-red-500 ml-0.5">*</span>
+                                                </label>
+                                                <Select
+                                                    options={countryOptions}
+                                                    value={countryOptions.find(opt => opt.value === checkoutCountry)}
+                                                    onChange={(selectedOption) => handleCheckoutChange("checkoutCountry", selectedOption?.value)}
+                                                    styles={customSelectStyles}
+                                                    className="mt-2 mainShadow rounded-xl"
+                                                    classNamePrefix="react-select"
+                                                />
+                                                {errors.country && <span className="text-red-500 text-[12px] mt-1 block">{errors.country}</span>}
                                             </div>
 
-                                            {/* <p className="font-semibold text-[#34353B] poppins text-md">
-                                                Total to pay now <span className="float-right poppins text-blue-900" style={{ fontSize: "22px" }}>£{calculatedAmount?.toFixed(2)}</span>
-                                            </p> */}
+                                            {/* 5. Postal Code — full width, consistent with step 1 */}
+                                            <div className="mb-6">
+                                                <label className="block text-gray-700 poppins text-[14px] font-medium mb-1">
+                                                    Postal Code<span className="text-red-500 ml-0.5">*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={zipCode}
+                                                    onChange={(e) => handleCheckoutChange("zipCode", e.target.value)}
+                                                    placeholder="Enter Postal Code"
+                                                    className={inputClass("zipCode")}
+                                                />
+                                                {errors.zipCode && <span className="text-red-500 text-[12px] mt-1 block">{errors.zipCode}</span>}
+                                            </div>
 
-                                            <div className="flex justify-end">
-                                                <button onClick={() => { setShowPopup(false); setStep(1); }} type="button"
-                                                    className="mt-6 px-6 py-2 poppins rounded-[6px] bg-white-900 text-blue-900 mr-6 border-blue-900 border-2 font-semibold hover:bg-blue-800 hover:text-white"
-                                                >Cancel</button>
-                                                <button onClick={() => setStep(1)} type="button"
-                                                    className="mt-6 px-6 py-2 poppins rounded-[6px] bg-white-900 text-blue-900 mr-6 border-blue-900 border-2 font-semibold hover:bg-blue-800 hover:text-white"
-                                                >Back</button>
-                                                <button disabled={!isFormValid || isSubmitting} onClick={handleFinalSubmit}
-                                                    className={`mt-6 px-6 py-2 poppins rounded-[6px] bg-blue-900 text-white font-semibold ${!isFormValid || isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-800"}`}
+                                            {/* 6. Total to pay */}
+                                            <p className="font-semibold text-[#34353B] poppins text-md mb-2">
+                                                Total to pay now{" "}
+                                                <span className="float-right poppins text-blue-900" style={{ fontSize: "22px" }}>
+                                                    £{pricingBreakdown?.stripeAmount?.toFixed(2)}
+                                                </span>
+                                            </p>
+
+                                            {/* 7. Buttons — Cancel | Back | Complete Booking */}
+                                            <div className="flex justify-end mt-6">
+                                                <button
+                                                    onClick={() => setShowPopup(false)}
                                                     type="button"
+                                                    className="px-6 py-2 poppins rounded-[6px] bg-white text-[#717073] mr-4 border-2 border-[#717073] font-semibold hover:bg-gray-100"
+                                                >Cancel</button>
+                                                <button
+                                                    onClick={() => setStep(1)}
+                                                    type="button"
+                                                    className="px-6 py-2 poppins rounded-[6px] bg-white text-blue-900 mr-4 border-2 border-blue-900 font-semibold hover:bg-blue-800 hover:text-white"
+                                                >Back</button>
+                                                <button
+                                                    disabled={!isFormValid || isSubmitting}
+                                                    onClick={handleFinalSubmit}
+                                                    type="button"
+                                                    className={`px-6 py-2 poppins rounded-[6px] bg-blue-900 text-white font-semibold ${!isFormValid || isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-800"}`}
                                                 >
                                                     {isSubmitting ? "Processing..." : "Complete Booking"}
                                                 </button>

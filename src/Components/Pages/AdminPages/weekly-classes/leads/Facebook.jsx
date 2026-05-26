@@ -13,6 +13,7 @@ import Loader from "../../contexts/Loader";
 import PlanTabs from "../../weekly-classes/find-a-class/PlanTabs";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup, ZoomControl } from 'react-leaflet';
+import dayjs from "dayjs";
 
 
 import ResizeMap from "../../Common/ResizeMap";
@@ -545,14 +546,18 @@ const Facebook = () => {
                                 {/* Location Info */}
                                 <div className="flex border-r pr-5  justify-between items-center gap-4 border-gray-400 pb-4 md:w-[30%]">
                                   <div className="truncate">
-                                    <p className="text-lg font-semibold text-[#333] truncate">{venue?.area}</p>
+                                    <p className="text-lg font-semibold text-[#333] truncate">{venue?.name}</p>
                                     <p className="text-sm text-gray-500 mt-2">{venue?.distance} miles</p>
                                   </div>
                                   <div className="text-center">
                                     <p className="text-[14px] font-semibold text-[#384455] whitespace-nowrap">
-                                      1st Nov 2023 – 4th Nov 2023
-                                    </p>
-                                    <p className="text-xs text-[#717073] font-semibold mt-2">4 Days</p>
+      {dayjs(venue?.createdAt).format("D MMM YYYY")} –{" "}
+      {dayjs(venue?.updatedAt).format("D MMM YYYY")}
+    </p>
+
+    <p className="text-xs text-[#717073] font-semibold mt-2">
+      {venue?.facility}
+    </p>
                                   </div>
                                 </div>
 
@@ -568,7 +573,7 @@ const Facebook = () => {
                                           className="flex items-center gap-4 py-3 border-b border-[#F0EFF3] last:border-0"
                                         >
                                           {/* Class name + level */}
-                                          <div className="min-w-[130px]">
+                                          <div className="min-w-[140px]">
                                             <p className="font-bold text-[#1A1A2E] text-sm leading-tight">
                                               Class {idx + 1}
                                             </p>
@@ -576,13 +581,10 @@ const Facebook = () => {
                                             <p className="text-xs text-[#717073] mt-0.5">{cls.className}</p>
                                           </div>
 
-                                          {/* Age range */}
-                                          <div className="min-w-[80px]">
-                                            <p className="text-sm text-[#384455] font-semibold">{cls.ageRange || '—'}</p>
-                                          </div>
+                                     
 
                                           {/* Day */}
-                                          <div className="min-w-[70px]">
+                                          <div className="min-w-[80px]">
                                             <p className="text-sm text-[#384455] font-semibold capitalize">{cls.day}</p>
                                           </div>
 

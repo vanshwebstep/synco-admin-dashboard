@@ -295,8 +295,9 @@ const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpe
         setActiveAccount,
         setFranchisesInfo,
       });
-      navigate('/')
-      window.location.reload();
+      
+      // Dispatch custom event to notify other contexts/components to reload in-place
+      window.dispatchEvent(new Event("accountSwitched"));
 
 
     } catch (error) {

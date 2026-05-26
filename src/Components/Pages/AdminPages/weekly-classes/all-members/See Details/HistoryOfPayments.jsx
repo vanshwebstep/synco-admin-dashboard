@@ -558,11 +558,26 @@ const HistoryOfPayments = ({ stateData }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-300">
-            {stateData?.payments?.filter(p => p.paymentStatus === "paid").length > 0 ? (
+            {stateData?.payments?.filter((payment, index, self) => {
+              if (payment.paymentCategory === "starter_pack") {
+                return payment.paymentStatus === "paid";
+              }
+              if (payment.paymentCategory === "recurring" || payment.paymentCategory === "pro_rata") {
+                return index === self.findIndex(p => p.paymentCategory === payment.paymentCategory);
+              }
+              return false;
+            }).length > 0 ? (
               stateData.payments
-                .filter(payment => payment.paymentStatus === "paid")
+                .filter((payment, index, self) => {
+                  if (payment.paymentCategory === "starter_pack") {
+                    return payment.paymentStatus === "paid";
+                  }
+                  if (payment.paymentCategory === "recurring" || payment.paymentCategory === "pro_rata") {
+                    return index === self.findIndex(p => p.paymentCategory === payment.paymentCategory);
+                  }
+                  return false;
+                })
                 .map((payment, index) => {
-                  console.log('stateData.payments', stateData.payments);
                   const isFailed =
                     payment.paymentStatus === "failed" || payment.paymentStatus === "cancelled";
 
@@ -582,7 +597,8 @@ const HistoryOfPayments = ({ stateData }) => {
                               <button className="text-[#F04438] text-sm font-medium">
                                 Retry Payment
                               </button>
-                            ) : payment.paymentStatus === "pending" ? (
+                            ) : payment.paymentStatus === "pending" ||
+                              payment.paymentStatus === "pending_submission" ? (
                               <span className="text-yellow-500 text-sm font-semibold">
                                 Payment Pending
                               </span>

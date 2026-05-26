@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useEffect ,useState, useCallback } from "react";
 import { showSuccess, showError } from "../../../../utils/swalHelper";
 import { useNavigate } from "react-router-dom";
 
@@ -279,6 +279,18 @@ export const MemberProvider = ({ children }) => {
         }
     }, []);
 
+    useEffect(() => {
+        const handleAccountSwitched = () => {
+            fetchMembers();
+            fetchDashboard();
+            fetchRoles();
+            fetchPermission();
+        };
+        window.addEventListener("accountSwitched", handleAccountSwitched);
+        return () => {
+            window.removeEventListener("accountSwitched", handleAccountSwitched);
+        };
+    }, [fetchMembers, fetchDashboard, fetchRoles, fetchPermission]);
 
     return (
         <MemberContext.Provider value={{

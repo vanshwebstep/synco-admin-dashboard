@@ -493,12 +493,12 @@ const ParentProfile = ({ ParentProfile }) => {
                                 {/* Header + Pencil/Save */}
                                 <div className="flex justify-between items-start">
                                     <h2 className="text-[20px] font-semibold">Parent information</h2>
-                                    {/* <button
+                                    <button
                                         onClick={() => toggleEditParent(index)}
                                         className="text-gray-600 hover:text-blue-600"
                                     >
                                         {editingIndex === index ? <FaSave /> : <FaEdit />}
-                                    </button> */}
+                                    </button>
                                 </div>
 
                                 {/* First/Last Name */}
@@ -624,12 +624,12 @@ const ParentProfile = ({ ParentProfile }) => {
                         <div key={index} className="bg-white p-6 rounded-3xl shadow-sm space-y-6">
                             <div className="flex justify-between items-start">
                                 <h2 className="text-[20px] font-semibold">Emergency contact details</h2>
-                                {/* <button
+                                <button
                                     onClick={() => toggleEditEmergency(index)}
                                     className="text-gray-600 hover:text-blue-600"
                                 >
                                     {editingEmergency === index ? <FaSave /> : <FaEdit />}
-                                </button> */}
+                                </button>
                             </div>
 
                             <div className="flex items-center gap-2">

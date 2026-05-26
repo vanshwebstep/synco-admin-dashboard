@@ -306,6 +306,27 @@ body#tinymce {
   /* Firefox */
 }
 
+/* Custom non-blinking, layout-stable scrollbar for the navigation sidebar */
+.sidebar-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.sidebar-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 9999px;
+}
+.sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+}
+.sidebar-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #374151 transparent;
+  scrollbar-gutter: stable;
+}
+
 button {
   cursor: pointer;
 }

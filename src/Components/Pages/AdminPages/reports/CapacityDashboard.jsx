@@ -32,6 +32,14 @@ const CapacityDashboard = () => {
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const [membersData, setMembersData] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [selectedFranchise, setSelectedFranchise] = useState(null);
+    const storedFranchises = localStorage.getItem('franchisesInfo');
+    const franchises = storedFranchises && storedFranchises !== 'undefined' ? JSON.parse(storedFranchises) : [];
+    const franchiseOptions = franchises.map(f => ({
+        label: (f.firstName + ' ' + (f.lastName || '')).trim() || f.email,
+        value: f.id
+    }));
+
 
     const venueOptions = [
         { value: "all", label: "All venues" },
@@ -59,7 +67,7 @@ const CapacityDashboard = () => {
         { label: "Acton", value: 45 },
         { label: "Other", value: 10 },
     ];
-   
+
 
     const stats = [
         {
@@ -255,7 +263,15 @@ const CapacityDashboard = () => {
     // Handle empty state
     const isEmpty = capacityData.length === 0;
 
+    useEffect(() => {
+        const handleAccountSwitched = () => {
+            if (typeof fetchData === 'function') fetchData();
+        };
+        window.addEventListener('accountSwitched', handleAccountSwitched);
+        return () => window.removeEventListener('accountSwitched', handleAccountSwitched);
+    }, [fetchData]);
     if (loading) return (<><Loader /></>)
+
 
     return (
         <div className="lg:p-6 bg-gray-50 min-h-screen">
@@ -263,12 +279,27 @@ const CapacityDashboard = () => {
             <div className="flex flex-wrap justify-between items-center mb-6">
                 <h1 className="text-3xl font-semibold text-gray-800 lg:mb-0 mb-4">Class Capacity</h1>
                 <div className="flex flex-wrap gap-3 items-center">
+                    {JSON.parse(localStorage.getItem("adminInfo"))?.role?.role === "Super Admin" && (
+                        <Select
+                            options={franchiseOptions}
+                            value={selectedFranchise}
+                            onChange={(selected) => {
+                                setSelectedFranchise(selected);
+                                if (typeof handleFilterChange === 'function') handleFilterChange('franchiseId', selected?.value || '');
+                            }}
+                            placeholder='Organization / Franchise'
+                            styles={typeof customSelectStyles !== 'undefined' ? customSelectStyles : undefined}
+                            isClearable
+                            components={{ IndicatorSeparator: () => null }}
+                            className='md:w-50'
+                        />
+                    )}
                     <Select
                         options={
                             membersData?.allVenues
                                 ? [
                                     { value: "", label: "All venues" },
-                                    ...membersData.allVenues.map((v) => ({
+                                    ...membersData.allVenues.filter(v => !selectedFranchise || v.adminId === selectedFranchise.value || v.admins?.id === selectedFranchise.value).map((v) => ({
                                         value: v.id,
                                         label: v.name,
                                     })),
