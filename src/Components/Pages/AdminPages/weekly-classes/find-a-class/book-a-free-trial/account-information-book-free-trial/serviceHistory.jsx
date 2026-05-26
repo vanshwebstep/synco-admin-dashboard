@@ -30,6 +30,7 @@ const ServiceHistory = ({ serviceHistory }) => {
     bookedBy,
     status,
     createdAt,
+    source,
     students,
     classSchedule,
   } = serviceHistory;
@@ -149,7 +150,7 @@ const ServiceHistory = ({ serviceHistory }) => {
                         Booking Source
                       </div>
                       <div className="font-semibold text-[16px]  text-[#282829]">
-                        {bookedBy?.firstName} {bookedBy?.lastName}
+                          {source || `${bookedBy?.firstName} ${bookedBy?.lastName}`}
                       </div>
                     </div>
                     <div>

@@ -41,6 +41,7 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
   const {
     bookingId,
     bookedId,
+    source,
     bookedBy,
     paymentData,
     status,
@@ -288,14 +289,13 @@ const ServiceHistory = ({ serviceHistory, itemId, labels = {}, comesFrom }) => {
                           {labels.bookingSource || "Booking Source"}
                         </div>
                         <div className="font-semibold text-[16px]  text-[#282829]">
-                          {
-                            bookedBy?.firstName
-                              ? `${bookedBy.firstName} ${bookedBy?.lastName || ""}`
-                              : bookedByAdmin?.firstName
-                                ? `${bookedByAdmin.firstName} ${bookedByAdmin?.lastName || ""}`
-                                : paymentData?.firstName
-                                  ? `${paymentData.firstName} ${paymentData?.lastName || ""}`
-                                  : ""
+                          {source || (bookedBy?.firstName
+                            ? `${bookedBy.firstName} ${bookedBy?.lastName || ""}`
+                            : bookedByAdmin?.firstName
+                              ? `${bookedByAdmin.firstName} ${bookedByAdmin?.lastName || ""}`
+                              : paymentData?.firstName
+                                ? `${paymentData.firstName} ${paymentData?.lastName || ""}`
+                                : "")
                           }
 
                         </div>

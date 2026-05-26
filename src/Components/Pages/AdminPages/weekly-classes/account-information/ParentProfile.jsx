@@ -204,6 +204,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
 
     const studentsList = profile?.students || [];
     const bookedBy = profile?.bookedBy;
+    const source = profile?.source;
     const [dialCode2, setDialCode2] = useState("+44");
     const [country2, setCountry2] = useState("gb");
     const [transferVenue, setTransferVenue] = useState(false);
@@ -1938,7 +1939,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                                             <>
                                                                 <div className="border-t border-[#495362] py-5">
                                                                     <div className=" text-[20px] text-white">Booking Source</div>
-                                                                    <div className="text-[16px]  mt-1 text-gray-400"> {bookedBy?.firstName} {bookedBy?.lastName}</div>
+                                                                    <div className="text-[16px]  mt-1 text-gray-400"> {source || `${bookedBy?.firstName} ${bookedBy?.lastName}`}</div>
                                                                 </div>
                                                             </>
 

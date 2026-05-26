@@ -194,6 +194,7 @@ const StudentProfile = ({ StudentProfile }) => {
         bookingId,
         trialDate,
         bookedBy,
+        source,
         status,
         createdAt,
         venueId,
@@ -836,7 +837,7 @@ const StudentProfile = ({ StudentProfile }) => {
                                 <>
                                     <div className="border-t border-[#495362] py-5">
                                         <div className=" text-[20px] text-white">Booking Source</div>
-                                        <div className="text-[16px]  mt-1 text-gray-400"> {bookedBy?.firstName} {bookedBy?.lastName}</div>
+                                        <div className="text-[16px]  mt-1 text-gray-400"> {source || `${bookedBy?.firstName} ${bookedBy?.lastName}`}</div>
                                     </div>
                                 </>
 

@@ -184,6 +184,7 @@ const ParentProfile = ({ ParentProfile }) => {
         id,
         bookingId,
         trialDate,
+        source,
         bookedBy,
         status,
         createdAt,
@@ -836,7 +837,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                 <>
                                     <div className="border-t border-[#495362] py-5">
                                         <div className=" text-[20px] text-white">Booking Source</div>
-                                        <div className="text-[16px]  mt-1 text-gray-400"> {bookedBy?.firstName} {bookedBy?.lastName}</div>
+                                        <div className="text-[16px]  mt-1 text-gray-400"> {source || `${bookedBy?.firstName} ${bookedBy?.lastName}`}</div>
                                     </div>
                                 </>
 
@@ -1195,7 +1196,7 @@ const ParentProfile = ({ ParentProfile }) => {
                                         {transferData.selectedStudents.map((studentOption) => {
                                             const studentId = studentOption.value;
                                             const studentConfig = transferData.studentTransfers?.[studentId] || {};
-                                          const currentClass = `${studentOption.classSchedule?.className || "-"} ${studentOption.classSchedule?.level || studentOption.abilityLevel ? `(${studentOption.classSchedule?.level || studentOption.abilityLevel})` : ""}`;
+                                            const currentClass = `${studentOption.classSchedule?.className || "-"} ${studentOption.classSchedule?.level || studentOption.abilityLevel ? `(${studentOption.classSchedule?.level || studentOption.abilityLevel})` : ""}`;
                                             const currentVenue = studentOption.classSchedule?.venue?.name || "-";
                                             console.log('transferData', transferData)
                                             console.log('studentConfig', studentConfig)
