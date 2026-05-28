@@ -273,11 +273,11 @@ const SeeDetails = () => {
             description: paymentData.description,
             amount: Number(paymentData.amount),
             paymentMethod:
-  paymentSource === "stripe"
-    ? "card"
-    : paymentSource === "gocardless"
-    ? "bank"
-    : paymentSource,
+                paymentSource === "stripe"
+                    ? "card"
+                    : paymentSource === "gocardless"
+                        ? "bank"
+                        : paymentSource,
             paymentTiming,
             paymentDate: paymentTiming === "specific" ? paymentData.paymentDate : null,
             ...(paymentSource === "stripe" && {
@@ -337,25 +337,25 @@ const SeeDetails = () => {
                     </div>
                 </div>
 
-                <div className="flex items-start gap-2 md:gap-3">
-                    <button
-                        onClick={() => setActiveTab("Failed Payments")}
-                        className="bg-white border border-black flex items-center gap-2 text-black px-6 py-2 md:py-[12px] rounded-xl hover:bg-gray-100 text-[16px] font-medium transition shadow-sm"
-                    >
-                        See Failed Payments
-                    </button>
-                    <button className="bg-white border border-[#237FEA] flex items-center gap-2 text-[#237FEA] px-6 py-2 md:py-[12px] rounded-xl hover:bg-blue-50 text-[16px] font-medium transition shadow-sm">
-                        Add a subscription
-                    </button>
-                    {serviceType === 'membership' && (
+                {serviceType === 'membership' && (
+                    <div className="flex items-start gap-2 md:gap-3">
+                        <button
+                            onClick={() => setActiveTab("Failed Payments")}
+                            className="bg-white border border-black flex items-center gap-2 text-black px-6 py-2 md:py-[12px] rounded-xl hover:bg-gray-100 text-[16px] font-medium transition shadow-sm"
+                        >
+                            See Failed Payments
+                        </button>
+                        <button className="bg-white border border-[#237FEA] flex items-center gap-2 text-[#237FEA] px-6 py-2 md:py-[12px] rounded-xl hover:bg-blue-50 text-[16px] font-medium transition shadow-sm">
+                            Add a subscription
+                        </button>
                         <button
                             onClick={() => setShowPaymentModal(true)}
                             className="bg-[#237FEA] flex items-center gap-2 text-white px-6 py-2 md:py-[12px] rounded-xl hover:bg-blue-700 text-[16px] font-medium transition shadow-lg"
                         >
                             Create Payment
                         </button>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
 
             {/* ─── Create Payment Modal ─────────────────────────────────────────── */}

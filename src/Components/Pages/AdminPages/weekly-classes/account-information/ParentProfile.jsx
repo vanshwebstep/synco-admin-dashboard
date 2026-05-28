@@ -653,13 +653,13 @@ const ParentProfile = ({ profile: rawProfile }) => {
             gender: student.gender,
             medicalInformation: student.medicalInformation,
             parents: parents.map((p, pIndex) => ({ id: p.id ?? pIndex + 1, ...p })),
-           emergencyContacts: (Array.isArray(emergencyContacts)
-  ? emergencyContacts
-  : []
-).map((e, eIndex) => ({
-  id: e.id ?? eIndex + 1,
-  ...e,
-})),
+            emergencyContacts: (Array.isArray(emergencyContacts)
+                ? emergencyContacts
+                : []
+            ).map((e, eIndex) => ({
+                id: e.id ?? eIndex + 1,
+                ...e,
+            })),
         }));
 
     const toggleEditParent = (index) => {
@@ -670,7 +670,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
                 return;
             }
             setEditingIndex(null);
-            updateBookMembershipFamily(profile.bookingId, buildFamilyPayload());
+            updateBookMembershipFamily(profile.id, buildFamilyPayload());
         } else {
             setEditingIndex(index);
         }
@@ -686,7 +686,7 @@ const ParentProfile = ({ profile: rawProfile }) => {
     const toggleEditEmergency = (index) => {
         if (editingEmergency === index) {
             setEditingEmergency(null);
-            updateBookMembershipFamily(profile.bookingId, buildFamilyPayload());
+            updateBookMembershipFamily(profile.id, buildFamilyPayload());
         } else {
             setEditingEmergency(index);
         }
@@ -1939,8 +1939,11 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                                             <>
                                                                 <div className="border-t border-[#495362] py-5">
                                                                     <div className=" text-[20px] text-white">Booking Source</div>
-                                                                    <div className="text-[16px]  mt-1 text-gray-400"> {source || `${bookedBy?.firstName} ${bookedBy?.lastName}`}</div>
-                                                                </div>
+                                                                    <div className="text-[16px] mt-1 text-gray-400">
+                                                                        {source?.trim()
+                                                                            ? source
+                                                                            : `${bookedBy?.firstName ?? ""} ${bookedBy?.lastName ?? ""}`.trim() || "-"}
+                                                                    </div>                                                                </div>
                                                             </>
 
                                                         </div></>
@@ -2192,81 +2195,141 @@ const ParentProfile = ({ profile: rawProfile }) => {
                 }
 
 
-          
-             {addToWaitingList && isMembership && (
-                                    <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
-                                        <div className="bg-white rounded-2xl w-[541px] max-h-[90%] overflow-y-auto relative scrollbar-hide">
-                                            <button
-                                                className="absolute top-4 left-4 p-2"
-                                                onClick={() => setaddToWaitingList(false)}
-                                            >
-                                                <img src="/images/icons/cross.png" alt="Close" />
-                                            </button>
-                
-                                            <div className="text-center py-6 border-b border-gray-300">
-                                                <h2 className="font-semibold text-[24px]">Add to Waiting List Form</h2>
-                                            </div>
-                
-                                            <div className="space-y-4 px-6 pb-6 pt-4">
-                
-                                                {/* Select Student */}
-                                                <div>
-                                                    <label className="block text-[16px] font-semibold">Select Student</label>
-                                                    <Select
-                                                        value={waitingListData.selectedStudents}
-                                                        onChange={handleWaitingListStudentSelect}
-                                                        options={studentsList?.map((student) => ({
-                                                            value: student.id,
-                                                            label: student.studentFirstName + " " + student.studentLastName,
-                                                            classSchedule: student.classSchedule
-                                                        })) || []}
-                                                        placeholder="Select Student"
-                                                        isMulti
-                                                        className="rounded-lg mt-2"
-                                                        styles={{
-                                                            control: (base) => ({
-                                                                ...base,
-                                                                borderRadius: "0.7rem",
-                                                                boxShadow: "none",
-                                                                padding: "4px 8px",
-                                                                minHeight: "48px",
-                                                            }),
-                                                            placeholder: (base) => ({ ...base, fontWeight: 600 }),
-                                                            dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
-                                                            indicatorSeparator: () => ({ display: "none" }),
-                                                        }}
-                                                    />
-                                                </div>
-                
-                                                {/* Common Venue Selection */}
-                                                {waitingListData.selectedStudents.length > 0 && (
+
+                {addToWaitingList && isMembership && (
+                    <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
+                        <div className="bg-white rounded-2xl w-[541px] max-h-[90%] overflow-y-auto relative scrollbar-hide">
+                            <button
+                                className="absolute top-4 left-4 p-2"
+                                onClick={() => setaddToWaitingList(false)}
+                            >
+                                <img src="/images/icons/cross.png" alt="Close" />
+                            </button>
+
+                            <div className="text-center py-6 border-b border-gray-300">
+                                <h2 className="font-semibold text-[24px]">Add to Waiting List Form</h2>
+                            </div>
+
+                            <div className="space-y-4 px-6 pb-6 pt-4">
+
+                                {/* Select Student */}
+                                <div>
+                                    <label className="block text-[16px] font-semibold">Select Student</label>
+                                    <Select
+                                        value={waitingListData.selectedStudents}
+                                        onChange={handleWaitingListStudentSelect}
+                                        options={studentsList?.map((student) => ({
+                                            value: student.id,
+                                            label: student.studentFirstName + " " + student.studentLastName,
+                                            classSchedule: student.classSchedule
+                                        })) || []}
+                                        placeholder="Select Student"
+                                        isMulti
+                                        className="rounded-lg mt-2"
+                                        styles={{
+                                            control: (base) => ({
+                                                ...base,
+                                                borderRadius: "0.7rem",
+                                                boxShadow: "none",
+                                                padding: "4px 8px",
+                                                minHeight: "48px",
+                                            }),
+                                            placeholder: (base) => ({ ...base, fontWeight: 600 }),
+                                            dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
+                                            indicatorSeparator: () => ({ display: "none" }),
+                                        }}
+                                    />
+                                </div>
+
+                                {/* Common Venue Selection */}
+                                {waitingListData.selectedStudents.length > 0 && (
+                                    <div>
+                                        <label className="block text-[16px] font-semibold">Select New Venue</label>
+                                        <Select
+                                            value={
+                                                waitingListData.venueId
+                                                    ? venueOptionsnoCapacity.find(v => v.value === waitingListData.venueId)
+                                                    : null
+                                            }
+                                            onChange={(selected) => {
+                                                const newVenueId = selected?.value;
+                                                setWaitingListData(prev => {
+                                                    const updatedConfigs = { ...prev.studentConfigs };
+                                                    Object.keys(updatedConfigs).forEach(studentId => {
+                                                        updatedConfigs[studentId] = {
+                                                            ...updatedConfigs[studentId],
+                                                            classScheduleId: null
+                                                        };
+                                                    });
+                                                    return {
+                                                        ...prev,
+                                                        venueId: newVenueId,
+                                                        studentConfigs: updatedConfigs
+                                                    };
+                                                });
+                                            }}
+                                            options={venueOptionsnoCapacity}
+                                            placeholder="Select Venue"
+                                            className="rounded-lg mt-2"
+                                            styles={{
+                                                control: (base) => ({
+                                                    ...base,
+                                                    borderRadius: "0.7rem",
+                                                    boxShadow: "none",
+                                                    padding: "4px 8px",
+                                                    minHeight: "48px",
+                                                }),
+                                                placeholder: (base) => ({ ...base, fontWeight: 600 }),
+                                                dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
+                                                indicatorSeparator: () => ({ display: "none" }),
+                                            }}
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Per-Student Configuration */}
+                                {waitingListData.selectedStudents.length > 0 && (
+                                    <div className="space-y-6 border-t pt-4 mt-6">
+                                        {waitingListData.selectedStudents.map((studentOption) => {
+                                            const studentId = studentOption.value;
+                                            const config = waitingListData.studentConfigs?.[studentId] || {};
+                                            const currentClass = `${studentOption.classSchedule?.className || "-"} ${studentOption.classSchedule?.level || studentOption.abilityLevel ? `(${studentOption.classSchedule?.level || studentOption.abilityLevel})` : ""}`;
+                                            const selectedVenue = venueOptionsnoCapacity.find(v => v.value === waitingListData.venueId);
+                                            const classOptions = selectedVenue
+                                                ? selectedVenue.classes.map(cls => ({
+                                                    value: cls.id,
+                                                    label: `${cls.className} ${cls.level || cls.abilityLevel ? `(${cls.level || cls.abilityLevel})` : ""}`,
+                                                }))
+                                                : [];
+
+                                            return (
+                                                <div key={studentId} className="bg-gray-50 p-4 rounded-xl space-y-3 border border-gray-200">
+                                                    <h3 className="font-semibold capitalize text-lg text-gray-800 pb-2">
+                                                        {studentOption.label}
+                                                    </h3>
+
+                                                    {/* Current Class only — venue is common above */}
                                                     <div>
-                                                        <label className="block text-[16px] font-semibold">Select New Venue</label>
+                                                        <label className="block text-sm font-semibold mb-1">Current Class / Level</label>
+                                                        <input
+                                                            type="text"
+                                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
+                                                            value={currentClass}
+                                                            readOnly
+                                                        />
+                                                    </div>
+
+                                                    {/* Select New Class / Level */}
+                                                    <div>
+                                                        <label className="block text-[16px] font-semibold">Select New Class / Level</label>
                                                         <Select
-                                                            value={
-                                                                waitingListData.venueId
-                                                                    ? venueOptionsnoCapacity.find(v => v.value === waitingListData.venueId)
-                                                                    : null
+                                                            value={config.classScheduleId ? classOptions.find(c => c.value === config.classScheduleId) : null}
+                                                            onChange={(selected) =>
+                                                                handleWaitingListConfigChange(studentId, "classScheduleId", selected?.value)
                                                             }
-                                                            onChange={(selected) => {
-                                                                const newVenueId = selected?.value;
-                                                                setWaitingListData(prev => {
-                                                                    const updatedConfigs = { ...prev.studentConfigs };
-                                                                    Object.keys(updatedConfigs).forEach(studentId => {
-                                                                        updatedConfigs[studentId] = {
-                                                                            ...updatedConfigs[studentId],
-                                                                            classScheduleId: null
-                                                                        };
-                                                                    });
-                                                                    return {
-                                                                        ...prev,
-                                                                        venueId: newVenueId,
-                                                                        studentConfigs: updatedConfigs
-                                                                    };
-                                                                });
-                                                            }}
-                                                            options={venueOptionsnoCapacity}
-                                                            placeholder="Select Venue"
+                                                            options={classOptions}
+                                                            placeholder={waitingListData.venueId ? "Select Class" : "Select venue first"}
+                                                            isDisabled={!waitingListData.venueId}
                                                             className="rounded-lg mt-2"
                                                             styles={{
                                                                 control: (base) => ({
@@ -2282,209 +2345,149 @@ const ParentProfile = ({ profile: rawProfile }) => {
                                                             }}
                                                         />
                                                     </div>
-                                                )}
-                
-                                                {/* Per-Student Configuration */}
-                                                {waitingListData.selectedStudents.length > 0 && (
-                                                    <div className="space-y-6 border-t pt-4 mt-6">
-                                                        {waitingListData.selectedStudents.map((studentOption) => {
-                                                            const studentId = studentOption.value;
-                                                            const config = waitingListData.studentConfigs?.[studentId] || {};
-                                                            const currentClass = `${studentOption.classSchedule?.className || "-"} ${studentOption.classSchedule?.level || studentOption.abilityLevel ? `(${studentOption.classSchedule?.level || studentOption.abilityLevel})` : ""}`;
-                                                            const selectedVenue = venueOptionsnoCapacity.find(v => v.value === waitingListData.venueId);
-                                                            const classOptions = selectedVenue
-                                                                ? selectedVenue.classes.map(cls => ({
-                                                                    value: cls.id,
-                                                                    label: `${cls.className} ${cls.level || cls.abilityLevel ? `(${cls.level || cls.abilityLevel})` : ""}`,
-                                                                }))
-                                                                : [];
-                
-                                                            return (
-                                                                <div key={studentId} className="bg-gray-50 p-4 rounded-xl space-y-3 border border-gray-200">
-                                                                    <h3 className="font-semibold capitalize text-lg text-gray-800 pb-2">
-                                                                        {studentOption.label}
-                                                                    </h3>
-                
-                                                                    {/* Current Class only — venue is common above */}
-                                                                    <div>
-                                                                        <label className="block text-sm font-semibold mb-1">Current Class / Level</label>
-                                                                        <input
-                                                                            type="text"
-                                                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
-                                                                            value={currentClass}
-                                                                            readOnly
-                                                                        />
-                                                                    </div>
-                
-                                                                    {/* Select New Class / Level */}
-                                                                    <div>
-                                                                        <label className="block text-[16px] font-semibold">Select New Class / Level</label>
-                                                                        <Select
-                                                                            value={config.classScheduleId ? classOptions.find(c => c.value === config.classScheduleId) : null}
-                                                                            onChange={(selected) =>
-                                                                                handleWaitingListConfigChange(studentId, "classScheduleId", selected?.value)
-                                                                            }
-                                                                            options={classOptions}
-                                                                            placeholder={waitingListData.venueId ? "Select Class" : "Select venue first"}
-                                                                            isDisabled={!waitingListData.venueId}
-                                                                            className="rounded-lg mt-2"
-                                                                            styles={{
-                                                                                control: (base) => ({
-                                                                                    ...base,
-                                                                                    borderRadius: "0.7rem",
-                                                                                    boxShadow: "none",
-                                                                                    padding: "4px 8px",
-                                                                                    minHeight: "48px",
-                                                                                }),
-                                                                                placeholder: (base) => ({ ...base, fontWeight: 600 }),
-                                                                                dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
-                                                                                indicatorSeparator: () => ({ display: "none" }),
-                                                                            }}
-                                                                        />
-                                                                    </div>
-                
-                                                                    {/* Interest Level */}
-                                                                    <div>
-                                                                        <label className="block text-[16px] font-semibold mb-2">Interest Level</label>
-                                                                        <div className="flex gap-6">
-                                                                            {["Low", "Medium", "High"].map((level) => (
-                                                                                <label key={level} className="flex items-center gap-2 cursor-pointer">
-                                                                                    <input
-                                                                                        type="radio"
-                                                                                        name="interest"
-                                                                                        value={level}
-                                                                                        checked={waitingListData.interest === level}
-                                                                                        onChange={(e) =>
-                                                                                            setWaitingListData((prev) => ({
-                                                                                                ...prev,
-                                                                                                interest: e.target.value
-                                                                                            }))
-                                                                                        }
-                                                                                    />
-                                                                                    {level}
-                                                                                </label>
-                                                                            ))}
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        })}
+
+                                                    {/* Interest Level */}
+                                                    <div>
+                                                        <label className="block text-[16px] font-semibold mb-2">Interest Level</label>
+                                                        <div className="flex gap-6">
+                                                            {["Low", "Medium", "High"].map((level) => (
+                                                                <label key={level} className="flex items-center gap-2 cursor-pointer">
+                                                                    <input
+                                                                        type="radio"
+                                                                        name="interest"
+                                                                        value={level}
+                                                                        checked={waitingListData.interest === level}
+                                                                        onChange={(e) =>
+                                                                            setWaitingListData((prev) => ({
+                                                                                ...prev,
+                                                                                interest: e.target.value
+                                                                            }))
+                                                                        }
+                                                                    />
+                                                                    {level}
+                                                                </label>
+                                                            ))}
+                                                        </div>
                                                     </div>
-                                                )}
-                
-                                                {/* Preferred Start Date */}
-                                                <div>
-                                                    <label className="block text-[16px] font-semibold">Preferred Start Date (Optional)</label>
-                                                    <DatePicker
-                                                        minDate={addDays(new Date(), 1)}
-                                                        selected={waitingListData.startDate ? new Date(waitingListData.startDate) : null}
-                                                        onChange={(date) => handleDateChange(date, "startDate", setWaitingListData)}
-                                                        dateFormat="EEEE, dd MMMM yyyy"
-                                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                        withPortal
-                                                    />
                                                 </div>
-                
-                                                {/* Notes */}
-                                                <div>
-                                                    <label className="block text-[16px] font-semibold">Notes (Optional)</label>
-                                                    <textarea
-                                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
-                                                        rows={6}
-                                                        name="notes"
-                                                        value={waitingListData.notes}
-                                                        onChange={(e) => handleInputChange(e, setWaitingListData)}
-                                                    />
-                                                </div>
-                
-                                                {/* Submit Button */}
-                                                <div className="justify-end flex gap-4 pt-4">
-                                                    <button
-                                                        className="w-1/2 bg-[#12B76A] text-white rounded-xl py-3 text-[18px] font-semibold hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
-                                                        disabled={waitingListData.selectedStudents.length === 0}
-                                                        onClick={() => {
-                                                            if (waitingListData.selectedStudents.length === 0) {
-                                                                showWarning("Missing Information", "Please select at least one student.");
-                                                                return;
-                                                            }
-                                                            if (!waitingListData.venueId) {
-                                                                showWarning("Missing Information", "Please select a venue.");
-                                                                return;
-                                                            }
-                                                            if (!waitingListData.interest) {
-                                                                showWarning("Missing Information", "Please select interest level.");
-                                                                return;
-                                                            }
-                
-                                                            const studentsPayload = waitingListData.selectedStudents.map(studentOption => {
-                                                                const config = waitingListData.studentConfigs?.[studentOption.value] || {};
-                                                                return {
-                                                                    studentId: studentOption.value,
-                                                                    classScheduleId: config.classScheduleId,
-                                                                    venueId: waitingListData.venueId
-                                                                };
-                                                            });
-                
-                                                            const incomplete = studentsPayload.some(s => !s.classScheduleId || !s.venueId);
-                                                            if (incomplete) {
-                                                                showWarning("Missing Information", "Please select a new class for all selected students.");
-                                                                return;
-                                                            }
-                
-                                                            const selectedConfigs = waitingListData.selectedStudents.map((studentOption) => {
-                                                                const config = waitingListData.studentConfigs?.[studentOption.value] || {};
-                                                                const fullStudent = profile.students.find(s => s.id === studentOption.value);
-                                                                return {
-                                                                    studentFirstName: fullStudent.studentFirstName,
-                                                                    studentLastName: fullStudent.studentLastName,
-                                                                    dateOfBirth: fullStudent.dateOfBirth,
-                                                                    age: fullStudent.age,
-                                                                    gender: fullStudent.gender,
-                                                                    medicalInformation: fullStudent.medicalInformation,
-                                                                    classScheduleId: config.classScheduleId,
-                                                                    venueId: waitingListData.venueId
-                                                                };
-                                                            });
-                
-                                                            const payload = {
-                                                                existingBookingId: waitingListData.bookingId,
-                                                                interest: waitingListData.interest,
-                                                                venueId: waitingListData.venueId,
-                                                                totalStudents: selectedConfigs.length,
-                                                                preferredStartDate: waitingListData.startDate,
-                                                                additionalNote: waitingListData.notes,
-                                                                students: selectedConfigs,
-                                                                parents: profile.parents.map((p) => ({
-                                                                    parentFirstName: p.parentFirstName,
-                                                                    parentLastName: p.parentLastName,
-                                                                    parentEmail: p.parentEmail,
-                                                                    parentPhoneNumber: p.parentPhoneNumber,
-                                                                    relationToChild: p.relationToChild,
-                                                                    interestReason: p.interestReason,
-                                                                    interestReasonOther: p.interestReasonOther,
-                                                                    howDidYouHear: p.howDidYouHear,
-                                                                    isCustomReason: false
-                                                                })),
-                                                                emergency: {
-                                                                    sameAsAbove: true,
-                                                                    emergencyFirstName: profile.emergency?.[0]?.emergencyFirstName,
-                                                                    emergencyLastName: profile.emergency?.[0]?.emergencyLastName,
-                                                                    emergencyPhoneNumber: profile.emergency?.[0]?.emergencyPhoneNumber,
-                                                                    emergencyRelation: profile.emergency?.[0]?.emergencyRelation
-                                                                }
-                                                            };
-                
-                                                            setaddToWaitingList(false);
-                                                            addtoWaitingListSubmit(payload, "allMembers");
-                                                        }}
-                                                    >
-                                                        Join Waiting List
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
+                                            );
+                                        })}
                                     </div>
                                 )}
+
+                                {/* Preferred Start Date */}
+                                <div>
+                                    <label className="block text-[16px] font-semibold">Preferred Start Date (Optional)</label>
+                                    <DatePicker
+                                        minDate={addDays(new Date(), 1)}
+                                        selected={waitingListData.startDate ? new Date(waitingListData.startDate) : null}
+                                        onChange={(date) => handleDateChange(date, "startDate", setWaitingListData)}
+                                        dateFormat="EEEE, dd MMMM yyyy"
+                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                        withPortal
+                                    />
+                                </div>
+
+                                {/* Notes */}
+                                <div>
+                                    <label className="block text-[16px] font-semibold">Notes (Optional)</label>
+                                    <textarea
+                                        className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3 text-base"
+                                        rows={6}
+                                        name="notes"
+                                        value={waitingListData.notes}
+                                        onChange={(e) => handleInputChange(e, setWaitingListData)}
+                                    />
+                                </div>
+
+                                {/* Submit Button */}
+                                <div className="justify-end flex gap-4 pt-4">
+                                    <button
+                                        className="w-1/2 bg-[#12B76A] text-white rounded-xl py-3 text-[18px] font-semibold hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={waitingListData.selectedStudents.length === 0}
+                                        onClick={() => {
+                                            if (waitingListData.selectedStudents.length === 0) {
+                                                showWarning("Missing Information", "Please select at least one student.");
+                                                return;
+                                            }
+                                            if (!waitingListData.venueId) {
+                                                showWarning("Missing Information", "Please select a venue.");
+                                                return;
+                                            }
+                                            if (!waitingListData.interest) {
+                                                showWarning("Missing Information", "Please select interest level.");
+                                                return;
+                                            }
+
+                                            const studentsPayload = waitingListData.selectedStudents.map(studentOption => {
+                                                const config = waitingListData.studentConfigs?.[studentOption.value] || {};
+                                                return {
+                                                    studentId: studentOption.value,
+                                                    classScheduleId: config.classScheduleId,
+                                                    venueId: waitingListData.venueId
+                                                };
+                                            });
+
+                                            const incomplete = studentsPayload.some(s => !s.classScheduleId || !s.venueId);
+                                            if (incomplete) {
+                                                showWarning("Missing Information", "Please select a new class for all selected students.");
+                                                return;
+                                            }
+
+                                            const selectedConfigs = waitingListData.selectedStudents.map((studentOption) => {
+                                                const config = waitingListData.studentConfigs?.[studentOption.value] || {};
+                                                const fullStudent = profile.students.find(s => s.id === studentOption.value);
+                                                return {
+                                                    studentFirstName: fullStudent.studentFirstName,
+                                                    studentLastName: fullStudent.studentLastName,
+                                                    dateOfBirth: fullStudent.dateOfBirth,
+                                                    age: fullStudent.age,
+                                                    gender: fullStudent.gender,
+                                                    medicalInformation: fullStudent.medicalInformation,
+                                                    classScheduleId: config.classScheduleId,
+                                                    venueId: waitingListData.venueId
+                                                };
+                                            });
+
+                                            const payload = {
+                                                existingBookingId: waitingListData.bookingId,
+                                                interest: waitingListData.interest,
+                                                venueId: waitingListData.venueId,
+                                                totalStudents: selectedConfigs.length,
+                                                preferredStartDate: waitingListData.startDate,
+                                                additionalNote: waitingListData.notes,
+                                                students: selectedConfigs,
+                                                parents: profile.parents.map((p) => ({
+                                                    parentFirstName: p.parentFirstName,
+                                                    parentLastName: p.parentLastName,
+                                                    parentEmail: p.parentEmail,
+                                                    parentPhoneNumber: p.parentPhoneNumber,
+                                                    relationToChild: p.relationToChild,
+                                                    interestReason: p.interestReason,
+                                                    interestReasonOther: p.interestReasonOther,
+                                                    howDidYouHear: p.howDidYouHear,
+                                                    isCustomReason: false
+                                                })),
+                                                emergency: {
+                                                    sameAsAbove: true,
+                                                    emergencyFirstName: profile.emergency?.[0]?.emergencyFirstName,
+                                                    emergencyLastName: profile.emergency?.[0]?.emergencyLastName,
+                                                    emergencyPhoneNumber: profile.emergency?.[0]?.emergencyPhoneNumber,
+                                                    emergencyRelation: profile.emergency?.[0]?.emergencyRelation
+                                                }
+                                            };
+
+                                            setaddToWaitingList(false);
+                                            addtoWaitingListSubmit(payload, "allMembers");
+                                        }}
+                                    >
+                                        Join Waiting List
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {reactivateMembership && (
                     <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
@@ -2725,211 +2728,211 @@ const ParentProfile = ({ profile: rawProfile }) => {
                     </div>
                 )}
 
-                {transferVenue && isMembership &&  (
-                                   <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
-                                       <div className="bg-white rounded-2xl w-[541px] max-h-[90%] overflow-y-auto relative scrollbar-hide">
-                                           <button
-                                               className="absolute top-4 left-4 p-2"
-                                               onClick={() => setTransferVenue(false)}
-                                           >
-                                               <img src="/images/icons/cross.png" alt="Close" />
-                                           </button>
-               
-                                           <div className="text-center py-6 border-b border-gray-300">
-                                               <h2 className="font-semibold text-[24px]">Transfer Class Form</h2>
-                                           </div>
-               
-                                           <div className="space-y-4 px-6 pb-6 pt-4">
-                                               {/* Current Class / Level */}
-                                               {/* Select Student */}
-                                               <div>
-                                                   <label className="block text-[16px] font-semibold">Select Student</label>
-                                                   <Select
-                                                       value={transferData.selectedStudents}
-                                                       onChange={handleStudentSelectChange}
-                                                       options={studentsList?.map((student) => ({
-                                                           value: student.id,
-                                                           label: student.studentFirstName + " " + student.studentLastName,
-                                                           classSchedule: student.classSchedule
-                                                       })) || []}
-                                                       placeholder="Select Student"
-                                                       isMulti
-                                                       className="rounded-lg mt-2"
-                                                       styles={{
-                                                           control: (base) => ({ ...base, borderRadius: "0.7rem", boxShadow: "none", padding: "4px 8px", minHeight: "48px" }),
-                                                           placeholder: (base) => ({ ...base, fontWeight: 600 }),
-                                                           dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
-                                                           indicatorSeparator: () => ({ display: "none" }),
-                                                       }}
-                                                   />
-                                               </div>
-               
-                                               {/* ✅ COMMON Venue Selection — outside student loop */}
-                                               {/* ✅ COMMON Venue Selection */}
-                                               {transferData.selectedStudents.length > 0 && (
-                                                   <div>
-                                                       <label className="block text-[16px] font-semibold">Select Venue</label>
-                                                       <Select
-                                                           value={transferData.selectedVenue}
-                                                           onChange={(selected) =>
-                                                               setTransferData(prev => ({
-                                                                   ...prev,
-                                                                   selectedVenue: selected,
-                                                                   studentTransfers: Object.fromEntries(
-                                                                       Object.entries(prev.studentTransfers).map(([k, v]) => [k, { ...v, classScheduleId: null }])
-                                                                   )
-                                                               }))
-                                                           }
-                                                           options={venueOptions}
-                                                           placeholder="Select Venue"
-                                                           isSearchable
-                                                           className="rounded-lg mt-2"
-                                                           styles={{
-                                                               control: (base) => ({
-                                                                   ...base,
-                                                                   borderRadius: "0.7rem",
-                                                                   boxShadow: "none",
-                                                                   padding: "4px 8px",
-                                                                   minHeight: "48px",
-                                                               }),
-                                                               placeholder: (base) => ({ ...base, fontWeight: 600 }),
-                                                               dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
-                                                               indicatorSeparator: () => ({ display: "none" }),
-                                                           }}
-                                                       />
-                                                   </div>
-                                               )}
-                                               {/* Per-Student Configuration */}
-                                               {transferData.selectedStudents.length > 0 && (
-                                                   <div className="space-y-6  pt-4">
-                                                       {transferData.selectedStudents.map((studentOption) => {
-                                                           const studentId = studentOption.value;
-                                                           const studentConfig = transferData.studentTransfers?.[studentId] || {};
-                                                           const currentClass = `${studentOption.classSchedule?.className || "-"} ${studentOption.classSchedule?.level || studentOption.abilityLevel ? `(${studentOption.classSchedule?.level || studentOption.abilityLevel})` : ""}`;
-               
-                                                           const filteredClasses = transferData.selectedVenue?.classes?.map(cls => ({
-                                                               value: cls.id,
-                                                               label: `${cls.className} ${cls.level || cls.abilityLevel ? `(${cls.level || cls.abilityLevel})` : ""}`,
-                                                           })) || [];
-               
-                                                           return (
-                                                               <div key={studentId} className="bg-gray-50 p-4 rounded-xl space-y-3 border border-gray-200">
-                                                                   <h3 className="font-semibold capitalize text-lg text-gray-800 pb-2">
-                                                                       {studentOption.label}
-                                                                   </h3>
-               
-                                                                   {/* Current Info */}
-                                                                   <div className="grid gap-4 text-sm text-gray-600">
-                                                                       <div>
-                                                                           <label className="block text-sm font-semibold mb-1">Current Venue</label>
-                                                                           <input
-                                                                               type="text"
-                                                                               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
-                                                                               value={profile?.venue?.name || "-"}
-                                                                               readOnly
-                                                                           />
-                                                                       </div>
-                                                                       <div>
-                                                                           <label className="block text-sm font-semibold mb-1">Current Class / Level</label>
-                                                                           <input
-                                                                               type="text"
-                                                                               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
-                                                                               value={currentClass}
-                                                                               readOnly
-                                                                           />
-                                                                       </div>
-                                                                   </div>
-               
-                                                                   {/* ✅ NO venue dropdown here anymore */}
-               
-                                                                   {/* New Class Select */}
-                                                                   <div>
-                                                                       <label className="block text-sm font-semibold mb-1">New Class / Level</label>
-                                                                       <Select
-                                                                           value={studentConfig.classScheduleId ? filteredClasses.find(c => c.value === studentConfig.classScheduleId) : null}
-                                                                           onChange={(selected) => handleTransferConfigChange(studentId, "classScheduleId", selected?.value)}
-                                                                           options={filteredClasses}
-                                                                           placeholder={transferData.selectedVenue ? "Select New Class / Level" : "Select venue first"}
-                                                                           isDisabled={!transferData.selectedVenue}
-                                                                            styles={{
-                                                           control: (base) => ({ ...base, borderRadius: "0.7rem", boxShadow: "none", padding: "4px 8px", minHeight: "48px" }),
-                                                           placeholder: (base) => ({ ...base, fontWeight: 600 }),
-                                                           dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
-                                                           indicatorSeparator: () => ({ display: "none" }),
-                                                       }}
-                                                                       />
-                                                                   </div>
-               
-                                                                   {/* Reason */}
-                                                                   <div>
-                                                                       <label className="block text-sm font-semibold mb-1">Reason for Transfer</label>
-                                                                       <textarea
-                                                                           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                                                                           rows={2}
-                                                                           placeholder="Reason for transfer"
-                                                                           value={studentConfig.transferReasonClass || ""}
-                                                                           onChange={(e) => handleTransferConfigChange(studentId, "transferReasonClass", e.target.value)}
-                                                                       />
-                                                                   </div>
-                                                               </div>
-                                                           );
-                                                       })}
-                                                   </div>
-                                               )}
-               
-               
-               
-                                               {/* Buttons */}
-                                               <div className="flex gap-4 pt-4 justify-end">
-               
-               
-                                                   <button
-                                                       className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-semibold hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
-                                                       disabled={transferData.selectedStudents.length === 0}
-                                                       onClick={() => {
-                                                           if (!transferData.selectedStudents.length) {
-                                                               showWarning("Missing Information", "Please select at least one student.");
-                                                               return;
-                                                           }
-                                                           if (!transferData.selectedVenue) {
-                                                               showWarning("Missing Information", "Please select a venue.");
-                                                               return;
-                                                           }
-               
-               
-                                                           // Construct Payload
-                                                           const transfers = transferData.selectedStudents.map(studentOption => {
-                                                               const config = transferData.studentTransfers?.[studentOption.value] || {};
-                                                               return {
-                                                                   studentId: studentOption.value,
-                                                                   classScheduleId: config.classScheduleId,
-                                                                   transferReasonClass: config.transferReasonClass
-                                                               };
-                                                           });
-               
-                                                           // Validation: Check if any student is missing a class selection
-                                                           const incomplete = transfers.some(t => !t.classScheduleId);
-                                                           if (incomplete) {
-                                                               showWarning("Missing Information", "Please select a new class for all selected students.");
-                                                               return;
-                                                           }
-               
-                                                           const payload = {
-                                                               bookingId: profile?.bookingId,
-                                                               transfers: transfers
-                                                           };
-               
-                                                           transferMembershipSubmit(payload, 'allMembers');
-                                                       }
-                                                       }
-                                                   >
-                                                       Submit Transfer
-                                                   </button>
-                                               </div>
-                                           </div>
-                                       </div>
-                                   </div>
-                               )}
+                {transferVenue && isMembership && (
+                    <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
+                        <div className="bg-white rounded-2xl w-[541px] max-h-[90%] overflow-y-auto relative scrollbar-hide">
+                            <button
+                                className="absolute top-4 left-4 p-2"
+                                onClick={() => setTransferVenue(false)}
+                            >
+                                <img src="/images/icons/cross.png" alt="Close" />
+                            </button>
+
+                            <div className="text-center py-6 border-b border-gray-300">
+                                <h2 className="font-semibold text-[24px]">Transfer Class Form</h2>
+                            </div>
+
+                            <div className="space-y-4 px-6 pb-6 pt-4">
+                                {/* Current Class / Level */}
+                                {/* Select Student */}
+                                <div>
+                                    <label className="block text-[16px] font-semibold">Select Student</label>
+                                    <Select
+                                        value={transferData.selectedStudents}
+                                        onChange={handleStudentSelectChange}
+                                        options={studentsList?.map((student) => ({
+                                            value: student.id,
+                                            label: student.studentFirstName + " " + student.studentLastName,
+                                            classSchedule: student.classSchedule
+                                        })) || []}
+                                        placeholder="Select Student"
+                                        isMulti
+                                        className="rounded-lg mt-2"
+                                        styles={{
+                                            control: (base) => ({ ...base, borderRadius: "0.7rem", boxShadow: "none", padding: "4px 8px", minHeight: "48px" }),
+                                            placeholder: (base) => ({ ...base, fontWeight: 600 }),
+                                            dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
+                                            indicatorSeparator: () => ({ display: "none" }),
+                                        }}
+                                    />
+                                </div>
+
+                                {/* ✅ COMMON Venue Selection — outside student loop */}
+                                {/* ✅ COMMON Venue Selection */}
+                                {transferData.selectedStudents.length > 0 && (
+                                    <div>
+                                        <label className="block text-[16px] font-semibold">Select Venue</label>
+                                        <Select
+                                            value={transferData.selectedVenue}
+                                            onChange={(selected) =>
+                                                setTransferData(prev => ({
+                                                    ...prev,
+                                                    selectedVenue: selected,
+                                                    studentTransfers: Object.fromEntries(
+                                                        Object.entries(prev.studentTransfers).map(([k, v]) => [k, { ...v, classScheduleId: null }])
+                                                    )
+                                                }))
+                                            }
+                                            options={venueOptions}
+                                            placeholder="Select Venue"
+                                            isSearchable
+                                            className="rounded-lg mt-2"
+                                            styles={{
+                                                control: (base) => ({
+                                                    ...base,
+                                                    borderRadius: "0.7rem",
+                                                    boxShadow: "none",
+                                                    padding: "4px 8px",
+                                                    minHeight: "48px",
+                                                }),
+                                                placeholder: (base) => ({ ...base, fontWeight: 600 }),
+                                                dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
+                                                indicatorSeparator: () => ({ display: "none" }),
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                                {/* Per-Student Configuration */}
+                                {transferData.selectedStudents.length > 0 && (
+                                    <div className="space-y-6  pt-4">
+                                        {transferData.selectedStudents.map((studentOption) => {
+                                            const studentId = studentOption.value;
+                                            const studentConfig = transferData.studentTransfers?.[studentId] || {};
+                                            const currentClass = `${studentOption.classSchedule?.className || "-"} ${studentOption.classSchedule?.level || studentOption.abilityLevel ? `(${studentOption.classSchedule?.level || studentOption.abilityLevel})` : ""}`;
+
+                                            const filteredClasses = transferData.selectedVenue?.classes?.map(cls => ({
+                                                value: cls.id,
+                                                label: `${cls.className} ${cls.level || cls.abilityLevel ? `(${cls.level || cls.abilityLevel})` : ""}`,
+                                            })) || [];
+
+                                            return (
+                                                <div key={studentId} className="bg-gray-50 p-4 rounded-xl space-y-3 border border-gray-200">
+                                                    <h3 className="font-semibold capitalize text-lg text-gray-800 pb-2">
+                                                        {studentOption.label}
+                                                    </h3>
+
+                                                    {/* Current Info */}
+                                                    <div className="grid gap-4 text-sm text-gray-600">
+                                                        <div>
+                                                            <label className="block text-sm font-semibold mb-1">Current Venue</label>
+                                                            <input
+                                                                type="text"
+                                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
+                                                                value={profile?.venue?.name || "-"}
+                                                                readOnly
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-semibold mb-1">Current Class / Level</label>
+                                                            <input
+                                                                type="text"
+                                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100"
+                                                                value={currentClass}
+                                                                readOnly
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* ✅ NO venue dropdown here anymore */}
+
+                                                    {/* New Class Select */}
+                                                    <div>
+                                                        <label className="block text-sm font-semibold mb-1">New Class / Level</label>
+                                                        <Select
+                                                            value={studentConfig.classScheduleId ? filteredClasses.find(c => c.value === studentConfig.classScheduleId) : null}
+                                                            onChange={(selected) => handleTransferConfigChange(studentId, "classScheduleId", selected?.value)}
+                                                            options={filteredClasses}
+                                                            placeholder={transferData.selectedVenue ? "Select New Class / Level" : "Select venue first"}
+                                                            isDisabled={!transferData.selectedVenue}
+                                                            styles={{
+                                                                control: (base) => ({ ...base, borderRadius: "0.7rem", boxShadow: "none", padding: "4px 8px", minHeight: "48px" }),
+                                                                placeholder: (base) => ({ ...base, fontWeight: 600 }),
+                                                                dropdownIndicator: (base) => ({ ...base, color: "#9CA3AF" }),
+                                                                indicatorSeparator: () => ({ display: "none" }),
+                                                            }}
+                                                        />
+                                                    </div>
+
+                                                    {/* Reason */}
+                                                    <div>
+                                                        <label className="block text-sm font-semibold mb-1">Reason for Transfer</label>
+                                                        <textarea
+                                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                                                            rows={2}
+                                                            placeholder="Reason for transfer"
+                                                            value={studentConfig.transferReasonClass || ""}
+                                                            onChange={(e) => handleTransferConfigChange(studentId, "transferReasonClass", e.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+
+
+
+                                {/* Buttons */}
+                                <div className="flex gap-4 pt-4 justify-end">
+
+
+                                    <button
+                                        className="w-1/2 bg-[#237FEA] text-white rounded-xl py-3 text-[18px] font-semibold hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={transferData.selectedStudents.length === 0}
+                                        onClick={() => {
+                                            if (!transferData.selectedStudents.length) {
+                                                showWarning("Missing Information", "Please select at least one student.");
+                                                return;
+                                            }
+                                            if (!transferData.selectedVenue) {
+                                                showWarning("Missing Information", "Please select a venue.");
+                                                return;
+                                            }
+
+
+                                            // Construct Payload
+                                            const transfers = transferData.selectedStudents.map(studentOption => {
+                                                const config = transferData.studentTransfers?.[studentOption.value] || {};
+                                                return {
+                                                    studentId: studentOption.value,
+                                                    classScheduleId: config.classScheduleId,
+                                                    transferReasonClass: config.transferReasonClass
+                                                };
+                                            });
+
+                                            // Validation: Check if any student is missing a class selection
+                                            const incomplete = transfers.some(t => !t.classScheduleId);
+                                            if (incomplete) {
+                                                showWarning("Missing Information", "Please select a new class for all selected students.");
+                                                return;
+                                            }
+
+                                            const payload = {
+                                                bookingId: profile?.bookingId,
+                                                transfers: transfers
+                                            };
+
+                                            transferMembershipSubmit(payload, 'allMembers');
+                                        }
+                                        }
+                                    >
+                                        Submit Transfer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {freezeMembership && isMembership && (
                     <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">

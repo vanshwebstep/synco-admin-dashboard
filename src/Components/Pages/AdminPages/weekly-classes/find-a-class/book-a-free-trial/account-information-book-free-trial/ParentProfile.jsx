@@ -546,10 +546,14 @@ const ParentProfile = ({ ParentProfile }) => {
                                         <label className="block text-[16px] font-semibold">Phone number</label>
 
                                         <PhoneNumberInput
-                                            value={parent.parentPhoneNumber}
+                                            value={parent?.parentPhoneNumber ?? ""}
                                             readOnly={editingIndex !== index}
-                                            onChange={(e) =>
-                                                handleDataChange(index, "parentPhoneNumber", e.target.value)
+                                            onChange={(fullNumber) =>
+                                                handleDataChange(
+                                                    index,
+                                                    "parentPhoneNumber",
+                                                    fullNumber ?? ""
+                                                )
                                             }
                                             placeholder="Enter phone number"
                                         />
@@ -671,15 +675,19 @@ const ParentProfile = ({ ParentProfile }) => {
                                 <div className="w-1/2">
                                     <label className="block text-[16px] font-semibold">Phone number</label>
 
+
                                     <PhoneNumberInput
-                                        value={emergency.emergencyPhoneNumber}
+                                        value={emergency?.emergencyPhoneNumber ?? ""}
                                         readOnly={editingEmergency !== index}
-                                        onChange={(e) =>
-                                            handleEmergencyChange(index, "emergencyPhoneNumber", e.target.value)
+                                        onChange={(fullNumber) =>
+                                            handleEmergencyChange(
+                                                index,
+                                                "emergencyPhoneNumber",
+                                                fullNumber ?? ""
+                                            )
                                         }
                                         placeholder="Enter phone number"
                                     />
-
                                 </div>
                                 <div className="w-1/2">
                                     <label className="block text-[16px] font-semibold">Relation to child</label>

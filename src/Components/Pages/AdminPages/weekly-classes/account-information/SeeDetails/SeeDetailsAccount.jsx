@@ -339,6 +339,7 @@ const SeeDetailsAccount = () => {
                     </div>
                 </div>
 
+                    {serviceType === 'membership' && (
                 <div className="flex items-start gap-2 md:gap-3">
                     <button
                         onClick={() => setActiveTab("Failed Payments")}
@@ -349,15 +350,14 @@ const SeeDetailsAccount = () => {
                     <button className="border border-[#237FEA] flex items-center gap-2 text-[#237FEA] px-8 py-2 md:py-[12px] rounded-xl hover:bg-[#237FEA] hover:text-white text-[18px]">
                         Add a subscription
                     </button>
-                    {serviceType === 'membership' && (
                         <button
                             onClick={() => setShowPaymentModal(true)}
                             className="bg-[#237FEA] flex items-center gap-2 text-white px-8 py-2 md:py-[12px] rounded-xl hover:bg-blue-700 text-[18px]"
                         >
                             Create Payment
                         </button>
-                    )}
                 </div>
+                    )}
             </div>
 
             {/* ─── Create Payment Modal ─────────────────────────────────────────── */}

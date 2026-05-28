@@ -295,10 +295,10 @@ const Header = ({ profileOpen, setProfileOpen, toggleMobileMenu, isMobileMenuOpe
         setActiveAccount,
         setFranchisesInfo,
       });
-      
-      // Dispatch custom event to notify other contexts/components to reload in-place
-      window.dispatchEvent(new Event("accountSwitched"));
 
+      // Dispatch custom event to notify other contexts/components to reload in-place
+      window.location.reload();
+      navigate('/')
 
     } catch (error) {
       console.error("Switch error:", error);

@@ -15,7 +15,7 @@ import { showError, showSuccess, showWarning } from "../../../../../../utils/swa
 const FIELD_ORDER = ["amount", "description", "paymentDate", "cardholderName", "cardNumber", "expiryDate", "cvc"];
 
 const SeeDetails = () => {
-    const { serviceHistoryMembership, serviceHistory, serviceHistoryFetchById ,serviceHistoryWaitingList} = useBookFreeTrial();
+    const { serviceHistoryMembership, serviceHistory, serviceHistoryFetchById, serviceHistoryWaitingList } = useBookFreeTrial();
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
     const navigate = useNavigate();
@@ -77,7 +77,7 @@ const SeeDetails = () => {
                 await serviceHistoryFetchById(itemId);
             } else if (memberInfo === 'waitingList') {
                 await serviceHistoryWaitingList(itemId);
-            }  else {
+            } else {
                 await serviceHistoryMembership(itemId);
             }
         };
@@ -95,16 +95,16 @@ const SeeDetails = () => {
         }
     }, [serviceHistory]);
 
-  const tabs = ["General", "History of Payments", "Credits", "Attendance"].filter(tab => {
-    if (
-        (memberInfo === 'freeTrial' || memberInfo === 'waitingList') &&
-        (tab === "History of Payments" || tab === "Credits")
-    ) {
-        return false;
-    }
+    const tabs = ["General", "History of Payments", "Credits", "Attendance"].filter(tab => {
+        if (
+            (memberInfo === 'freeTrial' || memberInfo === 'waitingList') &&
+            (tab === "History of Payments" || tab === "Credits")
+        ) {
+            return false;
+        }
 
-    return true;
-});
+        return true;
+    });
 
     const navigateTo =
         memberInfo === "allMembers" || memberInfo === "freeTrial"
@@ -301,11 +301,11 @@ const SeeDetails = () => {
             description: paymentData.description,
             amount: Number(paymentData.amount),
             paymentMethod:
-  paymentSource === "stripe"
-    ? "card"
-    : paymentSource === "gocardless"
-    ? "bank"
-    : paymentSource,
+                paymentSource === "stripe"
+                    ? "card"
+                    : paymentSource === "gocardless"
+                        ? "bank"
+                        : paymentSource,
             paymentTiming,
             paymentDate: paymentTiming === "specific" ? paymentData.paymentDate : null,
             ...(paymentSource === "stripe" && {
@@ -365,8 +365,9 @@ const SeeDetails = () => {
                     </div>
                 </div>
 
-                <div className="flex items-start gap-2 md:gap-3">
-                    {memberInfo !== 'freeTrial' && (
+                {memberInfo === "membership" && (
+                    <div className="flex items-start gap-2 md:gap-3">
+
                         <>
                             <button
                                 onClick={() => setActiveTab("Failed Payments")}
@@ -378,16 +379,15 @@ const SeeDetails = () => {
                                 Add a subscription
                             </button>
                         </>
-                    )}
-                    {memberInfo === "membership" && (
+
                         <button
                             onClick={() => setShowPaymentModal(true)}
                             className="bg-[#237FEA] flex items-center gap-2 text-white px-8 py-8 md:py-[12px] rounded-xl hover:bg-blue-700 text-[18px]"
                         >
                             Create Payment
                         </button>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
 
             {/* ─── Create Payment Modal ─────────────────────────────────────────── */}

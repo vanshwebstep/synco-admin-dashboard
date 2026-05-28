@@ -42,6 +42,7 @@ const List = () => {
     const [expression, setExpression] = useState('');
     const [result, setResult] = useState('');
     const [isPrefilled, setIsPrefilled] = useState(false);
+    const [passwordLink, setPasswordLink] = useState(null);
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -79,7 +80,7 @@ const List = () => {
         },
     ]);
 
-    console.log('students',students)
+    console.log('students', students)
     const [activePopup, setActivePopup] = useState(null);
     const togglePopup = (id) => {
         setActivePopup((prev) => (prev === id ? null : id));
@@ -154,7 +155,7 @@ const List = () => {
         { value: "To help my child make friends and build social skills", label: "To help my child make friends and build social skills" },
         { value: "To keep my child active and healthy", label: "To keep my child active and healthy" },
         { value: "High-quality coaching in a fun, positive environment", label: "High-quality coaching in a fun, positive environment" },
-        
+
 
     ];
     const handleRemoveStudent = (indexToRemove) => {
@@ -700,7 +701,7 @@ const List = () => {
 
     const venueClassOptions = !isEmpty
         ? allClasses?.map((cls) => ({ value: cls.id, label: cls.className }))
-        : classesWithCapacity?.map((cls) => ({ value: cls.id, label: `${cls.className} (${cls.level ?? cls.levelName ?? cls.classLevel ?? ''})`}));
+        : classesWithCapacity?.map((cls) => ({ value: cls.id, label: `${cls.className} (${cls.level ?? cls.levelName ?? cls.classLevel ?? ''})` }));
 
 
     console.log('singleClassSchedulesOnlyasasasa', singleClassSchedulesOnly)
@@ -1091,7 +1092,12 @@ const List = () => {
             }
             setIsBooked(true);
             await handleAfterBooking(res);
-            navigate(`/weekly-classes/trial/list`)
+            if (res?.setPasswordLink) {
+                setPasswordLink(res.setPasswordLink);
+            } else {
+                navigate(`/weekly-classes/trial/list`);
+            }
+
             // Optionally show success alert or reset form
         } catch (error) {
             console.error("Error while submitting:", error);
@@ -1227,7 +1233,7 @@ const List = () => {
     const genderOptions = [
         { value: "male", label: "Male" },
         { value: "female", label: "Female" },
-        
+
     ];
     const sessionDates = singleClassSchedulesOnly?.venue?.termGroups?.flatMap(group =>
         group.terms.flatMap(term =>
@@ -1869,60 +1875,60 @@ const List = () => {
 
                                     {/* Row 1 */}
                                     <div className="flex gap-4">
-                                         <div className="w-1/2">
-                                             <label className="block text-[16px] font-semibold">First name</label>
-                                             <input
-                                                 id={`parent-${index}-parentFirstName`}
-                                                 className={`w-full mt-2 border ${parentErrors[index]?.parentFirstName ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
-                                                 placeholder="Enter first name"
-                                                 disabled={isPrefilled} // Disable if pre-filled from existing parent data
-                                                 value={parent.parentFirstName}
-                                                 onChange={(e) => {
-                                                     // Remove numbers if typed or pasted
-                                                     const value = e.target.value.replace(/\d/g, "");
-                                                     handleParentChange(index, "parentFirstName", value);
-                                                     if (parentErrors[index]?.parentFirstName) {
-                                                         const newErrs = [...parentErrors];
-                                                         newErrs[index].parentFirstName = null;
-                                                         setParentErrors(newErrs);
-                                                     }
-                                                 }}
-                                                 onKeyPress={(e) => {
-                                                     if (/\d/.test(e.key)) e.preventDefault(); // block typing numbers
-                                                 }}
-                                             />
-                                             {parentErrors[index]?.parentFirstName && (
-                                                 <p className="text-[#F04438] text-sm mt-1">{parentErrors[index].parentFirstName}</p>
-                                             )}
-                                         </div>
+                                        <div className="w-1/2">
+                                            <label className="block text-[16px] font-semibold">First name</label>
+                                            <input
+                                                id={`parent-${index}-parentFirstName`}
+                                                className={`w-full mt-2 border ${parentErrors[index]?.parentFirstName ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                                                placeholder="Enter first name"
+                                                disabled={isPrefilled} // Disable if pre-filled from existing parent data
+                                                value={parent.parentFirstName}
+                                                onChange={(e) => {
+                                                    // Remove numbers if typed or pasted
+                                                    const value = e.target.value.replace(/\d/g, "");
+                                                    handleParentChange(index, "parentFirstName", value);
+                                                    if (parentErrors[index]?.parentFirstName) {
+                                                        const newErrs = [...parentErrors];
+                                                        newErrs[index].parentFirstName = null;
+                                                        setParentErrors(newErrs);
+                                                    }
+                                                }}
+                                                onKeyPress={(e) => {
+                                                    if (/\d/.test(e.key)) e.preventDefault(); // block typing numbers
+                                                }}
+                                            />
+                                            {parentErrors[index]?.parentFirstName && (
+                                                <p className="text-[#F04438] text-sm mt-1">{parentErrors[index].parentFirstName}</p>
+                                            )}
+                                        </div>
 
-                                         <div className="w-1/2">
-                                             <label className="block text-[16px] font-semibold">Last name</label>
-                                             <input
-                                                 id={`parent-${index}-parentLastName`}
-                                                 className={`w-full mt-2 border ${parentErrors[index]?.parentLastName ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
-                                                 placeholder="Enter last name"
-                                                 disabled={isPrefilled} // Disable if pre-filled from existing parent data
-                                                 value={parent.parentLastName}
-                                                 onChange={(e) => {
-                                                     // Remove numbers if typed or pasted
-                                                     const value = e.target.value.replace(/\d/g, "");
-                                                     handleParentChange(index, "parentLastName", value);
-                                                     if (parentErrors[index]?.parentLastName) {
-                                                         const newErrs = [...parentErrors];
-                                                         newErrs[index].parentLastName = null;
-                                                         setParentErrors(newErrs);
-                                                     }
-                                                 }}
-                                                 onKeyPress={(e) => {
-                                                     if (/\d/.test(e.key)) e.preventDefault(); // block typing numbers
-                                                 }}
-                                             />
-                                             {parentErrors[index]?.parentLastName && (
-                                                 <p className="text-[#F04438] text-sm mt-1">{parentErrors[index].parentLastName}</p>
-                                             )}
-                                         </div>
-                                     </div>
+                                        <div className="w-1/2">
+                                            <label className="block text-[16px] font-semibold">Last name</label>
+                                            <input
+                                                id={`parent-${index}-parentLastName`}
+                                                className={`w-full mt-2 border ${parentErrors[index]?.parentLastName ? 'border-[#F04438]' : 'border-gray-300'} rounded-xl px-4 py-3 text-base`}
+                                                placeholder="Enter last name"
+                                                disabled={isPrefilled} // Disable if pre-filled from existing parent data
+                                                value={parent.parentLastName}
+                                                onChange={(e) => {
+                                                    // Remove numbers if typed or pasted
+                                                    const value = e.target.value.replace(/\d/g, "");
+                                                    handleParentChange(index, "parentLastName", value);
+                                                    if (parentErrors[index]?.parentLastName) {
+                                                        const newErrs = [...parentErrors];
+                                                        newErrs[index].parentLastName = null;
+                                                        setParentErrors(newErrs);
+                                                    }
+                                                }}
+                                                onKeyPress={(e) => {
+                                                    if (/\d/.test(e.key)) e.preventDefault(); // block typing numbers
+                                                }}
+                                            />
+                                            {parentErrors[index]?.parentLastName && (
+                                                <p className="text-[#F04438] text-sm mt-1">{parentErrors[index].parentLastName}</p>
+                                            )}
+                                        </div>
+                                    </div>
 
 
                                     {/* Row 2 */}
@@ -2134,6 +2140,54 @@ const List = () => {
                                 </motion.div>
                             ))}
                         </div>
+                        {passwordLink && (
+                            <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
+                                <div className="bg-[#FDFDFF] rounded-2xl p-10 w-full max-w-md text-center shadow-xl">
+
+                                    {/* Success icon */}
+                                    <div className="flex justify-center mb-4">
+                                        <div className="w-16 h-16 rounded-full bg-[#E6F4EA] flex items-center justify-center">
+                                            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                    </div>
+
+                                    <h2 className="text-2xl font-bold text-[#042C89] poppins mb-2">
+                                        Free trial booked!
+                                    </h2>
+                                    <p className="text-[#34353B] poppins text-[15px] mb-1">
+                                        Your free trial has been booked!
+                                    </p>
+
+                                    <div className="my-5 p-4 bg-[#F1F4FC] rounded-xl border border-[#D0E7FF] text-left">
+                                        <p className="text-[#004B9E] font-semibold poppins text-[14px] mb-1">
+                                            🔐 Set up your Parent Dashboard
+                                        </p>
+                                        <p className="text-[#2D3748] poppins text-[13px] leading-relaxed">
+                                            A parent account has been created for you. Set up your password now to access your <strong>Parent Dashboard</strong> — where you can track sessions, manage bookings, and stay up to date.
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        onClick={() => window.open(passwordLink, "_blank")}
+                                        className="w-full bg-[#042C89] text-white poppins font-semibold text-[15px] py-3 rounded-xl hover:bg-blue-800 transition mb-3"
+                                 >
+                                        Set Up My Password →
+                                    </button>
+
+                                    <button
+                                        onClick={() => {
+                                            setPasswordLink(null);
+                                            navigate(`/weekly-classes/trial/list`);
+                                        }}
+                                        className="w-full text-[#717073] poppins text-[13px] underline hover:text-gray-800"
+                                    >
+                                        Skip for now
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                         <div className="bg-white p-6 rounded-3xl shadow-sm space-y-6">
                             <h2 className="text-[20px] font-semibold">Emergency contact details</h2>
 

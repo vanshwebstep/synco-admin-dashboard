@@ -21,17 +21,21 @@ const PhoneNumberInput = ({
         buildFullNumber,
         detectCountryFromPhone,
     } = usePhoneInput();
-    useEffect(() => {
-        if (!value) return;
-console.log('detec start ',  value)
-        const detected = detectCountryFromPhone(value);
-console.log('detec detected ',  detected)
+useEffect(() => {
+    // ✅ handle null / undefined / empty
+    if (!value || typeof value !== "string") return;
 
-        if (detected) {
-            setDialCode(detected.dialCode);
-            setCountry(detected.countryCode);
-        }
-    }, [value]);
+    const trimmedValue = value.trim();
+
+    if (!trimmedValue) return;
+
+    const detected = detectCountryFromPhone(trimmedValue);
+
+    if (detected) {
+        setDialCode(detected.dialCode);
+        setCountry(detected.countryCode);
+    }
+}, [value]);
     const handleCountryChange = (countryData) => {
         const newDialCode = "+" + countryData.dialCode;
         setDialCode(newDialCode);

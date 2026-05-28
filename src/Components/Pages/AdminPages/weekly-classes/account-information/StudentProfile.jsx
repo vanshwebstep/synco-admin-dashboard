@@ -26,6 +26,8 @@ import { useAccountsInfo } from "../../contexts/AccountsInfoContext";
 import { useRevertMembership } from '../../contexts/RevertMembershipContext';
 
 const StudentProfile = ({ profile }) => {
+
+  const source=profile?.source;
   const { fetchMembers, sendBirthdayMail, fetchBirthdyPartiesMembers, fetchOneToOneMembers, sendOnetoOneMail } = useAccountsInfo()
   const { openRevertPopup } = useRevertMembership();
   const navigate = useNavigate();
@@ -2234,8 +2236,11 @@ value={
                               <>
                                 <div className="border-t border-[#495362] py-5">
                                   <div className=" text-[20px] text-white">Booking Source</div>
-                                  <div className="text-[16px]  mt-1 text-gray-400"> {bookedBy?.firstName} {bookedBy?.lastName}</div>
-                                </div>
+                                  <div className="text-[16px] mt-1 text-gray-400">
+                                                                        {source?.trim()
+                                                                            ? source
+                                                                            : `${bookedBy?.firstName ?? ""} ${bookedBy?.lastName ?? ""}`.trim() || "-"}
+                                                                    </div>                                                                </div>
                               </>
 
                             </div></>

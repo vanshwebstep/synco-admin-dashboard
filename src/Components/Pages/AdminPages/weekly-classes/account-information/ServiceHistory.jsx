@@ -134,9 +134,12 @@ const BookingCard = ({ booking }) => {
               {renderField("Date Of Booking", booking?.startDate)}
               {renderField(
                 "Booking Source",
-                booking?.bookedByAdmin
-                  ? `${booking.bookedByAdmin.firstName || ""} ${booking.bookedByAdmin.lastName || ""}`.trim()
-                  : ""
+                booking?.source?.trim()
+                  ? booking.source
+                  : booking?.bookedByAdmin
+                    ? `${booking?.bookedByAdmin?.firstName ?? ""} ${booking?.bookedByAdmin?.lastName ?? ""
+                      }`.trim() || "-"
+                    : "-"
               )}
             </>
           )}
@@ -152,9 +155,12 @@ const BookingCard = ({ booking }) => {
               {renderField("Date Of Booking", formatPrettyDate(booking?.createdAt))}
               {renderField(
                 "Booking Source",
-                booking?.bookedByAdmin
-                  ? `${booking.bookedByAdmin.firstName || ""} ${booking.bookedByAdmin.lastName || ""}`.trim()
-                  : ""
+                booking?.source?.trim()
+                  ? booking.source
+                  : booking?.bookedByAdmin
+                    ? `${booking?.bookedByAdmin?.firstName ?? ""} ${booking?.bookedByAdmin?.lastName ?? ""
+                      }`.trim() || "-"
+                    : "-"
               )}
             </>
           )}
@@ -182,7 +188,15 @@ const BookingCard = ({ booking }) => {
                   .filter(Boolean)
                   .join(" ")
               )}
-              {renderField("Booking Source", booking?.source)}
+              {renderField(
+                "Booking Source",
+                booking?.source?.trim()
+                  ? booking.source
+                  : booking?.bookedByAdmin
+                    ? `${booking?.bookedByAdmin?.firstName ?? ""} ${booking?.bookedByAdmin?.lastName ?? ""
+                      }`.trim() || "-"
+                    : "-"
+              )}
             </>
           )}
 
@@ -204,7 +218,15 @@ const BookingCard = ({ booking }) => {
                   .filter(Boolean)
                   .join(" ")
               )}
-              {renderField("Booking Source", booking?.source)}
+              {renderField(
+                "Booking Source",
+                booking?.source?.trim()
+                  ? booking.source
+                  : booking?.bookedByAdmin
+                    ? `${booking?.bookedByAdmin?.firstName ?? ""} ${booking?.bookedByAdmin?.lastName ?? ""
+                      }`.trim() || "-"
+                    : "-"
+              )}
             </>
           )}
 
@@ -224,7 +246,15 @@ const BookingCard = ({ booking }) => {
               )}
               {renderField("Venue", booking?.holidayVenue?.name)}
               {renderField("Discount", booking?.discount?.code)}
-              {renderField("Booking Source", booking?.marketingChannel)}
+              {renderField(
+                "Booking Source",
+                booking?.marketingChannel?.trim()
+                  ? booking.marketingChannel
+                  : booking?.bookedByAdmin
+                    ? `${booking?.bookedByAdmin?.firstName ?? ""} ${booking?.bookedByAdmin?.lastName ?? ""
+                      }`.trim() || "-"
+                    : "-"
+              )}
             </>
           )}
 

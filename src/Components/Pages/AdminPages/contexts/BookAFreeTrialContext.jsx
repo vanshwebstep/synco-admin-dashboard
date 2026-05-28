@@ -951,48 +951,76 @@ export const BookFreeTrialProvider = ({ children }) => {
     },
     [API_BASE_URL]
   );
-  const updateBookMembershipFamily = async (bookFreeTrialId, updatedBookFreeTrialData, updateType) => {
-    setLoading(true);
-    // console.log('updatedBookFreeTrialData',updatedBookFreeTrialData)
-    const myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
-    if (token) {
-      myHeaders.append("Authorization", `Bearer ${token}`);
-    }
+const updateBookMembershipFamily = async (
+  bookFreeTrialId,
+  updatedBookFreeTrialData,
+  updateType
+) => {
+  setLoading(true);
 
-    const requestOptions = {
-      method: "PUT",
-      headers: myHeaders,
-      body: JSON.stringify({ students: updatedBookFreeTrialData })
-      , redirect: "follow",
-    };
+  const myHeaders = new Headers();
+  myHeaders.append("Content-Type", "application/json");
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/booking-update/${bookFreeTrialId}`, requestOptions);
+  if (token) {
+    myHeaders.append("Authorization", `Bearer ${token}`);
+  }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to update bookFreeTrial");
-      }
-
-      const result = await response.json();
-
-      await showSuccess("Success!", result.message || "BookFreeTrial has been updated successfully.");
-
-      return result;
-    } catch (error) {
-      console.error("Error updating bookFreeTrial:", error);
-      await showError("Error", error.message || "Something went wrong while updating bookFreeTrial.");
-      throw error;
-    } finally {
-      if (updateType !== "leadsbooking") {
-        navigate(`/weekly-classes/all-members/list`)
-      }
-
-      setLoading(false);
-    }
+  const requestOptions = {
+    method: "PUT",
+    headers: myHeaders,
+    body: JSON.stringify({
+      students: updatedBookFreeTrialData,
+    }),
+    redirect: "follow",
   };
 
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/admin/booking-update/${bookFreeTrialId}`,
+      requestOptions
+    );
+
+    const result = await response.json();
+
+    // ✅ handle HTTP error
+    if (!response.ok) {
+      throw new Error(
+        result?.message || "Failed to update booking."
+      );
+    }
+
+    // ✅ handle API false status
+    if (result?.status === false) {
+      throw new Error(
+        result?.message || "Failed to update booking."
+      );
+    }
+
+    // ✅ success
+    await showSuccess(
+      "Success!",
+      result?.message || "Booking updated successfully."
+    );
+
+    return result;
+  } catch (error) {
+    console.error("Error updating booking:", error);
+
+    await showError(
+      "Error",
+      error?.message || "Something went wrong while updating booking."
+    );
+
+    throw error;
+  } finally {
+    setLoading(false);
+
+    // ✅ navigate only on success
+    // if (updateType !== "leadsbooking") {
+    //   navigate(`/weekly-classes/all-members/list`);
+    // }
+  }
+};
   const serviceHistoryMembership = useCallback(async (ID) => {
     const token = localStorage.getItem("adminToken");
     if (!token) return;

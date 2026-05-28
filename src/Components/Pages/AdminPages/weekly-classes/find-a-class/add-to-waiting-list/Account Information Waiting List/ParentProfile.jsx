@@ -343,6 +343,8 @@ const ParentProfile = ({ profile }) => {
         }
     };
     const handleDataChange = (index, field, value) => {
+
+        console.log('index, field, value', index, field, value)
         const updatedParents = [...parents];
         updatedParents[index][field] = value;
         setParents(updatedParents);
@@ -556,10 +558,14 @@ const ParentProfile = ({ profile }) => {
                                     <div className="w-1/2">
                                         <label className="block text-[16px] font-semibold">Phone number</label>
                                         <PhoneNumberInput
-                                            value={parent.parentPhoneNumber}
+                                            value={parent?.parentPhoneNumber ?? ""}
                                             readOnly={editingIndex !== index}
-                                            onChange={(e) =>
-                                                handleDataChange(index, "parentPhoneNumber", e.target.value)
+                                            onChange={(fullNumber) =>
+                                                handleDataChange(
+                                                    index,
+                                                    "parentPhoneNumber",
+                                                    fullNumber ?? ""
+                                                )
                                             }
                                             placeholder="Enter phone number"
                                         />
@@ -679,14 +685,18 @@ const ParentProfile = ({ profile }) => {
                                 <div className="flex gap-4">
                                     <div className="w-1/2">
                                         <label className="block text-[16px] font-semibold">Phone number</label>
-                                        <PhoneNumberInput
-                                            value={emergency.emergencyPhoneNumber}
-                                            readOnly={editingEmergency !== index}
-                                            onChange={(e) =>
-                                                handleEmergencyChange(index, "emergencyPhoneNumber", e.target.value)
-                                            }
-                                            placeholder="Enter phone number"
-                                        />
+                                     <PhoneNumberInput
+    value={emergency?.emergencyPhoneNumber ?? ""}
+    readOnly={editingEmergency !== index}
+    onChange={(fullNumber) =>
+        handleEmergencyChange(
+            index,
+            "emergencyPhoneNumber",
+            fullNumber ?? ""
+        )
+    }
+    placeholder="Enter phone number"
+/>
                                     </div>
                                     <div className="w-1/2">
                                         <label className="block text-[16px] font-semibold">Relation to child</label>

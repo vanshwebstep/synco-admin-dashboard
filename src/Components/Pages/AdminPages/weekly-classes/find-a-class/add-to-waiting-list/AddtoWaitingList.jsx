@@ -44,6 +44,7 @@ const AddtoWaitingList = () => {
   const popup3Ref = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
   const [tempComments, setTempComments] = useState([]);
+    const [passwordLink, setPasswordLink] = useState(null);
 
   const [commentsList, setCommentsList] = useState([]);
   const [comment, setComment] = useState('');
@@ -122,7 +123,7 @@ const AddtoWaitingList = () => {
     { value: "To help my child make friends and build social skills", label: "To help my child make friends and build social skills" },
     { value: "To keep my child active and healthy", label: "To keep my child active and healthy" },
     { value: "High-quality coaching in a fun, positive environment", label: "High-quality coaching in a fun, positive environment" },
-    
+
 
   ];
   const ClassOptions = [
@@ -745,7 +746,7 @@ const AddtoWaitingList = () => {
   };
   const venueClassOptions = singleClassSchedulesOnly?.venueClasses?.filter((cls) => cls.capacity == 0)?.map((cls) => ({
     value: cls.id,
-     label: `${cls.className} (${cls.level ?? cls.levelName ?? cls.classLevel ?? ''})` 
+    label: `${cls.className} (${cls.level ?? cls.levelName ?? cls.classLevel ?? ''})`
   }));
   const handleAfterBooking = async (result) => {
     console.log("Booking successful, now submitting comments if any...", result);
@@ -820,7 +821,11 @@ const AddtoWaitingList = () => {
       setIsBooked(true);
 
       await handleAfterBooking(res);
-      navigate(`/weekly-classes/find-a-class/add-to-waiting-list/list`)
+      if (res?.setPasswordLink) {
+        setPasswordLink(res.setPasswordLink);
+      } else {
+        navigate(`/weekly-classes/find-a-class/add-to-waiting-list/list`);
+      }
       // console.log("Final Payload:", JSON.stringify(payload, null, 2));
       // Optionally show success alert or reset form
     } catch (error) {
@@ -934,7 +939,7 @@ const AddtoWaitingList = () => {
   const genderOptions = [
     { value: "male", label: "Male" },
     { value: "female", label: "Female" },
-    
+
   ];
   const sessionDates = singleClassSchedulesOnly?.venue?.termGroups?.flatMap(group =>
     group.terms.flatMap(term =>
@@ -1411,11 +1416,11 @@ const AddtoWaitingList = () => {
                       {index === 0 ? (
                         <input
                           type="text"
-value={(() => {
-    const name = selectedClassData?.className || singleClassSchedulesOnly?.className || "";
-    const level = selectedClassData?.level || singleClassSchedulesOnly?.level || "";
-    return level ? `${name} (${level})` : name;
-})()}                          readOnly
+                          value={(() => {
+                            const name = selectedClassData?.className || singleClassSchedulesOnly?.className || "";
+                            const level = selectedClassData?.level || singleClassSchedulesOnly?.level || "";
+                            return level ? `${name} (${level})` : name;
+                          })()} readOnly
                           className="w-full mt-2 border border-gray-300 rounded-xl px-4 py-3"
                         />
                       ) : (
@@ -1728,6 +1733,54 @@ value={(() => {
                 </motion.div>
               ))}
             </div>
+              {passwordLink && (
+                        <div className="fixed inset-0 bg-[#00000066] flex justify-center items-center z-50">
+                            <div className="bg-[#FDFDFF] rounded-2xl p-10 w-full max-w-md text-center shadow-xl">
+
+                                {/* Success icon */}
+                                <div className="flex justify-center mb-4">
+                                    <div className="w-16 h-16 rounded-full bg-[#E6F4EA] flex items-center justify-center">
+                                        <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <h2 className="text-2xl font-bold text-[#042C89] poppins mb-2">
+                                    You're on the list!
+                                </h2>
+                                <p className="text-[#34353B] poppins text-[15px] mb-1">
+                                    You've been added to the waiting list.
+                                </p>
+
+                                <div className="my-5 p-4 bg-[#F1F4FC] rounded-xl border border-[#D0E7FF] text-left">
+                                    <p className="text-[#004B9E] font-semibold poppins text-[14px] mb-1">
+                                        🔐 Set up your Parent Dashboard
+                                    </p>
+                                    <p className="text-[#2D3748] poppins text-[13px] leading-relaxed">
+                                        A parent account has been created for you. Set up your password now to access your <strong>Parent Dashboard</strong> — where you can track sessions, manage bookings, and stay up to date.
+                                    </p>
+                                </div>
+
+                                <button
+                                    onClick={() => window.open(passwordLink, "_blank")}
+                                    className="w-full bg-[#042C89] text-white poppins font-semibold text-[15px] py-3 rounded-xl hover:bg-blue-800 transition mb-3"
+                                >
+                                    Set Up My Password →
+                                </button>
+
+                                <button
+                                    onClick={() => {
+                                        setPasswordLink(null);
+                                        navigate(`/weekly-classes/find-a-class/add-to-waiting-list/list`);
+                                    }}
+                                    className="w-full text-[#717073] poppins text-[13px] underline hover:text-gray-800"
+                                >
+                                    Skip for now
+                                </button>
+                            </div>
+                        </div>
+                    )}
             <div className="bg-white p-6 rounded-3xl shadow-sm space-y-6">
               <h2 className="text-[20px] font-semibold">Emergency contact details</h2>
 

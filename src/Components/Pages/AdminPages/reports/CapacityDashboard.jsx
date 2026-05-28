@@ -252,7 +252,34 @@ const CapacityDashboard = () => {
         }
     }
 
+ const handleFilterChange = async (key, value) => {
+        const token = localStorage.getItem("adminToken");
 
+        const query = new URLSearchParams({ [key]: value }).toString();
+
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/api/admin/weekly-class/analytics/capacity?${query}`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+
+            const resultRaw = await response.json();
+            const result = resultRaw.data || null;
+
+            setMembersData(result);
+        } catch (error) {
+            console.error("Failed to fetch analytics:", error);
+            setMembersData(null);
+        } finally {
+            setLoading(false);
+        }
+    };
     const COLORS = ["#043bd3ff", "#7bb9ffff", "#0cb823e3", "#eb6e25ff", "#f3f63bff", "#ff0000ff"];
 
     // Ensure we always have an array
